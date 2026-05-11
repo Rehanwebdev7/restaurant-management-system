@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spice Garden — Restaurant Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #020617;
+      --card:      #0f172a;
+      --card-h:    #162032;
+      --border:    #1e293b;
+      --t1:        #ffffff;
+      --t2:        #94a3b8;
+      --accent:    #3b82f6;
+      --accent-h:  #2563eb;
+      --green:     #10b981;
+      --red:       #ef4444;
+      --orange:    #f59e0b;
+      --purple:    #8b5cf6;
+      --cyan:      #06b6d4;
+      --r:         16px;
+      --r-sm:      8px;
+    }
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family:'Inter',sans-serif;
+      background:var(--bg);
+      color:var(--t1);
+      display:flex;
+      min-height:100vh;
+      overflow-x:hidden;
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width:6px; }
+    ::-webkit-scrollbar-track { background:var(--bg); }
+    ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+    /* ══════════════════════════════════════
+       SIDEBAR
+    ══════════════════════════════════════ */
+    .sidebar {
+      width:240px; min-width:240px;
+      height:100vh; position:fixed; top:0; left:0;
+      background:#080f1e;
+      border-right:1px solid var(--border);
+      display:flex; flex-direction:column;
+      z-index:100; overflow-y:auto;
+      transition:width .25s ease;
+    }
+    .sb-logo {
+      padding:22px 20px;
+      border-bottom:1px solid var(--border);
+      display:flex; align-items:center; gap:12px;
+    }
+    .sb-logo .logo-icon {
+      width:40px; height:40px; min-width:40px;
+      background:linear-gradient(135deg,var(--accent),#6366f1);
+      border-radius:10px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:16px;
+    }
+    .sb-logo .brand { line-height:1.3; }
+    .sb-logo .brand-name { font-size:14px; font-weight:700; }
+    .sb-logo .brand-sub  { font-size:11px; color:var(--t2); }
+
+    .sb-user {
+      padding:14px 20px;
+      border-bottom:1px solid var(--border);
+      display:flex; align-items:center; gap:10px;
+    }
+    .sb-avatar {
+      width:36px; height:36px; min-width:36px; border-radius:50%;
+      background:linear-gradient(135deg,var(--accent),var(--purple));
+      display:flex; align-items:center; justify-content:center;
+      font-size:14px; font-weight:700;
+    }
+    .sb-user-name  { font-size:13px; font-weight:600; }
+    .sb-user-role  { font-size:11px; color:var(--t2); }
+
+    .sb-section {
+      padding:16px 20px 6px;
+      font-size:10px; font-weight:700; letter-spacing:1.2px;
+      color:var(--t2); text-transform:uppercase;
+    }
+    .sb-item { padding:0 10px; margin-bottom:2px; }
+    .sb-link {
+      display:flex; align-items:center; gap:10px;
+      padding:10px 12px; border-radius:var(--r-sm);
+      color:var(--t2); font-size:13.5px; font-weight:500;
+      cursor:pointer; transition:all .2s; position:relative;
+      border:none; background:transparent; width:100%; text-align:left;
+    }
+    .sb-link:hover  { background:rgba(59,130,246,.1); color:var(--t1); }
+    .sb-link.active {
+      background:rgba(59,130,246,.15); color:var(--accent);
+      border-left:3px solid var(--accent); margin-left:-3px;
+    }
+    .sb-link .ico { width:18px; text-align:center; font-size:14px; flex-shrink:0; }
+    .sb-link .lbl { flex:1; }
+    .sb-badge {
+      background:var(--red); color:#fff;
+      font-size:10px; font-weight:700;
+      padding:2px 7px; border-radius:10px;
+    }
+    .sb-bottom {
+      margin-top:auto; padding:14px;
+      border-top:1px solid var(--border);
+    }
+    .logout-btn {
+      display:flex; align-items:center; gap:10px;
+      width:100%; padding:10px 12px; border-radius:var(--r-sm);
+      background:transparent; border:none;
+      color:var(--red); font-size:13.5px; font-weight:500;
+      cursor:pointer; font-family:'Inter',sans-serif; transition:all .2s;
+    }
+    .logout-btn:hover { background:rgba(239,68,68,.1); }
+
+    /* ══════════════════════════════════════
+       MAIN
+    ══════════════════════════════════════ */
+    .main {
+      margin-left:240px; flex:1;
+      padding:24px; min-height:100vh;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      display:flex; align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap; gap:16px; margin-bottom:28px;
+    }
+    .header-left h1 {
+      font-size:22px; font-weight:800;
+      display:flex; align-items:center; gap:10px;
+    }
+    .header-left h1 i { color:var(--accent); font-size:18px; }
+    .last-upd { font-size:12px; color:var(--t2); margin-top:5px; }
+    .header-right { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .date-wrap { display:flex; align-items:center; gap:8px; }
+    .d-input {
+      background:var(--card); border:1px solid var(--border);
+      border-radius:var(--r-sm); color:var(--t1);
+      font-family:'Inter',sans-serif; font-size:13px;
+      padding:8px 12px; outline:none; transition:border-color .2s;
+    }
+    .d-input:focus { border-color:var(--accent); }
+    .d-input::-webkit-calendar-picker-indicator { filter:invert(1) opacity(.4); cursor:pointer; }
+    .sep { color:var(--t2); font-size:13px; }
+
+    .btn {
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 16px; border-radius:var(--r-sm);
+      font-family:'Inter',sans-serif; font-size:13px; font-weight:500;
+      cursor:pointer; border:none; transition:all .2s ease;
+    }
+    .btn-primary { background:var(--accent); color:#fff; }
+    .btn-primary:hover { background:var(--accent-h); transform:translateY(-1px); box-shadow:0 4px 14px rgba(59,130,246,.35); }
+    .btn-ghost { background:transparent; border:1px solid var(--border); color:var(--t2); }
+    .btn-ghost:hover { border-color:var(--accent); color:var(--accent); }
+
+    /* ── KPI GRID ── */
+    .kpi-grid {
+      display:grid;
+      grid-template-columns:repeat(6,1fr);
+      gap:16px; margin-bottom:24px;
+    }
+    .kpi {
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--r);
+      padding:20px; position:relative;
+      overflow:hidden; transition:all .25s ease;
+    }
+    .kpi::before {
+      content:''; position:absolute;
+      top:0; left:0; right:0; height:3px;
+      background:var(--kc, var(--accent));
+      border-radius:16px 16px 0 0;
+    }
+    .kpi:hover {
+      transform:translateY(-4px);
+      border-color:rgba(59,130,246,.35);
+      box-shadow:0 12px 28px rgba(0,0,0,.45);
+      background:var(--card-h);
+    }
+    .kpi-icon {
+      position:absolute; top:16px; right:16px;
+      width:38px; height:38px; border-radius:9px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:15px;
+      background:color-mix(in srgb, var(--kc, var(--accent)) 15%, transparent);
+      color:var(--kc, var(--accent));
+    }
+    .kpi-lbl {
+      font-size:10.5px; font-weight:700; letter-spacing:.6px;
+      color:var(--t2); text-transform:uppercase; margin-bottom:10px;
+    }
+    .kpi-val {
+      font-size:26px; font-weight:800; line-height:1;
+      margin-bottom:8px; font-variant-numeric:tabular-nums;
+    }
+    .kpi-trend { display:flex; align-items:center; gap:5px; font-size:12px; font-weight:600; }
+    .kpi-trend .sub { color:var(--t2); font-weight:400; margin-left:2px; font-size:11px; }
+    .up   { color:var(--green); }
+    .down { color:var(--red); }
+    .neu  { color:var(--cyan); }
+
+    /* ── CHARTS ── */
+    .charts-row { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:24px; }
+
+    .card {
+      background:var(--card); border:1px solid var(--border);
+      border-radius:var(--r); padding:24px;
+      transition:border-color .25s;
+    }
+    .card:hover { border-color:rgba(59,130,246,.25); }
+
+    .c-head {
+      display:flex; align-items:center;
+      justify-content:space-between; margin-bottom:20px;
+    }
+    .c-title {
+      font-size:15px; font-weight:700;
+      display:flex; align-items:center; gap:8px;
+    }
+    .c-title i { color:var(--accent); font-size:14px; }
+    .chart-wrap { position:relative; height:220px; }
+
+    /* ── BADGE ── */
+    .badge {
+      display:inline-flex; align-items:center; gap:4px;
+      padding:3px 9px; border-radius:20px;
+      font-size:11px; font-weight:600; white-space:nowrap;
+    }
+    .b-success { background:rgba(16,185,129,.15); color:var(--green); }
+    .b-warn    { background:rgba(245,158,11,.15);  color:var(--orange); }
+    .b-danger  { background:rgba(239,68,68,.15);   color:var(--red); }
+    .b-info    { background:rgba(59,130,246,.15);   color:var(--accent); }
+    .b-purple  { background:rgba(139,92,246,.15);  color:var(--purple); }
+    .b-muted   { background:rgba(148,163,184,.1);  color:var(--t2); }
+
+    /* ── MENU ITEMS ── */
+    .menu-row {
+      display:flex; align-items:center; gap:16px;
+      padding:14px 8px; border-bottom:1px solid rgba(30,41,59,.7);
+      border-radius:var(--r-sm); transition:all .2s;
+    }
+    .menu-row:last-child { border-bottom:none; }
+    .menu-row:hover { background:rgba(255,255,255,.025); }
+    .rank-em  { width:26px; text-align:center; font-size:18px; }
+    .thumb {
+      width:50px; height:50px; min-width:50px; border-radius:10px;
+      background:linear-gradient(135deg,#162032,#1e293b);
+      display:flex; align-items:center; justify-content:center;
+      font-size:22px;
+    }
+    .m-info    { flex:1; min-width:0; }
+    .m-name    { font-size:14px; font-weight:600; }
+    .m-price   { font-size:12px; color:var(--t2); margin-top:2px; }
+    .stars     { color:var(--orange); font-size:12px; letter-spacing:1px; }
+    .m-cnt     { text-align:center; min-width:72px; }
+    .m-cnt-lbl { font-size:11px; color:var(--t2); margin-bottom:3px; }
+    .m-cnt-val { font-size:18px; font-weight:700; }
+    .m-rev     { text-align:right; min-width:80px; }
+    .m-rev-v   { font-size:14px; font-weight:700; color:var(--green); }
+    .m-rev-l   { font-size:11px; color:var(--t2); margin-top:2px; }
+
+    /* ── ORDERS TABLE ── */
+    .tbl-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; font-size:13.5px; }
+    thead tr { border-bottom:1px solid var(--border); }
+    th {
+      padding:12px 14px; text-align:left;
+      font-size:11px; font-weight:700; letter-spacing:.5px;
+      color:var(--t2); text-transform:uppercase; white-space:nowrap;
+    }
+    td {
+      padding:14px 14px; border-bottom:1px solid rgba(30,41,59,.5);
+      vertical-align:middle;
+    }
+    tbody tr:hover td { background:rgba(255,255,255,.02); }
+    tbody tr:last-child td { border-bottom:none; }
+    .order-id { font-family:monospace; color:var(--accent); font-weight:700; font-size:13px; }
+    .cust-name { font-weight:600; font-size:13.5px; }
+    .cust-time { font-size:11px; color:var(--t2); margin-top:2px; }
+    .amt       { font-weight:700; color:var(--green); }
+    .upd-btn {
+      display:inline-flex; align-items:center; gap:5px;
+      padding:6px 12px; border-radius:6px;
+      background:rgba(59,130,246,.1); border:1px solid rgba(59,130,246,.3);
+      color:var(--accent); font-size:12px; font-weight:500;
+      cursor:pointer; font-family:'Inter',sans-serif; transition:all .2s;
+    }
+    .upd-btn:hover { background:rgba(59,130,246,.2); border-color:var(--accent); }
+
+    /* ── BOTTOM GRID ── */
+    .bottom-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:24px; }
+
+    /* Low Stock */
+    .ls-item {
+      display:flex; align-items:center; gap:14px;
+      padding:14px 0; border-bottom:1px solid rgba(30,41,59,.6);
+    }
+    .ls-item:last-child { border-bottom:none; }
+    .ls-ico {
+      width:42px; height:42px; min-width:42px; border-radius:10px;
+      background:rgba(239,68,68,.1); color:var(--red);
+      display:flex; align-items:center; justify-content:center;
+      font-size:18px;
+    }
+    .ls-info { flex:1; min-width:0; }
+    .ls-name { font-size:13.5px; font-weight:600; }
+    .ls-meta { font-size:11.5px; color:var(--t2); margin-top:2px; }
+    .ls-bar-bg { height:4px; background:var(--border); border-radius:2px; margin-top:6px; }
+    .ls-bar    { height:4px; border-radius:2px; background:var(--red); }
+    .ord-now {
+      padding:5px 10px; border-radius:6px;
+      background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3);
+      color:var(--red); font-size:11px; font-weight:600;
+      cursor:pointer; font-family:'Inter',sans-serif; transition:all .2s; white-space:nowrap;
+    }
+    .ord-now:hover { background:rgba(239,68,68,.2); }
+
+    /* Reviews */
+    .rv-item {
+      padding:14px 0; border-bottom:1px solid rgba(30,41,59,.6);
+    }
+    .rv-item:last-child { border-bottom:none; }
+    .rv-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+    .rv-who  { display:flex; align-items:center; gap:10px; }
+    .rv-av   {
+      width:34px; height:34px; min-width:34px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:13px; font-weight:700;
+    }
+    .rv-name { font-size:13px; font-weight:600; }
+    .rv-stars{ font-size:13px; color:var(--orange); }
+    .rv-time { font-size:11px; color:var(--t2); }
+    .rv-text { font-size:13px; color:var(--t2); line-height:1.55; }
+
+    /* ══════════════════════════════════════
+       RESPONSIVE
+    ══════════════════════════════════════ */
+    @media (max-width:1400px) {
+      .kpi-grid { grid-template-columns:repeat(3,1fr); }
+    }
+    @media (max-width:1100px) {
+      .sidebar { width:64px; }
+      .sb-logo .brand, .sb-user-name, .sb-user-role,
+      .sb-section, .sb-link .lbl, .sb-badge,
+      .logout-btn span { display:none; }
+      .sb-logo { padding:16px; justify-content:center; }
+      .sb-user { justify-content:center; }
+      .sb-link { justify-content:center; }
+      .main { margin-left:64px; }
+      .charts-row { grid-template-columns:1fr; }
+      .bottom-grid { grid-template-columns:1fr; }
+    }
+    @media (max-width:768px) {
+      .sidebar { display:none; }
+      .main { margin-left:0; padding:16px; }
+      .kpi-grid { grid-template-columns:repeat(2,1fr); }
+      .header { flex-direction:column; align-items:flex-start; }
+    }
+    @media (max-width:480px) {
+      .kpi-grid { grid-template-columns:1fr 1fr; }
+      .kpi-val  { font-size:20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════ SIDEBAR ══════════════════ -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="logo-icon">🌶️</div>
+    <div class="brand">
+      <div class="brand-name">Spice Garden</div>
+      <div class="brand-sub">Owner Portal</div>
+    </div>
+  </div>
+
+  <div class="sb-user">
+    <div class="sb-avatar">A</div>
+    <div>
+      <div class="sb-user-name">Amit Patel</div>
+      <div class="sb-user-role">Restaurant Owner</div>
+    </div>
+  </div>
+
+  <div class="sb-section">Main Menu</div>
+
+  <div class="sb-item">
+    <button class="sb-link active">
+      <i class="fa-solid fa-gauge ico"></i>
+      <span class="lbl">Dashboard</span>
+    </button>
+  </div>
+  <div class="sb-item">
+    <button class="sb-link" onclick="navClick(this)">
+      <i class="fa-solid fa-bag-shopping ico"></i>
+      <span class="lbl">Orders</span>
+      <span class="sb-badge">7</span>
+    </button>
+  </div>
+  <div class="sb-item">
+    <button class="sb-link" onclick="navClick(this)">
+      <i class="fa-solid fa-book-open ico"></i>
+      <span class="lbl">Menu Management</span>
+    </button>
+  </div>
+  <div class="sb-item">
+    <button class="sb-link" onclick="navClick(this)">
+      <i class="fa-solid fa-users ico"></i>
+      <span class="lbl">Customers</span>
+    </button>
+  </div>
+  <div class="sb-item">
+    <button class="sb-link" onclick="navClick(this)">
+      <i class="fa-solid fa-chart-line ico"></i>
+      <span class="lbl">Analytics</span>
+    </button>
+  </div>
+  <div class="sb-item">
+    <button class="sb-link" onclick="navClick(this)">
+      <i class="fa-solid fa-star ico"></i>
+      <span class="lbl">Reviews</span>
+    </button>
+  </div>
+  <div class="sb-item">
+    <button class="sb-link" onclick="navClick(this)">
+      <i class="fa-solid fa-ticket ico"></i>
+      <span class="lbl">Coupons</span>
+    </button>
+  </div>
+
+  <div class="sb-section">Settings</div>
+
+  <div class="sb-item">
+    <button class="sb-link" onclick="navClick(this)">
+      <i class="fa-solid fa-gear ico"></i>
+      <span class="lbl">Settings</span>
+    </button>
+  </div>
+
+  <div class="sb-bottom">
+    <button class="logout-btn">
+      <i class="fa-solid fa-arrow-right-from-bracket"></i>
+      <span>Sign Out</span>
+    </button>
+  </div>
+</aside>
+
+<!-- ══════════════════ MAIN ══════════════════ -->
+<main class="main">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <h1><i class="fa-solid fa-utensils"></i> Spice Garden Restaurant</h1>
+      <div class="last-upd">
+        <i class="fa-regular fa-clock" style="color:var(--t2)"></i>
+        &nbsp;Last updated: <span id="lastUpd"></span>
+        &nbsp;·&nbsp;
+        <span style="color:var(--green)">● Live</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="date-wrap">
+        <input type="date" class="d-input" id="fromDate" value="2026-03-21">
+        <span class="sep">→</span>
+        <input type="date" class="d-input" id="toDate" value="2026-04-21">
+      </div>
+      <button class="btn btn-primary" onclick="applyFilter()">
+        <i class="fa-solid fa-filter"></i> Apply
+      </button>
+      <button class="btn btn-ghost" onclick="downloadReport()">
+        <i class="fa-solid fa-file-arrow-down"></i> Report
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI CARDS -->
+  <div class="kpi-grid">
+
+    <div class="kpi" style="--kc:#3b82f6">
+      <div class="kpi-icon"><i class="fa-solid fa-bag-shopping"></i></div>
+      <div class="kpi-lbl">Total Orders</div>
+      <div class="kpi-val">1,248</div>
+      <div class="kpi-trend up">
+        <i class="fa-solid fa-arrow-trend-up"></i> +12.4%
+        <span class="sub">vs last week</span>
+      </div>
+    </div>
+
+    <div class="kpi" style="--kc:#10b981">
+      <div class="kpi-icon" style="background:rgba(16,185,129,.15);color:#10b981">
+        <i class="fa-solid fa-indian-rupee-sign"></i>
+      </div>
+      <div class="kpi-lbl">Total Revenue</div>
+      <div class="kpi-val">₹3.42L</div>
+      <div class="kpi-trend up">
+        <i class="fa-solid fa-arrow-trend-up"></i> +8.7%
+        <span class="sub">vs last week</span>
+      </div>
+    </div>
+
+    <div class="kpi" style="--kc:#f59e0b">
+      <div class="kpi-icon" style="background:rgba(245,158,11,.15);color:#f59e0b">
+        <i class="fa-solid fa-receipt"></i>
+      </div>
+      <div class="kpi-lbl">Avg Order Value</div>
+      <div class="kpi-val">₹274</div>
+      <div class="kpi-trend down">
+        <i class="fa-solid fa-arrow-trend-down"></i> −2.1%
+        <span class="sub">vs last week</span>
+      </div>
+    </div>
+
+    <div class="kpi" style="--kc:#8b5cf6">
+      <div class="kpi-icon" style="background:rgba(139,92,246,.15);color:#8b5cf6">
+        <i class="fa-solid fa-users"></i>
+      </div>
+      <div class="kpi-lbl">Active Customers</div>
+      <div class="kpi-val">892</div>
+      <div class="kpi-trend up">
+        <i class="fa-solid fa-arrow-trend-up"></i> +5.3%
+        <span class="sub">vs last week</span>
+      </div>
+    </div>
+
+    <div class="kpi" style="--kc:#ef4444">
+      <div class="kpi-icon" style="background:rgba(239,68,68,.15);color:#ef4444">
+        <i class="fa-solid fa-ban"></i>
+      </div>
+      <div class="kpi-lbl">Cancellation Rate</div>
+      <div class="kpi-val">4.8%</div>
+      <div class="kpi-trend down" style="color:#ef4444">
+        <i class="fa-solid fa-arrow-trend-up"></i> +0.3%
+        <span class="sub">vs last week</span>
+      </div>
+    </div>
+
+    <div class="kpi" style="--kc:#06b6d4">
+      <div class="kpi-icon" style="background:rgba(6,182,212,.15);color:#06b6d4">
+        <i class="fa-solid fa-chart-pie"></i>
+      </div>
+      <div class="kpi-lbl">Online vs Dine-in</div>
+      <div class="kpi-val" style="font-size:19px;letter-spacing:-1px">68% / 32%</div>
+      <div class="kpi-trend neu">
+        <i class="fa-solid fa-wifi"></i> Online leads
+        <span class="sub">this month</span>
+      </div>
+    </div>
+
+  </div><!-- /kpi-grid -->
+
+  <!-- CHARTS ROW -->
+  <div class="charts-row">
+    <div class="card">
+      <div class="c-head">
+        <div class="c-title">
+          <i class="fa-solid fa-chart-line"></i> Revenue Trend (Last 7 Days)
+        </div>
+        <span class="badge b-success">↑ +8.7% this week</span>
+      </div>
+      <div class="chart-wrap"><canvas id="revenueChart"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="c-head">
+        <div class="c-title">
+          <i class="fa-solid fa-circle-half-stroke"></i> Orders by Status
+        </div>
+        <span class="badge b-info">Last 30 days</span>
+      </div>
+      <div class="chart-wrap"><canvas id="statusChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- TOP MENU ITEMS -->
+  <div class="card" style="margin-bottom:24px">
+    <div class="c-head">
+      <div class="c-title"><i class="fa-solid fa-fire"></i> Top Menu Items</div>
+      <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px">
+        View All <i class="fa-solid fa-arrow-right" style="font-size:10px"></i>
+      </button>
+    </div>
+    <div id="menuItems"></div>
+  </div>
+
+  <!-- RECENT ORDERS -->
+  <div class="card">
+    <div class="c-head">
+      <div class="c-title"><i class="fa-solid fa-clock-rotate-left"></i> Recent Orders</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="badge b-warn">7 Pending</span>
+        <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px">View All</button>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Customer</th>
+            <th>Items</th>
+            <th>Amount</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="ordersBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- BOTTOM GRID -->
+  <div class="bottom-grid">
+    <!-- LOW STOCK -->
+    <div class="card">
+      <div class="c-head">
+        <div class="c-title" style="color:var(--red)">
+          <i class="fa-solid fa-triangle-exclamation"></i> Low Stock Alerts
+        </div>
+        <span class="badge b-danger">5 Items</span>
+      </div>
+      <div id="lowStock"></div>
+    </div>
+
+    <!-- REVIEWS -->
+    <div class="card">
+      <div class="c-head">
+        <div class="c-title">
+          <i class="fa-solid fa-star" style="color:var(--orange)"></i> Recent Reviews
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:20px;font-weight:800;color:var(--orange)">4.3</span>
+          <span style="color:var(--orange);font-size:14px">★★★★☆</span>
+        </div>
+      </div>
+      <div id="reviews"></div>
+    </div>
+  </div><!-- /bottom-grid -->
+
+</main>
+
+<!-- ══════════════════ SCRIPTS ══════════════════ -->
+<script>
+/* ─────────────── MOCK DATA ─────────────── */
+const MENU = [
+  { rank:1, em:'🍛', name:'Chicken Biryani',        price:320, orders:287, revenue:91840, rating:4.8, stock:'In Stock' },
+  { rank:2, em:'🥘', name:'Paneer Butter Masala',   price:240, orders:234, revenue:56160, rating:4.6, stock:'In Stock' },
+  { rank:3, em:'🍖', name:'Mutton Rogan Josh',       price:420, orders:198, revenue:83160, rating:4.7, stock:'Low Stock' },
+  { rank:4, em:'🫓', name:'Butter Garlic Naan ×4',  price:80,  orders:445, revenue:35600, rating:4.5, stock:'In Stock' },
+  { rank:5, em:'🫕', name:'Dal Makhani',             price:190, orders:312, revenue:59280, rating:4.4, stock:'In Stock' },
+];
+
+const ORDERS = [
+  { id:'#ORD-10045', cust:'Rajesh Kumar',   items:3, amt:840,  type:'Online',  status:'PENDING',   time:'2 min ago' },
+  { id:'#ORD-10044', cust:'Priya Sharma',   items:2, amt:560,  type:'Dine-in', status:'PREPARING',  time:'8 min ago' },
+  { id:'#ORD-10043', cust:'Amit Verma',     items:5, amt:1240, type:'Online',  status:'COMPLETED',  time:'15 min ago' },
+  { id:'#ORD-10042', cust:'Neha Rathod',    items:1, amt:320,  type:'Online',  status:'CANCELLED',  time:'22 min ago' },
+  { id:'#ORD-10041', cust:'Suresh Patel',   items:4, amt:950,  type:'Dine-in', status:'PREPARING',  time:'30 min ago' },
+  { id:'#ORD-10040', cust:'Kavya Nair',     items:2, amt:480,  type:'Online',  status:'COMPLETED',  time:'42 min ago' },
+  { id:'#ORD-10039', cust:'Arjun Singh',    items:3, amt:720,  type:'Dine-in', status:'PENDING',    time:'1 hr ago' },
+];
+
+const LOW_STOCK = [
+  { em:'🍖', name:'Mutton (Boneless)',    curr:2,   thresh:5,    unit:'kg' },
+  { em:'🧈', name:'Fresh Cream',          curr:0.5, thresh:2,    unit:'L'  },
+  { em:'🧅', name:'Shahi Paneer Mix',     curr:3,   thresh:10,   unit:'pcs'},
+  { em:'🌿', name:'Coriander Leaves',     curr:50,  thresh:200,  unit:'gm' },
+  { em:'🫙', name:'Kashmiri Chilli Pwd', curr:100, thresh:500,  unit:'gm' },
+];
+
+const REVIEWS = [
+  { name:'Riya Kapoor',  av:'RK', rating:5, text:'Amazing biryani! The mutton was perfectly cooked. Will definitely come back again!', time:'2 hrs ago',  color:'#3b82f6' },
+  { name:'Mohan Das',    av:'MD', rating:4, text:'Good food but delivery was a bit slow. The paneer butter masala was outstanding!',   time:'5 hrs ago',  color:'#10b981' },
+  { name:'Sneha Pillai', av:'SP', rating:5, text:"Best naan I've had in a long time. The garlic butter was perfect. Service was great!", time:'1 day ago', color:'#8b5cf6' },
+  { name:'Farhan Khan',  av:'FK', rating:3, text:'Food was okay, dal makhani was slightly too salty. Otherwise a decent experience.',  time:'2 days ago', color:'#f59e0b' },
+];
+
+/* ─────────────── CHART.JS DEFAULTS ─────────────── */
+Chart.defaults.color          = '#94a3b8';
+Chart.defaults.borderColor    = '#1e293b';
+Chart.defaults.font.family    = 'Inter';
+
+/* ─────────────── REVENUE LINE CHART ─────────────── */
+(function() {
+  const ctx  = document.getElementById('revenueChart').getContext('2d');
+  const grad = ctx.createLinearGradient(0, 0, 0, 220);
+  grad.addColorStop(0, 'rgba(59,130,246,.35)');
+  grad.addColorStop(1, 'rgba(59,130,246,0)');
+
+  new Chart(ctx, {
+    type:'line',
+    data:{
+      labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+      datasets:[{
+        label:'Revenue (₹)',
+        data:[42000,55000,48000,67000,72000,89000,64000],
+        borderColor:'#3b82f6',
+        backgroundColor:grad,
+        borderWidth:2.5,
+        tension:.42,
+        fill:true,
+        pointBackgroundColor:'#3b82f6',
+        pointBorderColor:'#0f172a',
+        pointBorderWidth:2,
+        pointRadius:5,
+        pointHoverRadius:7,
+      }]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#1e293b',
+          borderColor:'#334155',
+          borderWidth:1,
+          padding:12,
+          callbacks:{
+            label:c => ` ₹${(c.raw/1000).toFixed(1)}K`
+          }
+        }
+      },
+      scales:{
+        x:{ grid:{color:'rgba(30,41,59,.8)'}, ticks:{font:{size:12}} },
+        y:{
+          grid:{color:'rgba(30,41,59,.8)'},
+          ticks:{ font:{size:11}, callback:v => `₹${(v/1000).toFixed(0)}K` }
+        }
+      }
+    }
+  });
+})();
+
+/* ─────────────── STATUS DONUT CHART ─────────────── */
+(function() {
+  const ctx = document.getElementById('statusChart').getContext('2d');
+  new Chart(ctx, {
+    type:'doughnut',
+    data:{
+      labels:['Completed','Preparing','Pending','Cancelled'],
+      datasets:[{
+        data:[748,198,243,59],
+        backgroundColor:['#10b981','#3b82f6','#f59e0b','#ef4444'],
+        borderColor:'#0f172a',
+        borderWidth:3,
+        hoverOffset:10,
+      }]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      cutout:'68%',
+      plugins:{
+        legend:{
+          position:'bottom',
+          labels:{
+            padding:16,
+            usePointStyle:true,
+            pointStyleWidth:8,
+            font:{size:12}
+          }
+        },
+        tooltip:{
+          backgroundColor:'#1e293b',
+          borderColor:'#334155',
+          borderWidth:1,
+          padding:12,
+        }
+      }
+    }
+  });
+})();
+
+/* ─────────────── RENDER: MENU ITEMS ─────────────── */
+const RANK_EM = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+
+function renderMenu() {
+  document.getElementById('menuItems').innerHTML = MENU.map(m => {
+    const starsHtml = '★'.repeat(Math.floor(m.rating)) + '☆'.repeat(5 - Math.floor(m.rating));
+    const inStock   = m.stock === 'In Stock';
+    return `
+      <div class="menu-row">
+        <div class="rank-em">${RANK_EM[m.rank-1]}</div>
+        <div class="thumb">${m.em}</div>
+        <div class="m-info">
+          <div class="m-name">${m.name}</div>
+          <div class="m-price">₹${m.price} / plate</div>
+          <div class="stars">${starsHtml}
+            <span style="color:var(--t2);font-size:11px;font-family:Inter;margin-left:4px">${m.rating}</span>
+          </div>
+        </div>
+        <div class="m-cnt">
+          <div class="m-cnt-lbl">Orders</div>
+          <div class="m-cnt-val">${m.orders}</div>
+        </div>
+        <div class="m-rev">
+          <div class="m-rev-v">₹${(m.revenue/1000).toFixed(1)}K</div>
+          <div class="m-rev-l">Revenue</div>
+        </div>
+        <div style="min-width:85px;text-align:right">
+          <span class="badge ${inStock ? 'b-success' : 'b-warn'}">
+            ${inStock ? '● In Stock' : '⚠ Low Stock'}
+          </span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+/* ─────────────── RENDER: ORDERS ─────────────── */
+const STATUS_CFG = {
+  PENDING:   { lbl:'Pending',   cls:'b-warn',    ico:'⏳' },
+  PREPARING: { lbl:'Preparing', cls:'b-info',    ico:'👨‍🍳' },
+  COMPLETED: { lbl:'Completed', cls:'b-success', ico:'✓' },
+  CANCELLED: { lbl:'Cancelled', cls:'b-danger',  ico:'✕' },
+};
+
+function renderOrders() {
+  document.getElementById('ordersBody').innerHTML = ORDERS.map((o,i) => {
+    const sc = STATUS_CFG[o.status];
+    const canUpdate = o.status === 'PENDING' || o.status === 'PREPARING';
+    return `
+      <tr>
+        <td><span class="order-id">${o.id}</span></td>
+        <td>
+          <div class="cust-name">${o.cust}</div>
+          <div class="cust-time">${o.time}</div>
+        </td>
+        <td><span class="badge b-muted">${o.items} items</span></td>
+        <td><span class="amt">₹${o.amt}</span></td>
+        <td>
+          <span class="badge ${o.type==='Online'?'b-info':'b-purple'}">
+            ${o.type==='Online'?'🌐':'🪑'} ${o.type}
+          </span>
+        </td>
+        <td><span class="badge ${sc.cls}">${sc.ico} ${sc.lbl}</span></td>
+        <td>
+          ${canUpdate
+            ? `<button class="upd-btn" onclick="updateStatus(${i})">
+                 <i class="fa-solid fa-pen-to-square"></i> Update
+               </button>`
+            : `<span style="color:#475569;font-size:12px">—</span>`}
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+/* ─────────────── RENDER: LOW STOCK ─────────────── */
+function renderLowStock() {
+  document.getElementById('lowStock').innerHTML = LOW_STOCK.map(i => {
+    const pct = Math.min((i.curr / i.thresh) * 100, 100).toFixed(0);
+    return `
+      <div class="ls-item">
+        <div class="ls-ico">${i.em}</div>
+        <div class="ls-info">
+          <div class="ls-name">${i.name}</div>
+          <div class="ls-meta">
+            Stock: <strong style="color:var(--red)">${i.curr} ${i.unit}</strong>
+            &nbsp;·&nbsp; Threshold: ${i.thresh} ${i.unit}
+          </div>
+          <div class="ls-bar-bg">
+            <div class="ls-bar" style="width:${pct}%"></div>
+          </div>
+        </div>
+        <button class="ord-now"><i class="fa-solid fa-cart-plus"></i> Order</button>
+      </div>`;
+  }).join('');
+}
+
+/* ─────────────── RENDER: REVIEWS ─────────────── */
+function renderReviews() {
+  document.getElementById('reviews').innerHTML = REVIEWS.map(r => {
+    const stars = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+    return `
+      <div class="rv-item">
+        <div class="rv-head">
+          <div class="rv-who">
+            <div class="rv-av" style="background:linear-gradient(135deg,${r.color},${r.color}88)">${r.av}</div>
+            <div>
+              <div class="rv-name">${r.name}</div>
+              <div class="rv-stars">${stars}</div>
+            </div>
+          </div>
+          <div class="rv-time">${r.time}</div>
+        </div>
+        <div class="rv-text">"${r.text}"</div>
+      </div>`;
+  }).join('');
+}
+
+/* ─────────────── INTERACTIONS ─────────────── */
+function navClick(el) {
+  document.querySelectorAll('.sb-link').forEach(l => l.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function applyFilter() {
+  const btn = event.currentTarget;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Loading…';
+  btn.disabled = true;
+  setTimeout(() => {
+    btn.innerHTML = '<i class="fa-solid fa-filter"></i> Apply';
+    btn.disabled = false;
+  }, 1200);
+}
+
+function downloadReport() {
+  alert('📊 Report download started.\n\nIn production this generates a PDF/Excel for the selected date range.');
+}
+
+function updateStatus(idx) {
+  const map = { '1':'PENDING','2':'PREPARING','3':'COMPLETED','4':'CANCELLED' };
+  const choice = prompt(
+    `Update status for ${ORDERS[idx].id}\n\n1. Pending\n2. Preparing\n3. Completed\n4. Cancelled\n\nEnter number:`, '3'
+  );
+  if (choice && map[choice]) {
+    ORDERS[idx].status = map[choice];
+    renderOrders();
+  }
+}
+
+/* ─────────────── INIT ─────────────── */
+document.getElementById('lastUpd').textContent =
+  new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+
+renderMenu();
+renderOrders();
+renderLowStock();
+renderReviews();
+</script>
+</body>
+</html>

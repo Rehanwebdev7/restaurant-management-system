@@ -1,0 +1,70 @@
+.skeleton-row {
+  animation: skeleton-fade 1.5s ease-in-out infinite;
+}
+
+.skeleton-row:nth-child(odd) {
+  animation-delay: 0.1s;
+}
+
+.skeleton-row:nth-child(even) {
+  animation-delay: 0.2s;
+}
+
+.skeleton-cell {
+  padding: 8px 0;
+}
+
+.skeleton-line {
+  height: 16px;
+  background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 4px;
+  width: 80%;
+  margin: 0 auto;
+}
+
+/* Dark Mode Skeleton */
+[data-theme="dark"] .skeleton-line {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 75%);
+}
+
+.skeleton-row td:first-child .skeleton-line {
+  width: 60%;
+}
+
+.skeleton-row td:last-child .skeleton-line {
+  width: 70%;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes skeleton-fade {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Dark mode skeleton fade */
+@keyframes skeleton-fade-dark {
+  0%, 100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+[data-theme="dark"] .skeleton-row {
+  animation: skeleton-fade-dark 1.5s ease-in-out infinite;
+}

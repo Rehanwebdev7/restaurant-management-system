@@ -1,0 +1,658 @@
+/* ==========================================================================
+   Global Table Styles — Modern Admin Panel
+   Restaurant Management System
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Table Container
+   -------------------------------------------------------------------------- */
+.user-table-container {
+  padding: 1.5rem;
+  background: #ffffff;
+  border: 1px solid #EDF2F7;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  margin-bottom: 2rem;
+  transition: box-shadow 0.2s ease;
+}
+
+[data-theme="dark"] .user-table-container {
+  background: rgba(15, 15, 25, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+}
+
+/* --------------------------------------------------------------------------
+   Modern Table
+   -------------------------------------------------------------------------- */
+.modern-table {
+  margin-bottom: 0;
+  background: #ffffff;
+  border-radius: 10px;
+  overflow: hidden;
+  border-collapse: collapse;
+  border-spacing: 0;
+  width: 100%;
+}
+
+/* Table Header */
+.modern-table thead th {
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: none;
+  letter-spacing: 0.01em;
+  padding: 0.8rem 0.75rem;
+  border: none;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  text-align: center;
+  vertical-align: middle;
+  background: var(--theme-primary);
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.modern-table thead th:first-child {
+  border-top-left-radius: 10px;
+}
+
+.modern-table thead th:last-child {
+  border-top-right-radius: 10px;
+}
+
+[data-theme="light"] .modern-table thead th {
+  background: var(--theme-primary) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .modern-table thead th {
+  background: var(--theme-primary) !important;
+  color: #ffffff !important;
+}
+
+/* Table Body Cells */
+.modern-table tbody td {
+  padding: 0.55rem 0.75rem;
+  vertical-align: middle;
+  text-align: center;
+  font-size: 0.875rem;
+  color: #1e293b;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Alternating Row Backgrounds */
+.modern-table tbody tr {
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+}
+
+.modern-table tbody tr:nth-child(even) {
+  background-color: #f8fafc;
+}
+
+.modern-table tbody tr:nth-child(odd) {
+  background-color: #ffffff;
+}
+
+.modern-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Row Hover — Disabled */
+.modern-table tbody tr:hover {
+  background-color: transparent !important;
+  border-left: none !important;
+  box-shadow: none !important;
+}
+
+.modern-table tbody tr:hover td {
+  color: inherit !important;
+}
+
+/* Dark Theme Table Overrides */
+[data-theme="dark"] .modern-table {
+  background: rgba(15, 15, 25, 0.96);
+}
+
+[data-theme="dark"] .modern-table tbody td {
+  color: #e2e8f0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .modern-table tbody tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+[data-theme="dark"] .modern-table tbody tr:nth-child(odd) {
+  background-color: rgba(255, 255, 255, 0.01);
+}
+
+[data-theme="dark"] .modern-table tbody tr:hover {
+  background-color: rgba(var(--theme-primary-rgb), 0.06) !important;
+  border-left: 3px solid var(--theme-primary);
+  box-shadow: none;
+}
+
+[data-theme="dark"] .modern-table tbody tr:hover td {
+  color: #ffffff !important;
+}
+
+/* --------------------------------------------------------------------------
+   Table Responsive
+   -------------------------------------------------------------------------- */
+.table-responsive {
+  border-radius: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.table-responsive::-webkit-scrollbar {
+  height: 6px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* --------------------------------------------------------------------------
+   Button Styles
+   -------------------------------------------------------------------------- */
+
+/* Outline Primary */
+.btn-outline-primary-custom {
+  color: var(--theme-primary);
+  border: 1.5px solid var(--theme-primary);
+  background-color: transparent;
+  border-radius: 50px;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.btn-outline-primary-custom:hover {
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--theme-primary) 0%, #D4621E 100%);
+  border-color: var(--theme-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+}
+
+.btn-outline-primary-custom:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(99, 102, 241, 0.3);
+}
+
+.btn-outline-primary-custom:focus {
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+/* Action Buttons */
+.btn-sm {
+  padding: 0.35rem 0.85rem;
+  font-size: 0.8rem;
+  border-radius: 50px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+/* Success Button */
+.btn-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border: none;
+  color: #ffffff;
+  border-radius: 50px;
+  transition: all 0.2s ease;
+}
+
+.btn-success:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+}
+
+.btn-success:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(16, 185, 129, 0.3);
+}
+
+/* --------------------------------------------------------------------------
+   Search and Filter Inputs
+   -------------------------------------------------------------------------- */
+.form-control {
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: #1e293b;
+  background: #ffffff;
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .form-control::placeholder {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .form-control[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(0.85);
+}
+
+.form-control:focus {
+  border-color: var(--theme-primary);
+  box-shadow:
+    0 0 0 3px rgba(99, 102, 241, 0.12),
+    0 1px 3px rgba(99, 102, 241, 0.08);
+  outline: none;
+}
+
+.input-group-text {
+  background-color: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-right: none;
+  color: #64748b;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .input-group-text {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #94a3b8;
+}
+
+.input-group .form-control {
+  border-left: none;
+}
+
+.input-group:focus-within .input-group-text {
+  border-color: var(--theme-primary);
+  color: var(--theme-primary);
+}
+
+.input-group:focus-within .form-control {
+  border-color: var(--theme-primary);
+}
+
+/* --------------------------------------------------------------------------
+   Pagination Styles
+   -------------------------------------------------------------------------- */
+.pagination {
+  gap: 0.3rem;
+}
+
+.pagination .page-item .page-link {
+  border: 1.5px solid #e2e8f0;
+  color: #64748b;
+  border-radius: 50px;
+  padding: 0.45rem 0.9rem;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  font-size: 0.85rem;
+  margin: 0 1px;
+  background: #ffffff;
+}
+
+.pagination .page-item .page-link:hover {
+  background-color: #FFF7ED;
+  border-color: var(--theme-primary);
+  color: var(--theme-primary);
+}
+
+.pagination .page-item.active .page-link {
+  background: linear-gradient(135deg, var(--theme-primary) 0%, #D4621E 100%) !important;
+  border-color: var(--theme-primary);
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(var(--theme-primary-rgb), 0.35);
+}
+
+.pagination .page-item.disabled .page-link {
+  background-color: #f8fafc;
+  border-color: #e2e8f0;
+  color: #cbd5e1;
+  cursor: not-allowed;
+}
+
+/* --------------------------------------------------------------------------
+   Loading Spinner
+   -------------------------------------------------------------------------- */
+.spinner-border {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-width: 0.25em;
+  color: var(--theme-primary);
+}
+
+/* --------------------------------------------------------------------------
+   Empty State
+   -------------------------------------------------------------------------- */
+.text-muted {
+  color: #94a3b8 !important;
+}
+
+.bi-inbox {
+  color: #cbd5e1;
+}
+
+/* --------------------------------------------------------------------------
+   Header Styles
+   -------------------------------------------------------------------------- */
+h4 {
+  margin: 0;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+[data-theme="dark"] h4 {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .text-muted {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .pagination .page-item .page-link {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .pagination .page-item .page-link:hover {
+  background-color: rgba(var(--theme-primary-rgb), 0.14);
+  border-color: var(--theme-primary);
+  color: #ffffff;
+}
+
+[data-theme="dark"] .pagination .page-item.disabled .page-link {
+  background-color: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: rgba(203, 213, 225, 0.35);
+}
+
+[data-theme="dark"] * {
+  scrollbar-color: rgba(148, 163, 184, 0.55) rgba(15, 23, 42, 0.6);
+}
+
+/* --------------------------------------------------------------------------
+   Status Badges — Pill-shaped, Semi-transparent
+   -------------------------------------------------------------------------- */
+.badge {
+  padding: 0.35rem 0.8rem;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 0.7rem;
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+.badge-success {
+  background-color: rgba(16, 185, 129, 0.12);
+  color: #047857;
+}
+
+.badge-warning {
+  background-color: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+}
+
+.badge-danger {
+  background-color: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+}
+
+.badge-info {
+  background-color: rgba(99, 102, 241, 0.12);
+  color: #C75B1A;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive Styles
+   -------------------------------------------------------------------------- */
+@media (max-width: 992px) {
+  .user-table-container {
+    padding: 1rem;
+  }
+
+  .modern-table thead th {
+    font-size: 0.75rem;
+    padding: 0.75rem 0.5rem;
+  }
+
+  .modern-table tbody td {
+    font-size: 0.85rem;
+    padding: 0.75rem 0.5rem;
+  }
+
+  .pagination .page-item .page-link {
+    padding: 0.375rem 0.625rem;
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .user-table-container {
+    border-radius: 12px;
+    padding: 0.875rem;
+  }
+
+  .modern-table {
+    font-size: 0.875rem;
+  }
+
+  .modern-table thead th {
+    font-size: 0.7rem;
+    padding: 0.625rem 0.4rem;
+  }
+
+  .modern-table tbody td {
+    font-size: 0.8rem;
+    padding: 0.625rem 0.4rem;
+  }
+
+  .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .user-table-container {
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .modern-table thead th {
+    font-size: 0.65rem;
+    padding: 0.5rem 0.3rem;
+  }
+
+  .modern-table tbody td {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.3rem;
+  }
+
+  .table-responsive {
+    border-radius: 8px;
+  }
+
+  .pagination .page-item .page-link {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Accessibility
+   -------------------------------------------------------------------------- */
+.form-control:focus-visible,
+.btn:focus-visible,
+.page-link:focus-visible {
+  outline: 2px solid var(--theme-primary);
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   Custom Scrollbar (Firefox)
+   -------------------------------------------------------------------------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+/* --------------------------------------------------------------------------
+   Row Entrance Animation
+   -------------------------------------------------------------------------- */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modern-table tbody tr {
+  animation: fadeIn 0.25s ease-out;
+}
+
+/* --------------------------------------------------------------------------
+   Image and Icon Styles
+   -------------------------------------------------------------------------- */
+.modern-table img {
+  border-radius: 8px;
+  max-width: 60px;
+  max-height: 60px;
+  object-fit: cover;
+  border: 1px solid #e2e8f0;
+}
+
+.bi {
+  font-size: 1rem;
+}
+
+/* --------------------------------------------------------------------------
+   Gap Utilities
+   -------------------------------------------------------------------------- */
+.gap-2 {
+  gap: 0.5rem !important;
+}
+
+.gap-1 {
+  gap: 0.25rem !important;
+}
+
+/* --------------------------------------------------------------------------
+   Extra Wide Modal — Frosted Glass Header
+   -------------------------------------------------------------------------- */
+.modal-95w {
+  max-width: 95vw !important;
+  width: 1400px !important;
+}
+
+.modal-95w .modal-content {
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow:
+    0 8px 32px rgba(15, 23, 42, 0.12),
+    0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+.modal-95w .modal-header,
+.modal .modal-header {
+  background: linear-gradient(135deg, var(--theme-primary, #E86A24) 0%, var(--theme-primary-dark, #D4621E) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  padding: 1rem 1.25rem;
+}
+
+.modal .modal-header .modal-title {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.modal .modal-header .btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%);
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.modal .modal-header .btn-close:hover {
+  opacity: 1;
+}
+
+.modal-backdrop.show {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.modal .modal-body {
+  padding: 1.25rem;
+  background: #ffffff;
+}
+
+.modal .modal-footer {
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  padding: 0.85rem 1.25rem;
+}
+
+@media (max-width: 1500px) {
+  .modal-95w {
+    max-width: 95vw !important;
+    width: 95vw !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .modal-95w {
+    max-width: 98vw !important;
+    width: 98vw !important;
+    margin: 0.5rem;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Thermal Print Styles
+   -------------------------------------------------------------------------- */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .thermal-print {
+    width: 80mm !important;
+    font-family: 'Courier New', monospace !important;
+    font-size: 12px !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Third-party Overrides
+   -------------------------------------------------------------------------- */
+.css-1jqq78o-placeholder {
+  font-size: 12px !important;
+}

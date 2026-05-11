@@ -1,0 +1,25 @@
+package com.rms.common.repositories;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.List;
+import java.util.Optional;
+import java.math.BigDecimal;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import com.rms.common.entities.OrderAddonsItemsEntity;
+
+@Repository
+public interface OrderAddonsItemsRepository extends JpaRepository<OrderAddonsItemsEntity, Long> {
+    Page<OrderAddonsItemsEntity> findByCreatedAtBetween(LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
+    List<OrderAddonsItemsEntity> findByCreatedAtBetween(LocalDateTime fromDate, LocalDateTime toDate);
+    List<OrderAddonsItemsEntity> findByCreatedAt(LocalDateTime date);
+
+    // Custom Methods
+    Page<OrderAddonsItemsEntity> findAll(Pageable pageable);
+}

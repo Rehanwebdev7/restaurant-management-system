@@ -1,0 +1,65 @@
+{
+  "name": "rms",
+  "version": "1.0.0",
+  "description": "Modern admin dashboard for RMS application",
+  "private": true,
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^7.2.0",
+    "@react-google-maps/api": "^2.20.7",
+    "@testing-library/jest-dom": "^5.16.4",
+    "@testing-library/react": "^13.3.0",
+    "@testing-library/user-event": "^13.5.0",
+    "ajv": "^8.18.0",
+    "ajv-keywords": "^5.1.0",
+    "axios": "^1.13.2",
+    "bootstrap": "^5.2.3",
+    "bootstrap-icons": "^1.13.1",
+    "chart.js": "^4.5.1",
+    "date-fns": "^4.1.0",
+    "firebase": "^12.8.0",
+    "fork-ts-checker-webpack-plugin": "^9.1.0",
+    "html-to-image": "^1.11.13",
+    "lottie-react": "^2.4.1",
+    "qrcode": "^1.5.4",
+    "react": "^18.2.0",
+    "react-bootstrap": "^2.7.2",
+    "react-chartjs-2": "^5.3.1",
+    "react-datepicker": "^4.25.0",
+    "react-dom": "^18.2.0",
+    "react-easy-crop": "^5.5.6",
+    "react-router-dom": "^6.8.1",
+    "react-scripts": "^5.0.1",
+    "react-select": "^5.10.2",
+    "react-toastify": "^11.0.5",
+    "web-vitals": "^2.1.4",
+    "xlsx": "^0.18.5"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "CI=false react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "proxy": "http://localhost:8085",
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "baseline-browser-mapping": "^2.9.16"
+  }
+}

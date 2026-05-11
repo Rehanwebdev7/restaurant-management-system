@@ -1,0 +1,408 @@
+package com.rms.modules.admin.services;
+
+import com.rms.common.entities.CustomersEntity;
+import com.rms.common.repositories.CustomersRepository;
+import com.rms.common.repositories.OrdersRepository;
+import com.rms.common.serviceImplement.CustomersServiceIMP;
+import com.rms.configuration.Authorization;
+import com.rms.common.repositories.UsersRepository;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Row;
+import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
+import org.springframework.data.domain.Sort;
+import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.time.LocalTime;
+import java.text.DateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.lang.reflect.Field;
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.ArrayList;
+import java.math.BigDecimal;
+
+@Service
+@Qualifier("admCustomersService")
+public class AdmCustomersService implements CustomersServiceIMP {
+
+    private final CustomersRepository customersrepository;
+    private final UsersRepository usersrepository;
+
+    @Autowired
+    private OrdersRepository ordersRepository;
+
+    public AdmCustomersService(CustomersRepository customersrepository, UsersRepository usersrepository) {
+        this.customersrepository = customersrepository;
+        this.usersrepository = usersrepository;
+    }
+
+    public <T, ID> T fetchReferenceById(T inputRef, JpaRepository<T, ID> repo, String notFoundMessage) {
+        if (inputRef != null) {
+            try {
+                Field idField = inputRef.getClass().getDeclaredField("id");
+                idField.setAccessible(true);
+                Object idValue = idField.get(inputRef);
+                if (idValue != null) {
+                    return repo.findById((ID) idValue).orElseThrow(() -> new RuntimeException(notFoundMessage));
+                } else {
+                    throw new RuntimeException("Foreign key ID is null");
+                }
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                throw new RuntimeException("Invalid reference structure: " + e.getMessage());
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public List<CustomersEntity> getAllRecordCustomers(String token) throws Exception {
+        Authorization.authorizeAdmin(token);
+        return customersrepository.findAll();
+    }
+
+    @Override
+    public Map<String, Object> getAllCustomers(Integer pageNumber, Integer pageSize, String token) throws Exception {
+        Authorization.authorizeAdmin(token);
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"));
+        Page page = customersrepository.findAll(pageable);
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("totalRecords", page.getTotalElements());
+        response.put("pageSize", page.getSize());
+        response.put("currentPage", page.getNumber() + 1);
+        response.put("totalPages", page.getTotalPages());
+        response.put("records", page.getContent());
+        return response;
+    }
+
+    @Override
+    public CustomersEntity getOneCustomers(Long id, String token) throws Exception {
+        Authorization.authorizeAdmin(token);
+        return customersrepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Customers not found"));
+    }
+
+    @Override
+    public String addCustomers(CustomersEntity customersEntity, String token) throws Exception {
+        Authorization.authorizeAdmin(token);
+        CustomersEntity newEntity = new CustomersEntity();
+
+        // Copy non-foreign fields using reflection
+        for (Field field : CustomersEntity.class.getDeclaredFields()) {
+            field.setAccessible(true);
+            Object value = field.get(customersEntity);
+            if (value != null && !field.getName().endsWith("Id")) {
+                field.set(newEntity, value);
+            }
+        }
+
+        // Handle user_id foreign key
+        if (customersEntity.getUserId() != null && customersEntity.getUserId().getId() != null) {
+            newEntity.setUserId(
+                fetchReferenceById(customersEntity.getUserId(), usersrepository, "Users not found")
+            );
+        }
+
+        customersrepository.save(newEntity);
+        return "Added Successfully";
+    }
+
+    @Override
+    public String updateCustomers(CustomersEntity customersEntity, String token) throws Exception {
+        Authorization.authorizeAdmin(token);
+        CustomersEntity existingEntity = customersrepository.findById(customersEntity.getId())
+                .orElseThrow(() -> new RuntimeException("Customers not found"));
+
+        // Update non-foreign fields using reflection
+        for (Field field : CustomersEntity.class.getDeclaredFields()) {
+            field.setAccessible(true);
+            Object value = field.get(customersEntity);
+            if (value != null && !field.getName().endsWith("Id")) {
+                field.set(existingEntity, value);
+            }
+        }
+
+        // Handle user_id foreign key
+        if (customersEntity.getUserId() != null && customersEntity.getUserId().getId() != null) {
+            existingEntity.setUserId(
+                fetchReferenceById(customersEntity.getUserId(), usersrepository, "Users not found")
+            );
+        }
+
+        customersrepository.save(existingEntity);
+        return "Updated Successfully";
+    }
+
+    @Override
+    public String deleteCustomers(Long id, String token) throws Exception {
+        Authorization.authorizeAdmin(token);
+        if (!customersrepository.existsById(id)) {
+            throw new RuntimeException("Customers not found");
+        }
+        customersrepository.deleteById(id);
+        return "Deleted Successfully";
+    }
+
+    @Override
+    public String addMultipleCustomers(List<CustomersEntity> customersEntitys, String token) throws Exception {
+        Authorization.authorizeAdmin(token);
+        List<CustomersEntity> entitiesToSave = new ArrayList<>();
+
+        for (CustomersEntity entity : customersEntitys) {
+            CustomersEntity newEntity = new CustomersEntity();
+
+            // Copy non-foreign fields using reflection
+            for (Field field : CustomersEntity.class.getDeclaredFields()) {
+                field.setAccessible(true);
+                Object value = field.get(entity);
+                if (value != null && !field.getName().endsWith("Id")) {
+                    field.set(newEntity, value);
+                }
+            }
+
+            // Handle user_id foreign key
+            if (entity.getUserId() != null && entity.getUserId().getId() != null) {
+                newEntity.setUserId(
+                    fetchReferenceById(entity.getUserId(), usersrepository, "Users not found")
+                );
+            }
+
+            entitiesToSave.add(newEntity);
+        }
+
+        customersrepository.saveAll(entitiesToSave);
+        return "Added Successfully";
+    }
+
+    public Map<String, Object> updateReferralBonusesForAll(BigDecimal signupBonus, BigDecimal recurringBonus, String token) throws Exception {
+        Authorization.authorizeAdmin(token);
+        customersrepository.updateReferralBonusesForAll(signupBonus, recurringBonus);
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("signupBonus", signupBonus);
+        response.put("recurringBonus", recurringBonus);
+        return response;
+    }
+
+    @Override
+    public List<CustomersEntity> getCustomersByDateofbirthBetween(LocalDate fromDate, LocalDate toDate, String token) throws Exception {
+        Authorization.authorizeAdmin(token);
+        return customersrepository.findByDateOfBirthBetween(fromDate, toDate);
+    }
+
+    @Override
+    public Map<String, Object> getCustomersByDateofbirthBetweenPagination(LocalDate fromDate, LocalDate toDate, Integer pageNumber, Integer pageSize, String token) throws Exception {
+        Authorization.authorizeAdmin(token);
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"));
+        Page page = customersrepository.findByDateOfBirthBetween(fromDate, toDate, pageable);
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("totalRecords", page.getTotalElements());
+        response.put("pageSize", page.getSize());
+        response.put("currentPage", page.getNumber() + 1); // Page numbers are zero-based in Pageable
+        response.put("totalPages", page.getTotalPages());
+        response.put("records", page.getContent());
+        return response;
+    }
+
+    @Override
+    public List<CustomersEntity> getCustomersByDateofbirth(LocalDate dateofbirth, String token) throws Exception {
+        Authorization.authorizeAdmin(token);
+        return customersrepository.findByDateOfBirth(dateofbirth);
+    }
+
+    @Override
+    public List<CustomersEntity> getCustomersByCreatedatBetween(LocalDate fromDate, LocalDate toDate, String token) throws Exception {
+        Authorization.authorizeAdmin(token);
+        LocalDateTime fromDateTime = fromDate.atStartOfDay();
+        LocalDateTime toDateTime = toDate.atTime(23, 59, 59);
+        return customersrepository.findByCreatedAtBetween(fromDateTime, toDateTime);
+    }
+
+    @Override
+    public Map<String, Object> getCustomersByCreatedatBetweenPagination(LocalDate fromDate, LocalDate toDate, Integer pageNumber, Integer pageSize, String token) throws Exception {
+        Authorization.authorizeAdmin(token);
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"));
+        LocalDateTime fromDateTime = fromDate.atStartOfDay();
+        LocalDateTime toDateTime = toDate.atTime(23, 59, 59);
+        Page page = customersrepository.findByCreatedAtBetween(fromDateTime, toDateTime, pageable);
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("totalRecords", page.getTotalElements());
+        response.put("pageSize", page.getSize());
+        response.put("currentPage", page.getNumber() + 1); // Page numbers are zero-based in Pageable
+        response.put("totalPages", page.getTotalPages());
+        response.put("records", page.getContent());
+        return response;
+    }
+
+    @Override
+    public List<CustomersEntity> getCustomersByCreatedat(LocalDate createdat, String token) throws Exception {
+        Authorization.authorizeAdmin(token);
+        LocalDateTime dateTime = createdat.atStartOfDay();
+        return customersrepository.findByCreatedAt(dateTime);
+    }
+
+    @Override
+    public List<CustomersEntity> getCustomersByUpdatedatBetween(LocalDate fromDate, LocalDate toDate, String token) throws Exception {
+        Authorization.authorizeAdmin(token);
+        LocalDateTime fromDateTime = fromDate.atStartOfDay();
+        LocalDateTime toDateTime = toDate.atTime(23, 59, 59);
+        return customersrepository.findByUpdatedAtBetween(fromDateTime, toDateTime);
+    }
+
+    @Override
+    public Map<String, Object> getCustomersByUpdatedatBetweenPagination(LocalDate fromDate, LocalDate toDate, Integer pageNumber, Integer pageSize, String token) throws Exception {
+        Authorization.authorizeAdmin(token);
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"));
+        LocalDateTime fromDateTime = fromDate.atStartOfDay();
+        LocalDateTime toDateTime = toDate.atTime(23, 59, 59);
+        Page page = customersrepository.findByUpdatedAtBetween(fromDateTime, toDateTime, pageable);
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("totalRecords", page.getTotalElements());
+        response.put("pageSize", page.getSize());
+        response.put("currentPage", page.getNumber() + 1); // Page numbers are zero-based in Pageable
+        response.put("totalPages", page.getTotalPages());
+        response.put("records", page.getContent());
+        return response;
+    }
+
+    @Override
+    public List<CustomersEntity> getCustomersByUpdatedat(LocalDate updatedat, String token) throws Exception {
+        Authorization.authorizeAdmin(token);
+        LocalDateTime dateTime = updatedat.atStartOfDay();
+        return customersrepository.findByUpdatedAt(dateTime);
+    }
+
+
+    public ByteArrayInputStream streamExcel(int pageNumber, int pageSize, String token) throws IOException {
+        try {
+            Authorization.authorizeAdmin(token);
+        } catch (Exception e) {
+            throw new IllegalArgumentException(e.getMessage());
+        }
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        Page<CustomersEntity> page = customersrepository.findAll(pageable);
+
+        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        DateTimeFormatter timeFormat = DateTimeFormatter.ofPattern("HH:mm:ss");
+        DateTimeFormatter dateTimeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("Customerss");
+            Row header = sheet.createRow(0);
+            header.createCell(0).setCellValue("Id");
+            header.createCell(1).setCellValue("Name");
+            header.createCell(2).setCellValue("Email");
+            header.createCell(3).setCellValue("Mobile_number");
+            header.createCell(4).setCellValue("Password");
+            header.createCell(5).setCellValue("Photo_url");
+            header.createCell(6).setCellValue("Date_of_birth");
+            header.createCell(7).setCellValue("Is_active");
+            header.createCell(8).setCellValue("Created_at");
+            header.createCell(9).setCellValue("User_id");
+            header.createCell(10).setCellValue("Is_deleted");
+            header.createCell(11).setCellValue("Updated_at");
+
+            int rowNum = 1;
+            for (CustomersEntity customersEntity : page.getContent()) {
+                Row row = sheet.createRow(rowNum++);
+                row.createCell(0).setCellValue(customersEntity.getId() != null ? customersEntity.getId() : 0);
+                row.createCell(1).setCellValue(customersEntity.getName() != null ? customersEntity.getName() : "N/A");
+                row.createCell(2).setCellValue(customersEntity.getEmail() != null ? customersEntity.getEmail() : "N/A");
+                row.createCell(3).setCellValue(customersEntity.getMobileNumber() != null ? customersEntity.getMobileNumber() : "N/A");
+                row.createCell(4).setCellValue(customersEntity.getPassword() != null ? customersEntity.getPassword() : "N/A");
+                row.createCell(5).setCellValue(customersEntity.getPhotoUrl() != null ? customersEntity.getPhotoUrl() : "N/A");
+                LocalDate dateOfBirth = customersEntity.getDateOfBirth();
+                String formattedDateOfBirth = (dateOfBirth != null) ? dateOfBirth.format(dateFormat) : "";
+                row.createCell(6).setCellValue(formattedDateOfBirth);
+                row.createCell(7).setCellValue(customersEntity.getIsActive() != null && customersEntity.getIsActive() ? "Active" : "Inactive");
+                LocalDateTime createdAt = customersEntity.getCreatedAt();
+                String formattedCreatedAt = (createdAt != null) ? createdAt.format(dateTimeFormat) : "";
+                row.createCell(8).setCellValue(formattedCreatedAt);
+                row.createCell(9).setCellValue(customersEntity.getUserId() != null ? customersEntity.getUserId().toString() : "N/A");
+                row.createCell(10).setCellValue(customersEntity.getIsDeleted() != null ? customersEntity.getIsDeleted() : 0);
+                LocalDateTime updatedAt = customersEntity.getUpdatedAt();
+                String formattedUpdatedAt = (updatedAt != null) ? updatedAt.format(dateTimeFormat) : "";
+                row.createCell(11).setCellValue(formattedUpdatedAt);
+
+            }
+            workbook.write(out);
+            return new ByteArrayInputStream(out.toByteArray());
+        }
+    }
+
+    // =========================================================================
+    // MANAGEMENT: paginated customer list with per-customer order/spend stats.
+    // Accepts admin/branch/cashier tokens (view-only).
+    // =========================================================================
+    public Map<String, Object> getManagementList(String token, String searchValue, Long branchId,
+            Integer pageNumber, Integer pageSize) throws Exception {
+        Authorization.authorizeManagement(token);
+
+        Pageable pageable = PageRequest.of(
+                pageNumber != null ? pageNumber : 0,
+                pageSize != null ? pageSize : 20,
+                Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        // Simple spec: filter out deleted rows + optional name/mobile/email LIKE search.
+        org.springframework.data.jpa.domain.Specification<CustomersEntity> spec = (root, q, cb) -> {
+            java.util.List<jakarta.persistence.criteria.Predicate> preds = new ArrayList<>();
+            preds.add(cb.or(
+                    cb.isNull(root.get("isDeleted")),
+                    cb.equal(root.get("isDeleted"), false)));
+            if (searchValue != null && !searchValue.isBlank()) {
+                String like = "%" + searchValue.trim().toLowerCase() + "%";
+                preds.add(cb.or(
+                        cb.like(cb.lower(cb.coalesce(root.get("name"), "")), like),
+                        cb.like(cb.lower(cb.coalesce(root.get("mobileNumber"), "")), like),
+                        cb.like(cb.lower(cb.coalesce(root.get("email"), "")), like)
+                ));
+            }
+            return cb.and(preds.toArray(new jakarta.persistence.criteria.Predicate[0]));
+        };
+
+        Page<CustomersEntity> page = customersrepository.findAll(spec, pageable);
+
+        List<Map<String, Object>> records = new ArrayList<>();
+        for (CustomersEntity c : page.getContent()) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", c.getId());
+            m.put("name", c.getName());
+            m.put("mobileNumber", c.getMobileNumber());
+            m.put("email", c.getEmail());
+            m.put("photoUrl", c.getPhotoUrl());
+            m.put("walletBalance", c.getWalletBalance());
+            m.put("referalCode", c.getReferalCode());
+            m.put("isActive", c.getIsActive());
+            m.put("allowCod", c.getAllowCod());
+            m.put("createdAt", c.getCreatedAt());
+            m.put("dateOfBirth", c.getDateOfBirth());
+
+            Long cid = c.getId();
+            m.put("orderCount", cid != null ? ordersRepository.countByCustomerId(cid) : 0L);
+            m.put("totalSpend", cid != null ? ordersRepository.sumSpendByCustomerId(cid) : BigDecimal.ZERO);
+            m.put("lastOrderAt", cid != null ? ordersRepository.findLastOrderAtByCustomerId(cid) : null);
+
+            records.add(m);
+        }
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("pageNumber", page.getNumber());
+        response.put("pageSize", page.getSize());
+        response.put("totalRecords", page.getTotalElements());
+        response.put("totalPages", page.getTotalPages());
+        response.put("records", records);
+        // branchId reserved for future scoping — currently informational only.
+        response.put("branchIdFilter", branchId);
+        return response;
+    }
+}

@@ -1,0 +1,35 @@
+# Maven build output & cache
+target/
+.m2/
+*.class
+*.jar
+*.war
+*.ear
+
+# Node
+frontend/node_modules/
+frontend/build/
+frontend/.env
+frontend/.env.local
+node_modules/
+build/
+
+# IDE & OS
+.idea/
+*.iml
+.vscode/
+.DS_Store
+**/.DS_Store
+.claude/
+
+# Logs
+*.log
+backend.log
+frontend.log
+build.log
+
+# Backup files
+*.bak
+
+# Credentials
+application-local.properties
