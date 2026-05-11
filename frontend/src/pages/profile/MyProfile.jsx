@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useRef } from 'react';
 import { Modal } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 import ChangePasswordModal from '../../components/modals/ChangePasswordModal';
 import ImageCropperModal from '../../components/common/ImageCropperModal';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -8,6 +9,7 @@ import { toast } from 'react-toastify';
 
 const MyProfile = () => {
   const { primaryColor } = useTheme();
+  const navigate = useNavigate();
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [isEditingParentMobile, setIsEditingParentMobile] = useState(false);
   const [parentMobileDraft, setParentMobileDraft] = useState('');
@@ -215,9 +217,18 @@ const MyProfile = () => {
   return (
     <div className="profile-page container-fluid py-4">
 
-      {/* Profile Card — Centered */}
-      <div className="row justify-content-center">
-        <div className="col-12 col-sm-9 col-md-7 col-lg-5 col-xl-4">
+      {/* Back Button */}
+      <div className="mb-4">
+        <button className="btn btn-outline-secondary btn-sm" onClick={() => navigate(-1)}>
+          <i className="bi bi-arrow-left me-2"></i>
+          Back
+        </button>
+      </div>
+
+      <div className="row g-4 align-items-start">
+
+        {/* Left — Profile Summary Card */}
+        <div className="col-12 col-md-4 col-lg-3">
           <div className="profile-summary-card">
             <div className="profile-avatar-wrapper">
               {profilePhoto ? (
@@ -279,6 +290,91 @@ const MyProfile = () => {
             </div>
           </div>
         </div>
+
+        {/* Right — Profile Details Card */}
+        <div className="col-12 col-md-8 col-lg-9">
+          <div className="profile-details-card">
+
+            {/* Account Information */}
+            <div className="card-section">
+              <h5 className="section-title">
+                <i className="bi bi-person-circle me-2" style={{ color: themeColor }}></i>
+                Account Information
+              </h5>
+              <div className="row g-3">
+                <div className="col-12 col-sm-6">
+                  <label className="form-label text-muted small fw-semibold">Full Name</label>
+                  <input type="text" className="form-control" value={profileData.fullName} readOnly />
+                </div>
+                <div className="col-12 col-sm-6">
+                  <label className="form-label text-muted small fw-semibold">Email Address</label>
+                  <input type="text" className="form-control" value={profileData.email} readOnly />
+                </div>
+                <div className="col-12 col-sm-6">
+                  <label className="form-label text-muted small fw-semibold">Mobile Number</label>
+                  <input type="text" className="form-control" value={profileData.mobile || '—'} readOnly />
+                </div>
+                <div className="col-12 col-sm-6">
+                  <label className="form-label text-muted small fw-semibold">Role</label>
+                  <input type="text" className="form-control text-capitalize" value={profileData.role} readOnly />
+                </div>
+                {profileData.address && (
+                  <div className="col-12">
+                    <label className="form-label text-muted small fw-semibold">Address</label>
+                    <textarea className="form-control" rows="2" value={profileData.address} readOnly />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Parent Details (if any) */}
+            {parentDetailFields.length > 0 && (
+              <div className="card-section">
+                <h5 className="section-title">
+                  <i className="bi bi-diagram-3 me-2" style={{ color: themeColor }}></i>
+                  Parent Details
+                </h5>
+                <div className="row g-3">
+                  {parentDetailFields.map((field, idx) => (
+                    <React.Fragment key={idx}>
+                      <div className="col-12 col-sm-6">
+                        <label className="form-label text-muted small fw-semibold">{field.label} Name</label>
+                        <input type="text" className="form-control" value={field.name} readOnly />
+                      </div>
+                      <div className="col-12 col-sm-6">
+                        <label className="form-label text-muted small fw-semibold">{field.label} Mobile</label>
+                        <input type="text" className="form-control" value={field.mobile} readOnly />
+                      </div>
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Security Section */}
+            <div className="card-section">
+              <h5 className="section-title">
+                <i className="bi bi-shield-lock me-2" style={{ color: themeColor }}></i>
+                Security
+              </h5>
+              <div className="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div>
+                  <p className="mb-1 fw-semibold">Password</p>
+                  <small className="text-muted">Change your account password anytime</small>
+                </div>
+                <button
+                  className="btn btn-outline-secondary btn-sm"
+                  onClick={() => setShowChangePasswordModal(true)}
+                >
+                  <i className="bi bi-key me-1"></i>
+                  Change Password
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
       </div>
 
       {/* Edit Profile Modal */}

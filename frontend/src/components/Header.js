@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Offcanvas } from 'react-bootstrap';
 import ChangePasswordModal from './modals/ChangePasswordModal';
 import { useTheme } from '../contexts/ThemeContext';
 import { useDarkMode } from '../contexts/DarkModeContext';
@@ -21,6 +22,8 @@ const Header = ({ onToggleSidebar, sidebarCollapsed, sidebarVisible, onLogout })
   const [userMobile, setUserMobile] = useState('');
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState('');
+  const [showProfileDrawer, setShowProfileDrawer] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
 
   // ── STOP/RESUME Orders state ──
   const [ordersStopped, setOrdersStopped] = useState(false);
@@ -49,11 +52,13 @@ const Header = ({ onToggleSidebar, sidebarCollapsed, sidebarVisible, onLogout })
     const mobile = localStorage.getItem('UserMobile');
     const photo = localStorage.getItem('profilePhoto');
 
+    const email = localStorage.getItem('email') || JSON.parse(localStorage.getItem('user') || '{}').email || '';
     if (role) setUserRole(role);
     if (shop) setShopName(shop);
     if (name) setUserName(name);
     if (mobile) setUserMobile(mobile);
     if (photo) setProfilePhoto(photo);
+    if (email) setUserEmail(email);
 
     // Listen for profile photo updates
     const handlePhotoUpdate = () => {
@@ -203,7 +208,7 @@ const Header = ({ onToggleSidebar, sidebarCollapsed, sidebarVisible, onLogout })
 
   const handleNavigateToProfile = () => {
     setShowProfileMenu(false);
-    navigate('/profile');
+    setShowProfileDrawer(true);
   };
 
   const handleAvatarClick = (e) => {
@@ -768,6 +773,177 @@ const Header = ({ onToggleSidebar, sidebarCollapsed, sidebarVisible, onLogout })
         show={showChangePasswordModal}
         handleClose={() => setShowChangePasswordModal(false)}
       />
+
+      {/* Profile Drawer — Right Side */}
+      <Offcanvas
+        show={showProfileDrawer}
+        onHide={() => setShowProfileDrawer(false)}
+        placement="end"
+        style={{ width: '360px', maxWidth: '95vw' }}
+      >
+        {/* Gradient Profile Header */}
+        <div style={{
+          background: `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}bb 100%)`,
+          padding: '2rem 1.5rem 1.75rem',
+          position: 'relative',
+          textAlign: 'center',
+        }}>
+          <button
+            onClick={() => setShowProfileDrawer(false)}
+            style={{
+              position: 'absolute', top: '14px', right: '14px',
+              background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '50%',
+              width: '32px', height: '32px', color: '#fff', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '14px', transition: 'background 0.2s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.35)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
+          >
+            <i className="bi bi-x-lg"></i>
+          </button>
+
+          {/* Avatar */}
+          <div style={{
+            width: '88px', height: '88px', borderRadius: '50%',
+            background: 'rgba(255,255,255,0.2)',
+            border: '3px solid rgba(255,255,255,0.6)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 1rem', overflow: 'hidden',
+            fontSize: '2.2rem', color: '#fff', fontWeight: '700',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+          }}>
+            {profilePhoto ? (
+              <img src={profilePhoto} alt="profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={e => { e.target.style.display = 'none'; }} />
+            ) : (shopName || userName || 'U').charAt(0).toUpperCase()}
+          </div>
+
+          <h5 style={{ color: '#fff', fontWeight: '700', margin: '0 0 4px', fontSize: '1.1rem' }}>
+            {shopName || userName || 'User'}
+          </h5>
+          {userEmail && (
+            <p style={{ color: 'rgba(255,255,255,0.82)', fontSize: '12.5px', margin: '0 0 12px' }}>
+              {userEmail}
+            </p>
+          )}
+          <span style={{
+            background: 'rgba(255,255,255,0.22)', color: '#fff',
+            padding: '4px 16px', borderRadius: '20px',
+            fontSize: '11.5px', fontWeight: '600', textTransform: 'capitalize',
+            letterSpacing: '0.03em',
+          }}>
+            {userRole}
+          </span>
+        </div>
+
+        {/* Drawer Body */}
+        <Offcanvas.Body style={{ padding: '1.25rem', background: isDarkMode ? '#0f172a' : '#f8fafc', overflowY: 'auto' }}>
+
+          {/* Info Card */}
+          <div style={{
+            background: isDarkMode ? '#1e293b' : '#fff',
+            borderRadius: '14px', overflow: 'hidden',
+            border: isDarkMode ? '1px solid rgba(255,255,255,0.07)' : '1px solid #e8edf5',
+            boxShadow: isDarkMode ? '0 2px 12px rgba(0,0,0,0.25)' : '0 2px 12px rgba(0,0,0,0.05)',
+            marginBottom: '1.25rem',
+          }}>
+            {[
+              { icon: 'bi-person-fill', label: 'Full Name', value: userName || shopName || '—' },
+              { icon: 'bi-envelope-fill', label: 'Email', value: userEmail || '—' },
+              { icon: 'bi-phone-fill', label: 'Mobile', value: userMobile || '—' },
+              { icon: 'bi-briefcase-fill', label: 'Role', value: userRole || '—', last: true },
+            ].map((row, i) => (
+              <div key={i} style={{
+                display: 'flex', alignItems: 'center', gap: '14px',
+                padding: '13px 16px',
+                borderBottom: row.last ? 'none' : isDarkMode ? '1px solid rgba(255,255,255,0.06)' : '1px solid #f1f5f9',
+              }}>
+                <div style={{
+                  width: '36px', height: '36px', borderRadius: '10px', flexShrink: 0,
+                  background: `${primaryColor}18`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: primaryColor, fontSize: '15px',
+                }}>
+                  <i className={`bi ${row.icon}`}></i>
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '11px', color: isDarkMode ? '#64748b' : '#94a3b8', fontWeight: '500', marginBottom: '2px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    {row.label}
+                  </div>
+                  <div style={{
+                    fontSize: '13.5px', fontWeight: '600',
+                    color: isDarkMode ? '#e2e8f0' : '#1e293b',
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    textTransform: row.icon === 'bi-briefcase-fill' ? 'capitalize' : 'none',
+                  }}>
+                    {row.value}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Action Buttons */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '1.25rem' }}>
+            <button
+              onClick={() => { setShowProfileDrawer(false); navigate('/profile'); }}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                padding: '11px 20px', borderRadius: '12px', border: 'none', cursor: 'pointer',
+                background: `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}cc 100%)`,
+                color: '#fff', fontSize: '13.5px', fontWeight: '600',
+                boxShadow: `0 4px 14px ${primaryColor}40`,
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
+              onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+            >
+              <i className="bi bi-pencil-square"></i>
+              Edit Profile
+            </button>
+
+            <button
+              onClick={() => { setShowProfileDrawer(false); setShowChangePasswordModal(true); }}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                padding: '11px 20px', borderRadius: '12px', cursor: 'pointer',
+                background: 'transparent',
+                border: isDarkMode ? '1.5px solid rgba(255,255,255,0.15)' : `1.5px solid ${primaryColor}40`,
+                color: isDarkMode ? '#e2e8f0' : primaryColor,
+                fontSize: '13.5px', fontWeight: '600',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = `${primaryColor}12`; e.currentTarget.style.borderColor = primaryColor; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = isDarkMode ? 'rgba(255,255,255,0.15)' : `${primaryColor}40`; }}
+            >
+              <i className="bi bi-shield-lock-fill"></i>
+              Change Password
+            </button>
+          </div>
+
+          {/* Sign Out */}
+          <div style={{ borderTop: isDarkMode ? '1px solid rgba(255,255,255,0.07)' : '1px solid #e8edf5', paddingTop: '1.25rem' }}>
+            <button
+              onClick={() => { setShowProfileDrawer(false); handleLogout(); }}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                width: '100%', padding: '11px 20px', borderRadius: '12px', cursor: 'pointer',
+                background: isDarkMode ? 'rgba(220,53,69,0.1)' : '#fff5f5',
+                border: '1.5px solid rgba(220,53,69,0.25)',
+                color: '#dc3545', fontSize: '13.5px', fontWeight: '600',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(220,53,69,0.15)'; e.currentTarget.style.borderColor = '#dc3545'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = isDarkMode ? 'rgba(220,53,69,0.1)' : '#fff5f5'; e.currentTarget.style.borderColor = 'rgba(220,53,69,0.25)'; }}
+            >
+              <i className="bi bi-box-arrow-right"></i>
+              Sign Out
+            </button>
+          </div>
+
+        </Offcanvas.Body>
+      </Offcanvas>
 
       {/* STOP button pulse + bell swing animations */}
       <style>{`
