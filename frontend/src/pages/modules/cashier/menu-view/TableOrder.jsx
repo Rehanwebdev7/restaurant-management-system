@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Modal, Spinner, Button } from 'react-bootstrap';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ApiGet } from '../../../../ApiServices/ApiServices';
@@ -12,44 +12,40 @@ const TableOrder = () => {
   const tableInfo = location.state?.tableInfo || { tableNumber: `Table ${tableId}` };
   const { primaryColor } = useTheme();
 
-  // Dummy categories
-  const categories = [
-    { id: 'all', name: 'All Items' },
-    { id: 1, name: 'Starters' },
-    { id: 2, name: 'Main Course' },
-    { id: 3, name: 'Biryani' },
-    { id: 4, name: 'Beverages' },
-    { id: 5, name: 'Desserts' }
-  ];
-
-  // Dummy menu items with addonsId
-  const allMenuItems = [
-    { id: 1, name: 'Paneer Tikka', price: 280, categoryId: 1, isVeg: true, addonsId: { id: 1 } },
-    { id: 2, name: 'Chicken Tikka', price: 320, categoryId: 1, isVeg: false, addonsId: { id: 1 } },
-    { id: 3, name: 'Veg Spring Roll', price: 180, categoryId: 1, isVeg: true, addonsId: { id: 2 } },
-    { id: 4, name: 'Fish Fry', price: 350, categoryId: 1, isVeg: false, addonsId: { id: 1 } },
-    { id: 5, name: 'Mushroom Pepper', price: 260, categoryId: 1, isVeg: true },
-    { id: 6, name: 'Butter Chicken', price: 380, categoryId: 2, isVeg: false, addonsId: { id: 1 } },
-    { id: 7, name: 'Paneer Butter Masala', price: 320, categoryId: 2, isVeg: true, addonsId: { id: 2 } },
-    { id: 8, name: 'Dal Makhani', price: 260, categoryId: 2, isVeg: true },
-    { id: 9, name: 'Mutton Rogan Josh', price: 450, categoryId: 2, isVeg: false, addonsId: { id: 1 } },
-    { id: 10, name: 'Kadai Paneer', price: 300, categoryId: 2, isVeg: true, addonsId: { id: 2 } },
-    { id: 11, name: 'Chicken Biryani', price: 320, categoryId: 3, isVeg: false, addonsId: { id: 1 } },
-    { id: 12, name: 'Mutton Biryani', price: 420, categoryId: 3, isVeg: false, addonsId: { id: 1 } },
-    { id: 13, name: 'Veg Biryani', price: 250, categoryId: 3, isVeg: true, addonsId: { id: 2 } },
-    { id: 14, name: 'Egg Biryani', price: 280, categoryId: 3, isVeg: false },
-    { id: 15, name: 'Fresh Lime Soda', price: 80, categoryId: 4, isVeg: true },
-    { id: 16, name: 'Mango Lassi', price: 120, categoryId: 4, isVeg: true },
-    { id: 17, name: 'Cold Coffee', price: 150, categoryId: 4, isVeg: true },
-    { id: 18, name: 'Masala Chai', price: 50, categoryId: 4, isVeg: true },
-    { id: 19, name: 'Gulab Jamun', price: 100, categoryId: 5, isVeg: true },
-    { id: 20, name: 'Ice Cream', price: 120, categoryId: 5, isVeg: true },
-    { id: 21, name: 'Rasmalai', price: 140, categoryId: 5, isVeg: true },
-  ];
-
+  const [categories, setCategories] = useState([{ id: 'all', name: 'All Items' }]);
+  const [menuItems, setMenuItems] = useState([]);
+  const [menuLoading, setMenuLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [cart, setCart] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    fetchMenuData();
+  }, []);
+
+  const fetchMenuData = async () => {
+    setMenuLoading(true);
+    try {
+      const [catRes, itemRes] = await Promise.all([
+        ApiGet('/api/cashier/menu_category/all'),
+        ApiGet('/api/cashier/menu_items/filter', { pageNumber: 0, pageSize: 1000, isActive: true })
+      ]);
+
+      if (catRes.success) {
+        const cats = catRes.success.data?.data || [];
+        setCategories([{ id: 'all', name: 'All Items' }, ...cats]);
+      }
+
+      if (itemRes.success) {
+        const data = itemRes.success.data?.data || {};
+        setMenuItems(data.records || data || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch menu data:', err);
+    } finally {
+      setMenuLoading(false);
+    }
+  };
 
   // Mobile cart panel state
   const [showMobileCart, setShowMobileCart] = useState(false);
@@ -135,8 +131,7 @@ const TableOrder = () => {
     setSelectedAddons([]);
   };
 
-  // Filter menu items
-  const filteredItems = allMenuItems.filter(item => {
+  const filteredItems = menuItems.filter(item => {
     const matchesCategory = selectedCategory === 'all' || item.categoryId === selectedCategory;
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesCategory && matchesSearch;
@@ -307,12 +302,21 @@ const TableOrder = () => {
           <div style={{
             flex: 1,
             overflowY: 'auto',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+            display: menuLoading ? 'flex' : 'grid',
+            gridTemplateColumns: menuLoading ? undefined : 'repeat(auto-fill, minmax(140px, 1fr))',
             gap: '12px',
-            alignContent: 'start'
+            alignContent: 'start',
+            justifyContent: menuLoading ? 'center' : undefined,
+            alignItems: menuLoading ? 'center' : undefined
           }}>
-            {filteredItems.map(item => (
+            {menuLoading ? (
+              <Spinner animation="border" style={{ color: primaryColor }} />
+            ) : filteredItems.length === 0 ? (
+              <div style={{ textAlign: 'center', width: '100%', color: '#999', padding: '40px 20px' }}>
+                <i className="bi bi-inbox" style={{ fontSize: '2.5rem', display: 'block', marginBottom: '10px' }}></i>
+                <p style={{ margin: 0 }}>No items found</p>
+              </div>
+            ) : filteredItems.map(item => (
               <div
                 key={item.id}
                 style={{

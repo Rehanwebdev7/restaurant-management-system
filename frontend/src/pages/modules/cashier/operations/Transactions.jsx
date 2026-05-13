@@ -15,6 +15,12 @@ const Transactions = () => {
     fromDate: new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split('T')[0],
     toDate: new Date().toISOString().split('T')[0]
   });
+  const [pagination, setPagination] = useState({
+    page: 1,
+    pageSize: 10,
+    totalRecords: 0,
+    totalPages: 0
+  });
   const [summary, setSummary] = useState({
     totalTransactions: 0,
     totalAmount: 0,
@@ -25,20 +31,30 @@ const Transactions = () => {
 
   useEffect(() => {
     fetchTransactions();
-  }, [paymentFilter, dateRange]);
+  }, [pagination.page, pagination.pageSize, paymentFilter, dateRange]);
 
   const fetchTransactions = async () => {
     setLoading(true);
     try {
-      const result = await ApiGet('/api/cashier/transactions', {
-        paymentMethod: paymentFilter !== 'all' ? paymentFilter : undefined,
+      const params = {
+        pageNumber: pagination.page - 1,
+        pageSize: pagination.pageSize,
         fromDate: dateRange.fromDate,
         toDate: dateRange.toDate
-      });
+      };
+      if (paymentFilter !== 'all') params.paymentMethod = paymentFilter;
+
+      const result = await ApiGet('/api/cashier/orders/history', params);
       if (result.success) {
-        const data = result.success.data.data || [];
-        setTransactions(data);
-        calculateSummary(data);
+        const data = result.success?.data?.data || {};
+        const records = data.records || [];
+        setTransactions(records);
+        setPagination(prev => ({
+          ...prev,
+          totalRecords: data.totalRecords || 0,
+          totalPages: data.totalPages || 0
+        }));
+        calculateSummary(records);
       }
     } catch (err) {
       toast.error('Failed to fetch transactions');
@@ -50,13 +66,24 @@ const Transactions = () => {
   const calculateSummary = (data) => {
     const summary = data.reduce((acc, txn) => {
       acc.totalTransactions++;
-      acc.totalAmount += txn.amount || 0;
-      if (txn.paymentMethod === 'CASH') acc.cashAmount += txn.amount || 0;
-      if (txn.paymentMethod === 'CARD') acc.cardAmount += txn.amount || 0;
-      if (txn.paymentMethod === 'UPI') acc.upiAmount += txn.amount || 0;
+      const amount = txn.totalAmount || txn.amount || 0;
+      acc.totalAmount += amount;
+      if (txn.paymentMethod === 'CASH') acc.cashAmount += amount;
+      if (txn.paymentMethod === 'CARD') acc.cardAmount += amount;
+      if (txn.paymentMethod === 'UPI') acc.upiAmount += amount;
       return acc;
     }, { totalTransactions: 0, totalAmount: 0, cashAmount: 0, cardAmount: 0, upiAmount: 0 });
     setSummary(summary);
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
+      setPagination(prev => ({ ...prev, page: newPage }));
+    }
+  };
+
+  const handlePageSizeChange = (newSize) => {
+    setPagination(prev => ({ ...prev, pageSize: Number(newSize), page: 1 }));
   };
 
   const formatCurrency = (value) => {
@@ -200,13 +227,13 @@ const Transactions = () => {
               </thead>
               <tbody>
                 {loading ? (
-                  <TableSkeletonLoader rows={5} columns={6} />
-                ) : filteredTransactions.length > 0 ? (
-                  filteredTransactions.map((txn) => (
+                  <TableSkeletonLoader rows={pagination.pageSize} columns={6} />
+                ) : transactions.length > 0 ? (
+                  transactions.map((txn) => (
                     <tr key={txn.id}>
-                      <td className="fw-semibold">{txn.transactionId || `TXN-${txn.id}`}</td>
-                      <td>{txn.orderNumber || `#${txn.orderId}`}</td>
-                      <td className="fw-bold text-success">{formatCurrency(txn.amount)}</td>
+                      <td className="fw-semibold">{txn.transactionId || txn.orderNumber || `#${txn.id}`}</td>
+                      <td>{txn.orderNumber || `#${txn.id}`}</td>
+                      <td className="fw-bold text-success">{formatCurrency(txn.totalAmount || txn.amount)}</td>
                       <td>{getPaymentBadge(txn.paymentMethod)}</td>
                       <td>
                         <Badge bg={txn.status === 'SUCCESS' ? 'success' : txn.status === 'FAILED' ? 'danger' : 'warning'}>
@@ -227,6 +254,37 @@ const Transactions = () => {
               </tbody>
             </Table>
         </Card.Body>
+        <Card.Footer className="bg-white">
+          <div className="d-flex justify-content-between align-items-center">
+            <div className="d-flex align-items-center gap-2">
+              <span className="text-muted">Show</span>
+              <Form.Select
+                size="sm"
+                value={pagination.pageSize}
+                onChange={(e) => handlePageSizeChange(e.target.value)}
+                style={{ width: '80px' }}
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </Form.Select>
+              <span className="text-muted">entries</span>
+            </div>
+            <small className="text-muted">
+              Showing {pagination.totalRecords > 0 ? ((pagination.page - 1) * pagination.pageSize) + 1 : 0} to {Math.min(pagination.page * pagination.pageSize, pagination.totalRecords)} of {pagination.totalRecords} transactions
+            </small>
+            <div className="d-flex gap-2">
+              <Button variant="outline-secondary" size="sm" disabled={pagination.page <= 1} onClick={() => handlePageChange(pagination.page - 1)}>
+                <i className="bi bi-chevron-left"></i> Previous
+              </Button>
+              <span className="align-self-center px-2">Page {pagination.page} of {pagination.totalPages || 1}</span>
+              <Button variant="outline-secondary" size="sm" disabled={pagination.page >= pagination.totalPages} onClick={() => handlePageChange(pagination.page + 1)}>
+                Next <i className="bi bi-chevron-right"></i>
+              </Button>
+            </div>
+          </div>
+        </Card.Footer>
       </Card>
     </Container>
   );

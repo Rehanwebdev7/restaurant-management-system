@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Card, Table, Badge, Spinner, Form, Row, Col, Button } from 'react-bootstrap';
+import { Container, Card, Table, Badge, Spinner, Form, Row, Col, Button, Pagination } from 'react-bootstrap';
 import { ApiGet } from '../../../../ApiServices/ApiServices';
 import TableSkeletonLoader from '../../../../components/common/TableSkeletonLoader';
 import { toast } from 'react-toastify';
@@ -12,18 +12,40 @@ const MenuItems = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    pageSize: 10,
+    totalRecords: 0,
+    totalPages: 0
+  });
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     fetchMenuItems();
-    fetchCategories();
-  }, []);
+  }, [pagination.currentPage, pagination.pageSize, searchTerm, selectedCategory]);
 
   const fetchMenuItems = async () => {
     setLoading(true);
     try {
-      const result = await ApiGet('/api/cashier/menu/items');
+      const params = {
+        pageNumber: pagination.currentPage - 1,
+        pageSize: pagination.pageSize
+      };
+      if (searchTerm) params.searchValue = searchTerm;
+      if (selectedCategory !== 'all') params.categoryId = selectedCategory;
+
+      const result = await ApiGet('/api/cashier/menu_items/filter', params);
       if (result.success) {
-        setMenuItems(result.success.data.data || []);
+        const data = result.success.data?.data || {};
+        setMenuItems(data.records || []);
+        setPagination(prev => ({
+          ...prev,
+          totalRecords: data.totalRecords || 0,
+          totalPages: data.totalPages || 0
+        }));
       }
     } catch (err) {
       toast.error('Failed to fetch menu items');
@@ -34,20 +56,24 @@ const MenuItems = () => {
 
   const fetchCategories = async () => {
     try {
-      const result = await ApiGet('/api/cashier/menu/categories');
+      const result = await ApiGet('/api/cashier/menu_category/all');
       if (result.success) {
-        setCategories(result.success.data.data || []);
+        setCategories(result.success.data?.data || []);
       }
     } catch (err) {
       console.error('Failed to fetch categories');
     }
   };
 
-  const filteredItems = menuItems.filter(item => {
-    const matchesSearch = item.name?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || item.categoryId === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
+      setPagination(prev => ({ ...prev, currentPage: newPage }));
+    }
+  };
+
+  const handlePageSizeChange = (newSize) => {
+    setPagination(prev => ({ ...prev, pageSize: Number(newSize), currentPage: 1 }));
+  };
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('en-US', {
@@ -104,9 +130,9 @@ const MenuItems = () => {
             </thead>
             <tbody>
               {loading ? (
-                <TableSkeletonLoader rows={10} columns={7} />
-              ) : filteredItems.length > 0 ? (
-                filteredItems.map((item, index) => (
+                <TableSkeletonLoader rows={pagination.pageSize} columns={7} />
+              ) : menuItems.length > 0 ? (
+                menuItems.map((item, index) => (
                     <tr key={item.id}>
                       <td>{index + 1}</td>
                       <td>
@@ -167,9 +193,44 @@ const MenuItems = () => {
           </Table>
         </Card.Body>
         <Card.Footer className="bg-white">
-          <small className="text-muted">
-            Total Items: <strong>{filteredItems.length}</strong>
-          </small>
+          <div className="d-flex justify-content-between align-items-center">
+            <small className="text-muted">
+              Total Items: <strong>{pagination.totalRecords}</strong>
+            </small>
+            <div className="d-flex gap-2 align-items-center">
+              <Form.Select
+                size="sm"
+                value={pagination.pageSize}
+                onChange={(e) => handlePageSizeChange(e.target.value)}
+                style={{ width: '80px' }}
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </Form.Select>
+              <small className="text-muted">per page</small>
+              <Button
+                variant="outline-secondary"
+                size="sm"
+                disabled={pagination.currentPage <= 1}
+                onClick={() => handlePageChange(pagination.currentPage - 1)}
+              >
+                <i className="bi bi-chevron-left"></i>
+              </Button>
+              <small className="text-muted">
+                Page {pagination.currentPage} of {pagination.totalPages || 1}
+              </small>
+              <Button
+                variant="outline-secondary"
+                size="sm"
+                disabled={pagination.currentPage >= pagination.totalPages}
+                onClick={() => handlePageChange(pagination.currentPage + 1)}
+              >
+                <i className="bi bi-chevron-right"></i>
+              </Button>
+            </div>
+          </div>
         </Card.Footer>
       </Card>
     </Container>

@@ -21,13 +21,25 @@ const Reports = () => {
   const fetchReport = async () => {
     setLoading(true);
     try {
-      const result = await ApiGet('/api/cashier/reports', {
-        type: reportType,
+      const result = await ApiGet('/api/cashier/dashboard/summary', {
         fromDate: dateRange.fromDate,
         toDate: dateRange.toDate
       });
       if (result.success) {
-        setReportData(result.success.data.data || {});
+        const data = result.success.data?.data || {};
+        setReportData({
+          totalSales: data.totalRevenue || 0,
+          totalOrders: data.totalOrders || 0,
+          avgOrderValue: data.averageOrderValue || 0,
+          customersServed: 0,
+          paymentMethods: {
+            cash: data.ordersByPayment?.Cash || 0,
+            card: data.ordersByPayment?.Card || 0,
+            upi: data.ordersByPayment?.Online || 0
+          },
+          orderTypes: data.ordersByType || { dineIn: 0, takeaway: 0, delivery: 0 },
+          topItems: []
+        });
       }
     } catch (err) {
       toast.error('Failed to fetch report');

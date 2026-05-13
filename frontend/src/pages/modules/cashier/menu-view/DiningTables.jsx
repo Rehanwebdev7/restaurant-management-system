@@ -1,71 +1,44 @@
-import React from 'react';
-import { Container } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Container, Spinner } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import { ApiGet } from '../../../../ApiServices/ApiServices';
 
 const DiningTables = () => {
   const navigate = useNavigate();
+  const [sections, setSections] = useState([]);
+  const [tables, setTables] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  // Handle table click - navigate to order page
+  useEffect(() => {
+    fetchAll();
+  }, []);
+
+  const fetchAll = async () => {
+    setLoading(true);
+    try {
+      const [secRes, tblRes] = await Promise.all([
+        ApiGet('/api/cashier/section/filter', { pageNumber: 0, pageSize: 1000 }),
+        ApiGet('/api/cashier/dining_tables/filter', { pageNumber: 0, pageSize: 1000 })
+      ]);
+
+      if (secRes.success) {
+        setSections(secRes.success.data?.data?.records || secRes.success.data?.data || []);
+      }
+      if (tblRes.success) {
+        setTables(tblRes.success.data?.data?.records || tblRes.success.data?.data || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch tables:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleTableClick = (table) => {
     navigate(`/cashier/table-order/${table.id}`, {
       state: { tableInfo: table }
     });
   };
-  // Dummy sections data
-  const sections = [
-    { id: 1, name: 'A/C' },
-    { id: 2, name: 'Non A/C' },
-    { id: 3, name: 'Bar' }
-  ];
-
-  // Dummy tables data
-  const tables = [
-    // A/C Section Tables
-    { id: 1, tableNumber: 'Table 1', sectionId: 1, status: 1 },
-    { id: 2, tableNumber: 'Table 2', sectionId: 1, status: 2 },
-    { id: 3, tableNumber: 'Table 3', sectionId: 1, status: 1 },
-    { id: 4, tableNumber: 'Table 4', sectionId: 1, status: 1 },
-    { id: 5, tableNumber: 'Table 5', sectionId: 1, status: 2 },
-    { id: 6, tableNumber: 'Table 6', sectionId: 1, status: 1 },
-    { id: 7, tableNumber: 'Table 7', sectionId: 1, status: 1 },
-    { id: 8, tableNumber: 'Table 8', sectionId: 1, status: 5 },
-    { id: 9, tableNumber: 'Table 9', sectionId: 1, status: 5 },
-    { id: 10, tableNumber: 'Table 10', sectionId: 1, status: 1 },
-    { id: 11, tableNumber: 'Table 11', sectionId: 1, status: 1 },
-    { id: 12, tableNumber: 'Table 12', sectionId: 1, status: 2 },
-    { id: 13, tableNumber: 'Table 13', sectionId: 1, status: 1 },
-    { id: 14, tableNumber: 'Table 14', sectionId: 1, status: 3 },
-    { id: 15, tableNumber: 'Table 15', sectionId: 1, status: 1 },
-    { id: 16, tableNumber: 'Table 16', sectionId: 1, status: 1 },
-    { id: 17, tableNumber: 'Table 17', sectionId: 1, status: 1 },
-    { id: 18, tableNumber: 'Table 18', sectionId: 1, status: 1 },
-    { id: 19, tableNumber: 'Table 19', sectionId: 1, status: 5 },
-    { id: 20, tableNumber: 'Table 20', sectionId: 1, status: 1 },
-    { id: 21, tableNumber: 'Table 21', sectionId: 1, status: 1 },
-    { id: 22, tableNumber: 'Table 22', sectionId: 1, status: 1 },
-    { id: 23, tableNumber: 'Table 23', sectionId: 1, status: 1 },
-    { id: 24, tableNumber: 'Table 24', sectionId: 1, status: 1 },
-    { id: 25, tableNumber: 'Table 25', sectionId: 1, status: 1 },
-    { id: 26, tableNumber: 'Table 26', sectionId: 1, status: 5 },
-    { id: 27, tableNumber: 'Table 27', sectionId: 1, status: 2 },
-    { id: 28, tableNumber: 'Table 28', sectionId: 1, status: 5 },
-    // Non A/C Section Tables
-    { id: 29, tableNumber: 'Table 1', sectionId: 2, status: 1 },
-    { id: 30, tableNumber: 'Table 2', sectionId: 2, status: 2 },
-    { id: 31, tableNumber: 'Table 3', sectionId: 2, status: 1 },
-    { id: 32, tableNumber: 'Table 4', sectionId: 2, status: 1 },
-    { id: 33, tableNumber: 'Table 5', sectionId: 2, status: 5 },
-    { id: 34, tableNumber: 'Table 6', sectionId: 2, status: 5 },
-    { id: 35, tableNumber: 'Table 7', sectionId: 2, status: 1 },
-    { id: 36, tableNumber: 'Table 8', sectionId: 2, status: 5 },
-    { id: 37, tableNumber: 'Table 9', sectionId: 2, status: 1 },
-    // Bar Section Tables
-    { id: 38, tableNumber: 'Table 1', sectionId: 3, status: 1 },
-    { id: 39, tableNumber: 'Table 2', sectionId: 3, status: 2 },
-    { id: 40, tableNumber: 'Table 3', sectionId: 3, status: 3 },
-    { id: 41, tableNumber: 'Table 4', sectionId: 3, status: 1 },
-    { id: 42, tableNumber: 'Table 5', sectionId: 3, status: 4 },
-  ];
 
   // Status mapping based on reference design
   // 1 = Available (Blank), 2 = Running, 3 = Printed, 4 = Paid, 5 = Running KOT
@@ -115,6 +88,14 @@ const DiningTables = () => {
 
   return (
     <Container fluid className="py-3" style={{ background: '#f8fafc', minHeight: '100vh' }}>
+      {loading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+          <Spinner animation="border" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </Spinner>
+        </div>
+      ) : (
+        <>
       {/* Header */}
       <div style={{
         display: 'flex',
@@ -320,6 +301,8 @@ const DiningTables = () => {
         }}>
           Total <strong>{tables.length}</strong> tables across <strong>{groupedTables.length}</strong> sections
         </div>
+      )}
+        </>
       )}
     </Container>
   );
