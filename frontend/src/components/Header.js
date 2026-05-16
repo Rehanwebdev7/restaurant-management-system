@@ -350,11 +350,12 @@ const Header = ({ onToggleSidebar, sidebarCollapsed, sidebarVisible, onLogout })
               gap: '6px',
               padding: '5px 12px',
               borderRadius: '20px',
-              background: '#fef2f2',
-              border: '1.5px solid #fecaca',
+              background: '#dc2626',
+              border: 'none',
               fontSize: '12px',
               fontWeight: 700,
-              color: '#dc2626',
+              color: '#ffffff',
+              boxShadow: '0 2px 8px rgba(220,38,38,0.45)',
               animation: isRinging ? 'pulse-stop 1.5s infinite' : 'none',
               cursor: 'default'
             }}

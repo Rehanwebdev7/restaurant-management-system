@@ -305,119 +305,34 @@ public class KitOrdersService implements OrdersServiceIMP {
 
 		Long restaurantId = branchUser.getParentId().getId();
 
-		Specification<OrdersEntity> spec = (root, query, cb) -> {
+		// ================= CONVERT DATES =================
+		LocalDateTime fromDateTime = fromDate != null ? fromDate.atStartOfDay() : null;
+		LocalDateTime toDateTime = toDate != null ? toDate.atTime(LocalTime.MAX) : null;
 
-			List<Predicate> predicates = new ArrayList<>();
-
-			// ================= MANDATORY SCOPE FILTERS =================
-
-			// ✅ KITCHEN FILTER (MOST IMPORTANT ❗)
-			predicates.add(cb.equal(root.get("kitchenId").get("id"), kitchenUserId));
-
-			// ✅ BRANCH FILTER
-			predicates.add(cb.equal(root.get("branchId").get("id"), branchId));
-
-			// ✅ RESTAURANT FILTER
-			predicates.add(cb.equal(root.get("restaurantId").get("id"), restaurantId));
-
-			// ================= DATE FILTER =================
-			if (fromDate != null && toDate != null) {
-				predicates
-						.add(cb.between(root.get("createdAt"), fromDate.atStartOfDay(), toDate.atTime(LocalTime.MAX)));
-			}
-
-			// ================= STATUS FILTER =================
-			if (status != null && !status.isBlank()) {
-				predicates.add(cb.equal(cb.lower(root.get("status")), status.toLowerCase()));
-			}
-
-			// ================= SEARCH FILTER =================
-			if (searchValue != null && !searchValue.isBlank()) {
-
-				String pattern = "%" + searchValue.toLowerCase() + "%";
-				List<Predicate> searchPredicates = new ArrayList<>();
-
-				searchPredicates.add(cb.like(cb.lower(root.get("orderNumber")), pattern));
-				searchPredicates.add(cb.like(cb.lower(root.get("orderType")), pattern));
-				searchPredicates.add(cb.like(cb.lower(root.get("tableNumber")), pattern));
-//				searchPredicates.add(cb.like(cb.lower(root.get("paymentStatus")), pattern));
-				searchPredicates.add(cb.like(cb.lower(root.get("paymentMethod")), pattern));
-				searchPredicates.add(cb.like(cb.lower(root.get("customerPhone")), pattern));
-				searchPredicates.add(cb.like(cb.lower(root.get("customerName")), pattern));
-
-				try {
-					BigDecimal amount = new BigDecimal(searchValue);
-					searchPredicates.add(cb.equal(root.get("totalAmount"), amount));
-				} catch (Exception ignored) {
-				}
-
-				predicates.add(cb.or(searchPredicates.toArray(new Predicate[0])));
-			}
-
-			return cb.and(predicates.toArray(new Predicate[0]));
-		};
-
-//		Specification<OrdersEntity> spec = (root, query, cb) -> {
-//
-//			List<Predicate> predicates = new ArrayList<>();
-//
-//			// ================= JOINS =================
-//			Join<OrdersEntity, UsersEntity> branchJoin = root.join("branchId", JoinType.INNER);
-//
-//			Join<UsersEntity, UsersEntity> restaurantJoin = branchJoin.join("parentId", JoinType.INNER);
-//
-//			// ================= MANDATORY SCOPE FILTERS =================
-//			// Branch
-//			predicates.add(cb.equal(branchJoin.get("id"), branchId));
-//
-//			// Restaurant
-//			predicates.add(cb.equal(restaurantJoin.get("id"), restaurantId));
-//
-//			// ================= DATE FILTER =================
-//			if (fromDate != null && toDate != null) {
-//				predicates
-//						.add(cb.between(root.get("createdAt"), fromDate.atStartOfDay(), toDate.atTime(LocalTime.MAX)));
-//			}
-//
-//			// ================= STATUS FILTER (IGNORE CASE) =================
-//			if (status != null && !status.isBlank()) {
-//				predicates.add(cb.equal(cb.lower(root.get("status")), status.toLowerCase()));
-//			}
-//
-//			// ================= SEARCH FILTER (IGNORE CASE) =================
-//			if (searchValue != null && !searchValue.isBlank()) {
-//
-//				String pattern = "%" + searchValue.toLowerCase() + "%";
-//				List<Predicate> searchPredicates = new ArrayList<>();
-//
-//				searchPredicates.add(cb.like(cb.lower(root.get("orderNumber")), pattern));
-//				searchPredicates.add(cb.like(cb.lower(root.get("orderType")), pattern));
-//				searchPredicates.add(cb.like(cb.lower(root.get("tableNumber")), pattern));
-//				searchPredicates.add(cb.like(cb.lower(root.get("paymentStatus")), pattern));
-//				searchPredicates.add(cb.like(cb.lower(root.get("paymentMethod")), pattern));
-//
-//				try {
-//					BigDecimal amount = new BigDecimal(searchValue);
-//					searchPredicates.add(cb.equal(root.get("totalAmount"), amount));
-//				} catch (Exception ignored) {
-//				}
-//
-//				predicates.add(cb.or(searchPredicates.toArray(new Predicate[0])));
-//			}
-//
-//			return cb.and(predicates.toArray(new Predicate[0]));
-//		};
-
+		// ================= PAGEABLE =================
 		Pageable pageable = PageRequest.of(Math.max(pageNumber, 0), pageSize, Sort.by(Sort.Direction.DESC, "id"));
 
-		Page<OrdersEntity> page = ordersRepository.findAll(spec, pageable);
+		// ================= FETCH VIA NATIVE QUERY (SAFE - NO EAGER JOIN EXPLOSION) =================
+		Page<Object[]> page = ordersRepository.findKitchenOrderSummaries(
+				kitchenUserId, branchId, restaurantId,
+				fromDateTime, toDateTime,
+				status, searchValue,
+				pageable
+		);
+
+		// ================= MAP RESULTS =================
+		List<BranchOrderSummaryDTO> records = page.getContent().stream()
+				.filter(Objects::nonNull)
+				.map(BranchOrderSummaryDTO::fromRow)
+				.filter(Objects::nonNull)
+				.collect(Collectors.toList());
 
 		Map<String, Object> response = new LinkedHashMap<>();
 		response.put("totalRecords", page.getTotalElements());
 		response.put("pageSize", page.getSize());
 		response.put("currentPage", page.getNumber() + 1);
 		response.put("totalPages", page.getTotalPages());
-		response.put("records", page.getContent());
+		response.put("records", records);
 
 		return response;
 	}
