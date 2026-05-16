@@ -644,167 +644,141 @@ const Addons = () => {
         show={showModal}
         onHide={() => setShowModal(false)}
         centered
-        dialogClassName="modal-dialog-wide"
-        contentClassName="modal-content-wide"
+        size="lg"
       >
-        <style>
-          {`
-            .modal-dialog-wide {
-              max-width: 70vw !important;
-              width: 70vw !important;
-            }
-            @media (max-width: 768px) {
-              .modal-dialog-wide {
-                max-width: 90vw !important;
-                width: 90vw !important;
-              }
-            }
-          `}
-        </style>
-        <Modal.Header closeButton>
-          <Modal.Title>
-            <i className={`fas fa-${modalMode === 'add' ? 'plus' : 'edit'} me-2`}></i>
+        <Modal.Header closeButton style={{ padding: '14px 20px', borderBottom: '1px solid var(--bs-border-color)' }}>
+          <Modal.Title style={{ fontSize: '16px', fontWeight: 700 }}>
+            <i className={`bi bi-${modalMode === 'add' ? 'plus-circle' : 'pencil'} me-2`} style={{ color: primaryColor }}></i>
             {modalMode === 'add' ? 'Add Addon' : 'Edit Addon'}
           </Modal.Title>
         </Modal.Header>
         <Form onSubmit={handleModalSubmit}>
-          <Modal.Body>
+          <Modal.Body style={{ padding: '16px 20px' }}>
+
             {/* Basic Info */}
-            <Card className="mb-3">
-              <Card.Header className="bg-light">
-                <strong><i className="bi bi-info-circle me-2"></i>Basic Information</strong>
-              </Card.Header>
-              <Card.Body>
-                <Row>
-                  <Col md={12}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Addon Name <span className="text-danger">*</span></Form.Label>
-                      <Form.Control
-                        type="text"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleFormChange}
-                        placeholder="Enter addon name"
-                        isInvalid={!!formErrors.name}
-                      />
-                      <Form.Control.Feedback type="invalid">
-                        {formErrors.name}
-                      </Form.Control.Feedback>
-                    </Form.Group>
-                  </Col>
-                </Row>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#64748b', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <i className="bi bi-info-circle" style={{ color: primaryColor }}></i> Basic Information
+              </div>
+              <Row className="g-2">
+                <Col md={8}>
+                  <Form.Group>
+                    <Form.Label style={{ fontSize: '12px', fontWeight: 600, marginBottom: 4 }}>Addon Name <span className="text-danger">*</span></Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleFormChange}
+                      placeholder="e.g. Extra Toppings"
+                      isInvalid={!!formErrors.name}
+                      style={{ fontSize: '13px', padding: '7px 12px' }}
+                    />
+                    <Form.Control.Feedback type="invalid" style={{ fontSize: '11px' }}>
+                      {formErrors.name}
+                    </Form.Control.Feedback>
+                  </Form.Group>
+                </Col>
+                <Col md={2}>
+                  <Form.Group>
+                    <Form.Label style={{ fontSize: '12px', fontWeight: 600, marginBottom: 4 }}>Min</Form.Label>
+                    <Form.Control
+                      type="number"
+                      name="minAddon"
+                      value={formData.minAddon}
+                      onChange={handleFormChange}
+                      min="0"
+                      isInvalid={!!formErrors.minAddon}
+                      style={{ fontSize: '13px', padding: '7px 10px' }}
+                      onWheel={e => e.target.blur()}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={2}>
+                  <Form.Group>
+                    <Form.Label style={{ fontSize: '12px', fontWeight: 600, marginBottom: 4 }}>Max</Form.Label>
+                    <Form.Control
+                      type="number"
+                      name="maxAddon"
+                      value={formData.maxAddon}
+                      onChange={handleFormChange}
+                      min="1"
+                      isInvalid={!!formErrors.maxAddon}
+                      style={{ fontSize: '13px', padding: '7px 10px' }}
+                      onWheel={e => e.target.blur()}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={12}>
+                  <Form.Group>
+                    <Form.Label style={{ fontSize: '12px', fontWeight: 600, marginBottom: 4 }}>Description <span style={{ fontWeight: 400, color: '#94a3b8' }}>(optional)</span></Form.Label>
+                    <Form.Control
+                      as="textarea"
+                      rows={2}
+                      name="description"
+                      value={formData.description}
+                      onChange={handleFormChange}
+                      placeholder="Brief description..."
+                      style={{ fontSize: '13px', padding: '7px 12px', resize: 'none' }}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={12}>
+                  <div style={{ display: 'flex', gap: 20, paddingTop: 4 }}>
+                    <Form.Check
+                      type="switch"
+                      id="showOnline"
+                      name="showOnline"
+                      label={<span style={{ fontSize: '13px' }}>Show Online</span>}
+                      checked={formData.showOnline}
+                      onChange={handleFormChange}
+                    />
+                    <Form.Check
+                      type="switch"
+                      id="showInCaptain"
+                      name="showInCaptain"
+                      label={<span style={{ fontSize: '13px' }}>Show In Captain</span>}
+                      checked={formData.showInCaptain}
+                      onChange={handleFormChange}
+                    />
+                    <Form.Check
+                      type="switch"
+                      id="isActive"
+                      name="isActive"
+                      label={<span style={{ fontSize: '13px' }}>Active</span>}
+                      checked={formData.isActive === 1}
+                      onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked ? 1 : 0 }))}
+                    />
+                  </div>
+                </Col>
+              </Row>
+            </div>
 
-                <Row>
-                  <Col md={12}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Description</Form.Label>
-                      <Form.Control
-                        as="textarea"
-                        rows={2}
-                        name="description"
-                        value={formData.description}
-                        onChange={handleFormChange}
-                        placeholder="Enter addon description"
-                      />
-                    </Form.Group>
-                  </Col>
-                </Row>
-
-                <Row>
-                  <Col md={3}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Min Selection</Form.Label>
-                      <Form.Control
-                        type="number"
-                        name="minAddon"
-                        value={formData.minAddon}
-                        onChange={handleFormChange}
-                        min="0"
-                        isInvalid={!!formErrors.minAddon}
-                      />
-                      <Form.Control.Feedback type="invalid">
-                        {formErrors.minAddon}
-                      </Form.Control.Feedback>
-                    </Form.Group>
-                  </Col>
-                  <Col md={3}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Max Selection</Form.Label>
-                      <Form.Control
-                        type="number"
-                        name="maxAddon"
-                        value={formData.maxAddon}
-                        onChange={handleFormChange}
-                        min="1"
-                        isInvalid={!!formErrors.maxAddon}
-                      />
-                      <Form.Control.Feedback type="invalid">
-                        {formErrors.maxAddon}
-                      </Form.Control.Feedback>
-                    </Form.Group>
-                  </Col>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Options</Form.Label>
-                      <div className="d-flex flex-wrap gap-3 mt-2">
-                        <Form.Check
-                          type="switch"
-                          id="showOnline"
-                          name="showOnline"
-                          label="Show Online"
-                          checked={formData.showOnline}
-                          onChange={handleFormChange}
-                        />
-                        <Form.Check
-                          type="switch"
-                          id="showInCaptain"
-                          name="showInCaptain"
-                          label="Show In Captain"
-                          checked={formData.showInCaptain}
-                          onChange={handleFormChange}
-                        />
-                        <Form.Check
-                          type="switch"
-                          id="isActive"
-                          name="isActive"
-                          label="Active"
-                          checked={formData.isActive === 1}
-                          onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked ? 1 : 0 }))}
-                        />
-                      </div>
-                    </Form.Group>
-                  </Col>
-                </Row>
-              </Card.Body>
-            </Card>
+            <hr style={{ margin: '0 0 14px', opacity: 0.15 }} />
 
             {/* Addon Items */}
-            <Card>
-              <Card.Header className="bg-light d-flex justify-content-between align-items-center">
-                <strong><i className="bi bi-list-ul me-2"></i>Addon Items <span className="text-danger">*</span></strong>
-                <Button
-                  variant="outline-success"
-                  size="sm"
-                  onClick={addAddonItem}
-                >
-                  <i className="bi bi-plus-lg me-1"></i>
-                  Add Item
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#64748b', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <i className="bi bi-list-ul" style={{ color: primaryColor }}></i> Addon Items <span className="text-danger">*</span>
+                </div>
+                <Button variant="outline-success" size="sm" onClick={addAddonItem} style={{ fontSize: '12px', padding: '4px 12px' }}>
+                  <i className="bi bi-plus-lg me-1"></i>Add Item
                 </Button>
-              </Card.Header>
-              <Card.Body>
-                {formErrors.addonItems && (
-                  <div className="alert alert-danger py-2" role="alert">
-                    <i className="bi bi-exclamation-triangle me-2"></i>
-                    {formErrors.addonItems}
-                  </div>
-                )}
+              </div>
 
-                {addonItems.length === 0 ? (
-                  <div className="text-center py-4 text-muted">
-                    <i className="bi bi-inbox fs-1 d-block mb-2"></i>
-                    No addon items added. Click "Add Item" to add one.
-                  </div>
-                ) : (
+              {formErrors.addonItems && (
+                <div className="alert alert-danger py-2 mb-2" role="alert" style={{ fontSize: '12px' }}>
+                  <i className="bi bi-exclamation-triangle me-2"></i>
+                  {formErrors.addonItems}
+                </div>
+              )}
+
+              {addonItems.length === 0 ? (
+                <div className="text-center py-3 text-muted" style={{ fontSize: '13px', background: 'rgba(0,0,0,0.03)', borderRadius: 8 }}>
+                  <i className="bi bi-inbox d-block mb-1" style={{ fontSize: '20px' }}></i>
+                  No items added yet. Click "+ Add Item" above.
+                </div>
+              ) : (
                   <Table bordered size="sm">
                     <thead>
                       <tr>
@@ -876,26 +850,27 @@ const Addons = () => {
                     </tbody>
                   </Table>
                 )}
-              </Card.Body>
-            </Card>
+            </div>
+
           </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowModal(false)}>
+          <Modal.Footer style={{ padding: '10px 20px', borderTop: '1px solid var(--bs-border-color)' }}>
+            <Button variant="secondary" size="sm" onClick={() => setShowModal(false)}>
               Cancel
             </Button>
             <Button
               type="submit"
+              size="sm"
               style={{ backgroundColor: primaryColor, borderColor: primaryColor }}
               disabled={formLoading}
             >
               {formLoading ? (
                 <>
-                  <Spinner animation="border" size="sm" style={{ width: '1rem', height: '1rem' }} className="me-2" />
+                  <Spinner animation="border" size="sm" style={{ width: '0.85rem', height: '0.85rem' }} className="me-2" />
                   Saving...
                 </>
               ) : (
                 <>
-                  <i className="bi bi-check-lg me-2"></i>
+                  <i className="bi bi-check-lg me-1"></i>
                   {modalMode === 'add' ? 'Add Addon' : 'Update Addon'}
                 </>
               )}

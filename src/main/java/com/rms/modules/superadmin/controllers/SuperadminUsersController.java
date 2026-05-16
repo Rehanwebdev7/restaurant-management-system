@@ -116,7 +116,7 @@ public class SuperadminUsersController {
 	public ResponseEntity<Object> addUsers(@RequestHeader("access_token") String token,
 			@RequestBody UsersEntity usersEntity) {
 		try {
-			UsersEntity result = usersServiceIMP.addUsers(usersEntity, token);
+			String result = usersServiceIMP.addUsers(usersEntity, token);
 			return ApiResponse.responseBuilder(result, "SUCCESS", HttpStatus.CREATED, "Users added successfully");
 		} catch (SecurityException e) {
 			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.UNAUTHORIZED, e.getMessage());

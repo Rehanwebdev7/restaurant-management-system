@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Container, Table, Form, Button, Row, Col, Pagination, Spinner, Modal } from 'react-bootstrap';
 import * as XLSX from 'xlsx';
 import { toast } from 'react-toastify';
-import { ApiGet, ApiPost, ApiPut } from '../../../../../ApiServices/ApiServices';
+import { ApiDelete, ApiGet, ApiPost, ApiPut } from '../../../../../ApiServices/ApiServices';
 import { useTheme } from '../../../../../contexts/ThemeContext';
 import '../../../../../styles/tables.css';
 
@@ -225,7 +225,7 @@ const BankDetail = () => {
     }
 
     try {
-      const result = await ApiGet('/api/restaurant/bank_details/delete', { id: bankDetail.id });
+      const result = await ApiDelete(`/api/restaurant/bank_details/${bankDetail.id}`);
 
       if (result.success) {
         toast.success('Bank detail deleted successfully');

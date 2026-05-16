@@ -51,4 +51,9 @@ public interface AddonsItemsServiceIMP {
     // Get AddonsItems By Updatedat Range with Pagination
     public Map<String, Object> getAddonsItemsByUpdatedatBetweenPagination(LocalDate fromDate, LocalDate toDate, Integer pageNumber, Integer pageSize, String token) throws Exception;
 
+    // Filter helper for role-specific screens
+    default Map<String, Object> getAddonsItemsWithFilters(LocalDate fromDate, LocalDate toDate, Boolean isActive, String searchValue, Integer pageNumber, Integer pageSize, String token) throws Exception {
+        throw new UnsupportedOperationException("Filter operation not available");
+    }
+
 }

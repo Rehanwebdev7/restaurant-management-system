@@ -30,6 +30,7 @@ public interface OrderItemsRepository extends JpaRepository<OrderItemsEntity, Lo
     // Custom Methods
     Page<OrderItemsEntity> findAll(Pageable pageable);
 	void deleteByOrderId_Id(Long orderId);
+	List<OrderItemsEntity> findByOrderId_Id(Long orderId);
 	
 
 	

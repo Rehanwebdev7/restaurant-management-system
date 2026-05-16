@@ -420,7 +420,7 @@ const Coupons = () => {
     }
 
     try {
-      const result = await ApiDelete('/api/restaurant/coupon/deleteCoupon', { id: coupon.id });
+      const result = await ApiDelete(`/api/restaurant/coupon/${coupon.id}`);
 
       if (result.success) {
         toast.success('Coupon deleted successfully');

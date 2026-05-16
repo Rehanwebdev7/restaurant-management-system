@@ -501,15 +501,12 @@ export const initializeTheme = async () => {
         const userId = user?.id || localStorage.getItem('UserId');
         // userType from login, role from impersonation/refresh
         const userRole = user?.userType || user?.role || localStorage.getItem('UserRole');
-        // For restaurant/branch/kitchen/cashier/delivery roles, fetch user's restaurant theme
-        if (userId && (userRole === 'restaurant' || userRole === 'branch' || userRole === 'kitchen' || userRole === 'cashier' || userRole === 'delivery')) {
-          // parentId: flat ID from login, or nested object from other flows
-          const parentId = user?.parentId?.id || user?.parentId || user?.branchId?.id;
-          const restId = userRole === 'restaurant' ? userId : (parentId || userId);
-          if (restId) {
-            console.log('Logged-in user detected, fetching theme by restId:', restId);
-            apiData = await fetchThemeByRestId(restId);
-          }
+        // Only restaurant users use direct restId lookup.
+        // Branch/kitchen/cashier/delivery screens should not force a global theme API call here,
+        // because many deployments do not expose /api/global/theme/getByRestId for those roles.
+        if (userId && userRole === 'restaurant') {
+          console.log('Logged-in restaurant user detected, fetching theme by restId:', userId);
+          apiData = await fetchThemeByRestId(userId);
         }
       } catch (e) {
         console.warn('Could not parse logged-in user for theme lookup:', e);

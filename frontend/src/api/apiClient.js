@@ -6,6 +6,11 @@ const baseURL = server_api();
 
 const REAL_API_PREFIXES = [
   '/api/admin/',
+  '/api/branch/',
+  '/api/cashier/',
+  '/api/customer/',
+  '/api/delivery/',
+  '/api/kitchen/',
   '/api/restaurant/users/',
   '/api/restaurant/users_profile/',
   '/api/restaurant/menu_category/',

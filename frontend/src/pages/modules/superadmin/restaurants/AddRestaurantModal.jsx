@@ -19,9 +19,30 @@ const RESTAURANT_TYPES = [
   { value: 'both',   label: '🟡 Both'       },
 ];
 
+const COUNTRY_TIMEZONES = [
+  { country: 'United States', flag: '🇺🇸', timezone: 'America/New_York',    currency: 'USD' },
+  { country: 'United Kingdom',flag: '🇬🇧', timezone: 'Europe/London',        currency: 'GBP' },
+  { country: 'India',         flag: '🇮🇳', timezone: 'Asia/Kolkata',         currency: 'INR' },
+  { country: 'UAE',           flag: '🇦🇪', timezone: 'Asia/Dubai',           currency: 'AED' },
+  { country: 'Canada',        flag: '🇨🇦', timezone: 'America/Toronto',      currency: 'CAD' },
+  { country: 'Australia',     flag: '🇦🇺', timezone: 'Australia/Sydney',     currency: 'AUD' },
+  { country: 'Singapore',     flag: '🇸🇬', timezone: 'Asia/Singapore',       currency: 'SGD' },
+  { country: 'Saudi Arabia',  flag: '🇸🇦', timezone: 'Asia/Riyadh',          currency: 'SAR' },
+  { country: 'Germany',       flag: '🇩🇪', timezone: 'Europe/Berlin',        currency: 'EUR' },
+  { country: 'France',        flag: '🇫🇷', timezone: 'Europe/Paris',         currency: 'EUR' },
+  { country: 'Netherlands',   flag: '🇳🇱', timezone: 'Europe/Amsterdam',     currency: 'EUR' },
+  { country: 'New Zealand',   flag: '🇳🇿', timezone: 'Pacific/Auckland',     currency: 'NZD' },
+  { country: 'South Africa',  flag: '🇿🇦', timezone: 'Africa/Johannesburg',  currency: 'ZAR' },
+  { country: 'Malaysia',      flag: '🇲🇾', timezone: 'Asia/Kuala_Lumpur',    currency: 'MYR' },
+  { country: 'Bangladesh',    flag: '🇧🇩', timezone: 'Asia/Dhaka',           currency: 'BDT' },
+  { country: 'Pakistan',      flag: '🇵🇰', timezone: 'Asia/Karachi',         currency: 'PKR' },
+  { country: 'Nepal',         flag: '🇳🇵', timezone: 'Asia/Kathmandu',       currency: 'NPR' },
+  { country: 'Sri Lanka',     flag: '🇱🇰', timezone: 'Asia/Colombo',         currency: 'LKR' },
+];
+
 const emptyBasic = { ownerName: '', mobile: '', email: '', password: '' };
 const emptyKyc   = { einNumber: '' };
-const emptyBiz   = { restaurantName: '', address: '', city: '', state: '', zipCode: '', entityType: 'Sole Proprietor', restaurantType: 'both', restaurantCode: '', primaryColor: '#3B82F6', logoUrl: '' };
+const emptyBiz   = { restaurantName: '', address: '', city: '', state: '', zipCode: '', entityType: 'Sole Proprietor', restaurantType: 'both', restaurantCode: '', primaryColor: '#3B82F6', logoUrl: '', country: 'United States', timezone: 'America/New_York', currencyCode: 'USD' };
 
 const PRESET_COLORS = ['#3B82F6','#8B5CF6','#EC4899','#EF4444','#F97316','#EAB308','#22C55E','#14B8A6','#06B6D4','#64748B'];
 const emptyDocs  = { einProof: null, businessRegistration: null, foodLicense: null, foodProtectionCertificate: null, addressProof: null, fireSafety: null, liquorLicense: null };
@@ -190,9 +211,9 @@ const AddRestaurantModal = ({ show, onHide, onSuccess }) => {
         restaurantId: { id: createdRestaurantId },
         restaurantName: biz.restaurantName.trim(),
         phone: basic.mobile.trim(),
-        country: 'India',
-        timezone: 'Asia/Kolkata',
-        currencyCode: 'INR',
+        country: biz.country,
+        timezone: biz.timezone,
+        currencyCode: biz.currencyCode,
         isActive: true,
         primarys: biz.primaryColor,
         secondary: '#10b981',
@@ -368,6 +389,53 @@ const AddRestaurantModal = ({ show, onHide, onSuccess }) => {
                 <Form.Group>
                   <Form.Label>ZIP Code <span className="text-danger">*</span></Form.Label>
                   <Form.Control value={biz.zipCode} maxLength={5} onChange={e => setBiz(p => ({ ...p, zipCode: e.target.value.replace(/\D/g, '') }))} placeholder="5-digit ZIP" required />
+                </Form.Group>
+              </Col>
+              <Col md={4}>
+                <Form.Group>
+                  <Form.Label>Country <span className="text-danger">*</span></Form.Label>
+                  <Form.Select
+                    value={biz.country}
+                    onChange={e => {
+                      const selected = COUNTRY_TIMEZONES.find(c => c.country === e.target.value);
+                      setBiz(p => ({
+                        ...p,
+                        country: e.target.value,
+                        timezone: selected?.timezone || p.timezone,
+                        currencyCode: selected?.currency || p.currencyCode,
+                      }));
+                    }}
+                  >
+                    {COUNTRY_TIMEZONES.map(c => (
+                      <option key={c.country} value={c.country}>{c.flag} {c.country}</option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+              <Col md={4}>
+                <Form.Group>
+                  <Form.Label>Timezone</Form.Label>
+                  <Form.Control
+                    value={biz.timezone}
+                    readOnly
+                    style={{ background: '#f8fafc', cursor: 'default', fontSize: 13 }}
+                  />
+                  <Form.Text className="text-muted" style={{ fontSize: 11 }}>
+                    Auto-set based on country
+                  </Form.Text>
+                </Form.Group>
+              </Col>
+              <Col md={4}>
+                <Form.Group>
+                  <Form.Label>Currency</Form.Label>
+                  <Form.Control
+                    value={biz.currencyCode}
+                    readOnly
+                    style={{ background: '#f8fafc', cursor: 'default', fontSize: 13 }}
+                  />
+                  <Form.Text className="text-muted" style={{ fontSize: 11 }}>
+                    Auto-set based on country
+                  </Form.Text>
                 </Form.Group>
               </Col>
               <Col md={4}>

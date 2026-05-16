@@ -38,6 +38,8 @@ const Delivered = () => {
     'REFUNDED': { bg: 'secondary', label: 'Refunded' }
   };
 
+  const getOrderItemsCount = (order) => order?.orderItemsCount ?? order?.orderItems?.length ?? 0;
+
   useEffect(() => {
     fetchOrders();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -317,7 +319,7 @@ const Delivered = () => {
                       {order.orderItems && order.orderItems.length > 0 ? (
                         <details style={{ cursor: 'pointer' }}>
                           <summary style={{ listStyle: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                            <Badge bg="secondary">{order.orderItems.length}</Badge>
+                            <Badge bg="secondary">{getOrderItemsCount(order)}</Badge>
                             <i className="bi bi-chevron-down" style={{ fontSize: '10px', color: '#666' }}></i>
                           </summary>
                           <div style={{ textAlign: 'left', marginTop: '8px', fontSize: '0.85rem', background: '#f8f9fa', padding: '8px', borderRadius: '6px' }}>
@@ -330,7 +332,7 @@ const Delivered = () => {
                           </div>
                         </details>
                       ) : (
-                        <Badge bg="secondary">0</Badge>
+                        <Badge bg="secondary">{getOrderItemsCount(order)}</Badge>
                       )}
                     </td>
                     <td><strong>{formatCurrency(order.totalAmount)}</strong></td>

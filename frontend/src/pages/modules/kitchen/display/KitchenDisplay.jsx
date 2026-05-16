@@ -31,6 +31,8 @@ const KitchenDisplay = () => {
     totalPages: 0
   });
   const [statusCounts, setStatusCounts] = useState({});
+  const [orderDetailsCache, setOrderDetailsCache] = useState({});
+  const [orderDetailsLoading, setOrderDetailsLoading] = useState({});
 
   // Get theme colors
   const { isDarkMode } = useDarkMode();
@@ -296,6 +298,36 @@ const KitchenDisplay = () => {
     }
   }, []);
 
+  const handleOrderDetailsToggle = useCallback(async (order, isOpen) => {
+    if (!isOpen || !order?.id) {
+      return;
+    }
+
+    if (Array.isArray(order.orderItems) && order.orderItems.length > 0) {
+      return;
+    }
+
+    if (orderDetailsCache[order.id] || orderDetailsLoading[order.id]) {
+      return;
+    }
+
+    setOrderDetailsLoading((prev) => ({ ...prev, [order.id]: true }));
+
+    try {
+      const response = await ApiGet(`/api/kitchen/orders/${order.id}`);
+      if (response.success) {
+        const resolved = response.success.data?.data || response.success.data || {};
+        if (resolved && resolved.id) {
+          setOrderDetailsCache((prev) => ({ ...prev, [order.id]: resolved }));
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load kitchen order details:', err);
+    } finally {
+      setOrderDetailsLoading((prev) => ({ ...prev, [order.id]: false }));
+    }
+  }, [orderDetailsCache, orderDetailsLoading]);
+
   // Initial load and auto-refresh setup
   useEffect(() => {
     fetchOrders(activeTab, true, searchValue, pagination.page, pagination.pageSize, fromDate, toDate);
@@ -452,6 +484,23 @@ const KitchenDisplay = () => {
     if (diff < 1) return 'Just now';
     if (diff < 60) return `${diff}m ago`;
     return `${Math.floor(diff / 60)}h ${diff % 60}m ago`;
+  };
+
+  const getResolvedOrder = (order) => orderDetailsCache[order?.id] || order;
+  const getResolvedOrderItems = (order) => {
+    const resolved = getResolvedOrder(order);
+    if (Array.isArray(resolved?.orderItems)) {
+      return resolved.orderItems;
+    }
+    return [];
+  };
+
+  const getResolvedOrderItemsCount = (order) => {
+    const resolvedItems = getResolvedOrderItems(order);
+    if (resolvedItems.length > 0) {
+      return resolvedItems.length;
+    }
+    return Number(getResolvedOrder(order)?.orderItemsCount || 0);
   };
 
   // Map tab ids to API response count keys
@@ -710,8 +759,11 @@ const KitchenDisplay = () => {
                     <td className="py-3 align-middle" style={{ padding: '16px', textAlign: 'center' }}>
                       <div style={{ fontSize: '14px', color: tp }}>{formatTime(order.createdAt)}</div>
                     </td>
-                    <td className="py-3 align-middle" style={{ padding: '16px', textAlign: 'center' }}>
-                      <details style={{ cursor: 'pointer' }}>
+                      <td className="py-3 align-middle" style={{ padding: '16px', textAlign: 'center' }}>
+                      <details
+                        style={{ cursor: 'pointer' }}
+                        onToggle={(e) => handleOrderDetailsToggle(order, e.currentTarget.open)}
+                      >
                         <summary style={{ fontSize: '14px', fontWeight: '500', listStyle: 'none' }}>
                           <span style={{
                             fontSize: '13px',
@@ -721,31 +773,42 @@ const KitchenDisplay = () => {
                             textDecoration: 'underline'
                           }}>
                             <i className="bi bi-eye me-1"></i>
-                            View ({(order.orderItems || []).length} items)
+                            View ({getResolvedOrderItemsCount(order)} items)
                           </span>
                         </summary>
                         <div style={{ marginTop: '8px', paddingLeft: '10px', borderLeft: `2px solid ${cBorder}`, textAlign: 'left' }}>
-                          {(order.orderItems || []).map((item, idx) => (
-                            <div key={idx} style={{ fontSize: '13px', marginBottom: '8px', paddingBottom: '8px', borderBottom: idx < order.orderItems.length - 1 ? `1px dashed ${cBorder}` : 'none', color: tp }}>
-                              <div className="fw-bold">{item.quantity}x {item.menuItemName || item.name || 'Item'}</div>
-                              {item.specialInstructions && (
-                                <div style={{ fontSize: '12px', color: '#f59e0b', marginTop: '4px' }}>
-                                  <i className="bi bi-info-circle me-1"></i>
-                                  {item.specialInstructions}
-                                </div>
-                              )}
-                              {item.addonItems && item.addonItems.length > 0 && (
-                                <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
-                                  <strong>Addons:</strong>
-                                  {item.addonItems.map((addon, addonIdx) => (
-                                    <div key={addonIdx} style={{ paddingLeft: '8px' }}>
-                                      + {addon.name} (x{addon.quantity})
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
+                          {orderDetailsLoading[order.id] ? (
+                            <div className="d-flex align-items-center gap-2" style={{ fontSize: '13px', color: ts }}>
+                              <Spinner animation="border" size="sm" />
+                              Loading item details...
                             </div>
-                          ))}
+                          ) : getResolvedOrderItems(order).length > 0 ? (
+                            getResolvedOrderItems(order).map((item, idx, arr) => (
+                              <div key={idx} style={{ fontSize: '13px', marginBottom: '8px', paddingBottom: '8px', borderBottom: idx < arr.length - 1 ? `1px dashed ${cBorder}` : 'none', color: tp }}>
+                                <div className="fw-bold">{item.quantity}x {item.menuItemName || item.name || 'Item'}</div>
+                                {item.specialInstructions && (
+                                  <div style={{ fontSize: '12px', color: '#f59e0b', marginTop: '4px' }}>
+                                    <i className="bi bi-info-circle me-1"></i>
+                                    {item.specialInstructions}
+                                  </div>
+                                )}
+                                {item.addonItems && item.addonItems.length > 0 && (
+                                  <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                                    <strong>Addons:</strong>
+                                    {item.addonItems.map((addon, addonIdx) => (
+                                      <div key={addonIdx} style={{ paddingLeft: '8px' }}>
+                                        + {addon.name} (x{addon.quantity})
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            ))
+                          ) : (
+                            <div style={{ fontSize: '13px', color: ts }}>
+                              Item details will load when expanded.
+                            </div>
+                          )}
                         </div>
                       </details>
                     </td>

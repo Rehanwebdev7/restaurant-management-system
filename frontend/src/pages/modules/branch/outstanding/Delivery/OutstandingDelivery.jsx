@@ -58,7 +58,8 @@ const OutstandingDelivery = () => {
       const params = {
         role: 'delivery',
         pageNumber: currentPage - 1,
-        pageSize: rowsPerPage
+        pageSize: rowsPerPage,
+        hasOutstanding: true
       };
 
       if (searchQuery.trim()) {

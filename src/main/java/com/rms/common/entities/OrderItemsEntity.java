@@ -51,6 +51,21 @@ public class OrderItemsEntity {
     @Digits(integer = 38, fraction = 2)
     private BigDecimal itemTotal;
 
+    @Column(name = "gst_rate")
+    @Digits(integer = 10, fraction = 2)
+    private BigDecimal gstRate;
+
+    @Column(name = "gst_type")
+    private String gstType;
+
+    @Column(name = "taxable_amount")
+    @Digits(integer = 38, fraction = 2)
+    private BigDecimal taxableAmount;
+
+    @Column(name = "gst_amount")
+    @Digits(integer = 38, fraction = 2)
+    private BigDecimal gstAmount;
+
     @Column(name = "status")
     private String status;
     

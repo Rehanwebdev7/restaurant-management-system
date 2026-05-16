@@ -97,6 +97,25 @@ public class UsersEntity {
     @Column(name = "order_stopped_by")
     private String orderStoppedBy;
 
+    @Column(name = "accepts_takeaway")
+    private Boolean acceptsTakeaway;
+
+    @Column(name = "accepts_delivery")
+    private Boolean acceptsDelivery;
+
+    @Column(name = "accepts_dine_in_reserve")
+    private Boolean acceptsDineInReserve;
+
+    @Column(name = "accepts_dine_in_now")
+    private Boolean acceptsDineInNow;
+
+    @Column(name = "dine_in_proximity_meters")
+    private Integer dineInProximityMeters;
+
+    @Column(name = "table_reservation_advance_amount")
+    @Digits(integer = 10, fraction = 2)
+    private BigDecimal tableReservationAdvanceAmount;
+
     @PrePersist
     protected void onCreate() {
     	 if (this.isActive == null) this.isActive = true;

@@ -4,8 +4,10 @@ import Select from 'react-select';
 import { ApiPut, ApiGet } from '../../../../../ApiServices/ApiServices';
 import { toast } from 'react-toastify';
 
-const EditOrderModal = ({ show, onClose, order }) => {
+const EditOrderModal = ({ show, onClose, order: initialOrder }) => {
   const [loading, setLoading] = useState(false);
+  const [orderLoading, setOrderLoading] = useState(false);
+  const [resolvedOrder, setResolvedOrder] = useState(initialOrder);
   const [menuItems, setMenuItems] = useState([]);
   const [addons, setAddons] = useState([]);
   const [menuItemsLoading, setMenuItemsLoading] = useState(false);
@@ -33,18 +35,53 @@ const EditOrderModal = ({ show, onClose, order }) => {
 
   // Load data when modal opens
   useEffect(() => {
-    if (show && order) {
-      loadFormData();
+    let cancelled = false;
+
+    const loadOrder = async () => {
+      if (!show || !initialOrder?.id) {
+        setResolvedOrder(initialOrder);
+        return;
+      }
+
+      setOrderLoading(true);
+      try {
+        const response = await ApiGet(`/api/branch/orders/${initialOrder.id}`);
+        if (!cancelled && response.success) {
+          setResolvedOrder(response.success.data?.data || initialOrder);
+        } else if (!cancelled) {
+          setResolvedOrder(initialOrder);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setResolvedOrder(initialOrder);
+        }
+      } finally {
+        if (!cancelled) {
+          setOrderLoading(false);
+        }
+      }
+    };
+
+    loadOrder();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [show, initialOrder]);
+
+  useEffect(() => {
+    if (show && resolvedOrder) {
+      loadFormData(resolvedOrder);
       fetchMenuItems();
       fetchAddons();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [show, order]);
+  }, [show, resolvedOrder]);
 
-  const loadFormData = () => {
-    if (!order) return;
+  const loadFormData = (orderData) => {
+    if (!orderData) return;
 
-    const items = order.orderItems?.map(item => ({
+    const items = orderData.orderItems?.map(item => ({
       menu_item_id: item.menuItemId || '',
       menuItemName: item.menuItemName,
       quantity: item.quantity || 1,
@@ -59,12 +96,12 @@ const EditOrderModal = ({ show, onClose, order }) => {
     })) || [];
 
     setFormData({
-      id: order.id,
-      customerId: order.customerId ? { id: order.customerId.id } : null,
-      customerName: order.customerName || '',
-      customerEmail: order.customerEmail || '',
-      customerPhone: order.customerPhone || '',
-      orderType: order.orderType || 'DINE_IN',
+      id: orderData.id,
+      customerId: orderData.customerId ? { id: orderData.customerId.id } : null,
+      customerName: orderData.customerName || '',
+      customerEmail: orderData.customerEmail || '',
+      customerPhone: orderData.customerPhone || '',
+      orderType: orderData.orderType || 'DINE_IN',
       items: items
     });
   };
@@ -94,12 +131,9 @@ const EditOrderModal = ({ show, onClose, order }) => {
   const fetchAddons = async () => {
     setAddonsLoading(true);
     try {
-      const response = await ApiGet('/api/branch/addon_items/filter', {
-        pageSize: 500,
-        pageNumber: 0
-      });
+      const response = await ApiGet('/api/branch/addons_items/all');
       if (response.success) {
-        const items = response.success.data?.data?.records || [];
+        const items = response.success.data?.data || [];
         setAddons(items.map(item => ({
           value: item.id,
           label: item.name,
@@ -352,12 +386,21 @@ const EditOrderModal = ({ show, onClose, order }) => {
       <Modal.Header closeButton>
         <Modal.Title>
           <i className="bi bi-pencil-square me-2"></i>
-          Edit Order: {order?.orderNumber}
+          Edit Order: {resolvedOrder?.orderNumber || initialOrder?.orderNumber}
         </Modal.Title>
       </Modal.Header>
 
       <Form onSubmit={handleSubmit}>
         <Modal.Body style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+          {orderLoading ? (
+            <div className="d-flex align-items-center justify-content-center py-5">
+              <div className="text-center">
+                <div className="spinner-border text-primary mb-2" role="status" />
+                <div>Loading order details...</div>
+              </div>
+            </div>
+          ) : (
+          <>
           {/* Customer Information */}
           <div className="border rounded p-3 mb-3">
             <h6 className="text-primary mb-3">
@@ -588,13 +631,15 @@ const EditOrderModal = ({ show, onClose, order }) => {
               </div>
             )}
           </div>
+          </>
+          )}
         </Modal.Body>
 
         <Modal.Footer>
           <Button variant="secondary" onClick={() => onClose(false)} disabled={loading}>
             Cancel
           </Button>
-          <Button variant="primary" type="submit" disabled={loading}>
+          <Button variant="primary" type="submit" disabled={loading || orderLoading}>
             {loading ? (
               <>
                 <Spinner size="sm" className="me-1" />

@@ -110,12 +110,9 @@ const EditOrderModal = ({ show, onClose, order }) => {
   const fetchAddons = async () => {
     setAddonsLoading(true);
     try {
-      const response = await ApiGet('/api/restaurant/addon_items/filter', {
-        pageSize: 500,
-        pageNumber: 0
-      });
+      const response = await ApiGet('/api/restaurant/addons_items/all');
       if (response.success) {
-        const items = response.success.data?.data?.records || [];
+        const items = response.success.data?.data || [];
         setAddons(items.map(item => ({
           value: item.id,
           label: item.name,

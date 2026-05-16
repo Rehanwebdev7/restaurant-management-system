@@ -1116,6 +1116,7 @@ const MenuItems = () => {
                     onChange={handleFormChange}
                     placeholder="Enter price"
                     isInvalid={!!formErrors.price}
+                    onWheel={e => e.target.blur()}
                   />
                   <Form.Control.Feedback type="invalid">
                     {formErrors.price}
@@ -1133,6 +1134,7 @@ const MenuItems = () => {
                     onChange={handleFormChange}
                     placeholder="Enter MRP"
                     isInvalid={!!formErrors.mrp}
+                    onWheel={e => e.target.blur()}
                   />
                   <Form.Control.Feedback type="invalid">
                     {formErrors.mrp}
@@ -1149,6 +1151,7 @@ const MenuItems = () => {
                     value={formData.costPrice}
                     onChange={handleFormChange}
                     placeholder="Enter cost price"
+                    onWheel={e => e.target.blur()}
                   />
                 </Form.Group>
               </Col>
@@ -1368,6 +1371,7 @@ const MenuItems = () => {
                         onChange={handleAddonFormChange}
                         min="0"
                         isInvalid={!!addonFormErrors.minAddon}
+                        onWheel={e => e.target.blur()}
                       />
                       <Form.Control.Feedback type="invalid">
                         {addonFormErrors.minAddon}
@@ -1384,6 +1388,7 @@ const MenuItems = () => {
                         onChange={handleAddonFormChange}
                         min="1"
                         isInvalid={!!addonFormErrors.maxAddon}
+                        onWheel={e => e.target.blur()}
                       />
                       <Form.Control.Feedback type="invalid">
                         {addonFormErrors.maxAddon}
@@ -1497,6 +1502,7 @@ const MenuItems = () => {
                               onChange={(e) => updateAddonItem(index, 'price', e.target.value)}
                               min="0"
                               isInvalid={!!addonFormErrors[`addonItem_${index}_price`]}
+                              onWheel={e => e.target.blur()}
                             />
                           </td>
                           <td>

@@ -34,12 +34,41 @@ const Dashboard = () => {
   const fetchDashboard = async () => {
     setLoading(true);
     try {
-      const response = await ApiGet('/api/delivery/dashboard');
-      if (response.success) {
-        setStats(response.success.data || response.success);
-      } else {
+      const [activeResponse, deliveredResponse] = await Promise.all([
+        ApiGet('/api/delivery/orders/filter', {
+          status: 'READY_FOR_ORDER,OUT_FOR_DELIVERY',
+          pageNumber: 0,
+          pageSize: 100
+        }),
+        ApiGet('/api/delivery/orders/filter', {
+          status: 'DELIVERED',
+          pageNumber: 0,
+          pageSize: 100
+        })
+      ]);
+
+      if (!activeResponse.success || !deliveredResponse.success) {
         toast.error('Failed to load dashboard');
+        return;
       }
+
+      const activeOrders = activeResponse.success.data?.data?.records || [];
+      const deliveredOrders = deliveredResponse.success.data?.data?.records || [];
+      const today = new Date().toISOString().split('T')[0];
+      const deliveredToday = deliveredOrders.filter((order) => {
+        if (!order?.createdAt) return false;
+        return String(order.createdAt).slice(0, 10) === today;
+      });
+
+      setStats({
+        todayDeliveries: deliveredToday.length,
+        activeOrders: activeOrders.length,
+        totalEarnings: deliveredToday.reduce((sum, order) => sum + (Number(order.totalAmount) || 0), 0),
+        deliveryBoy: {
+          name: localStorage.getItem('UserName') || '',
+          id: Number(localStorage.getItem('UserId')) || 0
+        }
+      });
     } catch (error) {
       toast.error('Error loading dashboard');
     } finally {

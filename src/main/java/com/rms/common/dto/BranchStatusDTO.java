@@ -9,5 +9,8 @@ import lombok.*;
 @NoArgsConstructor
 public class BranchStatusDTO {
     private Long branchId;
-    private String status;
+    private String branchName;
+    private Boolean adminStopped;
+    private String orderStoppedAt;
+    private String orderStoppedBy;
 }

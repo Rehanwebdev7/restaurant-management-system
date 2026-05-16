@@ -126,8 +126,15 @@ const BranchSidebar = ({ collapsed, visible, onLogout }) => {
       icon: 'bi bi-grid-fill',
       label: 'Menu Management',
       submenu: [
+        { path: '/branch/menu-management/menu-tree',        label: 'Menu Tree' },
+        { path: '/branch/menu-management/categories',       label: 'Categories' },
+        { path: '/branch/menu-management/subcategories',    label: 'Subcategories' },
+        { path: '/branch/menu-management/items',            label: 'Menu Items' },
+        { path: '/branch/menu-management/addons',           label: 'Addons' },
+        { path: '/branch/menu-management/sections',         label: 'Sections' },
+        { path: '/branch/menu-management/dining-tables',    label: 'Dining Tables' },
         { path: '/branch/menu-management/restaurant-hours', label: 'Restaurant Hours' },
-        { path: '/branch/menu-management/delivery-zones', label: 'Delivery Zones' }
+        { path: '/branch/menu-management/delivery-zones',   label: 'Delivery Zones' },
       ]
     },
     {

@@ -2,7 +2,7 @@ import React from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 
 const AuthLayout = ({ title, subtitle, children, onBack }) => {
-  const { logoUrl, restaurantName } = useTheme();
+  const { primaryColor } = useTheme();
 
   return (
     <div className="auth-container">
@@ -27,18 +27,22 @@ const AuthLayout = ({ title, subtitle, children, onBack }) => {
           )}
 
           <div className="auth-form-container">
+            {/* Header: colored icon + title */}
             <div className="auth-form-header">
-              <img
-                src={logoUrl || "/app-favicon.svg"}
-                alt={restaurantName || "Restaurant Logo"}
-                className="auth-logo"
-                onError={(e) => { e.target.src = "/app-favicon.svg"; }}
-              />
+              <div style={{
+                width: 52, height: 52, borderRadius: '14px',
+                background: primaryColor || '#3B82F6',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                margin: '0 auto 20px',
+                boxShadow: `0 8px 24px ${(primaryColor || '#3B82F6')}40`
+              }}>
+                <i className="bi bi-shop" style={{ fontSize: '22px', color: '#fff' }}></i>
+              </div>
+              {title && <h2 className="auth-title">{title}</h2>}
+              {subtitle && <p className="auth-subtitle">{subtitle}</p>}
             </div>
 
             <div className="auth-form-content">
-              {title && <h2 className="auth-title">{title}</h2>}
-              {subtitle && <p className="auth-subtitle">{subtitle}</p>}
               {children}
             </div>
           </div>

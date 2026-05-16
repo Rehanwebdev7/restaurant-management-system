@@ -1,5 +1,6 @@
 package com.rms.common.services;
 
+import com.rms.common.dto.BranchStatusDTO;
 import com.rms.common.entities.UsersEntity;
 import com.rms.common.repositories.UsersRepository;
 import com.rms.common.util.AES256Util;
@@ -60,6 +61,25 @@ public class BranchStatusService {
         status.put("orderStoppedAt", branch.getOrderStoppedAt() != null ? branch.getOrderStoppedAt().toString() : null);
         status.put("orderStoppedBy", branch.getOrderStoppedBy());
         return status;
+    }
+
+    public BranchStatusDTO getBranchStatus(Long branchId) {
+        Object status = getBranchStatus(branchId, null);
+        if (status instanceof BranchStatusDTO dto) {
+            return dto;
+        }
+        Map<?, ?> raw = (Map<?, ?>) status;
+        return new BranchStatusDTO(
+                branchId,
+                raw.get("branchName") != null ? String.valueOf(raw.get("branchName")) : null,
+                Boolean.TRUE.equals(raw.get("adminStopped")),
+                raw.get("orderStoppedAt") != null ? String.valueOf(raw.get("orderStoppedAt")) : null,
+                raw.get("orderStoppedBy") != null ? String.valueOf(raw.get("orderStoppedBy")) : null
+        );
+    }
+
+    public void resumeOrders(Long branchId) {
+        scheduleRelease(branchId, null);
     }
 
     public ByteArrayInputStream streamExcel(int pageNumber, int pageSize, String token) throws IOException {

@@ -194,6 +194,9 @@ public class OrdersEntity {
 
 	@Column(name = "api_ref_num")
 	private String apiRefNum;
+
+	@Column(name = "idempotency_key")
+	private String idempotencyKey;
 	
 	@Column(name = "customer_feedback", columnDefinition = "Text")
 	private String customerFeedback;
@@ -220,6 +223,9 @@ public class OrdersEntity {
 //	@JsonIgnore
 	@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" ,"orderId","kitchenId",})	
 	private List<OrderItemsEntity> orderItems;
+
+	@Transient
+	private List<java.util.Map<String, Object>> rawItems;
 
 	@PrePersist
 	protected void onCreate() {

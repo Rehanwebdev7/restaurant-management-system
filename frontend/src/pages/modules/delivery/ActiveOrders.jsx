@@ -28,9 +28,13 @@ const ActiveOrders = () => {
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const response = await ApiGet('/api/delivery/orders');
+      const response = await ApiGet('/api/delivery/orders/filter', {
+        status: 'READY_FOR_ORDER,OUT_FOR_DELIVERY',
+        pageNumber: 0,
+        pageSize: 100
+      });
       if (response.success) {
-        setOrders(response.success.data?.records || response.success.records || []);
+        setOrders(response.success.data?.data?.records || []);
       } else {
         toast.error('Failed to load orders');
       }

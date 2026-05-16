@@ -41,6 +41,15 @@ public class AppVersionEntity {
 	@Column(name = "app_store_url")
 	private String appStoreUrl;
 
+	@Column(name = "release_notes", columnDefinition = "TEXT")
+	private String releaseNotes;
+
+	@Column(name = "sha256_checksum")
+	private String sha256Checksum;
+
+	@Column(name = "application_zip")
+	private String applicationZip;
+
 	@Column(name = "created_at")
 	private LocalDateTime createdAt;
 

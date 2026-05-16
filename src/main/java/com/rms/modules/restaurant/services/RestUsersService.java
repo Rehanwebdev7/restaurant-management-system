@@ -365,7 +365,7 @@ public class RestUsersService implements UsersServiceIMP {
 
 	@Override
 	@Transactional
-	public UsersEntity addUsers(UsersEntity usersEntity, String token) throws Exception {
+	public String addUsers(UsersEntity usersEntity, String token) throws Exception {
 
 		System.out.println("🚀 addUsers() STARTED");
 
@@ -477,7 +477,7 @@ public class RestUsersService implements UsersServiceIMP {
 			UsersEntity saved = usersRepository.save(newEntity);
 
 			System.out.println("✅ User saved successfully with role: " + role);
-			return saved;
+			return "Added Successfully";
 
 		} finally {
 			tokenUtil.clearTokenData();

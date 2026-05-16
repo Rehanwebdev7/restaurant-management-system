@@ -19,7 +19,7 @@ public interface UsersServiceIMP {
     public UsersEntity getOneUsers(Long id, String token) throws Exception;
 
     // Add/Create New Users
-    public UsersEntity addUsers(UsersEntity usersEntity, String token) throws Exception;
+    public String addUsers(UsersEntity usersEntity, String token) throws Exception;
 
     // Update Existing Users
     public String updateUsers(UsersEntity usersEntity,String token)throws Exception;

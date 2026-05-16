@@ -350,7 +350,7 @@ public class AdmUsersService implements UsersServiceIMP {
 //    }
     @Override
     @Transactional
-    public UsersEntity addUsers(UsersEntity usersEntity, String token) throws Exception {
+    public String addUsers(UsersEntity usersEntity, String token) throws Exception {
 
         System.out.println("🚀 addUsers() STARTED");
 
@@ -449,7 +449,7 @@ public class AdmUsersService implements UsersServiceIMP {
                     });
             }
 
-            return saved;
+            return "Added Successfully";
 
         } finally {
             // ================= TOKEN CLEAR =================

@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Spinner, Alert, Form, Table } from 'react-bootstrap';
 import { ApiGet } from '../../../../ApiServices/ApiServices';
-import { toast } from 'react-toastify';
 import TableSkeletonLoader from '../../../../components/common/TableSkeletonLoader';
 import { useDarkMode } from '../../../../contexts/DarkModeContext';
 import { useTheme } from '../../../../contexts/ThemeContext';
 import { getContrastColor } from '../../../../services/themeService';
+
+const EMPTY_REPORT = {
+  summary: { totalOrders: 0, completedOrders: 0, avgPrepTime: 0, peakHour: '-' },
+  ordersByStatus: [],
+  topItems: [],
+  hourlyBreakdown: []
+};
 
 const Reports = () => {
   const { isDarkMode } = useDarkMode();
@@ -15,33 +21,12 @@ const Reports = () => {
 
   const bg      = isDarkMode ? '#0f172a' : '#ffffff';
   const cBg     = isDarkMode ? '#1e293b' : '#f8fafc';
-  const cBorder = isDarkMode ? '#334155' : '#e2e8f0';
   const tp      = isDarkMode ? '#e2e8f0' : '#1e293b';
-  const ts      = isDarkMode ? '#cbd5e1' : '#64748b';
-  const hBg     = isDarkMode ? '#475569' : '#f1f5f9';
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [reportType, setReportType] = useState('daily');
-  const [reportData, setReportData] = useState({
-    summary: { totalOrders: 57, completedOrders: 38, avgPrepTime: 18, peakHour: '12 PM - 1 PM' },
-    ordersByStatus: [
-      { status: 'PENDING', count: 5 }, { status: 'ACCEPTED_ORDER', count: 4 },
-      { status: 'PREPARING_ORDER', count: 7 }, { status: 'READY_FOR_ORDER', count: 3 },
-      { status: 'COMPLETED', count: 38 }, { status: 'CANCELLED', count: 2 }
-    ],
-    topItems: [
-      { name: 'Chicken Biryani', quantity: 45 }, { name: 'Butter Chicken', quantity: 38 },
-      { name: 'Dal Makhani', quantity: 32 }, { name: 'Veg Thali', quantity: 28 },
-      { name: 'Paneer Tikka', quantity: 24 }, { name: 'Mutton Biryani', quantity: 19 }
-    ],
-    hourlyBreakdown: [
-      { hour: '9 AM', orders: 3, avgPrepTime: 15 }, { hour: '10 AM', orders: 7, avgPrepTime: 17 },
-      { hour: '11 AM', orders: 9, avgPrepTime: 18 }, { hour: '12 PM', orders: 14, avgPrepTime: 22 },
-      { hour: '1 PM', orders: 11, avgPrepTime: 20 }, { hour: '2 PM', orders: 8, avgPrepTime: 16 },
-      { hour: '3 PM', orders: 5, avgPrepTime: 14 }, { hour: '4 PM', orders: 4, avgPrepTime: 13 }
-    ]
-  });
+  const [reportData, setReportData] = useState(EMPTY_REPORT);
 
   // Date filters
   const [filters, setFilters] = useState({
@@ -51,7 +36,112 @@ const Reports = () => {
 
   useEffect(() => {
     fetchReportData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reportType]);
+
+  const getPrepTimeMinutes = (order) => {
+    if (!order?.createdAt || !order?.updatedAt) {
+      return 0;
+    }
+
+    const createdAt = new Date(order.createdAt).getTime();
+    const updatedAt = new Date(order.updatedAt).getTime();
+
+    if (Number.isNaN(createdAt) || Number.isNaN(updatedAt) || updatedAt <= createdAt) {
+      return 0;
+    }
+
+    return Math.round((updatedAt - createdAt) / 60000);
+  };
+
+  const formatHourLabel = (hour) => {
+    const normalizedHour = Number(hour);
+    if (Number.isNaN(normalizedHour)) return '-';
+    const period = normalizedHour >= 12 ? 'PM' : 'AM';
+    const displayHour = normalizedHour % 12 || 12;
+    return `${displayHour} ${period}`;
+  };
+
+  const buildReportData = (orders) => {
+    if (!Array.isArray(orders) || orders.length === 0) {
+      return EMPTY_REPORT;
+    }
+
+    const statusMap = new Map();
+    const itemMap = new Map();
+    const hourlyMap = new Map();
+
+    let completedOrders = 0;
+    let prepTimeTotal = 0;
+    let prepTimeCount = 0;
+
+    orders.forEach((order) => {
+      const status = order?.status || 'UNKNOWN';
+      statusMap.set(status, (statusMap.get(status) || 0) + 1);
+
+      if (['COMPLETED', 'SERVED', 'READY_FOR_ORDER'].includes(status)) {
+        completedOrders += 1;
+      }
+
+      const prepTime = getPrepTimeMinutes(order);
+      if (prepTime > 0) {
+        prepTimeTotal += prepTime;
+        prepTimeCount += 1;
+      }
+
+      if (order?.createdAt) {
+        const createdDate = new Date(order.createdAt);
+        const hour = createdDate.getHours();
+        const currentHour = hourlyMap.get(hour) || { hour, orders: 0, prepTimeTotal: 0, prepTimeCount: 0 };
+        currentHour.orders += 1;
+        if (prepTime > 0) {
+          currentHour.prepTimeTotal += prepTime;
+          currentHour.prepTimeCount += 1;
+        }
+        hourlyMap.set(hour, currentHour);
+      }
+
+      (order?.orderItems || []).forEach((item) => {
+        const name = item?.menuItemName || item?.menuItemId?.name || item?.name;
+        if (!name) return;
+        const quantity = Number(item?.quantity) || 0;
+        itemMap.set(name, (itemMap.get(name) || 0) + quantity);
+      });
+    });
+
+    const ordersByStatus = Array.from(statusMap.entries())
+      .map(([status, count]) => ({ status: status.replace(/_/g, ' '), count }))
+      .sort((a, b) => b.count - a.count);
+
+    const topItems = Array.from(itemMap.entries())
+      .map(([name, quantity]) => ({ name, quantity }))
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 6);
+
+    const hourlyBreakdown = Array.from(hourlyMap.values())
+      .sort((a, b) => a.hour - b.hour)
+      .map((entry) => ({
+        hour: formatHourLabel(entry.hour),
+        orders: entry.orders,
+        avgPrepTime: entry.prepTimeCount > 0 ? Math.round(entry.prepTimeTotal / entry.prepTimeCount) : 0
+      }));
+
+    const peakHourEntry = hourlyBreakdown.reduce((peak, entry) => (
+      !peak || entry.orders > peak.orders ? entry : peak
+    ), null);
+
+    return {
+      summary: {
+        totalOrders: orders.length,
+        completedOrders,
+        avgPrepTime: prepTimeCount > 0 ? Math.round(prepTimeTotal / prepTimeCount) : 0,
+        peakHour: peakHourEntry?.hour || '-'
+      },
+      ordersByStatus,
+      topItems,
+      hourlyBreakdown
+    };
+  };
 
   const fetchReportData = async () => {
     setLoading(true);
@@ -59,62 +149,27 @@ const Reports = () => {
 
     try {
       const params = {
-        reportType,
         fromDate: filters.fromDate,
-        toDate: filters.toDate
+        toDate: filters.toDate,
+        pageNumber: 0,
+        pageSize: 500
       };
 
-      const response = await ApiGet('/api/kitchen/reports', params);
+      const response = await ApiGet('/api/kitchen/orders/history', params);
 
       if (response.success) {
-        setReportData(response.success?.data?.data || generateMockData());
+        const orders = response.success?.data?.data?.records || [];
+        setReportData(buildReportData(orders));
       } else {
-        // Use mock data for now
-        setReportData(generateMockData());
+        setError(response.fail || 'Failed to load kitchen reports');
+        setReportData(EMPTY_REPORT);
       }
     } catch (err) {
-      // Use mock data if API fails
-      setReportData(generateMockData());
+      setError('Failed to load kitchen reports');
+      setReportData(EMPTY_REPORT);
     } finally {
       setLoading(false);
     }
-  };
-
-  const generateMockData = () => {
-    return {
-      summary: {
-        totalOrders: 57,
-        completedOrders: 38,
-        avgPrepTime: 18,
-        peakHour: '12 PM - 1 PM'
-      },
-      ordersByStatus: [
-        { status: 'PENDING', count: 5 },
-        { status: 'ACCEPTED_ORDER', count: 4 },
-        { status: 'PREPARING_ORDER', count: 7 },
-        { status: 'READY_FOR_ORDER', count: 3 },
-        { status: 'COMPLETED', count: 38 },
-        { status: 'CANCELLED', count: 2 }
-      ],
-      topItems: [
-        { name: 'Chicken Biryani', quantity: 45 },
-        { name: 'Butter Chicken', quantity: 38 },
-        { name: 'Dal Makhani', quantity: 32 },
-        { name: 'Veg Thali', quantity: 28 },
-        { name: 'Paneer Tikka', quantity: 24 },
-        { name: 'Mutton Biryani', quantity: 19 }
-      ],
-      hourlyBreakdown: [
-        { hour: '9 AM', orders: 3, avgPrepTime: 15 },
-        { hour: '10 AM', orders: 7, avgPrepTime: 17 },
-        { hour: '11 AM', orders: 9, avgPrepTime: 18 },
-        { hour: '12 PM', orders: 14, avgPrepTime: 22 },
-        { hour: '1 PM', orders: 11, avgPrepTime: 20 },
-        { hour: '2 PM', orders: 8, avgPrepTime: 16 },
-        { hour: '3 PM', orders: 5, avgPrepTime: 14 },
-        { hour: '4 PM', orders: 4, avgPrepTime: 13 }
-      ]
-    };
   };
 
   const handleFilterChange = (field, value) => {

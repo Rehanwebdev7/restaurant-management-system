@@ -4,6 +4,7 @@ import Select from 'react-select';
 import { toast } from 'react-toastify';
 import { ApiGet, ApiPut, ApiPostFormData } from '../../../../../ApiServices/ApiServices';
 import { useTheme } from '../../../../../contexts/ThemeContext';
+import { useDarkMode } from '../../../../../contexts/DarkModeContext';
 import ImageCropperModal from '../../../../../components/common/ImageCropperModal';
 
 // ==================== LEVEL CONFIG ====================
@@ -68,22 +69,22 @@ const ToggleSwitch = ({ isActive, onToggle, loading, size = 'sm' }) => {
 };
 
 // ==================== SHARED MODAL STYLES ====================
-const modalStyles = (pc) => ({
+const modalStyles = (pc, dark = false) => ({
   overlay: { backdropFilter: 'blur(6px)' },
   dialog: { borderRadius: '20px', overflow: 'hidden', border: 'none', boxShadow: '0 25px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.04)' },
   header: { padding: '28px 28px 0', border: 'none', background: 'transparent' },
   headerIcon: { width: 44, height: 44, borderRadius: '14px', background: `linear-gradient(135deg, ${pc}, color-mix(in srgb, ${pc} 70%, #000))`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '18px', flexShrink: 0, boxShadow: `0 8px 20px color-mix(in srgb, ${pc} 35%, transparent)` },
-  headerTitle: { fontSize: '18px', fontWeight: 700, color: '#0f172a', letterSpacing: '-0.3px' },
+  headerTitle: { fontSize: '18px', fontWeight: 700, color: dark ? '#f1f5f9' : '#0f172a', letterSpacing: '-0.3px' },
   headerSub: { fontSize: '12px', color: '#94a3b8', marginTop: 2 },
-  closeBtn: { width: 32, height: 32, borderRadius: '10px', border: 'none', background: '#f1f5f9', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s', fontSize: '16px', flexShrink: 0, marginLeft: 'auto' },
+  closeBtn: { width: 32, height: 32, borderRadius: '10px', border: 'none', background: dark ? '#334155' : '#f1f5f9', color: dark ? '#cbd5e1' : '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s', fontSize: '16px', flexShrink: 0, marginLeft: 'auto' },
   body: { padding: '24px 28px' },
-  label: { fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', color: '#64748b', marginBottom: '6px', display: 'block' },
-  input: { borderRadius: '10px', border: '1.5px solid #e2e8f0', padding: '10px 14px', fontSize: '14px', transition: 'all 0.2s', background: '#f8fafc' },
-  inputFocus: `outline: none; border-color: ${pc}; box-shadow: 0 0 0 3px color-mix(in srgb, ${pc} 12%, transparent); background: #fff;`,
-  uploadZone: { border: '2px dashed #e2e8f0', borderRadius: '14px', padding: '16px', textAlign: 'center', cursor: 'pointer', transition: 'all 0.25s', background: '#fafbfc', position: 'relative', overflow: 'hidden' },
-  uploadZoneHover: `border-color: ${pc}; background: color-mix(in srgb, ${pc} 4%, #fff);`,
+  label: { fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', color: dark ? '#94a3b8' : '#64748b', marginBottom: '6px', display: 'block' },
+  input: { borderRadius: '10px', border: `1.5px solid ${dark ? '#334155' : '#e2e8f0'}`, padding: '10px 14px', fontSize: '14px', transition: 'all 0.2s', background: dark ? '#1e293b' : '#f8fafc', color: dark ? '#f1f5f9' : '#0f172a' },
+  inputFocus: `outline: none; border-color: ${pc}; box-shadow: 0 0 0 3px color-mix(in srgb, ${pc} 12%, transparent);`,
+  uploadZone: { border: `2px dashed ${dark ? '#334155' : '#e2e8f0'}`, borderRadius: '14px', padding: '16px', textAlign: 'center', cursor: 'pointer', transition: 'all 0.25s', background: dark ? '#1e293b' : '#fafbfc', position: 'relative', overflow: 'hidden' },
+  uploadZoneHover: `border-color: ${pc}; background: color-mix(in srgb, ${pc} 4%, ${dark ? '#1e293b' : '#fff'});`,
   footer: { padding: '0 28px 24px', border: 'none', display: 'flex', gap: '10px', justifyContent: 'flex-end' },
-  cancelBtn: { padding: '10px 22px', borderRadius: '12px', border: '1.5px solid #e2e8f0', background: '#fff', color: '#64748b', fontWeight: 600, fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s' },
+  cancelBtn: { padding: '10px 22px', borderRadius: '12px', border: `1.5px solid ${dark ? '#334155' : '#e2e8f0'}`, background: dark ? '#1e293b' : '#fff', color: dark ? '#94a3b8' : '#64748b', fontWeight: 600, fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s' },
   submitBtn: { padding: '10px 28px', borderRadius: '12px', border: 'none', background: `linear-gradient(135deg, ${pc}, color-mix(in srgb, ${pc} 80%, #000))`, color: '#fff', fontWeight: 600, fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: `0 4px 14px color-mix(in srgb, ${pc} 35%, transparent)`, display: 'flex', alignItems: 'center', gap: '6px' },
 });
 
@@ -130,6 +131,7 @@ const ImageUploadZone = ({ imagePreview, onSelect, onRemove, pc }) => {
 
 // ==================== CATEGORY MODAL ====================
 const CategoryModal = ({ show, onHide, category, onSave, primaryColor }) => {
+  const { isDarkMode } = useDarkMode();
   const [form, setForm] = useState({ name: '', description: '', priority: 1, isActive: true });
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
@@ -137,7 +139,7 @@ const CategoryModal = ({ show, onHide, category, onSave, primaryColor }) => {
   const [imagePreview, setImagePreview] = useState(null);
   const [showCropper, setShowCropper] = useState(false);
   const [tempImageSrc, setTempImageSrc] = useState(null);
-  const ms = modalStyles(primaryColor);
+  const ms = modalStyles(primaryColor, isDarkMode);
 
   useEffect(() => {
     if (show) {
@@ -220,6 +222,7 @@ const CategoryModal = ({ show, onHide, category, onSave, primaryColor }) => {
 
 // ==================== SUBCATEGORY MODAL ====================
 const SubcategoryModal = ({ show, onHide, subcategory, categoryId, onSave, primaryColor }) => {
+  const { isDarkMode } = useDarkMode();
   const [form, setForm] = useState({ name: '', description: '', isActive: true, priority: 1 });
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
@@ -227,7 +230,7 @@ const SubcategoryModal = ({ show, onHide, subcategory, categoryId, onSave, prima
   const [imagePreview, setImagePreview] = useState(null);
   const [showCropper, setShowCropper] = useState(false);
   const [tempImageSrc, setTempImageSrc] = useState(null);
-  const ms = modalStyles(primaryColor);
+  const ms = modalStyles(primaryColor, isDarkMode);
 
   useEffect(() => {
     if (show) {
@@ -260,93 +263,134 @@ const SubcategoryModal = ({ show, onHide, subcategory, categoryId, onSave, prima
   const handleFileDrop = (e) => { e.preventDefault(); setDragOver(false); const file = e.dataTransfer?.files?.[0]; if (file && file.type.startsWith('image/')) { const reader = new FileReader(); reader.onloadend = () => handleImageSelect(reader.result); reader.readAsDataURL(file); } };
   const handleFileChange = (e) => { const file = e.target.files?.[0]; if (file && file.type.startsWith('image/')) { const reader = new FileReader(); reader.onloadend = () => handleImageSelect(reader.result); reader.readAsDataURL(file); } e.target.value = ''; };
 
+  const bg = isDarkMode ? '#1a2236' : '#ffffff';
+  const bg2 = isDarkMode ? '#141c2e' : '#f8fafc';
+  const border = isDarkMode ? '#2a3650' : '#e2e8f0';
+  const text = isDarkMode ? '#e2e8f0' : '#1e293b';
+  const muted = isDarkMode ? '#64748b' : '#94a3b8';
+  const inputBg = isDarkMode ? '#0f1827' : '#ffffff';
+
   return (
     <>
       <Modal show={show} onHide={onHide} centered size="lg" contentClassName="mtree-modal-content">
         <Form onSubmit={handleSubmit}>
-          <div style={{ position: 'relative', padding: '32px 32px 24px', overflow: 'hidden', background: `linear-gradient(135deg, color-mix(in srgb, ${pc} 6%, #fff) 0%, #fff 50%, color-mix(in srgb, ${pc} 4%, #fff) 100%)`, borderBottom: '1px solid #f1f5f9' }}>
-            <div style={{ position: 'absolute', top: -40, right: -20, width: 120, height: 120, borderRadius: '50%', background: `color-mix(in srgb, ${pc} 8%, transparent)`, filter: 'blur(40px)', pointerEvents: 'none' }} />
-            <div style={{ position: 'absolute', bottom: -30, left: 40, width: 80, height: 80, borderRadius: '50%', background: 'color-mix(in srgb, #8b5cf6 6%, transparent)', filter: 'blur(30px)', pointerEvents: 'none' }} />
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
-              <div style={{ width: 52, height: 52, borderRadius: '18px', flexShrink: 0, position: 'relative', background: `linear-gradient(135deg, ${pc}, color-mix(in srgb, ${pc} 60%, #8b5cf6))`, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 10px 30px color-mix(in srgb, ${pc} 30%, transparent)` }}>
-                <i className={`bi bi-${subcategory ? 'pencil-square' : 'layers-fill'}`} style={{ fontSize: '22px', color: '#fff' }}></i>
-                <div style={{ position: 'absolute', inset: 0, borderRadius: '18px', background: 'linear-gradient(135deg, rgba(255,255,255,0.25) 0%, transparent 50%)', pointerEvents: 'none' }} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.5px' }}>{subcategory ? 'Edit Subcategory' : 'New Subcategory'}</div>
-                <div style={{ fontSize: '13px', color: '#94a3b8', marginTop: 2 }}>{subcategory ? 'Modify name, image, priority & visibility' : 'Add a fresh subcategory to organize your menu'}</div>
-              </div>
-              <button type="button" onClick={onHide} style={{ width: 38, height: 38, borderRadius: '14px', border: 'none', background: 'rgba(0,0,0,0.04)', backdropFilter: 'blur(10px)', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s', fontSize: '16px', flexShrink: 0 }} className="mtree-close-btn"><i className="bi bi-x-lg"></i></button>
+
+          {/* ── Header ── */}
+          <div style={{ padding: '22px 28px 18px', display: 'flex', alignItems: 'center', gap: 14, borderBottom: `1px solid ${border}`, background: bg }}>
+            <div style={{ width: 40, height: 40, borderRadius: '10px', background: pc, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <i className={`bi bi-${subcategory ? 'pencil' : 'layers-fill'}`} style={{ fontSize: '18px', color: '#fff' }} />
             </div>
-            <div style={{ position: 'relative' }}>
-              <input className="mtree-input" placeholder={subcategory ? 'Subcategory name' : 'Enter subcategory name...'} value={form.name} onChange={e => { setForm(p => ({ ...p, name: e.target.value })); setErrors({}); }} autoFocus style={{ width: '100%', padding: '14px 18px', fontSize: '16px', fontWeight: 700, borderRadius: '14px', border: `2px solid ${errors.name ? '#ef4444' : 'rgba(0,0,0,0.06)'}`, background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(10px)', outline: 'none', transition: 'all 0.3s', color: '#0f172a', letterSpacing: '-0.3px', boxShadow: '0 2px 12px rgba(0,0,0,0.03)' }} onFocus={e => { e.target.style.borderColor = pc; e.target.style.boxShadow = `0 0 0 4px color-mix(in srgb, ${pc} 10%, transparent)`; }} onBlur={e => { e.target.style.borderColor = errors.name ? '#ef4444' : 'rgba(0,0,0,0.06)'; e.target.style.boxShadow = '0 2px 12px rgba(0,0,0,0.03)'; }} />
-              {errors.name && <div style={{ fontSize: '11px', color: '#ef4444', marginTop: 6, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}><i className="bi bi-exclamation-triangle-fill"></i>Name is required</div>}
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '17px', fontWeight: 700, color: text, lineHeight: 1.2 }}>{subcategory ? 'Edit Subcategory' : 'New Subcategory'}</div>
+              <div style={{ fontSize: '12px', color: muted, marginTop: 2 }}>{subcategory ? 'Update name, image, order & visibility' : 'Fill in the details to add a subcategory'}</div>
             </div>
+            <button type="button" onClick={onHide} style={{ width: 32, height: 32, borderRadius: '8px', border: `1px solid ${border}`, background: 'transparent', color: muted, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '14px', flexShrink: 0 }}><i className="bi bi-x-lg" /></button>
           </div>
 
-          <div style={{ padding: '24px 32px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+          {/* ── Name input ── */}
+          <div style={{ padding: '20px 28px 0', background: bg }}>
+            <label style={{ fontSize: '12px', fontWeight: 600, color: muted, display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.6px' }}>Subcategory Name <span style={{ color: '#ef4444' }}>*</span></label>
+            <input
+              className="mtree-input"
+              placeholder="e.g. Grilled Starters, Desserts..."
+              value={form.name}
+              onChange={e => { setForm(p => ({ ...p, name: e.target.value })); setErrors({}); }}
+              autoFocus
+              style={{ width: '100%', padding: '11px 14px', fontSize: '14px', fontWeight: 600, borderRadius: '8px', border: `1.5px solid ${errors.name ? '#ef4444' : border}`, background: inputBg, outline: 'none', color: text, transition: 'border-color 0.2s' }}
+              onFocus={e => { e.target.style.borderColor = pc; }}
+              onBlur={e => { e.target.style.borderColor = errors.name ? '#ef4444' : border; }}
+            />
+            {errors.name && <div style={{ fontSize: '11px', color: '#ef4444', marginTop: 5, display: 'flex', alignItems: 'center', gap: 4 }}><i className="bi bi-exclamation-circle" />Name is required</div>}
+          </div>
+
+          {/* ── Body: 2-col grid ── */}
+          <div style={{ padding: '20px 28px', display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: 20, background: bg, maxHeight: '56vh', overflowY: 'auto' }}>
+
+            {/* Left: Cover Image — square */}
             <div>
-              <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: '#475569', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <div style={{ width: 20, height: 20, borderRadius: '6px', background: '#ea580c10', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><i className="bi bi-image" style={{ fontSize: '10px', color: '#ea580c' }}></i></div>Cover Image
-              </div>
+              <label style={{ fontSize: '11px', fontWeight: 600, color: muted, display: 'block', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.6px' }}>Cover Image</label>
               {imagePreview ? (
-                <div style={{ position: 'relative', borderRadius: '18px', overflow: 'hidden', border: '2px solid #e8ecf1', height: 220, background: '#0f172a', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-                  <img src={imagePreview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.95 }} />
-                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(0deg, rgba(0,0,0,0.6) 0%, transparent 40%, transparent 70%, rgba(0,0,0,0.2) 100%)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 14, opacity: 0, transition: 'opacity 0.25s' }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0}>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}><button type="button" onClick={() => { setImageFile(null); setImagePreview(null); }} style={{ width: 34, height: 34, borderRadius: '10px', border: 'none', fontSize: '14px', background: 'rgba(239,68,68,0.85)', backdropFilter: 'blur(8px)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><i className="bi bi-trash3"></i></button></div>
-                    <div style={{ display: 'flex', justifyContent: 'center' }}><button type="button" onClick={() => fileRef.current?.click()} style={{ padding: '8px 20px', borderRadius: '10px', border: 'none', fontSize: '12px', fontWeight: 700, background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(12px)', color: '#1e293b', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 4px 16px rgba(0,0,0,0.15)', letterSpacing: '-0.2px' }}><i className="bi bi-arrow-repeat" style={{ fontSize: '13px' }}></i>Change Image</button></div>
+                <div style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', border: `1.5px solid ${border}`, aspectRatio: '1', width: '100%' }}>
+                  <img src={imagePreview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 10, opacity: 0, transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.45)'; e.currentTarget.style.opacity = 1; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,0,0,0)'; e.currentTarget.style.opacity = 0; }}>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                      <button type="button" onClick={() => { setImageFile(null); setImagePreview(null); }} style={{ width: 28, height: 28, borderRadius: '6px', border: 'none', background: '#ef4444', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}><i className="bi bi-trash3" /></button>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                      <button type="button" onClick={() => fileRef.current?.click()} style={{ padding: '6px 14px', borderRadius: '6px', border: 'none', fontSize: '12px', fontWeight: 600, background: '#fff', color: '#1e293b', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}><i className="bi bi-arrow-repeat" />Change</button>
+                    </div>
                   </div>
-                  <div style={{ position: 'absolute', top: 12, left: 12, padding: '4px 10px', borderRadius: '8px', background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(8px)', fontSize: '10px', fontWeight: 700, color: '#10b981', display: 'flex', alignItems: 'center', gap: 4 }}><i className="bi bi-check-circle-fill" style={{ fontSize: '9px' }}></i>Uploaded</div>
+                  <span style={{ position: 'absolute', top: 8, left: 8, padding: '2px 7px', borderRadius: '5px', background: '#10b981', fontSize: '10px', fontWeight: 700, color: '#fff' }}>✓ Uploaded</span>
                 </div>
               ) : (
-                <div onClick={() => fileRef.current?.click()} onDragOver={e => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)} onDrop={handleFileDrop} style={{ borderRadius: '18px', height: 220, position: 'relative', overflow: 'hidden', border: `2.5px dashed ${dragOver ? pc : '#d1d5db'}`, background: dragOver ? `color-mix(in srgb, ${pc} 4%, #fff)` : 'linear-gradient(145deg, #fafbfd, #f5f7fa)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s', gap: 10 }}>
-                  <div style={{ width: 64, height: 64, borderRadius: '20px', position: 'relative', background: `linear-gradient(135deg, color-mix(in srgb, ${pc} 12%, #fff), color-mix(in srgb, ${pc} 6%, #fff))`, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 8px 24px color-mix(in srgb, ${pc} 10%, transparent)` }}><i className="bi bi-cloud-arrow-up-fill" style={{ fontSize: '24px', color: pc }} /></div>
-                  <div style={{ textAlign: 'center' }}><div style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>{dragOver ? 'Drop it here!' : 'Upload Cover Image'}</div><div style={{ fontSize: '11px', color: '#94a3b8', marginTop: 3 }}>Drag & drop or <span style={{ color: pc, fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: '2px' }}>browse files</span></div></div>
-                  <div style={{ fontSize: '10px', color: '#c1c8d4', background: '#f1f5f9', padding: '3px 10px', borderRadius: '6px' }}>PNG, JPG, WEBP up to 5MB</div>
+                <div
+                  onClick={() => fileRef.current?.click()}
+                  onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={handleFileDrop}
+                  style={{ borderRadius: '10px', aspectRatio: '1', width: '100%', border: `1.5px dashed ${dragOver ? pc : border}`, background: dragOver ? (isDarkMode ? '#1e2d4a' : '#f0f7ff') : bg2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s', gap: 10 }}
+                >
+                  <div style={{ width: 52, height: 52, borderRadius: '12px', background: isDarkMode ? '#1e2d4a' : '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <i className="bi bi-cloud-upload" style={{ fontSize: '24px', color: pc }} />
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: text }}>{dragOver ? 'Drop to upload' : 'Click to Upload'}</div>
+                    <div style={{ fontSize: '11px', color: muted, marginTop: 3 }}>or drag & drop your image here</div>
+                  </div>
+                  <span style={{ fontSize: '10px', color: muted, background: isDarkMode ? '#2a3650' : '#e9eef5', padding: '2px 8px', borderRadius: '4px' }}>PNG · JPG · WEBP · max 5MB</span>
                 </div>
               )}
               <input ref={fileRef} type="file" accept="image/*" hidden onChange={handleFileChange} />
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div>
-                <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: '#475569', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}><div style={{ width: 20, height: 20, borderRadius: '6px', background: form.isActive ? '#10b98110' : '#64748b10', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><i className="bi bi-broadcast" style={{ fontSize: '10px', color: form.isActive ? '#10b981' : '#64748b' }}></i></div>Visibility</div>
-                <div onClick={() => setForm(p => ({ ...p, isActive: !p.isActive }))} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderRadius: '16px', cursor: 'pointer', transition: 'all 0.3s', userSelect: 'none', background: form.isActive ? 'linear-gradient(135deg, #ecfdf5, #f0fdf4)' : 'linear-gradient(135deg, #f8fafc, #f1f5f9)', border: `1.5px solid ${form.isActive ? '#86efac' : '#e2e8f0'}`, boxShadow: form.isActive ? '0 4px 16px rgba(16,185,129,0.1)' : 'none' }}>
-                  <div style={{ width: 42, height: 42, borderRadius: '14px', flexShrink: 0, background: form.isActive ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #cbd5e1, #94a3b8)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: form.isActive ? '0 6px 16px rgba(16,185,129,0.3)' : '0 2px 8px rgba(0,0,0,0.08)', transition: 'all 0.3s' }}><i className={`bi bi-${form.isActive ? 'eye-fill' : 'eye-slash-fill'}`} style={{ fontSize: '17px', color: '#fff' }}></i></div>
-                  <div style={{ flex: 1 }}><div style={{ fontSize: '14px', fontWeight: 800, color: form.isActive ? '#065f46' : '#475569', letterSpacing: '-0.3px' }}>{form.isActive ? 'Live on Menu' : 'Hidden'}</div><div style={{ fontSize: '11px', color: form.isActive ? '#6ee7b7' : '#94a3b8', fontWeight: 500, marginTop: 1 }}>{form.isActive ? 'Customers can see this subcategory' : 'Not visible to customers'}</div></div>
-                  <ToggleSwitch isActive={form.isActive} onToggle={v => setForm(p => ({ ...p, isActive: v }))} loading={false} size="lg" />
+            {/* Right: Settings — compact rows */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+
+              {/* Visibility */}
+              <div style={{ paddingBottom: 14, borderBottom: `1px solid ${border}`, marginBottom: 14 }}>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: muted, display: 'block', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.6px' }}>Visibility</label>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }} onClick={() => setForm(p => ({ ...p, isActive: !p.isActive }))}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                    <i className={`bi bi-${form.isActive ? 'eye-fill' : 'eye-slash'}`} style={{ fontSize: '13px', color: form.isActive ? '#10b981' : muted }} />
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: form.isActive ? (isDarkMode ? '#6ee7b7' : '#059669') : text }}>{form.isActive ? 'Visible' : 'Hidden'}</span>
+                  </div>
+                  <ToggleSwitch isActive={form.isActive} onToggle={v => setForm(p => ({ ...p, isActive: v }))} loading={false} size="sm" />
                 </div>
               </div>
 
-              <div>
-                <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: '#475569', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}><div style={{ width: 20, height: 20, borderRadius: '6px', background: '#6366f110', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><i className="bi bi-arrows-move" style={{ fontSize: '10px', color: '#6366f1' }}></i></div>Display Order</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px', borderRadius: '14px', background: '#f8fafc', border: '1.5px solid #e8ecf1' }}>
-                  <button type="button" onClick={() => setForm(p => ({ ...p, priority: Math.max(0, (parseInt(p.priority) || 1) - 1) }))} style={{ width: 42, height: 42, borderRadius: '10px', border: 'none', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', color: '#64748b', transition: 'all 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', flexShrink: 0 }}><i className="bi bi-dash-lg"></i></button>
-                  <div style={{ flex: 1, textAlign: 'center' }}><input type="number" min="0" value={form.priority} onChange={e => setForm(p => ({ ...p, priority: e.target.value }))} style={{ width: '100%', padding: '6px', fontSize: '22px', fontWeight: 800, textAlign: 'center', border: 'none', background: 'transparent', outline: 'none', color: '#1e293b', letterSpacing: '-0.5px' }} /><div style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#94a3b8', marginTop: -2 }}>Priority</div></div>
-                  <button type="button" onClick={() => setForm(p => ({ ...p, priority: (parseInt(p.priority) || 0) + 1 }))} style={{ width: 42, height: 42, borderRadius: '10px', border: 'none', background: `linear-gradient(135deg, ${pc}, color-mix(in srgb, ${pc} 80%, #8b5cf6))`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', color: '#fff', transition: 'all 0.2s', boxShadow: `0 4px 12px color-mix(in srgb, ${pc} 25%, transparent)`, flexShrink: 0 }}><i className="bi bi-plus-lg"></i></button>
+              {/* Display Order */}
+              <div style={{ paddingBottom: 14, borderBottom: `1px solid ${border}`, marginBottom: 14 }}>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: muted, display: 'block', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.6px' }}>Order</label>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <button type="button" onClick={() => setForm(p => ({ ...p, priority: Math.max(0, (parseInt(p.priority) || 1) - 1) }))} style={{ width: 28, height: 28, borderRadius: '6px', border: `1.5px solid ${border}`, background: bg2, color: text, cursor: 'pointer', fontSize: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>−</button>
+                  <input type="number" min="0" value={form.priority} onChange={e => setForm(p => ({ ...p, priority: e.target.value }))} style={{ width: 45, padding: '4px 6px', fontSize: '14px', fontWeight: 700, textAlign: 'center', border: `1.5px solid ${border}`, borderRadius: '6px', background: inputBg, outline: 'none', color: text }} />
+                  <button type="button" onClick={() => setForm(p => ({ ...p, priority: (parseInt(p.priority) || 0) + 1 }))} style={{ width: 28, height: 28, borderRadius: '6px', border: 'none', background: pc, color: '#fff', cursor: 'pointer', fontSize: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>+</button>
                 </div>
               </div>
 
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: '#475569', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}><div style={{ width: 20, height: 20, borderRadius: '6px', background: '#8b5cf610', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><i className="bi bi-text-paragraph" style={{ fontSize: '10px', color: '#8b5cf6' }}></i></div>Description <span style={{ fontSize: '9px', fontWeight: 500, color: '#b0b8c4', textTransform: 'none', letterSpacing: 0 }}>optional</span></div>
-                <textarea className="mtree-input" rows={3} placeholder="Brief description of this subcategory..." value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} style={{ width: '100%', padding: '12px 16px', fontSize: '13px', borderRadius: '14px', border: '1.5px solid #e8ecf1', background: '#fafbfd', outline: 'none', resize: 'none', transition: 'all 0.3s', minHeight: 72, color: '#334155', lineHeight: 1.6 }} onFocus={e => { e.target.style.borderColor = pc; e.target.style.boxShadow = `0 0 0 3px color-mix(in srgb, ${pc} 8%, transparent)`; }} onBlur={e => { e.target.style.borderColor = '#e8ecf1'; e.target.style.boxShadow = 'none'; }} />
+              {/* Description */}
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: muted, display: 'block', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.6px' }}>Description <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, fontSize: '11px' }}>(opt.)</span></label>
+                <textarea
+                  className="mtree-input"
+                  rows={4}
+                  placeholder="Brief description..."
+                  value={form.description}
+                  onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
+                  style={{ width: '100%', padding: '9px 12px', fontSize: '12px', borderRadius: '8px', border: `1.5px solid ${border}`, background: inputBg, outline: 'none', resize: 'none', color: text, lineHeight: 1.5, transition: 'border-color 0.2s' }}
+                  onFocus={e => { e.target.style.borderColor = pc; }}
+                  onBlur={e => { e.target.style.borderColor = border; }}
+                />
               </div>
             </div>
           </div>
 
-          <div style={{ padding: '18px 32px 24px', display: 'flex', alignItems: 'center', background: 'linear-gradient(180deg, #fafbfd, #f5f7fa)', borderTop: '1px solid #edf0f4', borderRadius: '0 0 20px 20px' }}>
-            <div style={{ display: 'flex', gap: 6, flex: 1 }}>
-              {form.isActive && <span style={{ fontSize: '10px', fontWeight: 700, padding: '5px 10px', borderRadius: '8px', background: '#ecfdf5', color: '#059669', display: 'inline-flex', alignItems: 'center', gap: 4 }}><div style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981' }}></div>Live</span>}
-              {!form.isActive && <span style={{ fontSize: '10px', fontWeight: 700, padding: '5px 10px', borderRadius: '8px', background: '#f1f5f9', color: '#64748b', display: 'inline-flex', alignItems: 'center', gap: 4 }}><div style={{ width: 6, height: 6, borderRadius: '50%', background: '#94a3b8' }}></div>Draft</span>}
-              {form.priority !== '' && <span style={{ fontSize: '10px', fontWeight: 700, padding: '5px 10px', borderRadius: '8px', background: '#eef2ff', color: '#6366f1', display: 'inline-flex', alignItems: 'center', gap: 4 }}><i className="bi bi-arrow-up-short" style={{ fontSize: '11px' }}></i>#{form.priority}</span>}
-            </div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button type="button" onClick={onHide} style={{ padding: '11px 24px', borderRadius: '12px', border: '1.5px solid #e2e8f0', background: '#fff', color: '#475569', fontWeight: 700, fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s' }} className="mtree-cancel-btn">Cancel</button>
-              <button type="submit" disabled={saving} style={{ padding: '11px 32px', borderRadius: '12px', border: 'none', position: 'relative', overflow: 'hidden', background: `linear-gradient(135deg, ${pc}, color-mix(in srgb, ${pc} 65%, #7c3aed))`, color: '#fff', fontWeight: 800, fontSize: '13px', cursor: 'pointer', transition: 'all 0.3s', letterSpacing: '-0.2px', boxShadow: `0 6px 20px color-mix(in srgb, ${pc} 35%, transparent)`, opacity: saving ? 0.7 : 1, display: 'flex', alignItems: 'center', gap: 8 }} className="mtree-submit-btn">
-                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%)', pointerEvents: 'none' }} />
-                {saving ? <Spinner size="sm" /> : <><i className="bi bi-check2-circle" style={{ fontSize: '16px' }}></i><span style={{ position: 'relative' }}>{subcategory ? 'Save Changes' : 'Create Subcategory'}</span></>}
-              </button>
-            </div>
+          {/* ── Footer ── */}
+          <div style={{ padding: '16px 28px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 10, borderTop: `1px solid ${border}`, background: bg2, borderRadius: '0 0 12px 12px' }}>
+            <button type="button" onClick={onHide} style={{ padding: '9px 22px', borderRadius: '8px', border: `1.5px solid ${border}`, background: 'transparent', color: text, fontWeight: 600, fontSize: '13px', cursor: 'pointer' }} className="mtree-cancel-btn">Cancel</button>
+            <button type="submit" disabled={saving} style={{ padding: '9px 26px', borderRadius: '8px', border: 'none', background: pc, color: '#fff', fontWeight: 700, fontSize: '13px', cursor: 'pointer', opacity: saving ? 0.7 : 1, display: 'flex', alignItems: 'center', gap: 8 }} className="mtree-submit-btn">
+              {saving ? <Spinner size="sm" /> : <><i className="bi bi-check2" style={{ fontSize: '15px' }} />{subcategory ? 'Save Changes' : 'Create Subcategory'}</>}
+            </button>
           </div>
         </Form>
       </Modal>
@@ -421,6 +465,7 @@ const InlineAddonRow = ({ addon, index, onChange, onRemove, pc }) => (
 
 // ==================== ITEM MODAL ====================
 const ItemModal = ({ show, onHide, item, categoryId, subcategoryId, addons, onSave, primaryColor }) => {
+  const { isDarkMode } = useDarkMode();
   const [form, setForm] = useState({ name: '', description: '', price: '', mrp: '', halfPrice: '', halfMrp: '', qtrPrice: '', qtrMrp: '', dietaryType: true, isAvailable: true, isActive: true, isRecommended: false, preparationMinutes: '', priority: 1, spiceLevel: '', addonsId: '', gstPercentage: '', gstType: '' });
   const [inlineAddons, setInlineAddons] = useState([]);
   const [existingAddonItems, setExistingAddonItems] = useState([]);
@@ -430,8 +475,15 @@ const ItemModal = ({ show, onHide, item, categoryId, subcategoryId, addons, onSa
   const [imagePreview, setImagePreview] = useState(null);
   const [showCropper, setShowCropper] = useState(false);
   const [tempImageSrc, setTempImageSrc] = useState(null);
-  const ms = modalStyles(primaryColor);
+  const ms = modalStyles(primaryColor, isDarkMode);
   const pc = primaryColor;
+
+  const bg = isDarkMode ? '#1a2236' : '#ffffff';
+  const bg2 = isDarkMode ? '#141c2e' : '#f8fafc';
+  const border = isDarkMode ? '#2a3650' : '#e2e8f0';
+  const text = isDarkMode ? '#e2e8f0' : '#1e293b';
+  const muted = isDarkMode ? '#64748b' : '#94a3b8';
+  const inputBg = isDarkMode ? '#0f1827' : '#ffffff';
 
   useEffect(() => {
     if (show) {
@@ -490,16 +542,17 @@ const ItemModal = ({ show, onHide, item, categoryId, subcategoryId, addons, onSa
 
   return (
     <>
-      <Modal show={show} onHide={onHide} centered size="lg" contentClassName="mtree-modal-content" dialogClassName="mtree-item-modal-dialog">
-        <div style={ms.header}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div style={ms.headerIcon}><i className={`bi bi-${item ? 'pencil-square' : 'cup-hot-fill'}`}></i></div>
-            <div style={{ flex: 1 }}>
-              <div style={ms.headerTitle}>{item ? 'Edit Menu Item' : 'New Menu Item'}</div>
-              <div style={ms.headerSub}>{item ? 'Update item details and pricing' : 'Add a delicious new item to your menu'}</div>
-            </div>
-            <button onClick={onHide} style={ms.closeBtn} className="mtree-close-btn"><i className="bi bi-x-lg"></i></button>
+      <Modal show={show} onHide={onHide} centered size="lg" contentClassName="mtree-modal-content">
+        {/* ── Header ── */}
+        <div style={{ padding: '22px 28px 18px', display: 'flex', alignItems: 'center', gap: 14, borderBottom: `1px solid ${border}`, background: bg }}>
+          <div style={{ width: 40, height: 40, borderRadius: '10px', background: pc, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <i className={`bi bi-${item ? 'pencil' : 'cup-hot-fill'}`} style={{ fontSize: '18px', color: '#fff' }} />
           </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '17px', fontWeight: 700, color: text, lineHeight: 1.2 }}>{item ? 'Edit Menu Item' : 'New Menu Item'}</div>
+            <div style={{ fontSize: '12px', color: muted, marginTop: 2 }}>{item ? 'Update pricing and details' : 'Add delicious items to your menu'}</div>
+          </div>
+          <button type="button" onClick={onHide} style={{ width: 32, height: 32, borderRadius: '8px', border: `1px solid ${border}`, background: 'transparent', color: muted, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '14px', flexShrink: 0 }}><i className="bi bi-x-lg" /></button>
         </div>
         <Form onSubmit={handleSubmit}>
           <div style={{ ...ms.body, maxHeight: '65vh', overflowY: 'auto', overflowX: 'hidden' }}>
@@ -507,63 +560,63 @@ const ItemModal = ({ show, onHide, item, categoryId, subcategoryId, addons, onSa
             {/* ── SECTION 1: MENU ITEM INFORMATION ── */}
             <SectionCard icon="tag" title="Menu Item Information" pc={pc}>
               <Row className="g-3">
-                <Col md={6}>
-                  <label style={ms.label}><i className="bi bi-type me-1"></i>Item Name <span style={{ color: '#ef4444' }}>*</span></label>
-                  <input className="mtree-input" placeholder="e.g. Paneer Tikka" value={form.name} onChange={e => { setForm(p => ({ ...p, name: e.target.value })); setErrors(p => ({ ...p, name: '' })); }} style={{ ...ms.input, width: '100%', ...(errors.name ? { borderColor: '#ef4444' } : {}) }} />
-                  {errors.name && <div style={{ fontSize: '11px', color: '#ef4444', marginTop: '4px' }}>{errors.name}</div>}
+                <Col md={5}>
+                  <label style={{ fontSize: '11px', fontWeight: 600, color: muted, display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.6px' }}><i className="bi bi-type me-1"></i>Item Name <span style={{ color: '#ef4444' }}>*</span></label>
+                  <input className="mtree-input" placeholder="e.g. Paneer Tikka" value={form.name} onChange={e => { setForm(p => ({ ...p, name: e.target.value })); setErrors(p => ({ ...p, name: '' })); }} style={{ width: '100%', padding: '13px 16px', fontSize: '16px', fontWeight: 600, borderRadius: '8px', border: `1.5px solid ${errors.name ? '#ef4444' : border}`, background: inputBg, outline: 'none', color: text, transition: 'border-color 0.2s' }} onFocus={e => { e.target.style.borderColor = pc; }} onBlur={e => { e.target.style.borderColor = errors.name ? '#ef4444' : border; }} />
+                  {errors.name && <div style={{ fontSize: '11px', color: '#ef4444', marginTop: '5px' }}>{errors.name}</div>}
                 </Col>
-                <Col md={6}>
-                  <div style={{ border: '1.5px solid #e2e8f0', borderRadius: '10px', overflow: 'hidden' }}>
+                <Col md={7}>
+                  <div style={{ border: `1.5px solid ${border}`, borderRadius: '10px', overflow: 'hidden' }}>
                     {/* Header */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '56px 1fr 1fr', background: '#f8fafc', borderBottom: '1.5px solid #e2e8f0' }}>
-                      <div style={{ padding: '5px 8px', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#94a3b8' }}></div>
-                      <div style={{ padding: '5px 8px', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#64748b', borderLeft: '1px solid #e2e8f0' }}>Price <span style={{ color: '#ef4444' }}>*</span></div>
-                      <div style={{ padding: '5px 8px', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#64748b', borderLeft: '1px solid #e2e8f0' }}>MRP <span style={{ color: '#94a3b8', fontWeight: 400, textTransform: 'none' }}>(opt)</span></div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '56px 1fr 1fr', background: bg2, borderBottom: `1.5px solid ${border}` }}>
+                      <div style={{ padding: '5px 8px', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: muted }}></div>
+                      <div style={{ padding: '5px 8px', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: muted, borderLeft: `1px solid ${border}` }}>Price <span style={{ color: '#ef4444' }}>*</span></div>
+                      <div style={{ padding: '5px 8px', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: muted, borderLeft: `1px solid ${border}` }}>MRP <span style={{ color: muted, fontWeight: 400, textTransform: 'none' }}>(opt)</span></div>
                     </div>
                     {/* FULL */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '56px 1fr 1fr', borderBottom: '1px solid #f1f5f9' }}>
-                      <div style={{ padding: '5px 8px', fontSize: '10px', fontWeight: 700, color: '#475569', display: 'flex', alignItems: 'center' }}>FULL</div>
-                      <div style={{ borderLeft: '1px solid #e2e8f0', position: 'relative' }}>
-                        <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>$</span>
-                        <input className="mtree-input" type="number" step="0.01" placeholder="220" value={form.price} onChange={e => { setForm(p => ({ ...p, price: e.target.value })); setErrors(p => ({ ...p, price: '' })); }} style={{ width: '100%', padding: '6px 8px 6px 22px', fontSize: '12px', border: 'none', background: errors.price ? '#fef2f2' : 'transparent', outline: 'none' }} />
+                    <div style={{ display: 'grid', gridTemplateColumns: '56px 1fr 1fr', borderBottom: `1px solid ${border}` }}>
+                      <div style={{ padding: '5px 8px', fontSize: '10px', fontWeight: 700, color: text, display: 'flex', alignItems: 'center' }}>FULL</div>
+                      <div style={{ borderLeft: `1px solid ${border}`, position: 'relative', background: inputBg }}>
+                        <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', color: muted, fontWeight: 600 }}>$</span>
+                        <input className="mtree-input" type="number" step="0.01" placeholder="220" value={form.price} onChange={e => { setForm(p => ({ ...p, price: e.target.value })); setErrors(p => ({ ...p, price: '' })); }} onWheel={e => e.target.blur()} style={{ width: '100%', padding: '10px 10px 10px 26px', fontSize: '15px', fontWeight: 600, border: 'none', background: 'transparent', outline: 'none', color: text }} />
                       </div>
-                      <div style={{ borderLeft: '1px solid #e2e8f0', position: 'relative' }}>
-                        <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>$</span>
-                        <input className="mtree-input" type="number" step="0.01" placeholder="260" value={form.mrp} onChange={e => setForm(p => ({ ...p, mrp: e.target.value }))} style={{ width: '100%', padding: '6px 8px 6px 22px', fontSize: '12px', border: 'none', background: 'transparent', outline: 'none' }} />
+                      <div style={{ borderLeft: `1px solid ${border}`, position: 'relative', background: inputBg }}>
+                        <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', color: muted, fontWeight: 600 }}>$</span>
+                        <input className="mtree-input" type="number" step="0.01" placeholder="260" value={form.mrp} onChange={e => setForm(p => ({ ...p, mrp: e.target.value }))} onWheel={e => e.target.blur()} style={{ width: '100%', padding: '10px 10px 10px 26px', fontSize: '15px', fontWeight: 600, border: 'none', background: 'transparent', outline: 'none', color: text }} />
                       </div>
                     </div>
                     {/* HALF */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '56px 1fr 1fr', borderBottom: '1px solid #f1f5f9' }}>
-                      <div style={{ padding: '5px 8px', fontSize: '10px', fontWeight: 700, color: '#475569', display: 'flex', alignItems: 'center' }}>HALF</div>
-                      <div style={{ borderLeft: '1px solid #e2e8f0', position: 'relative' }}>
-                        <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>$</span>
-                        <input className="mtree-input" type="number" step="0.01" placeholder="–" value={form.halfPrice} onChange={e => setForm(p => ({ ...p, halfPrice: e.target.value }))} style={{ width: '100%', padding: '6px 8px 6px 22px', fontSize: '12px', border: 'none', background: 'transparent', outline: 'none' }} />
+                    <div style={{ display: 'grid', gridTemplateColumns: '56px 1fr 1fr', borderBottom: `1px solid ${border}` }}>
+                      <div style={{ padding: '5px 8px', fontSize: '10px', fontWeight: 700, color: text, display: 'flex', alignItems: 'center' }}>HALF</div>
+                      <div style={{ borderLeft: `1px solid ${border}`, position: 'relative', background: inputBg }}>
+                        <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', color: muted, fontWeight: 600 }}>$</span>
+                        <input className="mtree-input" type="number" step="0.01" placeholder="–" value={form.halfPrice} onChange={e => setForm(p => ({ ...p, halfPrice: e.target.value }))} onWheel={e => e.target.blur()} style={{ width: '100%', padding: '10px 10px 10px 26px', fontSize: '15px', fontWeight: 600, border: 'none', background: 'transparent', outline: 'none', color: text }} />
                       </div>
-                      <div style={{ borderLeft: '1px solid #e2e8f0', position: 'relative' }}>
-                        <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>$</span>
-                        <input className="mtree-input" type="number" step="0.01" placeholder="–" value={form.halfMrp} onChange={e => setForm(p => ({ ...p, halfMrp: e.target.value }))} style={{ width: '100%', padding: '6px 8px 6px 22px', fontSize: '12px', border: 'none', background: 'transparent', outline: 'none' }} />
+                      <div style={{ borderLeft: `1px solid ${border}`, position: 'relative', background: inputBg }}>
+                        <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', color: muted, fontWeight: 600 }}>$</span>
+                        <input className="mtree-input" type="number" step="0.01" placeholder="–" value={form.halfMrp} onChange={e => setForm(p => ({ ...p, halfMrp: e.target.value }))} onWheel={e => e.target.blur()} style={{ width: '100%', padding: '10px 10px 10px 26px', fontSize: '15px', fontWeight: 600, border: 'none', background: 'transparent', outline: 'none', color: text }} />
                       </div>
                     </div>
                     {/* QTR */}
                     <div style={{ display: 'grid', gridTemplateColumns: '56px 1fr 1fr' }}>
-                      <div style={{ padding: '5px 8px', fontSize: '10px', fontWeight: 700, color: '#475569', display: 'flex', alignItems: 'center' }}>QTR</div>
-                      <div style={{ borderLeft: '1px solid #e2e8f0', position: 'relative' }}>
-                        <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>$</span>
-                        <input className="mtree-input" type="number" step="0.01" placeholder="–" value={form.qtrPrice} onChange={e => setForm(p => ({ ...p, qtrPrice: e.target.value }))} style={{ width: '100%', padding: '6px 8px 6px 22px', fontSize: '12px', border: 'none', background: 'transparent', outline: 'none' }} />
+                      <div style={{ padding: '5px 8px', fontSize: '10px', fontWeight: 700, color: text, display: 'flex', alignItems: 'center' }}>QTR</div>
+                      <div style={{ borderLeft: `1px solid ${border}`, position: 'relative', background: inputBg }}>
+                        <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', color: muted, fontWeight: 600 }}>$</span>
+                        <input className="mtree-input" type="number" step="0.01" placeholder="–" value={form.qtrPrice} onChange={e => setForm(p => ({ ...p, qtrPrice: e.target.value }))} onWheel={e => e.target.blur()} style={{ width: '100%', padding: '10px 10px 10px 26px', fontSize: '15px', fontWeight: 600, border: 'none', background: 'transparent', outline: 'none', color: text }} />
                       </div>
-                      <div style={{ borderLeft: '1px solid #e2e8f0', position: 'relative' }}>
-                        <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>$</span>
-                        <input className="mtree-input" type="number" step="0.01" placeholder="–" value={form.qtrMrp} onChange={e => setForm(p => ({ ...p, qtrMrp: e.target.value }))} style={{ width: '100%', padding: '6px 8px 6px 22px', fontSize: '12px', border: 'none', background: 'transparent', outline: 'none' }} />
+                      <div style={{ borderLeft: `1px solid ${border}`, position: 'relative', background: inputBg }}>
+                        <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', color: muted, fontWeight: 600 }}>$</span>
+                        <input className="mtree-input" type="number" step="0.01" placeholder="–" value={form.qtrMrp} onChange={e => setForm(p => ({ ...p, qtrMrp: e.target.value }))} onWheel={e => e.target.blur()} style={{ width: '100%', padding: '10px 10px 10px 26px', fontSize: '15px', fontWeight: 600, border: 'none', background: 'transparent', outline: 'none', color: text }} />
                       </div>
                     </div>
                   </div>
                   {errors.price && <div style={{ fontSize: '11px', color: '#ef4444', marginTop: '4px' }}>Full price is required</div>}
                 </Col>
                 <Col md={3}>
-                  <label style={ms.label}><i className="bi bi-percent me-1"></i>GST %</label>
+                  <label style={{ fontSize: '11px', fontWeight: 600, color: muted, display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.6px' }}><i className="bi bi-percent me-1"></i>GST %</label>
                   <div style={{ position: 'relative' }}>
-                    <input className="mtree-input" type="number" step="0.01" min="0" max="100" placeholder="0" value={form.gstPercentage} onChange={e => setForm(p => ({ ...p, gstPercentage: e.target.value }))} style={{ ...ms.input, width: '100%', paddingRight: '32px' }} />
-                    <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>%</span>
+                    <input className="mtree-input" type="number" step="0.01" min="0" max="100" placeholder="0" value={form.gstPercentage} onChange={e => setForm(p => ({ ...p, gstPercentage: e.target.value }))} onWheel={e => e.target.blur()} style={{ width: '100%', padding: '13px 32px 13px 16px', fontSize: '16px', fontWeight: 600, borderRadius: '8px', border: `1.5px solid ${border}`, background: inputBg, outline: 'none', color: text, transition: 'border-color 0.2s' }} onFocus={e => { e.target.style.borderColor = pc; }} onBlur={e => { e.target.style.borderColor = border; }} />
+                    <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', color: muted, fontWeight: 600 }}>%</span>
                   </div>
                 </Col>
                 <Col md={3}>
@@ -599,15 +652,15 @@ const ItemModal = ({ show, onHide, item, categoryId, subcategoryId, addons, onSa
                   </div>
                 </Col>
                 <Col md={4}>
-                  <label style={ms.label}><i className="bi bi-clock me-1"></i>Prep Time</label>
+                  <label style={{ fontSize: '11px', fontWeight: 600, color: muted, display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.6px' }}><i className="bi bi-clock me-1"></i>Prep Time</label>
                   <div style={{ position: 'relative' }}>
-                    <input className="mtree-input" type="number" placeholder="15" value={form.preparationMinutes} onChange={e => setForm(p => ({ ...p, preparationMinutes: e.target.value }))} style={{ ...ms.input, width: '100%', paddingRight: '44px' }} />
-                    <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '11px', color: '#94a3b8', fontWeight: 600 }}>min</span>
+                    <input className="mtree-input" type="number" placeholder="15" value={form.preparationMinutes} onChange={e => setForm(p => ({ ...p, preparationMinutes: e.target.value }))} onWheel={e => e.target.blur()} style={{ width: '100%', padding: '13px 44px 13px 16px', fontSize: '16px', fontWeight: 600, borderRadius: '8px', border: `1.5px solid ${border}`, background: inputBg, outline: 'none', color: text, transition: 'border-color 0.2s' }} onFocus={e => { e.target.style.borderColor = pc; }} onBlur={e => { e.target.style.borderColor = border; }} />
+                    <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', color: muted, fontWeight: 600 }}>min</span>
                   </div>
                 </Col>
                 <Col md={4}>
-                  <label style={ms.label}><i className="bi bi-sort-numeric-up me-1"></i>Priority</label>
-                  <input className="mtree-input" type="number" min="0" placeholder="1" value={form.priority} onChange={e => setForm(p => ({ ...p, priority: e.target.value }))} style={{ ...ms.input, width: '100%' }} />
+                  <label style={{ fontSize: '11px', fontWeight: 600, color: muted, display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.6px' }}><i className="bi bi-sort-numeric-up me-1"></i>Priority</label>
+                  <input className="mtree-input" type="number" min="0" placeholder="1" value={form.priority} onChange={e => setForm(p => ({ ...p, priority: e.target.value }))} onWheel={e => e.target.blur()} style={{ width: '100%', padding: '13px 16px', fontSize: '16px', fontWeight: 600, borderRadius: '8px', border: `1.5px solid ${border}`, background: inputBg, outline: 'none', color: text, transition: 'border-color 0.2s' }} onFocus={e => { e.target.style.borderColor = pc; }} onBlur={e => { e.target.style.borderColor = border; }} />
                 </Col>
                 <Col xs={12}>
                   <label style={ms.label}><i className="bi bi-fire me-1"></i>Spice Level</label>
@@ -618,24 +671,20 @@ const ItemModal = ({ show, onHide, item, categoryId, subcategoryId, addons, onSa
 
             {/* ── SECTION 3: CUSTOMER EXPERIENCE ── */}
             <SectionCard icon="stars" title="Customer Experience" pc={pc}>
-              <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {[
-                  { key: 'isRecommended', label: 'Recommended', sub: 'Show in top picks', icon: 'bi-hand-thumbs-up-fill', activeColor: '#f59e0b', activeBg: '#fef3c7' },
-                  { key: 'isAvailable', label: 'Available', sub: 'Visible to customers', icon: 'bi-eye-fill', activeColor: '#10b981', activeBg: '#d1fae5' },
-                  { key: 'isActive', label: 'Active', sub: 'Live on menu', icon: 'bi-lightning-fill', activeColor: '#6366f1', activeBg: '#e0e7ff' },
+                  { key: 'isRecommended', label: 'Recommended', icon: 'bi-hand-thumbs-up-fill' },
+                  { key: 'isAvailable', label: 'Available', icon: 'bi-eye-fill' },
+                  { key: 'isActive', label: 'Active', icon: 'bi-lightning-fill' },
                 ].map(t => {
                   const active = form[t.key];
                   return (
-                    <div key={t.key} onClick={() => setForm(p => ({ ...p, [t.key]: !p[t.key] }))}
-                      style={{ flex: '1 1 140px', padding: '14px 16px', borderRadius: '12px', border: `1.5px solid ${active ? t.activeColor + '50' : '#e8ecf1'}`, background: active ? t.activeBg + '80' : '#fafbfc', cursor: 'pointer', transition: 'all 0.25s', display: 'flex', alignItems: 'center', gap: '12px', userSelect: 'none' }}>
-                      <div style={{ width: 36, height: 36, borderRadius: '10px', background: active ? t.activeColor + '20' : '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.25s' }}>
-                        <i className={`bi ${t.icon}`} style={{ fontSize: '15px', color: active ? t.activeColor : '#94a3b8' }}></i>
+                    <div key={t.key} onClick={() => setForm(p => ({ ...p, [t.key]: !p[t.key] }))} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 10, borderBottom: `1px solid ${border}`, cursor: 'pointer', userSelect: 'none' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <i className={`bi ${t.icon}`} style={{ fontSize: '14px', color: active ? pc : muted }} />
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: active ? text : muted }}>{t.label}</span>
                       </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: '13px', fontWeight: 600, color: active ? '#1e293b' : '#64748b' }}>{t.label}</div>
-                        <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '1px' }}>{t.sub}</div>
-                      </div>
-                      <ToggleSwitch isActive={active} onToggle={() => setForm(p => ({ ...p, [t.key]: !p[t.key] }))} loading={false} size="lg" />
+                      <ToggleSwitch isActive={active} onToggle={() => setForm(p => ({ ...p, [t.key]: !p[t.key] }))} loading={false} size="sm" />
                     </div>
                   );
                 })}
@@ -685,22 +734,18 @@ const ItemModal = ({ show, onHide, item, categoryId, subcategoryId, addons, onSa
                   <div style={{ fontSize: '10px', color: '#b0b8c4', marginTop: '6px' }}>PNG, JPG, WEBP up to 5MB</div>
                 </Col>
                 <Col md={6}>
-                  <label style={ms.label}><i className="bi bi-text-paragraph me-1"></i>Description</label>
-                  <textarea className="mtree-input" rows={4} placeholder="Describe the dish — flavor, ingredients, portion..." value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} style={{ ...ms.input, width: '100%', resize: 'vertical', minHeight: '110px' }} />
+                  <label style={{ fontSize: '11px', fontWeight: 600, color: muted, display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.6px' }}><i className="bi bi-text-paragraph me-1"></i>Description</label>
+                  <textarea className="mtree-input" rows={4} placeholder="Describe the dish — flavor, ingredients, portion..." value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} style={{ width: '100%', padding: '13px 16px', fontSize: '15px', borderRadius: '8px', border: `1.5px solid ${border}`, background: inputBg, outline: 'none', resize: 'vertical', minHeight: 110, color: text, lineHeight: 1.6, transition: 'border-color 0.2s' }} onFocus={e => { e.target.style.borderColor = pc; }} onBlur={e => { e.target.style.borderColor = border; }} />
                 </Col>
               </Row>
             </SectionCard>
           </div>
 
           {/* ── FOOTER ── */}
-          <div style={{ ...ms.footer, borderTop: '1px solid #f1f5f9', paddingTop: '18px', alignItems: 'center' }}>
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '10px' }}>
-              {form.isRecommended && <span style={{ fontSize: '11px', fontWeight: 600, color: '#f59e0b', background: '#fef3c7', padding: '3px 10px', borderRadius: '6px' }}><i className="bi bi-hand-thumbs-up-fill me-1"></i>Recommended</span>}
-              {inlineAddons.filter(a => a.name.trim()).length > 0 && <span style={{ fontSize: '11px', fontWeight: 600, color: '#8b5cf6', background: '#ede9fe', padding: '3px 10px', borderRadius: '6px' }}><i className="bi bi-puzzle me-1"></i>{inlineAddons.filter(a => a.name.trim()).length} add-on{inlineAddons.filter(a => a.name.trim()).length > 1 ? 's' : ''}</span>}
-            </div>
-            <button type="button" onClick={onHide} style={ms.cancelBtn} className="mtree-cancel-btn">Cancel</button>
-            <button type="submit" disabled={saving} style={{ ...ms.submitBtn, opacity: saving ? 0.7 : 1, padding: '11px 32px' }} className="mtree-submit-btn">
-              {saving ? <Spinner size="sm" /> : <><i className="bi bi-check-lg"></i>{item ? 'Update Item' : 'Add Item'}</>}
+          <div style={{ padding: '16px 28px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 10, borderTop: `1px solid ${border}`, background: bg2, borderRadius: '0 0 12px 12px' }}>
+            <button type="button" onClick={onHide} style={{ padding: '9px 22px', borderRadius: '8px', border: `1.5px solid ${border}`, background: 'transparent', color: text, fontWeight: 600, fontSize: '13px', cursor: 'pointer' }} className="mtree-cancel-btn">Cancel</button>
+            <button type="submit" disabled={saving} style={{ padding: '9px 26px', borderRadius: '8px', border: 'none', background: pc, color: '#fff', fontWeight: 700, fontSize: '13px', cursor: 'pointer', opacity: saving ? 0.7 : 1, display: 'flex', alignItems: 'center', gap: 8 }} className="mtree-submit-btn">
+              {saving ? <Spinner size="sm" /> : <><i className="bi bi-check2" style={{ fontSize: '15px' }} />{item ? 'Update Item' : 'Add Item'}</>}
             </button>
           </div>
         </Form>
@@ -712,6 +757,7 @@ const ItemModal = ({ show, onHide, item, categoryId, subcategoryId, addons, onSa
 
 // ==================== SUBCATEGORY ACCORDION ITEM ====================
 const SubcategoryAccordionItem = ({ sub, isExpanded, onToggle, onEditSub, onEditItem, onAddItem, primaryColor, onStatusChange }) => {
+  const { isDarkMode } = useDarkMode();
   const [items, setItems] = useState([]);
   const [addons, setAddons] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -783,9 +829,9 @@ const SubcategoryAccordionItem = ({ sub, isExpanded, onToggle, onEditSub, onEdit
   const sc = LEVEL_CONFIG.subcategory;
 
   return (
-    <div style={{ marginBottom: '4px', marginLeft: '20px', borderRadius: '10px', border: isExpanded ? `1.5px solid ${primaryColor}` : '1px solid #e2e8f0', background: '#fff', transition: 'all 0.25s ease', boxShadow: isExpanded ? `0 4px 16px ${primaryColor}18` : 'none' }}>
+    <div style={{ marginBottom: '4px', marginLeft: '20px', borderRadius: '10px', border: isExpanded ? `1.5px solid ${primaryColor}` : `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`, background: isDarkMode ? '#1e293b' : '#fff', transition: 'all 0.25s ease', boxShadow: isExpanded ? `0 4px 16px ${primaryColor}18` : 'none' }}>
       {/* Subcategory Header */}
-      <div onClick={handleToggle} className="subcategory-header-row" style={{ display: 'flex', alignItems: 'center', padding: '10px 16px', cursor: 'pointer', borderRadius: isExpanded ? '10px 10px 0 0' : '10px', background: isExpanded ? '#f0fdfa' : '#fff', transition: 'background 0.25s ease', gap: '12px', userSelect: 'none' }}>
+      <div onClick={handleToggle} className="subcategory-header-row" style={{ display: 'flex', alignItems: 'center', padding: '10px 16px', cursor: 'pointer', borderRadius: isExpanded ? '10px 10px 0 0' : '10px', background: isExpanded ? (isDarkMode ? `color-mix(in srgb, ${primaryColor} 15%, #0f172a)` : '#f0fdfa') : (isDarkMode ? '#1e293b' : '#fff'), transition: 'background 0.25s ease', gap: '12px', userSelect: 'none' }}>
         <i className={`bi bi-chevron-${isExpanded ? 'down' : 'right'}`} style={{ fontSize: '12px', color: isExpanded ? primaryColor : '#94a3b8', minWidth: '14px', transition: 'color 0.25s ease' }}></i>
         <div style={{ width: 32, height: 32, borderRadius: '8px', background: isExpanded ? `linear-gradient(135deg, ${sc.color}, ${primaryColor})` : sc.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, color: isExpanded ? '#fff' : sc.color, transition: 'all 0.25s ease', flexShrink: 0, overflow: 'hidden' }}>
           {sub.iconUrl ? <img src={sub.iconUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none'; }} /> : (sub.name || '?').charAt(0).toUpperCase()}
@@ -803,7 +849,7 @@ const SubcategoryAccordionItem = ({ sub, isExpanded, onToggle, onEditSub, onEdit
           </span>
         )}
         <Button size="sm" variant="link" className="p-0 px-1" style={{ color: 'var(--theme-primary, #0891b2)', fontSize: '13px' }} title="Edit" onClick={e => { e.stopPropagation(); onEditSub(sub, refreshItems); }}><i className="bi bi-pencil"></i></Button>
-        <Button size="sm" variant="link" className="p-0 px-1" style={{ color: primaryColor, fontSize: '13px' }} title="Add Item" onClick={e => { e.stopPropagation(); onAddItem(sub, addons, refreshItems); }}><i className="bi bi-plus-circle"></i></Button>
+        <button style={{ padding: '8px 20px', borderRadius: '8px', border: 'none', background: primaryColor, color: '#fff', fontWeight: 700, fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s' }} onClick={e => { e.stopPropagation(); onAddItem(sub, addons, refreshItems); }} onMouseEnter={e => { e.target.style.opacity = '0.9'; e.target.style.boxShadow = `0 4px 12px ${primaryColor}40`; }} onMouseLeave={e => { e.target.style.opacity = '1'; e.target.style.boxShadow = 'none'; }}><i className="bi bi-plus-lg" style={{ fontSize: '14px' }} /> Add Item</button>
       </div>
 
       {/* Items Table */}
@@ -880,6 +926,7 @@ const SubcategoryAccordionItem = ({ sub, isExpanded, onToggle, onEditSub, onEdit
 
 // ==================== CATEGORY ACCORDION ITEM ====================
 const CategoryAccordionItem = ({ category, isExpanded, onToggle, onEditCategory, onEditSub, onAddSub, onEditItem, onAddItem, primaryColor, onCategoryStatusChange }) => {
+  const { isDarkMode } = useDarkMode();
   const [subcategories, setSubcategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -954,9 +1001,9 @@ const CategoryAccordionItem = ({ category, isExpanded, onToggle, onEditCategory,
   const cc = LEVEL_CONFIG.category;
 
   return (
-    <div style={{ marginBottom: '8px', borderRadius: '12px', border: isExpanded ? `1.5px solid ${primaryColor}` : '1px solid #e2e8f0', background: '#fff', transition: 'all 0.25s ease', boxShadow: isExpanded ? `0 4px 20px ${primaryColor}18` : '0 1px 3px rgba(0,0,0,0.04)' }}>
+    <div style={{ marginBottom: '8px', borderRadius: '12px', border: isExpanded ? `1.5px solid ${primaryColor}` : `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`, background: isDarkMode ? '#1e293b' : '#fff', transition: 'all 0.25s ease', boxShadow: isExpanded ? `0 4px 20px ${primaryColor}18` : '0 1px 3px rgba(0,0,0,0.04)' }}>
       {/* Category Header Row */}
-      <div onClick={handleToggle} className="category-header-row" style={{ display: 'flex', alignItems: 'center', padding: '14px 20px', cursor: 'pointer', borderRadius: isExpanded ? '12px 12px 0 0' : '12px', background: isExpanded ? 'linear-gradient(135deg, #f0fdfa, #eff6ff)' : '#fff', transition: 'background 0.25s ease', gap: '16px', userSelect: 'none' }}>
+      <div onClick={handleToggle} className="category-header-row" style={{ display: 'flex', alignItems: 'center', padding: '14px 20px', cursor: 'pointer', borderRadius: isExpanded ? '12px 12px 0 0' : '12px', background: isExpanded ? (isDarkMode ? `color-mix(in srgb, ${primaryColor} 12%, #0f172a)` : 'linear-gradient(135deg, #f0fdfa, #eff6ff)') : (isDarkMode ? '#1e293b' : '#fff'), transition: 'background 0.25s ease', gap: '16px', userSelect: 'none' }}>
         <i className={`bi bi-chevron-${isExpanded ? 'down' : 'right'}`} style={{ fontSize: '14px', color: isExpanded ? primaryColor : '#94a3b8', minWidth: '16px', transition: 'color 0.25s ease' }}></i>
 
         {/* Avatar */}
@@ -1189,8 +1236,8 @@ const MenuTree = () => {
 
       {/* Hover styles */}
       <style>{`
-        .category-header-row:hover { background: #f8fafc !important; }
-        .subcategory-header-row:hover { background: #f8fafc !important; }
+        .category-header-row:hover { background: color-mix(in srgb, var(--theme-primary, #6366f1) 8%, transparent) !important; }
+        .subcategory-header-row:hover { background: color-mix(in srgb, var(--theme-primary, #6366f1) 8%, transparent) !important; }
 
         /* ===== Redesigned Modal Styles ===== */
         .mtree-modal-content {
@@ -1202,6 +1249,25 @@ const MenuTree = () => {
         .mtree-modal-content .modal-header { display: none !important; }
         .mtree-modal-content .modal-body { padding: 0 !important; }
         .mtree-modal-content .modal-footer { display: none !important; }
+
+        [data-theme="dark"] .mtree-modal-content {
+          background-color: #0f172a !important;
+          color: #f1f5f9 !important;
+        }
+        [data-theme="dark"] .mtree-modal-content .modal-body {
+          background-color: #0f172a !important;
+        }
+        [data-theme="dark"] .mtree-modal-content input,
+        [data-theme="dark"] .mtree-modal-content textarea,
+        [data-theme="dark"] .mtree-modal-content select {
+          background-color: #1e293b !important;
+          border-color: #334155 !important;
+          color: #f1f5f9 !important;
+        }
+        [data-theme="dark"] .mtree-modal-content input::placeholder,
+        [data-theme="dark"] .mtree-modal-content textarea::placeholder {
+          color: #64748b !important;
+        }
 
         .mtree-close-btn:hover { background: #e2e8f0 !important; color: #334155 !important; }
         .mtree-cancel-btn:hover { background: #f8fafc !important; border-color: #cbd5e1 !important; color: #334155 !important; }
@@ -1216,8 +1282,13 @@ const MenuTree = () => {
         .mtree-input:focus {
           border-color: var(--theme-primary, #0891b2) !important;
           box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-primary, #0891b2) 12%, transparent) !important;
-          background: #fff !important;
         }
+        .mtree-input[type="number"]::-webkit-outer-spin-button,
+        .mtree-input[type="number"]::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        .mtree-input[type="number"] { -moz-appearance: textfield; }
 
         /* Modal entrance animation */
         .modal.show .mtree-modal-content {

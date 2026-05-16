@@ -45,6 +45,10 @@ public class DeliveryZonesEntity {
     @Digits(integer = 38, fraction = 2)
     private BigDecimal deliveryCharge;
 
+    @Column(name = "free_delivery_above")
+    @Digits(integer = 38, fraction = 2)
+    private BigDecimal freeDeliveryAbove;
+
     @Column(name = "delivery_time_minutes")
     private Integer deliveryTimeMinutes;
 

@@ -56,6 +56,9 @@ public class TableBookingEntity {
 	@Digits(integer = 38, fraction = 2)
 	private BigDecimal amount;
 
+	@Column(name = "hold_expires_at")
+	private LocalDateTime holdExpiresAt;
+
 	// 🔹 PRE-PERSIST LOGIC
 	@PrePersist
 	protected void onCreate() {

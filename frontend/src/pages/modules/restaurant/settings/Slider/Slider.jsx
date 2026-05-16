@@ -218,7 +218,7 @@ const Slider = () => {
     }
 
     try {
-      const result = await ApiDelete('/api/restaurant/sliders/delete', { id: slider.id });
+      const result = await ApiDelete(`/api/restaurant/sliders/${slider.id}`);
 
       if (result.success) {
         toast.success('Slider deleted successfully');

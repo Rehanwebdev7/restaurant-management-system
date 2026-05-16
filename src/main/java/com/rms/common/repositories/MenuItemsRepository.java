@@ -33,6 +33,8 @@ public interface MenuItemsRepository extends JpaRepository<MenuItemsEntity, Long
 	List<MenuItemsEntity> findByMenuCategoryId_IdAndIsDeletedFalse(Long categoryId);
 	List<MenuItemsEntity> findByMenuSubcategoryId_Id(Long subcategoryId);
 	List<MenuItemsEntity> findByMenuCategoryId_Id(Long categoryId);
+	long countByMenuCategoryId_IdAndIsDeletedFalse(Long categoryId);
+	long countByMenuSubcategoryId_IdAndIsDeletedFalse(Long subcategoryId);
 
 	@Modifying @Transactional
 	@Query("UPDATE MenuItemsEntity m SET m.driveImageUrl = :url WHERE m.id = :id")
