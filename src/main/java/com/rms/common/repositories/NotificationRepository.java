@@ -15,4 +15,11 @@ public interface NotificationRepository extends JpaRepository<NotificationEntity
     long countByCustomerIdAndIsReadFalse(Long customerId);
 
     List<NotificationEntity> findByCustomerIdAndIsReadFalseOrderByCreatedAtDesc(Long customerId);
+
+    // Kitchen/Branch/Restaurant user notifications
+    List<NotificationEntity> findByUserIdOrderByCreatedAtDesc(Long userId);
+
+    long countByUserIdAndIsReadFalse(Long userId);
+
+    List<NotificationEntity> findByUserIdAndIsReadFalseOrderByCreatedAtDesc(Long userId);
 }

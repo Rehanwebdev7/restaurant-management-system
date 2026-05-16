@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { onForegroundMessage } from '../firebase/firebase';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import apiClient from '../api/apiClient';
 
 const NotificationContext = createContext();
 
@@ -12,64 +12,93 @@ export const useNotifications = () => {
 };
 
 export const NotificationProvider = ({ children }) => {
-  const [notifications, setNotifications] = useState(() => {
-    // Load saved notifications from localStorage
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const intervalRef = useRef(null);
+
+  const getToken = () => localStorage.getItem('access_token');
+  const getRole = () => localStorage.getItem('UserRole');
+
+  const fetchNotifications = useCallback(async () => {
+    const token = getToken();
+    const role = getRole();
+    if (!token || role !== 'kitchen') return;
+
     try {
-      const saved = localStorage.getItem('fcm_notifications');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  // Save to localStorage whenever notifications change
-  useEffect(() => {
-    localStorage.setItem('fcm_notifications', JSON.stringify(notifications));
-  }, [notifications]);
-
-  // Listen for foreground Firebase messages
-  useEffect(() => {
-    const userRole = localStorage.getItem('UserRole');
-    const alertRoles = ['kitchen', 'restaurant'];
-    if (!alertRoles.includes(userRole)) return;
-
-    const unsubscribe = onForegroundMessage((payload) => {
-      const newNotification = {
-        id: Date.now().toString(),
-        title: payload.notification?.title || payload.data?.title || 'New Notification',
-        message: payload.notification?.body || payload.data?.body || '',
-        time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-        timestamp: Date.now(),
-        unread: true,
-        data: payload.data || {}
-      };
-
-      setNotifications(prev => [newNotification, ...prev]);
-    });
-
-    return () => {
-      if (typeof unsubscribe === 'function') {
-        unsubscribe();
+      const res = await apiClient.get('/api/kitchen/notifications', {
+        headers: { access_token: token }
+      });
+      if (res.data?.success) {
+        const data = res.data.success.data;
+        setNotifications(data?.notifications || []);
+        setUnreadCount(data?.unreadCount || 0);
       }
-    };
+    } catch {
+      // silently ignore — network errors shouldn't break the UI
+    }
   }, []);
 
-  const unreadCount = notifications.filter(n => n.unread).length;
+  // Poll every 15 seconds for kitchen role
+  useEffect(() => {
+    const role = getRole();
+    if (role !== 'kitchen') return;
 
-  const markAsRead = useCallback((id) => {
+    fetchNotifications();
+    intervalRef.current = setInterval(fetchNotifications, 15000);
+
+    return () => clearInterval(intervalRef.current);
+  }, [fetchNotifications]);
+
+  const markAsRead = useCallback(async (id) => {
+    const token = getToken();
+    if (!token) return;
+
+    // Optimistically update UI
     setNotifications(prev =>
       prev.map(n => n.id === id ? { ...n, unread: false } : n)
     );
-  }, []);
+    setUnreadCount(prev => Math.max(0, prev - 1));
 
-  const markAllAsRead = useCallback(() => {
-    setNotifications(prev =>
-      prev.map(n => ({ ...n, unread: false }))
-    );
-  }, []);
+    try {
+      await apiClient.put(`/api/kitchen/notifications/${id}/read`, {}, {
+        headers: { access_token: token }
+      });
+    } catch {
+      // revert on failure
+      fetchNotifications();
+    }
+  }, [fetchNotifications]);
 
-  const clearNotifications = useCallback(() => {
+  const markAllAsRead = useCallback(async () => {
+    const token = getToken();
+    if (!token) return;
+
+    setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
+    setUnreadCount(0);
+
+    try {
+      await apiClient.put('/api/kitchen/notifications/read-all', {}, {
+        headers: { access_token: token }
+      });
+    } catch {
+      fetchNotifications();
+    }
+  }, [fetchNotifications]);
+
+  const clearNotifications = useCallback(async () => {
+    const token = getToken();
+    if (!token) return;
+
     setNotifications([]);
+    setUnreadCount(0);
+
+    try {
+      await apiClient.delete('/api/kitchen/notifications/clear', {
+        headers: { access_token: token }
+      });
+    } catch {
+      // ignore
+    }
   }, []);
 
   return (
@@ -78,7 +107,8 @@ export const NotificationProvider = ({ children }) => {
       unreadCount,
       markAsRead,
       markAllAsRead,
-      clearNotifications
+      clearNotifications,
+      refreshNotifications: fetchNotifications
     }}>
       {children}
     </NotificationContext.Provider>

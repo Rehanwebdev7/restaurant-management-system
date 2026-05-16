@@ -19,6 +19,9 @@ public class NotificationEntity {
     @Column(name = "customer_id")
     private Long customerId;
 
+    @Column(name = "user_id")
+    private Long userId;
+
     @Column(name = "restaurant_id")
     private Long restaurantId;
 

@@ -10,6 +10,8 @@ const Delivery = () => {
   const { primaryColor } = useTheme();
   const categoryEmojis = { 501: '🥗', 502: '🍗', 503: '🍔', 504: '🍛', 505: '🍱', 506: '🍮', 507: '🥤', 508: '🎁' };
   const [menuItems, setMenuItems] = useState([]);
+  const [branchName, setBranchName] = useState('Branch');
+  const [restaurantName, setRestaurantName] = useState('Restaurant');
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -225,6 +227,11 @@ const Delivery = () => {
 
         if (isNewSearch) {
           setMenuItems(newRecords);
+          if (newRecords.length > 0) {
+            const first = newRecords[0];
+            if (first.branchId?.name) setBranchName(first.branchId.name);
+            if (first.restaurantId?.name) setRestaurantName(first.restaurantId.name);
+          }
         } else {
           setMenuItems(prev => [...prev, ...newRecords]);
         }
@@ -932,11 +939,11 @@ const Delivery = () => {
                     boxShadow: `0 4px 12px ${primaryColor}40`
                   }}
                 >
-                  R
+                  {branchName.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <div style={{ fontSize: '14px', fontWeight: '700', color: primaryColor, margin: 0 }}>Royal</div>
-                  <div style={{ fontSize: '11px', color: '#999', margin: 0 }}>Restaurant</div>
+                  <div style={{ fontSize: '14px', fontWeight: '700', color: primaryColor, margin: 0 }}>{branchName}</div>
+                  <div style={{ fontSize: '11px', color: '#999', margin: 0 }}>{restaurantName}</div>
                 </div>
               </div>
               <h5 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>

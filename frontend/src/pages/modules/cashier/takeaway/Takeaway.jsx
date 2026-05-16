@@ -10,6 +10,8 @@ const Takeaway = () => {
   const { primaryColor } = useTheme();
   const categoryEmojis = { 501: '🥗', 502: '🍗', 503: '🍔', 504: '🍛', 505: '🍱', 506: '🍮', 507: '🥤', 508: '🎁' };
   const [menuItems, setMenuItems] = useState([]);
+  const [branchName, setBranchName] = useState('Branch');
+  const [restaurantName, setRestaurantName] = useState('Restaurant');
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -191,6 +193,11 @@ const Takeaway = () => {
 
         if (isNewSearch) {
           setMenuItems(newRecords);
+          if (newRecords.length > 0) {
+            const first = newRecords[0];
+            if (first.branchId?.name) setBranchName(first.branchId.name);
+            if (first.restaurantId?.name) setRestaurantName(first.restaurantId.name);
+          }
         } else {
           setMenuItems(prev => [...prev, ...newRecords]);
         }
@@ -791,11 +798,11 @@ const Takeaway = () => {
                     boxShadow: `0 4px 12px ${primaryColor}40`
                   }}
                 >
-                  R
+                  {branchName.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <div style={{ fontSize: '14px', fontWeight: '700', color: primaryColor, margin: 0 }}>Royal</div>
-                  <div style={{ fontSize: '11px', color: '#999', margin: 0 }}>Restaurant</div>
+                  <div style={{ fontSize: '14px', fontWeight: '700', color: primaryColor, margin: 0 }}>{branchName}</div>
+                  <div style={{ fontSize: '11px', color: '#999', margin: 0 }}>{restaurantName}</div>
                 </div>
               </div>
               <h5 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
@@ -1273,6 +1280,42 @@ const Takeaway = () => {
                     .modern-item-image { width: 120px; height: 120px; flex-shrink: 0; }
                     .modern-item-content { min-width: 0; }
                   }
+                  /* ===== DARK MODE OVERRIDES ===== */
+                  [data-theme="dark"] .modern-item-card {
+                    background: rgba(26, 26, 46, 0.9);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                  }
+                  [data-theme="dark"] .modern-item-card:hover {
+                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+                    border-color: ${primaryColor};
+                  }
+                  [data-theme="dark"] .modern-item-image {
+                    background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.08) 100%);
+                  }
+                  [data-theme="dark"] .modern-item-name {
+                    color: #e2e8f0;
+                  }
+                  [data-theme="dark"] .modern-item-category {
+                    color: #94a3b8;
+                  }
+                  [data-theme="dark"] .modern-price-original {
+                    color: #64748b;
+                  }
+                  [data-theme="dark"] .modern-qty-input {
+                    background: rgba(255, 255, 255, 0.06);
+                    border: 1px solid rgba(255, 255, 255, 0.12);
+                    color: #e2e8f0;
+                  }
+                  [data-theme="dark"] .pos-category-btn {
+                    background: rgba(26, 26, 46, 0.9) !important;
+                    border-color: rgba(255, 255, 255, 0.12) !important;
+                    color: #e2e8f0 !important;
+                  }
+                  [data-theme="dark"] .pos-search-box .form-control {
+                    background: rgba(255, 255, 255, 0.06);
+                    border-color: rgba(255, 255, 255, 0.12);
+                    color: #e2e8f0;
+                  }
                 `}</style>
 
                 <div className="modern-items-grid">
@@ -1287,7 +1330,7 @@ const Takeaway = () => {
 
                         <div className="modern-item-image">
                           <img
-                            src={item.imageUrl || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22180%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22200%22 height=%22180%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 font-family=%22Arial%22 font-size=%2214%22 fill=%22%239ca3af%22%3ENo Image%3C/text%3E%3C/svg%3E'}
+                            src={item.imageUrl || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22180%22%3E%3Crect fill=%22%232a2a3e%22 width=%22200%22 height=%22180%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 font-family=%22Arial%22 font-size=%2214%22 fill=%22%234b5563%22%3ENo Image%3C/text%3E%3C/svg%3E'}
                             alt={item.name}
                             onError={(e) => { e.target.style.display = 'none'; }}
                           />
