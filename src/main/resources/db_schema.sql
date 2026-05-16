@@ -564,6 +564,7 @@ CREATE TABLE IF NOT EXISTS referral_contacts (
 CREATE TABLE IF NOT EXISTS notifications (
     id BIGSERIAL PRIMARY KEY,
     customer_id BIGINT,
+    user_id BIGINT,
     restaurant_id BIGINT,
     title VARCHAR(255),
     message TEXT,
