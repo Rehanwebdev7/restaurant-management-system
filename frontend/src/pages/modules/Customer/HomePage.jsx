@@ -4007,12 +4007,8 @@ const CustomerLanding = () => {
           </div>
         )}
 
-        {/* No Branch Modal - COMMENTED OUT */}
-        {/* {showNoBranchModal && (
-          <div className="no-branch-modal-overlay">
-            ...
-          </div>
-        )} */}
+        {/* No Branch Modal - DISABLED */}
+        {false && showNoBranchModal && <div/>}
 
         {/* Floating Cart Button — hidden when drawer is open */}
         {getTotalCartCount() > 0 && !showCart && (
@@ -4327,8 +4323,8 @@ const CustomerLanding = () => {
         </div>
       )}
 
-      {/* Location Modal - COMMENTED OUT */}
-      {/* {showLocationModal && (
+      {/* Location Modal - DISABLED */}
+      {false && showLocationModal && (
         <div
           className="location-modal-overlay"
           onClick={() => setShowLocationModal(false)}
@@ -4577,7 +4573,7 @@ const CustomerLanding = () => {
             </div>
           </div>
         </div>
-      )} */}
+      )}
 
       {/* Order Success Congratulation Modal */}
       {showOrderSuccess && (
