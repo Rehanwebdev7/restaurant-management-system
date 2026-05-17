@@ -12,7 +12,7 @@ import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 
 import com.rms.common.repositories.UsersRepository;
-import com.rms.common.repositories.UsersRepository;
+import com.rms.common.util.JavaProcedures;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -54,6 +54,9 @@ public class CashWalletTopupRequestService implements WalletTopupRequestServiceI
 
 	@Autowired
 	private TokenUtil tokenUtil;
+
+	@Autowired
+	private JavaProcedures javaProcedures;
 
 	public CashWalletTopupRequestService(WalletTopupRequestRepository wallettopuprequestrepository,
 			UsersRepository usersrepository) {
@@ -442,7 +445,31 @@ public class CashWalletTopupRequestService implements WalletTopupRequestServiceI
 		// ================= BUSINESS LOGIC (ONLY ON FIRST APPROVAL) =================
 		if ("APPROVED".equalsIgnoreCase(newStatus) && !"APPROVED".equalsIgnoreCase(oldStatus)) {
 
-			// 🔥 wallet credit logic (execute once only)
+			BigDecimal amount = existingEntity.getAmount();
+			Long deliveryUserId = existingEntity.getUserId() != null ? existingEntity.getUserId().getId() : null;
+			String requestType = existingEntity.getRequestType();
+
+			if (amount != null && deliveryUserId != null && amount.compareTo(BigDecimal.ZERO) > 0) {
+
+				if ("WITHDRAWAL".equalsIgnoreCase(requestType)) {
+					// Cashier approved withdrawal → deduct from delivery boy's wallet
+					Map<String, Object> payload = new java.util.HashMap<>();
+					payload.put("userId", deliveryUserId);
+					payload.put("amount", amount);
+					payload.put("mode", "debit");
+					payload.put("remarks", "Withdrawal approved by cashier");
+					javaProcedures.walletTransactionProcedure(payload);
+
+				} else {
+					// TOPUP → credit to delivery boy's wallet
+					Map<String, Object> payload = new java.util.HashMap<>();
+					payload.put("userId", deliveryUserId);
+					payload.put("amount", amount);
+					payload.put("mode", "credit");
+					payload.put("remarks", "Wallet top-up approved by cashier");
+					javaProcedures.walletTransactionProcedure(payload);
+				}
+			}
 		}
 
 		// ================= SAVE =================
