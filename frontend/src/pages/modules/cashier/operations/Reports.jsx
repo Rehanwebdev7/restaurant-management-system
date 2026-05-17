@@ -37,7 +37,11 @@ const Reports = () => {
             card: data.ordersByPayment?.Card || 0,
             upi: data.ordersByPayment?.Online || 0
           },
-          orderTypes: data.ordersByType || { dineIn: 0, takeaway: 0, delivery: 0 },
+          orderTypes: {
+            dineIn: data.ordersByType?.DINING || data.ordersByType?.dineIn || 0,
+            takeaway: data.ordersByType?.TAKEAWAY || data.ordersByType?.takeaway || 0,
+            delivery: data.ordersByType?.DELIVERY || data.ordersByType?.delivery || 0
+          },
           topItems: []
         });
       }

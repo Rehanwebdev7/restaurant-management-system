@@ -3,11 +3,13 @@ import { Row, Col, Form, Spinner, Modal, Button } from 'react-bootstrap';
 import { ApiGet, ApiPost } from '../../../../ApiServices/ApiServices';
 import { toast } from 'react-toastify';
 import { useTheme } from '../../../../contexts/ThemeContext';
+import { useDarkMode } from '../../../../contexts/DarkModeContext';
 
 const CART_STORAGE_KEY = 'takeaway_cart';
 
 const Takeaway = () => {
   const { primaryColor } = useTheme();
+  const { isDarkMode } = useDarkMode();
   const categoryEmojis = { 501: '🥗', 502: '🍗', 503: '🍔', 504: '🍛', 505: '🍱', 506: '🍮', 507: '🥤', 508: '🎁' };
   const [menuItems, setMenuItems] = useState([]);
   const [branchName, setBranchName] = useState('Branch');
@@ -936,9 +938,9 @@ const Takeaway = () => {
 
             {/* Subcategories - Show when category is selected */}
             {selectedCategory !== 'all' && subcategories.length > 0 && (
-              <div style={{ padding: '10px 20px', borderBottom: '1px solid #eee', background: '#f5f5f5' }}>
+              <div style={{ padding: '10px 20px', borderBottom: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #eee', background: isDarkMode ? 'rgba(26,26,46,0.9)' : '#f5f5f5' }}>
                 <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '5px', alignItems: 'center' }}>
-                  <span style={{ fontSize: '12px', color: '#666', fontWeight: '500', marginRight: '5px' }}>
+                  <span style={{ fontSize: '12px', color: isDarkMode ? '#94a3b8' : '#666', fontWeight: '500', marginRight: '5px' }}>
                     <i className="bi bi-arrow-return-right"></i>
                   </span>
                   <button
@@ -946,9 +948,9 @@ const Takeaway = () => {
                     style={{
                       padding: '6px 14px',
                       borderRadius: '15px',
-                      border: selectedSubcategory === 'all' ? `2px solid ${primaryColor}` : '1px solid #ccc',
-                      background: selectedSubcategory === 'all' ? '#fff8f8' : '#fff',
-                      color: selectedSubcategory === 'all' ? primaryColor : '#555',
+                      border: selectedSubcategory === 'all' ? `2px solid ${primaryColor}` : isDarkMode ? '1px solid rgba(255,255,255,0.12)' : '1px solid #ccc',
+                      background: selectedSubcategory === 'all' ? (isDarkMode ? `rgba(59,130,246,0.15)` : '#fff8f8') : (isDarkMode ? 'rgba(255,255,255,0.06)' : '#fff'),
+                      color: selectedSubcategory === 'all' ? primaryColor : (isDarkMode ? '#94a3b8' : '#555'),
                       fontWeight: selectedSubcategory === 'all' ? '600' : '500',
                       fontSize: '12px',
                       cursor: 'pointer',
@@ -965,9 +967,9 @@ const Takeaway = () => {
                       style={{
                         padding: '6px 14px',
                         borderRadius: '15px',
-                        border: selectedSubcategory === sub.id ? `2px solid ${primaryColor}` : '1px solid #ccc',
-                        background: selectedSubcategory === sub.id ? '#fff8f8' : '#fff',
-                        color: selectedSubcategory === sub.id ? primaryColor : '#555',
+                        border: selectedSubcategory === sub.id ? `2px solid ${primaryColor}` : isDarkMode ? '1px solid rgba(255,255,255,0.12)' : '1px solid #ccc',
+                        background: selectedSubcategory === sub.id ? (isDarkMode ? `rgba(26,26,46,0.6)` : '#fff8f8') : (isDarkMode ? 'rgba(255,255,255,0.06)' : '#fff'),
+                        color: selectedSubcategory === sub.id ? primaryColor : (isDarkMode ? '#94a3b8' : '#555'),
                         fontWeight: selectedSubcategory === sub.id ? '600' : '500',
                         fontSize: '12px',
                         cursor: 'pointer',
@@ -2038,7 +2040,7 @@ const Takeaway = () => {
           <Form.Group className="mb-3">
             <Form.Label style={{ fontSize: '13px', fontWeight: '500', color: '#555' }}>Payment Method<span style={{ color: '#dc3545' }}>*</span></Form.Label>
             <div style={{ display: 'flex', gap: '8px' }}>
-              {[{ value: 'CASH', label: 'CASH' }, { value: 'UPI', label: 'UPI' }, { value: 'PG', label: 'Pay By Link' }].map((method) => (
+              {[{ value: 'CASH', label: 'CASH' }, { value: 'UPI', label: 'UPI' }, { value: 'CARD', label: 'CARD' }, { value: 'PG', label: 'Pay By Link' }].map((method) => (
                 <button
                   key={method.value}
                   type="button"

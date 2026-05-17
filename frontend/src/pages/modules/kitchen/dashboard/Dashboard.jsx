@@ -91,15 +91,19 @@ const Dashboard = () => {
         const raw = result.success.data.data;
 
         const ordersByStatus = raw.ordersByStatus || {};
-        const newOrders =
-          (ordersByStatus.PENDING || 0) +
-          (ordersByStatus.ACCEPTED || 0) +
-          (ordersByStatus.ACCEPTED_ORDER || 0);
-        const preparing = raw.preparingOrders || ordersByStatus.PREPARING_ORDER || 0;
+        const newOrders = (ordersByStatus.PENDING || 0);
+        const preparing =
+          raw.preparingOrders != null
+            ? raw.preparingOrders
+            : (ordersByStatus.PREPARING_ORDER || 0) +
+              (ordersByStatus.ACCEPTED_ORDER || 0) +
+              (ordersByStatus.ACCEPTED || 0);
         const ready =
-          raw.readyOrders ||
-          (ordersByStatus.READY_FOR_ORDER || 0) +
-          (ordersByStatus.READYFORORDER || 0);
+          raw.readyOrders != null
+            ? raw.readyOrders
+            : (ordersByStatus.READY_FOR_ORDER || 0) +
+              (ordersByStatus.READYFORORDER || 0);
+        const totalOrders = newOrders + preparing + ready;
 
         setData({
           ...MOCK_DATA,
@@ -107,7 +111,7 @@ const Dashboard = () => {
           newOrders,
           preparing,
           ready,
-          totalOrders: raw.totalOrders || 0,
+          totalOrders,
           ordersByStatus: raw.ordersByStatus || MOCK_DATA.ordersByStatus,
           hourlyTrend: raw.hourlyTrend || MOCK_DATA.hourlyTrend,
           recentOrders: raw.recentOrders || MOCK_DATA.recentOrders
@@ -124,7 +128,7 @@ const Dashboard = () => {
     fetchData();
     const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [dateRange.fromDate, dateRange.toDate]);
 
   const KpiCard = ({ label, value, color, icon }) => (
     <div

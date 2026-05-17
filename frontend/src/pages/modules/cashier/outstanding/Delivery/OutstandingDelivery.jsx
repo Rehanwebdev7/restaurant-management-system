@@ -73,9 +73,10 @@ const OutstandingDelivery = () => {
 
       if (result.success) {
         const data = result.success.data.data;
-        setApiData(data.records || []);
-        setTotalRecords(data.totalRecords || 0);
-        setTotalPages(data.totalPages || 0);
+        const records = (data.records || []).filter(r => (r.outstandingBalance ?? 0) > 0);
+        setApiData(records);
+        setTotalRecords(records.length);
+        setTotalPages(Math.ceil(records.length / rowsPerPage) || 0);
       } else {
         setError(result.fail);
         toast.error(result.fail);
@@ -269,29 +270,31 @@ const OutstandingDelivery = () => {
                 <tr key={delivery.id}>
                   <td>
                     <div className="d-flex gap-1">
-                      <Button
-                        size="sm"
-                        onClick={() => handleClearOutstanding(delivery)}
-                        disabled={loading}
-                        title="Clear Outstanding"
-                        style={{
-                          backgroundColor: 'transparent',
-                          borderColor: primaryColor,
-                          color: primaryColor,
-                          transition: 'all 0.3s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.backgroundColor = primaryColor;
-                          e.target.style.color = '#fff';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.backgroundColor = 'transparent';
-                          e.target.style.color = primaryColor;
-                        }}
-                      >
-                        <i className="bi bi-cash-stack me-1"></i>
-                        Clear Outstanding
-                      </Button>
+                      {(delivery.outstandingBalance ?? 0) > 0 && (
+                        <Button
+                          size="sm"
+                          onClick={() => handleClearOutstanding(delivery)}
+                          disabled={loading}
+                          title="Clear Outstanding"
+                          style={{
+                            backgroundColor: 'transparent',
+                            borderColor: primaryColor,
+                            color: primaryColor,
+                            transition: 'all 0.3s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.backgroundColor = primaryColor;
+                            e.target.style.color = '#fff';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.backgroundColor = 'transparent';
+                            e.target.style.color = primaryColor;
+                          }}
+                        >
+                          <i className="bi bi-cash-stack me-1"></i>
+                          Clear Outstanding
+                        </Button>
+                      )}
                     </div>
                   </td>
                   <td>{delivery.name || 'N/A'}</td>

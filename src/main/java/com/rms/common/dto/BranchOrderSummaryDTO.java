@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
+import com.rms.common.entities.OrdersEntity;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -66,6 +68,41 @@ public class BranchOrderSummaryDTO {
                 asString(row[index++]),
                 asString(row[index++]),
                 asLong(row[index++]));
+    }
+
+    public static BranchOrderSummaryDTO fromOrderEntity(OrdersEntity order) {
+        if (order == null) {
+            return null;
+        }
+
+        return new BranchOrderSummaryDTO(
+                order.getId(),
+                order.getOrderNumber(),
+                order.getOrderType(),
+                order.getStatus(),
+                order.getPaymentStatus(),
+                order.getPaymentMethod(),
+                order.getCustomerName() != null ? order.getCustomerName() : order.getCustomerId() != null ? order.getCustomerId().getName() : null,
+                order.getCustomerPhone() != null ? order.getCustomerPhone() : order.getCustomerId() != null ? order.getCustomerId().getMobileNumber() : null,
+                order.getCustomerEmail() != null ? order.getCustomerEmail() : order.getCustomerId() != null ? order.getCustomerId().getEmail() : null,
+                order.getTableNumber(),
+                order.getCouponCode(),
+                order.getSubtotal(),
+                order.getTaxAmount(),
+                order.getDiscountAmount(),
+                order.getDeliveryFee(),
+                order.getTotalAmount(),
+                order.getCreatedAt(),
+                order.getUpdatedAt(),
+                order.getCompletedAt(),
+                order.getEstimatedTime(),
+                order.getSpecialInstructions(),
+                order.getDeliveryStatus(),
+                null);
+    }
+
+    public BigDecimal getAmount() {
+        return totalAmount;
     }
 
     private static String asString(Object value) {

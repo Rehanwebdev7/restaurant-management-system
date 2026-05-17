@@ -130,7 +130,7 @@ public class CashOrdersController {
 				toDate = LocalDate.parse(toDateStr, formatter);
 			}
 
-			Map<String, Object> result = cashOrdersService.getOrdersWithFilters(fromDate, toDate, searchValue, status,
+			Map<String, Object> result = cashOrdersService.getOrdersWithFilters(fromDate, toDate, status, searchValue,
 					pageNumber, pageSize, token);
 
 			return ApiResponse.responseBuilder(result, "SUCCESS", HttpStatus.OK,
@@ -155,7 +155,7 @@ public class CashOrdersController {
 			@RequestBody Map<String, Object> ordersPayload // ⚡ JSON payload directly Map me
 	) {
 		try {
-			String result = cashOrdersService.addOrderss(ordersPayload, token);
+			Map<String, Object> result = cashOrdersService.addOrderss(ordersPayload, token);
 			return ApiResponse.responseBuilder(result, "SUCCESS", HttpStatus.CREATED, "Orders added successfully");
 
 		} catch (SecurityException e) {

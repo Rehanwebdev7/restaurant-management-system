@@ -11,9 +11,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.rms.common.entities.OrdersEntity;
 import com.rms.common.entities.UsersEntity;
@@ -22,6 +24,15 @@ import com.rms.common.entities.UsersEntity;
 public interface OrdersRepository extends JpaRepository<OrdersEntity, Long> {
 	Optional<OrdersEntity> findByOrderNumber(String order_number);
 	Optional<OrdersEntity> findByIdempotencyKey(String idempotencyKey);
+
+	@Query("SELECT o.orderType FROM OrdersEntity o WHERE o.id = :id")
+	Optional<String> findOrderTypeValueById(@Param("id") Long id);
+
+	@Query("SELECT o.tableBookingId.id FROM OrdersEntity o WHERE o.id = :id")
+	Optional<Long> findTableBookingIdValueById(@Param("id") Long id);
+
+	@Query("SELECT o.paymentStatus FROM OrdersEntity o WHERE o.id = :id")
+	Optional<String> findPaymentStatusValueById(@Param("id") Long id);
 
 	Page<OrdersEntity> findByCaptainId_Id(Long captainId, Pageable pageable);
 
@@ -83,6 +94,34 @@ public interface OrdersRepository extends JpaRepository<OrdersEntity, Long> {
 	Page<OrdersEntity> findAll(Pageable pageable);
 
 	Page<OrdersEntity> findAll(Specification<OrdersEntity> spec, Pageable pageable);
+
+	@Modifying
+	@Transactional
+	@Query(value = """
+			UPDATE orders
+			SET payment_status = COALESCE(CAST(:paymentStatus AS text), payment_status),
+			    status = COALESCE(CAST(:status AS text), status),
+			    payment_method = COALESCE(CAST(:paymentMethod AS text), payment_method),
+			    payment_remarks = COALESCE(CAST(:paymentRemarks AS text), payment_remarks),
+			    bank_ref_num = COALESCE(CAST(:bankRefNum AS text), bank_ref_num),
+			    api_ref_num = COALESCE(CAST(:apiRefNum AS text), api_ref_num),
+			    updated_at = CURRENT_TIMESTAMP,
+			    completed_at = CASE
+			        WHEN CAST(:status AS text) IS NOT NULL
+			             AND UPPER(CAST(:status AS text)) IN ('COMPLETED', 'DELIVERED', 'SERVED')
+			        THEN COALESCE(completed_at, CURRENT_TIMESTAMP)
+			        ELSE completed_at
+			    END
+			WHERE id = :id
+			""", nativeQuery = true)
+	int updateOrderPaymentSnapshot(
+			@Param("id") Long id,
+			@Param("paymentStatus") String paymentStatus,
+			@Param("status") String status,
+			@Param("paymentMethod") String paymentMethod,
+			@Param("paymentRemarks") String paymentRemarks,
+			@Param("bankRefNum") String bankRefNum,
+			@Param("apiRefNum") String apiRefNum);
 
 	@Query(value = """
 			SELECT
@@ -458,8 +497,7 @@ public interface OrdersRepository extends JpaRepository<OrdersEntity, Long> {
 			    WHERE o.cashierId = :cashier
 			      AND o.branchId = :branch
 			      AND o.createdAt BETWEEN :from AND :to
-			      AND o.paymentStatus = 'PAID'
-			      AND o.status = 'COMPLETED'
+			      AND UPPER(COALESCE(o.paymentStatus, '')) IN ('PAID', 'SUCCESS', 'COMPLETED')
 			""")
 			BigDecimal getTotalRevenueByCashier(
 			        @Param("cashier") UsersEntity cashier,
@@ -505,8 +543,7 @@ public interface OrdersRepository extends JpaRepository<OrdersEntity, Long> {
 			    WHERE o.captainId = :captain
 			      AND o.branchId = :branch
 			      AND o.createdAt BETWEEN :from AND :to
-			      AND o.paymentStatus = 'PAID'
-			      AND o.status = 'COMPLETED'
+			      AND UPPER(COALESCE(o.paymentStatus, '')) IN ('PAID', 'SUCCESS', 'COMPLETED')
 			""")
 			BigDecimal getTotalRevenueByCaptain(
 			        @Param("captain") UsersEntity captain,
@@ -541,25 +578,33 @@ public interface OrdersRepository extends JpaRepository<OrdersEntity, Long> {
 		List<OrdersEntity> findByDeliveryIdAndCreatedAtBetween(UsersEntity branch, LocalDateTime fromDateTime,
 				LocalDateTime toDateTime);
 		
-		@Query("""
-			    SELECT COUNT(o)
-			    FROM OrdersEntity o
+		@Query(value = """
+			    SELECT COUNT(*)
+			    FROM orders o
 			    WHERE o.status = :status
-			      AND o.branchId.id = :branchId
-			""")
-			Long countByStatusAndBranchId_Id(
+			      AND o.branch_id = :branchId
+			      AND (CAST(:fromDate AS timestamp) IS NULL OR o.created_at >= CAST(:fromDate AS timestamp))
+			      AND (CAST(:toDate AS timestamp) IS NULL OR o.created_at <= CAST(:toDate AS timestamp))
+			""", nativeQuery = true)
+			Long countPendingByBranchIdAndDate(
 			        @Param("status") String status,
-			        @Param("branchId") Long branchId
+			        @Param("branchId") Long branchId,
+			        @Param("fromDate") LocalDateTime fromDate,
+			        @Param("toDate") LocalDateTime toDate
 			);
-		@Query("""
-			    SELECT o.status, COUNT(o)
-			    FROM OrdersEntity o
-			    WHERE o.kitchenId.id = :kitchenId
+		@Query(value = """
+			    SELECT o.status, COUNT(*)
+			    FROM orders o
+			    WHERE o.kitchen_id = :kitchenId
 			      AND o.status <> 'PENDING'
+			      AND (CAST(:fromDate AS timestamp) IS NULL OR o.created_at >= CAST(:fromDate AS timestamp))
+			      AND (CAST(:toDate AS timestamp) IS NULL OR o.created_at <= CAST(:toDate AS timestamp))
 			    GROUP BY o.status
-			""")
-			List<Object[]> countByKitchenIdAndStatusNotPending(
-			        @Param("kitchenId") Long kitchenId
+			""", nativeQuery = true)
+			List<Object[]> countByKitchenIdAndStatusNotPendingAndDate(
+			        @Param("kitchenId") Long kitchenId,
+			        @Param("fromDate") LocalDateTime fromDate,
+			        @Param("toDate") LocalDateTime toDate
 			);
 
 	Long countByCustomerId_Id(Long customerId);
@@ -623,5 +668,33 @@ public interface OrdersRepository extends JpaRepository<OrdersEntity, Long> {
 	                                     @Param("from") LocalDateTime from);
 
 	List<OrdersEntity> findTop5ByRestaurantIdOrderByCreatedAtDesc(UsersEntity restaurant);
+
+	@Query(value = "SELECT COUNT(*) FROM orders WHERE kitchen_id = :kitchenId AND created_at::date = CURRENT_DATE", nativeQuery = true)
+	Long countTodayOrdersByKitchen(@Param("kitchenId") Long kitchenId);
+
+	@Modifying
+	@Transactional
+	@Query(value = """
+		UPDATE orders SET
+		    status     = :status,
+		    kitchen_id = :kitchenId,
+		    kitchen_accept_at = CASE
+		        WHEN :status IN ('ACCEPTED_ORDER','CONFIRMED')
+		        THEN COALESCE(kitchen_accept_at, NOW())
+		        ELSE kitchen_accept_at
+		    END,
+		    kitchen_ready_at = CASE
+		        WHEN :status IN ('READY_FOR_ORDER','READY')
+		        THEN COALESCE(kitchen_ready_at, NOW())
+		        ELSE kitchen_ready_at
+		    END,
+		    updated_at = NOW()
+		WHERE id = :orderId
+	""", nativeQuery = true)
+	int updateOrderStatusByKitchen(
+		@Param("orderId") Long orderId,
+		@Param("status") String status,
+		@Param("kitchenId") Long kitchenId
+	);
 
 }

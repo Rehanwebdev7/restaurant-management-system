@@ -60,6 +60,9 @@ public class DataInitializer implements CommandLineRunner {
         // Initialize kitchen orders for testing
         initializeKitchenOrders();
 
+        // Initialize delivery orders for testing
+        initializeDeliveryOrders();
+
         System.out.println("✅ [DATA INITIALIZER] Done");
     }
 
@@ -96,6 +99,13 @@ public class DataInitializer implements CommandLineRunner {
                 return;
             }
 
+            // Skip if today's test orders already exist
+            Long todayCount = ordersRepository.countTodayOrdersByKitchen(kitchenUser.getId());
+            if (todayCount != null && todayCount >= 3) {
+                System.out.println("✅ Kitchen test orders already exist for today (" + todayCount + "). Skipping.");
+                return;
+            }
+
             // Get first 3 menu items
             var menuItems = menuItemsRepository.findAll();
             if (menuItems.size() < 3) {
@@ -103,10 +113,10 @@ public class DataInitializer implements CommandLineRunner {
                 return;
             }
 
-            // Create 3 orders: PENDING, PREPARING, READY
+            // Create 3 orders with correct status values
             createKitchenOrder(customer, kitchenUser, restaurant, branch, menuItems.get(0), "PENDING", null);
-            createKitchenOrder(customer, kitchenUser, restaurant, branch, menuItems.get(1), "PREPARING", LocalDateTime.now().minusMinutes(10));
-            createKitchenOrder(customer, kitchenUser, restaurant, branch, menuItems.get(2), "READY", LocalDateTime.now().minusMinutes(25));
+            createKitchenOrder(customer, kitchenUser, restaurant, branch, menuItems.get(1), "PREPARING_ORDER", LocalDateTime.now().minusMinutes(10));
+            createKitchenOrder(customer, kitchenUser, restaurant, branch, menuItems.get(2), "READY_FOR_ORDER", LocalDateTime.now().minusMinutes(25));
 
             System.out.println("✅ Kitchen orders initialized successfully!");
         } catch (Exception e) {
@@ -143,7 +153,7 @@ public class DataInitializer implements CommandLineRunner {
         order.setSpecialInstructions("Test order for kitchen display");
         order.setEstimatedTime(20);
         order.setKitchenAcceptAt(kitchenAcceptTime);
-        if ("READY".equals(status)) {
+        if ("READY_FOR_ORDER".equals(status) || "READY".equals(status)) {
             order.setKitchenReadyAt(LocalDateTime.now().minusMinutes(5));
         }
         order.setCreatedAt(LocalDateTime.now());
@@ -156,6 +166,121 @@ public class DataInitializer implements CommandLineRunner {
         orderItem.setOrderId(savedOrder);
         orderItem.setMenuItemId(menuItem);
         orderItem.setKitchenId(kitchenUser);
+        orderItem.setMenuItemName(menuItem.getName() + " - " + status);
+        orderItem.setPrice(new BigDecimal("250.00"));
+        orderItem.setQuantity(2);
+        orderItem.setAddonsTotal(new BigDecimal("0.00"));
+        orderItem.setItemTotal(new BigDecimal("500.00"));
+        orderItem.setStatus(status);
+        orderItem.setCreatedAt(LocalDateTime.now());
+        orderItem.setUpdatedAt(LocalDateTime.now());
+
+        orderItemsRepository.save(orderItem);
+    }
+
+    private void initializeDeliveryOrders() {
+        try {
+            // Get delivery user Vikram Singh (9800000005)
+            UsersEntity deliveryUser = usersRepository.findByMobileAndRole("9800000005", "delivery").orElse(null);
+
+            if (deliveryUser == null) {
+                System.out.println("⚠️  Delivery user (9800000005) not found. Skipping delivery orders initialization.");
+                return;
+            }
+
+            // Get restaurant and branch
+            UsersEntity restaurant = usersRepository.findByMobile("9800000001").orElse(null);
+            UsersEntity branch = usersRepository.findByMobileAndRole("9800000002", "branch").orElse(null);
+
+            if (restaurant == null || branch == null) {
+                System.out.println("⚠️  Restaurant or Branch not found. Skipping delivery orders initialization.");
+                return;
+            }
+
+            // Skip if test delivery orders already exist
+            if (ordersRepository.findByOrderNumber("DEL-TEST-READY").isPresent()) {
+                System.out.println("✅ Delivery test orders already exist. Skipping.");
+                return;
+            }
+
+            // Get first customer or create
+            CustomersEntity customer = customersRepository.findByMobileNumber("9000000001")
+                .orElseGet(() -> {
+                    CustomersEntity newCustomer = new CustomersEntity();
+                    newCustomer.setName("Neha Gupta");
+                    newCustomer.setEmail("neha.delivery@example.com");
+                    newCustomer.setMobileNumber("9000000001");
+                    newCustomer.setIsActive(true);
+                    newCustomer.setCreatedAt(LocalDateTime.now());
+                    newCustomer.setUpdatedAt(LocalDateTime.now());
+                    return customersRepository.save(newCustomer);
+                });
+
+            // Get first 2 menu items
+            var menuItems = menuItemsRepository.findAll();
+            if (menuItems.size() < 2) {
+                System.out.println("⚠️  Not enough menu items found. Skipping delivery orders initialization.");
+                return;
+            }
+
+            // Order 1: Ready for pickup (unassigned, visible to all delivery staff)
+            createDeliveryOrder(customer, restaurant, branch, deliveryUser, menuItems.get(0),
+                "DEL-TEST-READY", "READY_FOR_ORDER", "READY_FOR_ORDER", null,
+                LocalDateTime.now().minusMinutes(5), null);
+
+            // Order 2: In-progress (assigned to Vikram Singh)
+            createDeliveryOrder(customer, restaurant, branch, deliveryUser, menuItems.get(1),
+                "DEL-TEST-ONWAY", "OUT_FOR_DELIVERY", "OUT_FOR_DELIVERY", deliveryUser,
+                LocalDateTime.now().minusMinutes(5), LocalDateTime.now().minusMinutes(15));
+
+            System.out.println("✅ Delivery orders initialized successfully!");
+        } catch (Exception e) {
+            System.out.println("⚠️  Error initializing delivery orders: " + e.getMessage());
+        }
+    }
+
+    private void createDeliveryOrder(CustomersEntity customer, UsersEntity restaurant, UsersEntity branch,
+                                      UsersEntity defaultDeliveryUser, MenuItemsEntity menuItem, String orderNumber,
+                                      String status, String deliveryStatus, UsersEntity assignedDeliveryUser,
+                                      LocalDateTime kitchenReadyAt, LocalDateTime deliveryAcceptAt) {
+        if (ordersRepository.findByOrderNumber(orderNumber).isPresent()) {
+            return;
+        }
+
+        OrdersEntity order = new OrdersEntity();
+        order.setOrderNumber(orderNumber);
+        order.setOrderType("DELIVERY");
+        order.setRestaurantId(restaurant);
+        order.setBranchId(branch);
+        order.setKitchenId(null);
+        order.setDeliveryId(assignedDeliveryUser);
+        order.setCustomerId(customer);
+        order.setStatus(status);
+        order.setDeliveryStatus(deliveryStatus);
+        order.setPaymentStatus("PENDING");
+        order.setPaymentMethod("CASH");
+        order.setSubtotal(new BigDecimal("500.00"));
+        order.setTaxAmount(new BigDecimal("50.00"));
+        order.setDiscountAmount(new BigDecimal("0.00"));
+        order.setDeliveryFee(new BigDecimal("40.00"));
+        order.setTotalAmount(new BigDecimal("590.00"));
+        order.setCustomerName(customer.getName());
+        order.setCustomerPhone(customer.getMobileNumber());
+        order.setCustomerEmail(customer.getEmail());
+        order.setSpecialInstructions("Test delivery order");
+        order.setEstimatedTime(30);
+        order.setKitchenReadyAt(kitchenReadyAt);
+        order.setDeliveryAcceptAt(deliveryAcceptAt);
+        order.setCreatedAt(LocalDateTime.now());
+        order.setUpdatedAt(LocalDateTime.now());
+
+        OrdersEntity savedOrder = ordersRepository.save(order);
+
+        // Create order item
+        OrderItemsEntity orderItem = new OrderItemsEntity();
+        orderItem.setOrderId(savedOrder);
+        orderItem.setMenuItemId(menuItem);
+        orderItem.setKitchenId(null);
         orderItem.setMenuItemName(menuItem.getName() + " - " + status);
         orderItem.setPrice(new BigDecimal("250.00"));
         orderItem.setQuantity(2);

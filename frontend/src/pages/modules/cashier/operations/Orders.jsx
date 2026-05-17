@@ -182,6 +182,7 @@ const Orders = () => {
 
   const getOrderTypeBadge = (type) => {
     const typeColors = {
+      'DINING': 'primary',
       'DINE_IN': 'primary',
       'ONLINE': 'success',
       'TAKEAWAY': 'info',

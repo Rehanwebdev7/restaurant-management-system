@@ -111,6 +111,10 @@ public class CashDashboardService {
 				? ordersRepository.getTotalRevenueByCaptain(cashier, branch, from, to)
 				: ordersRepository.getTotalRevenueByCashier(cashier, branch, from, to);
 
+		List<com.rms.common.entities.OrdersEntity> scopedOrders = isCaptain
+				? ordersRepository.findByCaptainIdAndCreatedAtBetween(cashier, from, to)
+				: ordersRepository.findByCashierIdAndCreatedAtBetween(cashier, from, to);
+
 		// ================= STATUS COUNTS =================
 		List<Object[]> statusWise = isCaptain
 				? ordersRepository.countOrdersByStatusByCaptain(cashier, branch, from, to)
@@ -141,6 +145,59 @@ public class CashDashboardService {
 			}
 		}
 
+		long pendingOrders = 0L;
+		Map<String, Long> ordersByType = new LinkedHashMap<>();
+		ordersByType.put("DINING", 0L);
+		ordersByType.put("TAKEAWAY", 0L);
+		ordersByType.put("DELIVERY", 0L);
+
+		Map<String, BigDecimal> ordersByPayment = new LinkedHashMap<>();
+		ordersByPayment.put("Cash", BigDecimal.ZERO);
+		ordersByPayment.put("Card", BigDecimal.ZERO);
+		ordersByPayment.put("Online", BigDecimal.ZERO);
+
+		long paidCompletedOrders = 0L;
+
+		for (com.rms.common.entities.OrdersEntity order : scopedOrders) {
+			String status = order.getStatus() != null ? order.getStatus().toUpperCase() : "";
+			if (!"COMPLETED".equals(status) && !"CANCELLED".equals(status) && !"DELIVERED".equals(status)
+					&& !"SERVED".equals(status)) {
+				pendingOrders++;
+			}
+
+			String orderType = order.getOrderType() != null ? order.getOrderType().toUpperCase() : "";
+			if ("DINE_IN".equals(orderType)) {
+				orderType = "DINING";
+			}
+			if (ordersByType.containsKey(orderType)) {
+				ordersByType.put(orderType, ordersByType.get(orderType) + 1);
+			}
+
+			boolean isPaidCompleted =
+					("SUCCESS".equalsIgnoreCase(order.getPaymentStatus())
+							|| "PAID".equalsIgnoreCase(order.getPaymentStatus())
+							|| "COMPLETED".equalsIgnoreCase(order.getPaymentStatus()));
+			if (!isPaidCompleted) {
+				continue;
+			}
+
+			paidCompletedOrders++;
+			BigDecimal amount = order.getTotalAmount() != null ? order.getTotalAmount() : BigDecimal.ZERO;
+			String paymentMethod = order.getPaymentMethod() != null ? order.getPaymentMethod().toUpperCase() : "";
+
+			if ("CARD".equals(paymentMethod)) {
+				ordersByPayment.put("Card", ordersByPayment.get("Card").add(amount));
+			} else if ("UPI".equals(paymentMethod) || "PG".equals(paymentMethod)) {
+				ordersByPayment.put("Online", ordersByPayment.get("Online").add(amount));
+			} else {
+				ordersByPayment.put("Cash", ordersByPayment.get("Cash").add(amount));
+			}
+		}
+
+		BigDecimal averageOrderValue = paidCompletedOrders > 0
+				? totalRevenue.divide(BigDecimal.valueOf(paidCompletedOrders), 2, RoundingMode.HALF_UP)
+				: BigDecimal.ZERO;
+
 		// ================= RESPONSE =================
 		Map<String, Object> response = new LinkedHashMap<>();
 		response.put("cashierId", cashier.getId());
@@ -155,11 +212,15 @@ public class CashDashboardService {
 
 		response.put("totalOrders", totalOrders);
 		response.put("totalRevenue", totalRevenue);
+		response.put("averageOrderValue", averageOrderValue);
+		response.put("pendingOrders", pendingOrders);
 
 		response.put("preparingOrders", preparingCount);
 		response.put("readyOrders", readyCount);
 
 		response.put("ordersByStatus", statusMap);
+		response.put("ordersByType", ordersByType);
+		response.put("ordersByPayment", ordersByPayment);
 
 		System.out.println("========== CASHIER DASHBOARD END ==========\n");
 

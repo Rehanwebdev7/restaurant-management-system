@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Modal, Spinner, Button } from 'react-bootstrap';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ApiGet } from '../../../../ApiServices/ApiServices';
+import { ApiGet, ApiPost, ApiPut } from '../../../../ApiServices/ApiServices';
 import { toast } from 'react-toastify';
 import { useTheme } from '../../../../contexts/ThemeContext';
 
@@ -18,6 +18,8 @@ const TableOrder = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [cart, setCart] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('CASH');
+  const [processingOrder, setProcessingOrder] = useState(false);
 
   useEffect(() => {
     fetchMenuData();
@@ -171,6 +173,98 @@ const TableOrder = () => {
 
   // Total items count
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  const ensureTableBooking = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    const existingBookings = await ApiGet('/api/cashier/table_booking/byBookingdate', { bookingDate: today });
+    if (existingBookings.success) {
+      const bookings = existingBookings.success.data?.data || [];
+      const activeBooking = bookings.find((booking) => {
+        const bookingTableId = booking?.tableId?.id || booking?.tableId;
+        const bookingStatus = (booking?.status || '').toUpperCase();
+        return String(bookingTableId) === String(tableId)
+          && !['CANCELLED', 'NO_SHOW', 'COMPLETED'].includes(bookingStatus);
+      });
+      if (activeBooking?.id) {
+        return activeBooking.id;
+      }
+    }
+
+    const bookingPayload = {
+      tableId: { id: Number(tableId) },
+      status: 'CONFIRMED'
+    };
+    const bookingResponse = await ApiPost('/api/cashier/table_booking/add', bookingPayload);
+    if (!bookingResponse.success) {
+      throw new Error(bookingResponse.fail || 'Failed to reserve table');
+    }
+
+    const bookingId = bookingResponse.success.data?.data || bookingResponse.success.data;
+    if (!bookingId) {
+      throw new Error('Table booking ID not returned');
+    }
+    return bookingId;
+  };
+
+  const buildDiningPayload = (bookingId) => ({
+    tableBookingId: { id: Number(bookingId) },
+    orderType: 'DINING',
+    paymentMethod,
+    items: cart.map((item) => ({
+      menu_item_id: String(item.id),
+      quantity: item.quantity,
+      price: item.price,
+      special_instructions: '',
+      addonItems: item.addons && item.addons.length > 0
+        ? item.addons.map((addon) => ({
+            addonItemId: addon.id,
+            quantity: String(addon.quantity || 1)
+          }))
+        : []
+    }))
+  });
+
+  const submitOrder = async (collectPayment = false) => {
+    if (cart.length === 0 || processingOrder) {
+      return;
+    }
+
+    setProcessingOrder(true);
+    try {
+      const bookingId = await ensureTableBooking();
+      const orderResponse = await ApiPost('/api/cashier/orders/adds', buildDiningPayload(bookingId));
+      if (!orderResponse.success) {
+        throw new Error(orderResponse.fail || 'Failed to place dining order');
+      }
+
+      const createdOrder = orderResponse.success.data?.data || orderResponse.success.data || {};
+      const orderId = createdOrder?.id;
+
+      if (collectPayment) {
+        if (!orderId) {
+          throw new Error('Order created but order ID missing for payment collection');
+        }
+        const paymentUpdate = await ApiPut('/api/cashier/orders/update', {
+          id: orderId,
+          paymentStatus: 'SUCCESS',
+          status: 'COMPLETED',
+          paymentMethod
+        });
+        if (!paymentUpdate.success) {
+          throw new Error(paymentUpdate.fail || 'Failed to collect payment');
+        }
+      }
+
+      toast.success(collectPayment ? 'Dining order paid successfully' : 'Dining order saved successfully');
+      setCart([]);
+      setShowMobileCart(false);
+      navigate('/cashier/operations/orders');
+    } catch (error) {
+      toast.error(error.message || 'Failed to process dining order');
+    } finally {
+      setProcessingOrder(false);
+    }
+  };
 
   return (
     <Container fluid style={{ padding: 0, height: '100vh', display: 'flex', flexDirection: 'column', background: '#f5f5f5', position: 'relative' }}>
@@ -650,6 +744,32 @@ const TableOrder = () => {
             </div>
           </div>
 
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginBottom: '8px', flexShrink: 0 }}>
+            {['CASH', 'UPI', 'CARD', 'PG'].map((method) => {
+              const active = paymentMethod === method;
+              return (
+                <button
+                  key={method}
+                  type="button"
+                  disabled={processingOrder}
+                  onClick={() => setPaymentMethod(method)}
+                  style={{
+                    padding: '8px 4px',
+                    border: active ? `2px solid ${primaryColor}` : '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    background: active ? `${primaryColor}15` : '#fff',
+                    color: active ? primaryColor : '#475569',
+                    fontWeight: active ? '700' : '500',
+                    fontSize: '10px',
+                    cursor: processingOrder ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {method}
+                </button>
+              );
+            })}
+          </div>
+
           {/* Action Buttons - 4 in one row */}
           <div style={{
             display: 'grid',
@@ -658,6 +778,8 @@ const TableOrder = () => {
             flexShrink: 0
           }}>
             <button
+              type="button"
+              disabled={processingOrder}
               style={{
                 padding: '10px 6px',
                 border: 'none',
@@ -666,7 +788,7 @@ const TableOrder = () => {
                 color: '#92400e',
                 fontWeight: '600',
                 fontSize: '11px',
-                cursor: 'pointer',
+                cursor: processingOrder ? 'not-allowed' : 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -678,6 +800,8 @@ const TableOrder = () => {
               KOT
             </button>
             <button
+              type="button"
+              disabled={processingOrder}
               style={{
                 padding: '10px 6px',
                 border: 'none',
@@ -686,7 +810,7 @@ const TableOrder = () => {
                 color: '#1e40af',
                 fontWeight: '600',
                 fontSize: '11px',
-                cursor: 'pointer',
+                cursor: processingOrder ? 'not-allowed' : 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -698,6 +822,9 @@ const TableOrder = () => {
               Print
             </button>
             <button
+              type="button"
+              disabled={cart.length === 0 || processingOrder}
+              onClick={() => submitOrder(false)}
               style={{
                 padding: '10px 6px',
                 border: 'none',
@@ -706,7 +833,8 @@ const TableOrder = () => {
                 color: '#166534',
                 fontWeight: '600',
                 fontSize: '11px',
-                cursor: 'pointer',
+                cursor: cart.length === 0 || processingOrder ? 'not-allowed' : 'pointer',
+                opacity: cart.length === 0 || processingOrder ? 0.6 : 1,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -718,7 +846,9 @@ const TableOrder = () => {
               Save
             </button>
             <button
-              disabled={cart.length === 0}
+              type="button"
+              disabled={cart.length === 0 || processingOrder}
+              onClick={() => submitOrder(true)}
               style={{
                 padding: '10px 6px',
                 border: 'none',
@@ -727,7 +857,8 @@ const TableOrder = () => {
                 color: cart.length === 0 ? '#9ca3af' : '#fff',
                 fontWeight: '600',
                 fontSize: '11px',
-                cursor: cart.length === 0 ? 'not-allowed' : 'pointer',
+                cursor: cart.length === 0 || processingOrder ? 'not-allowed' : 'pointer',
+                opacity: processingOrder ? 0.75 : 1,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -735,8 +866,8 @@ const TableOrder = () => {
                 transition: 'all 0.2s'
               }}
             >
-              <i className="bi bi-credit-card" style={{ fontSize: '12px' }}></i>
-              Pay
+              <i className={`bi ${processingOrder ? 'bi-hourglass-split' : 'bi-credit-card'}`} style={{ fontSize: '12px' }}></i>
+              {processingOrder ? 'Processing' : 'Pay'}
             </button>
           </div>
         </Col>
@@ -1061,6 +1192,32 @@ const TableOrder = () => {
             </div>
           </div>
 
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginBottom: '8px' }}>
+            {['CASH', 'UPI', 'CARD', 'PG'].map((method) => {
+              const active = paymentMethod === method;
+              return (
+                <button
+                  key={method}
+                  type="button"
+                  disabled={processingOrder}
+                  onClick={() => setPaymentMethod(method)}
+                  style={{
+                    padding: '8px 4px',
+                    border: active ? `2px solid ${primaryColor}` : '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    background: active ? `${primaryColor}15` : '#fff',
+                    color: active ? primaryColor : '#475569',
+                    fontWeight: active ? '700' : '500',
+                    fontSize: '11px',
+                    cursor: processingOrder ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {method}
+                </button>
+              );
+            })}
+          </div>
+
           {/* Panel Action Buttons */}
           <div style={{
             display: 'grid',
@@ -1068,6 +1225,8 @@ const TableOrder = () => {
             gap: '8px'
           }}>
             <button
+              type="button"
+              disabled={processingOrder}
               style={{
                 padding: '12px 6px',
                 border: 'none',
@@ -1076,7 +1235,7 @@ const TableOrder = () => {
                 color: '#92400e',
                 fontWeight: '600',
                 fontSize: '12px',
-                cursor: 'pointer',
+                cursor: processingOrder ? 'not-allowed' : 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1087,6 +1246,8 @@ const TableOrder = () => {
               KOT
             </button>
             <button
+              type="button"
+              disabled={processingOrder}
               style={{
                 padding: '12px 6px',
                 border: 'none',
@@ -1095,7 +1256,7 @@ const TableOrder = () => {
                 color: '#1e40af',
                 fontWeight: '600',
                 fontSize: '12px',
-                cursor: 'pointer',
+                cursor: processingOrder ? 'not-allowed' : 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1106,6 +1267,9 @@ const TableOrder = () => {
               Print
             </button>
             <button
+              type="button"
+              disabled={cart.length === 0 || processingOrder}
+              onClick={() => submitOrder(false)}
               style={{
                 padding: '12px 6px',
                 border: 'none',
@@ -1114,7 +1278,8 @@ const TableOrder = () => {
                 color: '#166534',
                 fontWeight: '600',
                 fontSize: '12px',
-                cursor: 'pointer',
+                cursor: cart.length === 0 || processingOrder ? 'not-allowed' : 'pointer',
+                opacity: cart.length === 0 || processingOrder ? 0.6 : 1,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1125,7 +1290,9 @@ const TableOrder = () => {
               Save
             </button>
             <button
-              disabled={cart.length === 0}
+              type="button"
+              disabled={cart.length === 0 || processingOrder}
+              onClick={() => submitOrder(true)}
               style={{
                 padding: '12px 6px',
                 border: 'none',
@@ -1134,15 +1301,16 @@ const TableOrder = () => {
                 color: cart.length === 0 ? '#9ca3af' : '#fff',
                 fontWeight: '600',
                 fontSize: '12px',
-                cursor: cart.length === 0 ? 'not-allowed' : 'pointer',
+                cursor: cart.length === 0 || processingOrder ? 'not-allowed' : 'pointer',
+                opacity: processingOrder ? 0.75 : 1,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '4px'
               }}
             >
-              <i className="bi bi-credit-card" style={{ fontSize: '14px' }}></i>
-              Pay
+              <i className={`bi ${processingOrder ? 'bi-hourglass-split' : 'bi-credit-card'}`} style={{ fontSize: '14px' }}></i>
+              {processingOrder ? 'Processing' : 'Pay'}
             </button>
           </div>
         </div>

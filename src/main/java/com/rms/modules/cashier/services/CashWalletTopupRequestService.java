@@ -83,7 +83,7 @@ public class CashWalletTopupRequestService implements WalletTopupRequestServiceI
 	public ByteArrayInputStream streamExcel(String token, LocalDate fromDate, LocalDate toDate) throws Exception {
 
 		// 🔐 AUTH
-		Authorization.authorizeBranch(token);
+		Authorization.authorizeCashier(token);
 
 		// 🔓 TOKEN → USER ID
 		tokenUtil.decryptAndStoreToken(token);
@@ -156,8 +156,8 @@ public class CashWalletTopupRequestService implements WalletTopupRequestServiceI
 	public Map<String, Object> approvalHistory(LocalDateTime fromDate, LocalDateTime toDate, Integer mode,
 			String status, String searchValue, Integer pageNumber, Integer pageSize, String token) throws Exception {
 
-		// 🔐 AUTHORIZATION (BRANCH)
-		Authorization.authorizeBranch(token);
+		// 🔐 AUTHORIZATION (CASHIER)
+		Authorization.authorizeCashier(token);
 
 		// 🔓 TOKEN → BRANCH USER
 		tokenUtil.decryptAndStoreToken(token);
@@ -243,12 +243,18 @@ public class CashWalletTopupRequestService implements WalletTopupRequestServiceI
 			Integer mode, String status, String searchValue, Integer pageNumber, Integer pageSize, String token)
 			throws Exception {
 
-		// 🔐 AUTHORIZATION (BRANCH)
-		Authorization.authorizeBranch(token);
+		// 🔐 AUTHORIZATION (CASHIER)
+		Authorization.authorizeCashier(token);
 
-		// 🔓 TOKEN → BRANCH USER
+		// 🔓 TOKEN → CASHIER USER
 		tokenUtil.decryptAndStoreToken(token);
-		Long branchUserId = tokenUtil.getCurrentUserId().longValue();
+		Long cashierUserId = tokenUtil.getCurrentUserId().longValue();
+		UsersEntity cashierUser = usersrepository.findById(cashierUserId)
+				.orElseThrow(() -> new RuntimeException("Cashier user not found"));
+		if (cashierUser.getBranchId() == null || cashierUser.getBranchId().getId() == null) {
+			throw new RuntimeException("Branch not mapped with cashier");
+		}
+		Long branchUserId = cashierUser.getBranchId().getId();
 
 		// ================= BRANCH VALIDATION =================
 //		UsersEntity branchUser = usersrepository.findById(branchUserId)
@@ -328,14 +334,14 @@ public class CashWalletTopupRequestService implements WalletTopupRequestServiceI
 
 	@Override
 	public List<WalletTopupRequestEntity> getAllRecordWalletTopupRequest(String token) throws Exception {
-		Authorization.authorizeBranch(token);
+		Authorization.authorizeCashier(token);
 		return wallettopuprequestrepository.findAll();
 	}
 
 	@Override
 	public Map<String, Object> getAllWalletTopupRequest(Integer pageNumber, Integer pageSize, String token)
 			throws Exception {
-		Authorization.authorizeBranch(token);
+		Authorization.authorizeCashier(token);
 		Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"));
 		Page page = wallettopuprequestrepository.findAll(pageable);
 		Map<String, Object> response = new LinkedHashMap<>();
@@ -349,7 +355,7 @@ public class CashWalletTopupRequestService implements WalletTopupRequestServiceI
 
 	@Override
 	public WalletTopupRequestEntity getOneWalletTopupRequest(Integer id, String token) throws Exception {
-		Authorization.authorizeBranch(token);
+		Authorization.authorizeCashier(token);
 		return wallettopuprequestrepository.findById(id)
 				.orElseThrow(() -> new RuntimeException("WalletTopupRequest not found"));
 	}
@@ -357,7 +363,7 @@ public class CashWalletTopupRequestService implements WalletTopupRequestServiceI
 	@Override
 	public String addWalletTopupRequest(WalletTopupRequestEntity wallet_topup_requestEntity, String token)
 			throws Exception {
-		Authorization.authorizeBranch(token);
+		Authorization.authorizeCashier(token);
 		WalletTopupRequestEntity newEntity = new WalletTopupRequestEntity();
 
 		// Copy non-foreign fields using reflection
@@ -390,7 +396,7 @@ public class CashWalletTopupRequestService implements WalletTopupRequestServiceI
 	public String updateWalletTopupRequest(WalletTopupRequestEntity request, String token) throws Exception {
 
 		// 🔐 AUTH
-		Authorization.authorizeBranch(token);
+		Authorization.authorizeCashier(token);
 
 		// 🔓 TOKEN → APPROVER
 		tokenUtil.decryptAndStoreToken(token);
@@ -480,7 +486,7 @@ public class CashWalletTopupRequestService implements WalletTopupRequestServiceI
 
 	@Override
 	public String deleteWalletTopupRequest(Integer id, String token) throws Exception {
-		Authorization.authorizeBranch(token);
+		Authorization.authorizeCashier(token);
 		if (!wallettopuprequestrepository.existsById(id)) {
 			throw new RuntimeException("WalletTopupRequest not found");
 		}
@@ -491,7 +497,7 @@ public class CashWalletTopupRequestService implements WalletTopupRequestServiceI
 	@Override
 	public String addMultipleWalletTopupRequest(List<WalletTopupRequestEntity> wallet_topup_requestEntitys,
 			String token) throws Exception {
-		Authorization.authorizeBranch(token);
+		Authorization.authorizeCashier(token);
 		List<WalletTopupRequestEntity> entitiesToSave = new ArrayList<>();
 
 		for (WalletTopupRequestEntity entity : wallet_topup_requestEntitys) {
@@ -527,7 +533,7 @@ public class CashWalletTopupRequestService implements WalletTopupRequestServiceI
 	@Override
 	public List<WalletTopupRequestEntity> getWalletTopupRequestByApproveddateBetween(LocalDate fromDate,
 			LocalDate toDate, String token) throws Exception {
-		Authorization.authorizeBranch(token);
+		Authorization.authorizeCashier(token);
 		LocalDateTime fromDateTime = fromDate.atStartOfDay();
 		LocalDateTime toDateTime = toDate.atTime(23, 59, 59);
 		return wallettopuprequestrepository.findByApprovedDateBetween(fromDateTime, toDateTime);
@@ -536,7 +542,7 @@ public class CashWalletTopupRequestService implements WalletTopupRequestServiceI
 	@Override
 	public Map<String, Object> getWalletTopupRequestByApproveddateBetweenPagination(LocalDate fromDate,
 			LocalDate toDate, Integer pageNumber, Integer pageSize, String token) throws Exception {
-		Authorization.authorizeBranch(token);
+		Authorization.authorizeCashier(token);
 		Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"));
 		LocalDateTime fromDateTime = fromDate.atStartOfDay();
 		LocalDateTime toDateTime = toDate.atTime(23, 59, 59);
@@ -553,7 +559,7 @@ public class CashWalletTopupRequestService implements WalletTopupRequestServiceI
 	@Override
 	public List<WalletTopupRequestEntity> getWalletTopupRequestByApproveddate(LocalDate approveddate, String token)
 			throws Exception {
-		Authorization.authorizeBranch(token);
+		Authorization.authorizeCashier(token);
 		LocalDateTime dateTime = approveddate.atStartOfDay();
 		return wallettopuprequestrepository.findByApprovedDate(dateTime);
 	}
@@ -561,7 +567,7 @@ public class CashWalletTopupRequestService implements WalletTopupRequestServiceI
 	@Override
 	public List<WalletTopupRequestEntity> getWalletTopupRequestByDateBetween(LocalDate fromDate, LocalDate toDate,
 			String token) throws Exception {
-		Authorization.authorizeBranch(token);
+		Authorization.authorizeCashier(token);
 		LocalDateTime fromDateTime = fromDate.atStartOfDay();
 		LocalDateTime toDateTime = toDate.atTime(23, 59, 59);
 		return wallettopuprequestrepository.findByDateBetween(fromDateTime, toDateTime);
@@ -570,7 +576,7 @@ public class CashWalletTopupRequestService implements WalletTopupRequestServiceI
 	@Override
 	public Map<String, Object> getWalletTopupRequestByDateBetweenPagination(LocalDate fromDate, LocalDate toDate,
 			Integer pageNumber, Integer pageSize, String token) throws Exception {
-		Authorization.authorizeBranch(token);
+		Authorization.authorizeCashier(token);
 		Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"));
 		LocalDateTime fromDateTime = fromDate.atStartOfDay();
 		LocalDateTime toDateTime = toDate.atTime(23, 59, 59);
@@ -586,7 +592,7 @@ public class CashWalletTopupRequestService implements WalletTopupRequestServiceI
 
 	@Override
 	public List<WalletTopupRequestEntity> getWalletTopupRequestByDate(LocalDate date, String token) throws Exception {
-		Authorization.authorizeBranch(token);
+		Authorization.authorizeCashier(token);
 		LocalDateTime dateTime = date.atStartOfDay();
 		return wallettopuprequestrepository.findByDate(dateTime);
 	}
@@ -594,7 +600,7 @@ public class CashWalletTopupRequestService implements WalletTopupRequestServiceI
 	@Override
 	public List<WalletTopupRequestEntity> getWalletTopupRequestByTransdateBetween(LocalDate fromDate, LocalDate toDate,
 			String token) throws Exception {
-		Authorization.authorizeBranch(token);
+		Authorization.authorizeCashier(token);
 		LocalDateTime fromDateTime = fromDate.atStartOfDay();
 		LocalDateTime toDateTime = toDate.atTime(23, 59, 59);
 		return wallettopuprequestrepository.findByTransDateBetween(fromDateTime, toDateTime);
@@ -603,7 +609,7 @@ public class CashWalletTopupRequestService implements WalletTopupRequestServiceI
 	@Override
 	public Map<String, Object> getWalletTopupRequestByTransdateBetweenPagination(LocalDate fromDate, LocalDate toDate,
 			Integer pageNumber, Integer pageSize, String token) throws Exception {
-		Authorization.authorizeBranch(token);
+		Authorization.authorizeCashier(token);
 		Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"));
 		LocalDateTime fromDateTime = fromDate.atStartOfDay();
 		LocalDateTime toDateTime = toDate.atTime(23, 59, 59);
@@ -620,7 +626,7 @@ public class CashWalletTopupRequestService implements WalletTopupRequestServiceI
 	@Override
 	public List<WalletTopupRequestEntity> getWalletTopupRequestByTransdate(LocalDate transdate, String token)
 			throws Exception {
-		Authorization.authorizeBranch(token);
+		Authorization.authorizeCashier(token);
 		LocalDateTime dateTime = transdate.atStartOfDay();
 		return wallettopuprequestrepository.findByTransDate(dateTime);
 	}

@@ -288,7 +288,10 @@ const KitchenDisplay = () => {
   // Fetch order status counts
   const fetchStatusCounts = useCallback(async () => {
     try {
-      const response = await ApiGet('/api/kitchen/orders/order-status-count');
+      const response = await ApiGet('/api/kitchen/orders/order-status-count', {
+        fromDate: fromDate,
+        toDate: toDate
+      });
       if (response.success) {
         const data = response.success.data?.data || {};
         setStatusCounts(data);
@@ -296,7 +299,7 @@ const KitchenDisplay = () => {
     } catch (err) {
       console.error('Error fetching status counts:', err);
     }
-  }, []);
+  }, [fromDate, toDate]);
 
   const handleOrderDetailsToggle = useCallback(async (order, isOpen) => {
     if (!isOpen || !order?.id) {
@@ -344,7 +347,7 @@ const KitchenDisplay = () => {
         clearInterval(autoRefreshInterval.current);
       }
     };
-  }, [activeTab, pagination.page, pagination.pageSize]);
+  }, [activeTab, pagination.page, pagination.pageSize, fromDate, toDate, fetchStatusCounts]);
 
   // Handle tab change
   const handleTabChange = (tabId) => {

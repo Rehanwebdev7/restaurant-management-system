@@ -148,15 +148,30 @@ public class CashDeliveryZonesService implements DeliveryZonesServiceIMP {
         tokenUtil.decryptAndStoreToken(token);
 
         Integer branchId = tokenUtil.getBranchId();
-        System.out.println("Branch ID from Token : " + branchId);
+        if (branchId == null) {
+            Integer currentUserId = tokenUtil.getCurrentUserId();
+            UsersEntity cashier = usersRepository.findById(currentUserId.longValue())
+                    .orElseThrow(() -> new RuntimeException("Cashier not found"));
+            branchId = cashier.getBranchId() != null && cashier.getBranchId().getId() != null
+                    ? cashier.getBranchId().getId().intValue()
+                    : null;
+        }
+        System.out.println("Branch ID resolved : " + branchId);
 
         if (branchId == null) {
-            throw new RuntimeException("Branch ID not found in token");
+            throw new RuntimeException("Branch ID not found for cashier");
         }
 
         // 🔍 FETCH BRANCH PROFILE
         UsersProfileEntity usersProfileEntity =
                 usersProfileRepository.findByRestaurantId_id(branchId.longValue());
+        if (usersProfileEntity == null) {
+            UsersEntity branchUser = usersRepository.findById(branchId.longValue())
+                    .orElseThrow(() -> new RuntimeException("Branch user not found"));
+            if (branchUser.getParentId() != null && branchUser.getParentId().getId() != null) {
+                usersProfileEntity = usersProfileRepository.findFirstByRestaurantId_id(branchUser.getParentId().getId());
+            }
+        }
 
         if (usersProfileEntity == null) {
             throw new RuntimeException("Users profile not found for branchId: " + branchId);

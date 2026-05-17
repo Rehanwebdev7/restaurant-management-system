@@ -366,14 +366,8 @@ public class DelOrdersService implements OrdersServiceIMP {
 			// ================= MANDATORY BRANCH FILTER (any assigned branch) =================
 			predicates.add(branchJoin.get("id").in(branchIdsForQuery));
 
-			// ================= BRANCH JOIN =================
-			Join<OrdersEntity, UsersEntity> deliveryJoin = root.join("deliveryId", JoinType.INNER);
-
-			// ================= MANDATORY BRANCH FILTER =================
-			predicates.add(cb.equal(deliveryJoin.get("id"), deliveryUserId));
-
-			// ================= MANDATORY ORDER TYPE FILTER (ONLINE) =================
-			predicates.add(cb.equal(cb.lower(root.get("orderType")), "online"));
+			// ================= MANDATORY ORDER TYPE FILTER (DELIVERY) =================
+			predicates.add(cb.equal(cb.lower(root.get("orderType")), "delivery"));
 
 			// ================= DATE FILTER =================
 			if (fromDate != null && toDate != null) {

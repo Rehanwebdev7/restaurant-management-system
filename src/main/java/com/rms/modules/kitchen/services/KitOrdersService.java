@@ -173,7 +173,7 @@ public class KitOrdersService implements OrdersServiceIMP {
 	}
 
 	@Transactional(readOnly = true)
-	public Map<String, Long> getKitchenOrderStatusCounts(String token) throws Exception {
+	public Map<String, Long> getKitchenOrderStatusCounts(String token, String fromDate, String toDate) throws Exception {
 
 		System.out.println("🚀 Kitchen Order Status Count Service Started");
 
@@ -196,6 +196,16 @@ public class KitOrdersService implements OrdersServiceIMP {
 
 		System.out.println("🏬 Branch ID       : " + branchId);
 
+		// ================= PARSE DATES =================
+		LocalDateTime from = null;
+		LocalDateTime to = null;
+		if (fromDate != null && !fromDate.isBlank()) {
+			from = LocalDate.parse(fromDate, java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd")).atStartOfDay();
+		}
+		if (toDate != null && !toDate.isBlank()) {
+			to = LocalDate.parse(toDate, java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd")).atTime(23, 59, 59);
+		}
+
 		// ================= INIT STATUS MAP =================
 		Map<String, Long> statusCountMap = new LinkedHashMap<>();
 		statusCountMap.put("PENDING", 0L);
@@ -207,7 +217,7 @@ public class KitOrdersService implements OrdersServiceIMP {
 		// =====================================================
 		// 🔥 1️⃣ PENDING ORDERS → BRANCH WISE
 		// =====================================================
-		Long pendingCount = ordersRepository.countByStatusAndBranchId_Id("PENDING", branchId);
+		Long pendingCount = ordersRepository.countPendingByBranchIdAndDate("PENDING", branchId, from, to);
 
 		System.out.println("📦 PENDING Orders (Branch-wise): " + pendingCount);
 
@@ -216,7 +226,7 @@ public class KitOrdersService implements OrdersServiceIMP {
 		// =====================================================
 		// 🔥 2️⃣ OTHER STATUS → KITCHEN WISE
 		// =====================================================
-		List<Object[]> otherStatusCounts = ordersRepository.countByKitchenIdAndStatusNotPending(kitchenUserId);
+		List<Object[]> otherStatusCounts = ordersRepository.countByKitchenIdAndStatusNotPendingAndDate(kitchenUserId, from, to);
 
 		System.out.println("📊 Other Status Rows: " + otherStatusCounts.size());
 
@@ -493,6 +503,20 @@ public class KitOrdersService implements OrdersServiceIMP {
 		UsersEntity kitchenUser = usersrepository.findById(kitchenUserId)
 				.orElseThrow(() -> new RuntimeException("Kitchen user not found"));
 
+		// Simple kitchen status-only update → use native SQL to avoid Hibernate JOIN explosion
+		boolean isSimpleStatusUpdate = ordersEntity.getStatus() != null
+				&& (ordersEntity.getRawItems() == null || ordersEntity.getRawItems().isEmpty())
+				&& ordersEntity.getCustomerId() == null
+				&& ordersEntity.getBranchId() == null;
+
+		if (isSimpleStatusUpdate) {
+			if (!ordersrepository.existsById(ordersEntity.getId())) {
+				throw new RuntimeException("Orders not found");
+			}
+			ordersrepository.updateOrderStatusByKitchen(ordersEntity.getId(), ordersEntity.getStatus(), kitchenUserId);
+			return "Updated Successfully";
+		}
+
 		OrdersEntity existingEntity = ordersrepository.findById(ordersEntity.getId())
 				.orElseThrow(() -> new RuntimeException("Orders not found"));
 
@@ -611,6 +635,10 @@ public class KitOrdersService implements OrdersServiceIMP {
 			if ("READY".equals(canonicalStatus)) {
 				LocalDateTime indiaTime = ZonedDateTime.now(ZoneId.of("Asia/Kolkata")).toLocalDateTime();
 				existingEntity.setKitchenReadyAt(indiaTime);
+				existingEntity.setDeliveryStatus("READY_FOR_ORDER");
+				constant.sendNotificationByBranchAndRole(existingEntity.getBranchId().getId(), "DELIVERY",
+						"🚚 Order Ready for Pickup", "Order #" + existingEntity.getOrderNumber() + " is ready for delivery", data);
+				System.out.println("✅ Delivery notification sent");
 			}
 
 			// ================= SERVED STATUS (DINING ORDERS) =================

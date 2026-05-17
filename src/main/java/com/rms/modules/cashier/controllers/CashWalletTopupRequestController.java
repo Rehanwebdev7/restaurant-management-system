@@ -2,7 +2,7 @@ package com.rms.modules.cashier.controllers;
 
 import com.rms.common.entities.WalletTopupRequestEntity;
 import com.rms.common.serviceImplement.WalletTopupRequestServiceIMP;
-import com.rms.modules.branch.services.BrWalletTopupRequestService;
+import com.rms.modules.cashier.services.CashWalletTopupRequestService;
 import com.rms.common.response.ApiResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +32,7 @@ public class CashWalletTopupRequestController {
 	private WalletTopupRequestServiceIMP walletTopupRequestServiceIMP;
 
 	@Autowired
-	private BrWalletTopupRequestService brWalletTopupRequestService;
+	private CashWalletTopupRequestService cashWalletTopupRequestService;
  
 	@GetMapping("/xl_export")
 	public ResponseEntity<byte[]> downloadOrdersExcel(@RequestHeader("access_token") String token,
@@ -40,7 +40,7 @@ public class CashWalletTopupRequestController {
 
 		try {
 			// 📦 Call updated service method
-			ByteArrayInputStream in = brWalletTopupRequestService.streamExcel(token,fromDate, toDate);
+			ByteArrayInputStream in = cashWalletTopupRequestService.streamExcel(token,fromDate, toDate);
 
 			byte[] bytes = in.readAllBytes();
 
@@ -96,7 +96,7 @@ public class CashWalletTopupRequestController {
 			}
 
 			// ================= SERVICE CALL =================
-			Map<String, Object> result = brWalletTopupRequestService.approvalHistory(startDate, endDate, mode, status,
+			Map<String, Object> result = cashWalletTopupRequestService.approvalHistory(startDate, endDate, mode, status,
 					searchValue, pageNumber, pageSize, token);
 
 			return ApiResponse.responseBuilder(result, "SUCCESS", HttpStatus.OK,
@@ -149,7 +149,7 @@ public class CashWalletTopupRequestController {
 			}
 
 			// ================= SERVICE CALL =================
-			Map<String, Object> result = brWalletTopupRequestService.getWalletTopupRequestsWithFilters_ForBranch(
+			Map<String, Object> result = cashWalletTopupRequestService.getWalletTopupRequestsWithFilters_ForBranch(
 					startDate, endDate, mode, status, searchValue, pageNumber, pageSize, token);
 
 			return ApiResponse.responseBuilder(result, "SUCCESS", HttpStatus.OK,

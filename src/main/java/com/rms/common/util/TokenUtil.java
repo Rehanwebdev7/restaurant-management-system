@@ -19,8 +19,8 @@ public final class TokenUtil {
 //    @Autowired
 //    private UsersRepository usersRepository;
 
-	private JSONObject currentTokenData = null;
-	private String currentDecryptedToken = null;
+	private static final ThreadLocal<JSONObject> currentTokenData = new ThreadLocal<>();
+	private static final ThreadLocal<String> currentDecryptedToken = new ThreadLocal<>();
 
 	// ========== TOKEN DECRYPT + STORE ==========
 //    public JSONObject decryptAndStoreToken(String encryptedToken) throws Exception {
@@ -38,10 +38,11 @@ public final class TokenUtil {
 //    }
 
 	private Object get(String key) {
-		if (currentTokenData == null) {
+		JSONObject data = currentTokenData.get();
+		if (data == null) {
 			throw new IllegalStateException("Token not decrypted yet.");
 		}
-		return currentTokenData.has(key) ? currentTokenData.get(key) : null;
+		return data.has(key) ? data.get(key) : null;
 	}
 
 	public Integer getCurrentUserId() {
@@ -73,12 +74,12 @@ public final class TokenUtil {
 	}
 
 	public void clearTokenData() {
-		currentTokenData = null;
-		currentDecryptedToken = null;
+		currentTokenData.remove();
+		currentDecryptedToken.remove();
 	}
 
 	public boolean isTokenDataAvailable() {
-		return currentTokenData != null;
+		return currentTokenData.get() != null;
 	}
 
 	public JSONObject decryptAndStoreToken(String encryptedToken) throws Exception {
@@ -86,24 +87,27 @@ public final class TokenUtil {
 		System.out.println("====== TOKEN DECRYPT START ======");
 		System.out.println("Encrypted Token : " + encryptedToken);
 
-		currentDecryptedToken = AES256Util.decrypt(encryptedToken);
+		String decrypted = AES256Util.decrypt(encryptedToken);
+		currentDecryptedToken.set(decrypted);
 
-		System.out.println("Decrypted Token String : " + currentDecryptedToken);
+		System.out.println("Decrypted Token String : " + decrypted);
 
-		Object decryptedData = new JSONTokener(currentDecryptedToken).nextValue();
+		Object decryptedData = new JSONTokener(decrypted).nextValue();
 
+		JSONObject tokenData;
 		if (decryptedData instanceof JSONArray) {
 			System.out.println("Token JSON Type : JSONArray");
-			currentTokenData = ((JSONArray) decryptedData).getJSONObject(0);
+			tokenData = ((JSONArray) decryptedData).getJSONObject(0);
 		} else {
 			System.out.println("Token JSON Type : JSONObject");
-			currentTokenData = (JSONObject) decryptedData;
+			tokenData = (JSONObject) decryptedData;
 		}
+		currentTokenData.set(tokenData);
 
-		System.out.println("Parsed Token Data : " + currentTokenData.toString());
+		System.out.println("Parsed Token Data : " + tokenData.toString());
 		System.out.println("====== TOKEN DECRYPT END ======");
 
-		return currentTokenData;
+		return tokenData;
 	}
 
 	// ========== CREATE SESSION TOKEN (NO HIERARCHY) ==========

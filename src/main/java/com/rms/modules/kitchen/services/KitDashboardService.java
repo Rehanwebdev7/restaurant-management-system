@@ -166,22 +166,25 @@ public class KitDashboardService {
 	    LocalDateTime to = toDate.atTime(LocalTime.MAX);
 
 	    // ================= TOTALS =================
-	    Long totalOrders =
-	            ordersRepository.countTotalOrdersByBranch(branch, from, to);
+	    // PENDING: branch-scoped (unassigned orders)
+	    Long pendingCount = ordersRepository.countPendingByBranchIdAndDate("PENDING", branch.getId(), from, to);
 
+	    // Revenue: branch-scoped (for branch reporting)
 	    BigDecimal totalRevenue =
 	            ordersRepository.getTotalRevenueByBranch(branch, from, to);
 
-	    // ================= STATUS COUNTS =================
-	    List<Object[]> statusWise =
-	            ordersRepository.countOrdersByStatusByBranch(branch, from, to);
+	    // ================= STATUS COUNTS (KITCHEN-SCOPED) =================
+	    // Non-PENDING statuses: kitchen-scoped (only this kitchen user's orders)
+	    List<Object[]> kitchenStatuses =
+	            ordersRepository.countByKitchenIdAndStatusNotPendingAndDate(kitchenUserId, from, to);
 
 	    Map<String, Long> statusMap = new LinkedHashMap<>();
+	    statusMap.put("PENDING", pendingCount);
 
 	    long preparingCount = 0L;
 	    long readyCount = 0L;
 
-	    for (Object[] row : statusWise) {
+	    for (Object[] row : kitchenStatuses) {
 
 	        String status = String.valueOf(row[0]).toUpperCase();
 	        Long count = (Long) row[1];
@@ -201,6 +204,9 @@ public class KitDashboardService {
 	        }
 
 	    }
+
+	    // Total: sum of kitchen-scoped orders (PENDING + PREPARING + READY)
+	    Long totalOrders = pendingCount + preparingCount + readyCount;
 
 	    System.out.println("Preparing Orders : " + preparingCount);
 	    System.out.println("Ready Orders     : " + readyCount);

@@ -77,11 +77,12 @@ const Payments = () => {
 
   const calculateSummary = (data) => {
     const sum = data.reduce((acc, p) => {
-      acc.total += p.amount || 0;
+      const amount = Number(p.totalAmount ?? p.amount ?? 0);
+      acc.total += amount;
       acc.count++;
-      if (p.paymentMethod === 'CASH') acc.cash += p.amount || 0;
-      if (p.paymentMethod === 'CARD') acc.card += p.amount || 0;
-      if (p.paymentMethod === 'UPI') acc.upi += p.amount || 0;
+      if (p.paymentMethod === 'CASH') acc.cash += amount;
+      if (p.paymentMethod === 'CARD') acc.card += amount;
+      if (p.paymentMethod === 'UPI' || p.paymentMethod === 'PG') acc.upi += amount;
       return acc;
     }, { total: 0, cash: 0, card: 0, upi: 0, count: 0 });
     setSummary(sum);
@@ -136,7 +137,8 @@ const Payments = () => {
     const config = {
       'CASH': { bg: 'success', icon: 'bi-cash-coin' },
       'CARD': { bg: 'primary', icon: 'bi-credit-card' },
-      'UPI': { bg: 'info', icon: 'bi-phone' }
+      'UPI': { bg: 'info', icon: 'bi-phone' },
+      'PG': { bg: 'warning', icon: 'bi-link-45deg' }
     };
     const { bg, icon } = config[method] || { bg: 'secondary', icon: 'bi-wallet2' };
     return <Badge bg={bg}><i className={`bi ${icon} me-1`}></i>{method || 'N/A'}</Badge>;
@@ -211,6 +213,7 @@ const Payments = () => {
                   <option value="CASH">Cash</option>
                   <option value="CARD">Card</option>
                   <option value="UPI">UPI</option>
+                  <option value="PG">Pay Link</option>
                 </Form.Select>
               </Form.Group>
             </Col>

@@ -36,11 +36,14 @@ public class KitOrdersController {
 	// 📊 KITCHEN ORDER STATUS COUNT API
 	// =====================================================
 	@GetMapping("/order-status-count")
-	public ResponseEntity<Object> getKitchenOrderStatusCount(@RequestHeader("access_token") String token) {
+	public ResponseEntity<Object> getKitchenOrderStatusCount(
+			@RequestHeader("access_token") String token,
+			@RequestParam(required = false) String fromDate,
+			@RequestParam(required = false) String toDate) {
 
 		try {
 
-			Map<String, Long> result = kitOrdersService.getKitchenOrderStatusCounts(token);
+			Map<String, Long> result = kitOrdersService.getKitchenOrderStatusCounts(token, fromDate, toDate);
 
 			return ApiResponse.responseBuilder(result, "SUCCESS", HttpStatus.OK,
 					"Kitchen order status count fetched successfully");

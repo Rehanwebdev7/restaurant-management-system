@@ -1,6 +1,7 @@
 package com.rms.modules.cashier.services;
 
 import com.rms.common.Constant;
+import com.rms.common.dto.BranchOrderSummaryDTO;
 import com.rms.common.entities.AddonsItemsEntity;
 import com.rms.common.entities.CustomerDeliveryAddressesEntity;
 import com.rms.common.entities.CustomersEntity;
@@ -66,6 +67,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
@@ -183,6 +185,39 @@ public class CashOrdersService implements OrdersServiceIMP {
 		}
 		Long restaurantId = booking.getTableId().getRestaurantId().getId();
 		return restaurantId != null ? usersProfileRepository.findFirstByRestaurantId_id(restaurantId) : null;
+	}
+
+	private Map<String, Object> buildSummaryResponse(Page<OrdersEntity> page) {
+		List<BranchOrderSummaryDTO> records = page.getContent().stream()
+				.map(BranchOrderSummaryDTO::fromOrderEntity)
+				.collect(Collectors.toCollection(ArrayList::new));
+
+		Map<String, Object> response = new LinkedHashMap<>();
+		response.put("totalRecords", page.getTotalElements());
+		response.put("pageSize", page.getSize());
+		response.put("currentPage", page.getNumber() + 1);
+		response.put("totalPages", page.getTotalPages());
+		response.put("records", records);
+		return response;
+	}
+
+	private boolean isPaidStatus(String paymentStatus) {
+		return paymentStatus != null
+				&& Arrays.asList("SUCCESS", "PAID", "COMPLETED").contains(paymentStatus.trim().toUpperCase());
+	}
+
+	private boolean isScalarOnlyUpdate(OrdersEntity ordersEntity) {
+		return ordersEntity.getCustomerId() == null
+				&& ordersEntity.getCustomerDeliveryAddressesId() == null
+				&& ordersEntity.getBranchId() == null
+				&& ordersEntity.getCaptainId() == null
+				&& ordersEntity.getDeliveryId() == null
+				&& ordersEntity.getRestaurantId() == null
+				&& ordersEntity.getTableBookingId() == null
+				&& ordersEntity.getCashierId() == null
+				&& ordersEntity.getSectionId() == null
+				&& ordersEntity.getPaymentGatewayId() == null
+				&& (ordersEntity.getRawItems() == null || ordersEntity.getRawItems().isEmpty());
 	}
 
 	private CustomersEntity resolveCustomerForOrder(Map<String, Object> payload, UsersEntity restaurant)
@@ -419,16 +454,7 @@ public class CashOrdersService implements OrdersServiceIMP {
 		// ================= PAGINATION =================
 		Pageable pageable = PageRequest.of(Math.max(pageNumber, 0), pageSize, Sort.by(Sort.Direction.DESC, "id"));
 		Page<OrdersEntity> page = ordersRepository.findAll(spec, pageable);
-
-		// ================= RESPONSE =================
-		Map<String, Object> response = new LinkedHashMap<>();
-		response.put("totalRecords", page.getTotalElements());
-		response.put("pageSize", page.getSize());
-		response.put("currentPage", page.getNumber() + 1);
-		response.put("totalPages", page.getTotalPages());
-		response.put("records", page.getContent());
-
-		return response;
+		return buildSummaryResponse(page);
 	}
 
 	public Map<String, Object> getOrdersWithFilters(LocalDate fromDate, LocalDate toDate, String status,
@@ -446,7 +472,7 @@ public class CashOrdersService implements OrdersServiceIMP {
 				.orElseThrow(() -> new RuntimeException("Cashier not found from token"));
 
 		// ================= BRANCH USER =================
-		UsersEntity branchUser = cashier.getParentId();
+		UsersEntity branchUser = cashier.getBranchId();
 		if (branchUser == null) {
 			throw new RuntimeException("Branch not mapped with cashier");
 		}
@@ -513,19 +539,11 @@ public class CashOrdersService implements OrdersServiceIMP {
 		Pageable pageable = PageRequest.of(Math.max(pageNumber, 0), pageSize, Sort.by(Sort.Direction.DESC, "id"));
 
 		Page<OrdersEntity> page = ordersRepository.findAll(spec, pageable);
-
-		Map<String, Object> response = new LinkedHashMap<>();
-		response.put("totalRecords", page.getTotalElements());
-		response.put("pageSize", page.getSize());
-		response.put("currentPage", page.getNumber() + 1);
-		response.put("totalPages", page.getTotalPages());
-		response.put("records", page.getContent());
-
-		return response;
+		return buildSummaryResponse(page);
 	}
 
 	@Transactional(rollbackFor = Exception.class)
-	public String addOrderss(Map<String, Object> payload, String token) throws Exception {
+	public Map<String, Object> addOrderss(Map<String, Object> payload, String token) throws Exception {
 
 		System.out.println("\n╔══════════════════════════════════════════════╗");
 		System.out.println("║            🧾 ORDER CREATION START           ║");
@@ -539,7 +557,7 @@ public class CashOrdersService implements OrdersServiceIMP {
 		tokenUtil.decryptAndStoreToken(token);
 		Long cashierId = tokenUtil.getCurrentUserId().longValue();
 		String currentRole = tokenUtil.getCurrentUserType();
-		Long branchIdFromToken = tokenUtil.getBranchId().longValue();
+		Long branchIdFromToken = tokenUtil.getBranchId() != null ? tokenUtil.getBranchId().longValue() : null;
 
 		System.out.println("👤 Cashier ID      : " + cashierId);
 		System.out.println("🏬 Branch ID(Token): " + branchIdFromToken);
@@ -693,6 +711,9 @@ public class CashOrdersService implements OrdersServiceIMP {
 
 		if (tableBooking != null)
 			order.setTableBookingId(tableBooking);
+		if (tableBooking != null && tableBooking.getTableId() != null) {
+			order.setTableNumber(tableBooking.getTableId().getTableNumber());
+		}
 
 		if (sectionRecord != null)
 			order.setSectionId(sectionRecord);
@@ -911,7 +932,21 @@ public class CashOrdersService implements OrdersServiceIMP {
 
 //		return "Order Created Successfully - Order ID: " + orderGenerated_id;
 
-		return "Order Created Successfully - Order ID: " + orderGeneratedId;
+		Map<String, Object> response = new LinkedHashMap<>();
+		response.put("id", savedOrder.getId());
+		response.put("orderNumber", savedOrder.getOrderNumber());
+		response.put("orderType", savedOrder.getOrderType());
+		response.put("paymentMethod", savedOrder.getPaymentMethod());
+		response.put("paymentStatus", savedOrder.getPaymentStatus());
+		response.put("status", savedOrder.getStatus());
+		response.put("subtotal", savedOrder.getSubtotal());
+		response.put("taxAmount", savedOrder.getTaxAmount());
+		response.put("deliveryFee", savedOrder.getDeliveryFee());
+		response.put("totalAmount", savedOrder.getTotalAmount());
+		if (savedOrder.getTableBookingId() != null) {
+			response.put("tableBookingId", savedOrder.getTableBookingId().getId());
+		}
+		return response;
 	}
 //	@Transactional(rollbackFor = Exception.class)
 //	public String addOrderss(Map<String, Object> payload, String token) throws Exception {
@@ -1776,16 +1811,7 @@ public class CashOrdersService implements OrdersServiceIMP {
 
 	@Override
 	public Map<String, Object> getAllOrders(Integer pageNumber, Integer pageSize, String token) throws Exception {
-		Authorization.authorizeCashier(token);
-		Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"));
-		Page page = ordersrepository.findAll(pageable);
-		Map<String, Object> response = new LinkedHashMap<>();
-		response.put("totalRecords", page.getTotalElements());
-		response.put("pageSize", page.getSize());
-		response.put("currentPage", page.getNumber() + 1);
-		response.put("totalPages", page.getTotalPages());
-		response.put("records", page.getContent());
-		return response;
+		return getOrdersByCashierId(token, null, null, null, null, null, null, pageNumber, pageSize);
 	}
 
 	@Override
@@ -1851,6 +1877,42 @@ public class CashOrdersService implements OrdersServiceIMP {
 	@Override
 	public String updateOrders(OrdersEntity ordersEntity, String token) throws Exception {
 		Authorization.authorizeCashier(token);
+
+		if (ordersEntity.getId() == null) {
+			throw new RuntimeException("Order ID is required");
+		}
+
+		if (isScalarOnlyUpdate(ordersEntity)) {
+			String orderType = ordersrepository.findOrderTypeValueById(ordersEntity.getId())
+					.orElseThrow(() -> new RuntimeException("Orders not found"));
+			Long tableBookingId = ordersrepository.findTableBookingIdValueById(ordersEntity.getId()).orElse(null);
+			String previousPaymentStatus = ordersrepository.findPaymentStatusValueById(ordersEntity.getId()).orElse(null);
+
+			int updated = ordersrepository.updateOrderPaymentSnapshot(
+					ordersEntity.getId(),
+					ordersEntity.getPaymentStatus(),
+					ordersEntity.getStatus(),
+					ordersEntity.getPaymentMethod(),
+					ordersEntity.getPaymentRemarks(),
+					ordersEntity.getBankRefNum(),
+					ordersEntity.getApiRefNum());
+			if (updated == 0) {
+				throw new RuntimeException("Orders not found");
+			}
+
+			if (isPaidStatus(ordersEntity.getPaymentStatus())
+					&& !isPaidStatus(previousPaymentStatus)
+					&& "DINING".equalsIgnoreCase(orderType)
+					&& tableBookingId != null) {
+				TableBookingEntity tableBooking = tableBookingRepository.findById(tableBookingId).orElse(null);
+				if (tableBooking != null && tableBooking.getTableId() != null) {
+					diningTableReleaseScheduler.scheduleRelease(tableBooking.getTableId().getId());
+				}
+			}
+
+			return "Record Updated Successfully";
+		}
+
 		OrdersEntity existingEntity = ordersrepository.findById(ordersEntity.getId())
 				.orElseThrow(() -> new RuntimeException("Orders not found"));
 
@@ -1867,10 +1929,8 @@ public class CashOrdersService implements OrdersServiceIMP {
 
 		// Schedule 5-minute table auto-release on DINING payment success
 		String newPaymentStatus = existingEntity.getPaymentStatus();
-		boolean isNowPaid = newPaymentStatus != null
-				&& ("SUCCESS".equalsIgnoreCase(newPaymentStatus) || "PAID".equalsIgnoreCase(newPaymentStatus));
-		boolean wasPreviouslyPaid = previousPaymentStatus != null
-				&& ("SUCCESS".equalsIgnoreCase(previousPaymentStatus) || "PAID".equalsIgnoreCase(previousPaymentStatus));
+		boolean isNowPaid = isPaidStatus(newPaymentStatus);
+		boolean wasPreviouslyPaid = isPaidStatus(previousPaymentStatus);
 		if (isNowPaid && !wasPreviouslyPaid && "DINING".equalsIgnoreCase(existingEntity.getOrderType())) {
 			TableBookingEntity tableBooking = existingEntity.getTableBookingId();
 			if (tableBooking != null && tableBooking.getTableId() != null) {

@@ -98,9 +98,17 @@ public class LoginController {
 			}
 
 			long timestamp = UnixTimestampExample.getCurrentTimestamp() + 999999999;
+			String parentId = user.getParentId() != null && user.getParentId().getId() != null
+					? user.getParentId().getId().toString()
+					: "null";
+			String branchId = user.getBranchId() != null && user.getBranchId().getId() != null
+					? user.getBranchId().getId().toString()
+					: "null";
 			String tokenData = "{\"id\": " + user.getId()
 					+ ", \"userType\": \"" + (user.getRole() != null ? user.getRole().toLowerCase() : "user")
-					+ "\", \"timestamp\": " + timestamp + "}";
+					+ "\", \"parentId\": " + parentId
+					+ ", \"branchId\": " + branchId
+					+ ", \"timestamp\": " + timestamp + "}";
 			String token = AES256Util.encrypt(tokenData);
 
 			Map<String, Object> responseData = new HashMap<>();
