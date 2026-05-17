@@ -343,82 +343,37 @@ public class DelOrdersService implements OrdersServiceIMP {
 		tokenUtil.decryptAndStoreToken(token);
 		Long deliveryUserId = tokenUtil.getCurrentUserId().longValue();
 
-		// ================= DELIVERY USER =================
+		// ================= DELIVERY USER → BRANCH =================
 		UsersEntity deliveryUser = usersRepository.findById(deliveryUserId)
 				.orElseThrow(() -> new RuntimeException("Delivery user not found"));
 
-		List<Long> assignedBranchIds = new ArrayList<>();
-		if (deliveryUser.getBranchId() != null && deliveryUser.getBranchId().getId() != null) {
-			assignedBranchIds.add(deliveryUser.getBranchId().getId());
+		if (deliveryUser.getBranchId() == null || deliveryUser.getBranchId().getId() == null) {
+			throw new RuntimeException("No branch mapped with delivery user");
 		}
-		if (assignedBranchIds == null || assignedBranchIds.isEmpty()) {
-			throw new RuntimeException("No branches mapped with delivery user");
-		}
-		final List<Long> branchIdsForQuery = assignedBranchIds;
+		Long branchId = deliveryUser.getBranchId().getId();
 
-		Specification<OrdersEntity> spec = (root, query, cb) -> {
+		// ================= DATE RANGE =================
+		LocalDateTime fromDateTime = fromDate != null ? fromDate.atStartOfDay() : null;
+		LocalDateTime toDateTime = toDate != null ? toDate.atTime(LocalTime.MAX) : null;
 
-			List<Predicate> predicates = new ArrayList<>();
+		// ================= PAGEABLE (frontend sends 1-indexed) =================
+		int pageIndex = Math.max(pageNumber - 1, 0);
+		Pageable pageable = PageRequest.of(pageIndex, pageSize, Sort.by(Sort.Direction.DESC, "id"));
 
-			// ================= BRANCH JOIN =================
-			Join<OrdersEntity, UsersEntity> branchJoin = root.join("branchId", JoinType.INNER);
+		// ================= NATIVE QUERY (avoids 1664-column limit) =================
+		Page<Object[]> page = ordersRepository.findDeliveryOrderSummaries(
+				branchId, fromDateTime, toDateTime, status, searchValue, pageable);
 
-			// ================= MANDATORY BRANCH FILTER (any assigned branch) =================
-			predicates.add(branchJoin.get("id").in(branchIdsForQuery));
-
-			// ================= MANDATORY ORDER TYPE FILTER (DELIVERY) =================
-			predicates.add(cb.equal(cb.lower(root.get("orderType")), "delivery"));
-
-			// ================= DATE FILTER =================
-			if (fromDate != null && toDate != null) {
-				predicates
-						.add(cb.between(root.get("createdAt"), fromDate.atStartOfDay(), toDate.atTime(LocalTime.MAX)));
-			}
-
-			// ================= STATUS FILTER (IGNORE CASE) =================
-			Predicate statusPred = StatusFilterUtil.buildStatusPredicate(cb, root.get("deliveryStatus"), status);
-			if (statusPred != null) {
-				predicates.add(statusPred);
-			}
-
-			// ================= SEARCH FILTER (IGNORE CASE) =================
-			if (searchValue != null && !searchValue.isBlank()) {
-
-				String pattern = "%" + searchValue.toLowerCase() + "%";
-				List<Predicate> searchPredicates = new ArrayList<>();
-
-				searchPredicates.add(cb.like(cb.lower(root.get("orderNumber")), pattern));
-//				searchPredicates.add(cb.like(cb.lower(root.get("orderType")), pattern));
-				searchPredicates.add(cb.like(cb.lower(root.get("tableNumber")), pattern));
-				searchPredicates.add(cb.like(cb.lower(root.get("paymentStatus")), pattern));
-				searchPredicates.add(cb.like(cb.lower(root.get("paymentMethod")), pattern));
-
-				searchPredicates.add(cb.like(cb.lower(root.get("customerName")), pattern));
-				searchPredicates.add(cb.like(cb.lower(root.get("customerPhone")), pattern));
-				searchPredicates.add(cb.like(cb.lower(root.get("customerEmail")), pattern));
-
-				try {
-					BigDecimal amount = new BigDecimal(searchValue);
-					searchPredicates.add(cb.equal(root.get("totalAmount"), amount));
-				} catch (Exception ignored) {
-				}
-
-				predicates.add(cb.or(searchPredicates.toArray(new Predicate[0])));
-			}
-
-			return cb.and(predicates.toArray(new Predicate[0]));
-		};
-
-		Pageable pageable = PageRequest.of(Math.max(pageNumber, 0), pageSize, Sort.by(Sort.Direction.DESC, "id"));
-
-		Page<OrdersEntity> page = ordersRepository.findAll(spec, pageable);
+		List<com.rms.common.dto.BranchOrderSummaryDTO> records = page.getContent().stream()
+				.map(com.rms.common.dto.BranchOrderSummaryDTO::fromRow)
+				.collect(java.util.stream.Collectors.toList());
 
 		Map<String, Object> response = new LinkedHashMap<>();
 		response.put("totalRecords", page.getTotalElements());
 		response.put("pageSize", page.getSize());
 		response.put("currentPage", page.getNumber() + 1);
 		response.put("totalPages", page.getTotalPages());
-		response.put("records", page.getContent());
+		response.put("records", records);
 
 		return response;
 	}

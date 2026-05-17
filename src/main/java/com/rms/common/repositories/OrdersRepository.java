@@ -322,6 +322,69 @@ public interface OrdersRepository extends JpaRepository<OrdersEntity, Long> {
 			@Param("searchValue") String searchValue,
 			Pageable pageable);
 
+	@Query(value = """
+			SELECT
+			    o.id,
+			    o.order_number,
+			    o.order_type,
+			    o.status,
+			    o.payment_status,
+			    o.payment_method,
+			    o.customer_name,
+			    o.customer_phone,
+			    o.customer_email,
+			    o.table_number,
+			    o.coupon_code,
+			    o.subtotal,
+			    o.tax_amount,
+			    o.discount_amount,
+			    o.delivery_fee,
+			    o.total_amount,
+			    o.created_at,
+			    o.updated_at,
+			    o.completed_at,
+			    o.estimated_time,
+			    o.special_instructions,
+			    o.delivery_status,
+			    COALESCE((SELECT COUNT(1) FROM order_items oi WHERE oi.order_id = o.id), 0) AS order_items_count
+			FROM orders o
+			WHERE o.branch_id = :branchId
+			  AND LOWER(o.order_type) = 'delivery'
+			  AND (CAST(:fromDate AS timestamp) IS NULL OR o.created_at >= CAST(:fromDate AS timestamp))
+			  AND (CAST(:toDate AS timestamp) IS NULL OR o.created_at <= CAST(:toDate AS timestamp))
+			  AND (CAST(:status AS text) IS NULL OR CAST(:status AS text) = ''
+			       OR UPPER(o.delivery_status) = ANY(STRING_TO_ARRAY(UPPER(CAST(:status AS text)), ',')))
+			  AND (
+			    CAST(:searchValue AS text) IS NULL OR CAST(:searchValue AS text) = '' OR
+			    LOWER(COALESCE(o.order_number, '')) LIKE LOWER(CONCAT('%', CAST(:searchValue AS text), '%')) OR
+			    LOWER(COALESCE(o.customer_name, '')) LIKE LOWER(CONCAT('%', CAST(:searchValue AS text), '%')) OR
+			    LOWER(COALESCE(o.customer_phone, '')) LIKE LOWER(CONCAT('%', CAST(:searchValue AS text), '%'))
+			  )
+			ORDER BY o.id DESC
+			""", countQuery = """
+			SELECT COUNT(*)
+			FROM orders o
+			WHERE o.branch_id = :branchId
+			  AND LOWER(o.order_type) = 'delivery'
+			  AND (CAST(:fromDate AS timestamp) IS NULL OR o.created_at >= CAST(:fromDate AS timestamp))
+			  AND (CAST(:toDate AS timestamp) IS NULL OR o.created_at <= CAST(:toDate AS timestamp))
+			  AND (CAST(:status AS text) IS NULL OR CAST(:status AS text) = ''
+			       OR UPPER(o.delivery_status) = ANY(STRING_TO_ARRAY(UPPER(CAST(:status AS text)), ',')))
+			  AND (
+			    CAST(:searchValue AS text) IS NULL OR CAST(:searchValue AS text) = '' OR
+			    LOWER(COALESCE(o.order_number, '')) LIKE LOWER(CONCAT('%', CAST(:searchValue AS text), '%')) OR
+			    LOWER(COALESCE(o.customer_name, '')) LIKE LOWER(CONCAT('%', CAST(:searchValue AS text), '%')) OR
+			    LOWER(COALESCE(o.customer_phone, '')) LIKE LOWER(CONCAT('%', CAST(:searchValue AS text), '%'))
+			  )
+			""", nativeQuery = true)
+	Page<Object[]> findDeliveryOrderSummaries(
+			@Param("branchId") Long branchId,
+			@Param("fromDate") LocalDateTime fromDate,
+			@Param("toDate") LocalDateTime toDate,
+			@Param("status") String status,
+			@Param("searchValue") String searchValue,
+			Pageable pageable);
+
 	// ================= TOTAL ORDERS =================
 	@Query("""
 			    SELECT COUNT(o)
