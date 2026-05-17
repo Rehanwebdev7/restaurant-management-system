@@ -269,7 +269,7 @@ const TableOrder = () => {
   };
 
   return (
-    <Container fluid style={{ padding: 0, height: '100vh', display: 'flex', flexDirection: 'column', background: '#f5f5f5', position: 'relative' }}>
+    <Container fluid style={{ padding: 0, height: '100vh', display: 'flex', flexDirection: 'column', background: isDarkMode ? 'transparent' : '#f5f5f5', position: 'relative' }}>
       {/* Styles for bottom slide-up billing */}
       <style>{`
         .desktop-billing-col {
@@ -280,6 +280,17 @@ const TableOrder = () => {
           flex: 0 0 100% !important;
           max-width: 100% !important;
           padding-bottom: 70px !important;
+        }
+        .dark-modal .modal-content {
+          background: rgba(15,15,30,0.95);
+          color: #e2e8f0;
+          border: 1px solid rgba(255,255,255,0.1);
+        }
+        .dark-modal .modal-body {
+          background: rgba(15,15,30,0.8);
+        }
+        .dark-modal .btn-close {
+          filter: invert(1) grayscale(100%);
         }
       `}</style>
 
@@ -418,12 +429,12 @@ const TableOrder = () => {
               <div
                 key={item.id}
                 style={{
-                  background: '#fff',
+                  background: isDarkMode ? 'rgba(255,255,255,0.05)' : '#fff',
                   borderRadius: '12px',
                   padding: '14px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                  boxShadow: isDarkMode ? 'none' : '0 2px 8px rgba(0,0,0,0.06)',
                   transition: 'all 0.2s',
-                  border: '2px solid transparent',
+                  border: isDarkMode ? '2px solid rgba(255,255,255,0.08)' : '2px solid transparent',
                   position: 'relative'
                 }}
                 onMouseEnter={e => {
@@ -466,7 +477,7 @@ const TableOrder = () => {
                   <div style={{
                     fontSize: '13px',
                     fontWeight: '600',
-                    color: '#1f2937',
+                    color: isDarkMode ? '#e2e8f0' : '#1f2937',
                     marginBottom: '8px',
                     lineHeight: '1.3',
                     paddingRight: '20px'
@@ -491,7 +502,7 @@ const TableOrder = () => {
                     padding: '6px 10px',
                     border: `1px solid ${primaryColor}`,
                     borderRadius: '6px',
-                    background: '#fff',
+                    background: isDarkMode ? 'rgba(255,255,255,0.06)' : '#fff',
                     color: primaryColor,
                     fontSize: '11px',
                     fontWeight: '600',
@@ -507,7 +518,7 @@ const TableOrder = () => {
                     e.currentTarget.style.color = '#fff';
                   }}
                   onMouseLeave={e => {
-                    e.currentTarget.style.background = '#fff';
+                    e.currentTarget.style.background = isDarkMode ? 'rgba(255,255,255,0.06)' : '#fff';
                     e.currentTarget.style.color = primaryColor;
                   }}
                 >
@@ -524,8 +535,8 @@ const TableOrder = () => {
           padding: '12px',
           display: 'flex',
           flexDirection: 'column',
-          background: '#fff',
-          borderLeft: '1px solid #e5e7eb',
+          background: isDarkMode ? 'rgba(15,15,30,0.5)' : '#fff',
+          borderLeft: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e5e7eb',
           overflow: 'hidden',
           height: 'fit-content',
           maxHeight: '100%'
@@ -537,10 +548,10 @@ const TableOrder = () => {
             alignItems: 'center',
             marginBottom: '10px',
             paddingBottom: '8px',
-            borderBottom: '2px solid #f3f4f6',
+            borderBottom: isDarkMode ? '2px solid rgba(255,255,255,0.08)' : '2px solid #f3f4f6',
             flexShrink: 0
           }}>
-            <h5 style={{ margin: 0, fontWeight: '700', color: '#1f2937', fontSize: '14px' }}>
+            <h5 style={{ margin: 0, fontWeight: '700', color: isDarkMode ? '#e2e8f0' : '#1f2937', fontSize: '14px' }}>
               <i className="bi bi-receipt me-2" style={{ color: primaryColor }}></i>
               Order Details
             </h5>
@@ -562,7 +573,7 @@ const TableOrder = () => {
               <div style={{
                 textAlign: 'center',
                 padding: '20px 15px',
-                color: '#9ca3af'
+                color: isDarkMode ? '#64748b' : '#9ca3af'
               }}>
                 <i className="bi bi-cart3" style={{ fontSize: '32px', marginBottom: '8px', display: 'block' }}></i>
                 <p style={{ margin: 0, fontSize: '12px' }}>No items added yet</p>
@@ -579,7 +590,7 @@ const TableOrder = () => {
                     alignItems: 'center',
                     padding: '12px 14px',
                     marginBottom: '8px',
-                    background: '#f9fafb',
+                    background: isDarkMode ? 'rgba(255,255,255,0.05)' : '#f9fafb',
                     borderRadius: '10px',
                     gap: '12px'
                   }}
@@ -589,7 +600,7 @@ const TableOrder = () => {
                     <div style={{
                       fontSize: '14px',
                       fontWeight: '600',
-                      color: '#1f2937',
+                      color: isDarkMode ? '#e2e8f0' : '#1f2937',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '6px'
@@ -615,11 +626,11 @@ const TableOrder = () => {
                     </div>
                     {/* Show addons if any */}
                     {item.addons && item.addons.length > 0 && (
-                      <div style={{ fontSize: '10px', color: '#9ca3af', marginTop: '2px' }}>
+                      <div style={{ fontSize: '10px', color: isDarkMode ? '#64748b' : '#9ca3af', marginTop: '2px' }}>
                         + {item.addons.map(a => `${a.name}${a.quantity > 1 ? ` x${a.quantity}` : ''}`).join(', ')}
                       </div>
                     )}
-                    <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                    <div style={{ fontSize: '12px', color: isDarkMode ? '#94a3b8' : '#6b7280', marginTop: '4px' }}>
                       ${itemPrice} x {item.quantity}
                     </div>
                   </div>
@@ -637,7 +648,7 @@ const TableOrder = () => {
                         width: '28px',
                         height: '28px',
                         border: 'none',
-                        background: '#e5e7eb',
+                        background: isDarkMode ? 'rgba(255,255,255,0.08)' : '#e5e7eb',
                         borderRadius: '6px',
                         cursor: 'pointer',
                         display: 'flex',
@@ -645,7 +656,7 @@ const TableOrder = () => {
                         justifyContent: 'center',
                         fontSize: '14px',
                         fontWeight: '600',
-                        color: '#6b7280'
+                        color: isDarkMode ? '#94a3b8' : '#6b7280'
                       }}
                     >
                       -
@@ -678,7 +689,7 @@ const TableOrder = () => {
                   <div style={{
                     fontWeight: '700',
                     fontSize: '14px',
-                    color: '#1f2937',
+                    color: isDarkMode ? '#e2e8f0' : '#1f2937',
                     minWidth: '55px',
                     textAlign: 'right',
                     flexShrink: 0
@@ -708,7 +719,7 @@ const TableOrder = () => {
 
           {/* Billing Summary */}
           <div style={{
-            background: '#f9fafb',
+            background: isDarkMode ? 'rgba(255,255,255,0.04)' : '#f9fafb',
             borderRadius: '10px',
             padding: '10px 12px',
             marginBottom: '10px',
@@ -719,7 +730,7 @@ const TableOrder = () => {
               justifyContent: 'space-between',
               marginBottom: '4px',
               fontSize: '12px',
-              color: '#6b7280'
+              color: isDarkMode ? '#94a3b8' : '#6b7280'
             }}>
               <span>Subtotal</span>
               <span>${subtotal.toFixed(2)}</span>
@@ -729,7 +740,7 @@ const TableOrder = () => {
               justifyContent: 'space-between',
               marginBottom: '6px',
               fontSize: '12px',
-              color: '#6b7280'
+              color: isDarkMode ? '#94a3b8' : '#6b7280'
             }}>
               <span>GST (5%)</span>
               <span>${tax.toFixed(2)}</span>
@@ -738,10 +749,10 @@ const TableOrder = () => {
               display: 'flex',
               justifyContent: 'space-between',
               paddingTop: '8px',
-              borderTop: '1px dashed #e5e7eb',
+              borderTop: isDarkMode ? '1px dashed rgba(255,255,255,0.12)' : '1px dashed #e5e7eb',
               fontSize: '14px',
               fontWeight: '700',
-              color: '#1f2937'
+              color: isDarkMode ? '#e2e8f0' : '#1f2937'
             }}>
               <span>Total</span>
               <span style={{ color: primaryColor }}>${total.toFixed(2)}</span>
@@ -759,10 +770,10 @@ const TableOrder = () => {
                   onClick={() => setPaymentMethod(method)}
                   style={{
                     padding: '8px 4px',
-                    border: active ? `2px solid ${primaryColor}` : '1px solid #e5e7eb',
+                    border: active ? `2px solid ${primaryColor}` : (isDarkMode ? '1px solid rgba(255,255,255,0.12)' : '1px solid #e5e7eb'),
                     borderRadius: '8px',
-                    background: active ? `${primaryColor}15` : '#fff',
-                    color: active ? primaryColor : '#475569',
+                    background: active ? `${primaryColor}15` : (isDarkMode ? 'rgba(255,255,255,0.06)' : '#fff'),
+                    color: active ? primaryColor : (isDarkMode ? '#94a3b8' : '#475569'),
                     fontWeight: active ? '700' : '500',
                     fontSize: '10px',
                     cursor: processingOrder ? 'not-allowed' : 'pointer'
@@ -992,7 +1003,7 @@ const TableOrder = () => {
           style={{
             height: '100%',
             overflow: 'hidden',
-            background: '#fff',
+            background: isDarkMode ? 'rgba(15,15,30,0.98)' : '#fff',
             borderRadius: '12px',
             boxShadow: '0 4px 30px rgba(0,0,0,0.2)',
             display: 'flex',
@@ -1026,7 +1037,7 @@ const TableOrder = () => {
           {/* Panel Cart Items */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '10px' }}>
           {cart.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '30px', color: '#9ca3af' }}>
+            <div style={{ textAlign: 'center', padding: '30px', color: isDarkMode ? '#64748b' : '#9ca3af' }}>
               <i className="bi bi-cart3" style={{ fontSize: '40px', marginBottom: '12px', display: 'block' }}></i>
               <p style={{ margin: 0, fontSize: '14px' }}>No items added yet</p>
             </div>
@@ -1042,7 +1053,7 @@ const TableOrder = () => {
                     alignItems: 'center',
                     padding: '12px',
                     marginBottom: '8px',
-                    background: '#f9fafb',
+                    background: isDarkMode ? 'rgba(255,255,255,0.05)' : '#f9fafb',
                     borderRadius: '10px',
                     gap: '10px'
                   }}
@@ -1051,7 +1062,7 @@ const TableOrder = () => {
                     <div style={{
                       fontSize: '14px',
                       fontWeight: '600',
-                      color: '#1f2937',
+                      color: isDarkMode ? '#e2e8f0' : '#1f2937',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '6px'
@@ -1076,11 +1087,11 @@ const TableOrder = () => {
                       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</span>
                     </div>
                     {item.addons && item.addons.length > 0 && (
-                      <div style={{ fontSize: '10px', color: '#9ca3af', marginTop: '2px' }}>
+                      <div style={{ fontSize: '10px', color: isDarkMode ? '#64748b' : '#9ca3af', marginTop: '2px' }}>
                         + {item.addons.map(a => `${a.name}${a.quantity > 1 ? ` x${a.quantity}` : ''}`).join(', ')}
                       </div>
                     )}
-                    <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                    <div style={{ fontSize: '12px', color: isDarkMode ? '#94a3b8' : '#6b7280', marginTop: '4px' }}>
                       ${itemPrice} x {item.quantity}
                     </div>
                   </div>
@@ -1092,7 +1103,7 @@ const TableOrder = () => {
                         width: '28px',
                         height: '28px',
                         border: 'none',
-                        background: '#e5e7eb',
+                        background: isDarkMode ? 'rgba(255,255,255,0.08)' : '#e5e7eb',
                         borderRadius: '6px',
                         cursor: 'pointer',
                         display: 'flex',
@@ -1100,7 +1111,7 @@ const TableOrder = () => {
                         justifyContent: 'center',
                         fontSize: '14px',
                         fontWeight: '600',
-                        color: '#6b7280'
+                        color: isDarkMode ? '#94a3b8' : '#6b7280'
                       }}
                     >-</button>
                     <span style={{ width: '24px', textAlign: 'center', fontWeight: '600', fontSize: '14px' }}>
@@ -1128,7 +1139,7 @@ const TableOrder = () => {
                   <div style={{
                     fontWeight: '700',
                     fontSize: '14px',
-                    color: '#1f2937',
+                    color: isDarkMode ? '#e2e8f0' : '#1f2937',
                     minWidth: '55px',
                     textAlign: 'right'
                   }}>
@@ -1155,9 +1166,9 @@ const TableOrder = () => {
         </div>
 
           {/* Panel Billing Summary */}
-          <div style={{ padding: '15px 20px', borderTop: '2px solid #eee', background: '#f8f9fa', borderRadius: '0 0 12px 12px', flexShrink: 0 }}>
+          <div style={{ padding: '15px 20px', borderTop: isDarkMode ? '2px solid rgba(255,255,255,0.08)' : '2px solid #eee', background: isDarkMode ? 'rgba(10,10,25,0.6)' : '#f8f9fa', borderRadius: '0 0 12px 12px', flexShrink: 0 }}>
           <div style={{
-            background: '#f9fafb',
+            background: isDarkMode ? 'rgba(255,255,255,0.04)' : '#f9fafb',
             borderRadius: '10px',
             padding: '12px',
             marginBottom: '12px'
@@ -1167,7 +1178,7 @@ const TableOrder = () => {
               justifyContent: 'space-between',
               marginBottom: '4px',
               fontSize: '13px',
-              color: '#6b7280'
+              color: isDarkMode ? '#94a3b8' : '#6b7280'
             }}>
               <span>Subtotal</span>
               <span>${subtotal.toFixed(2)}</span>
@@ -1177,7 +1188,7 @@ const TableOrder = () => {
               justifyContent: 'space-between',
               marginBottom: '6px',
               fontSize: '13px',
-              color: '#6b7280'
+              color: isDarkMode ? '#94a3b8' : '#6b7280'
             }}>
               <span>GST (5%)</span>
               <span>${tax.toFixed(2)}</span>
@@ -1186,10 +1197,10 @@ const TableOrder = () => {
               display: 'flex',
               justifyContent: 'space-between',
               paddingTop: '8px',
-              borderTop: '1px dashed #e5e7eb',
+              borderTop: isDarkMode ? '1px dashed rgba(255,255,255,0.12)' : '1px dashed #e5e7eb',
               fontSize: '16px',
               fontWeight: '700',
-              color: '#1f2937'
+              color: isDarkMode ? '#e2e8f0' : '#1f2937'
             }}>
               <span>Total</span>
               <span style={{ color: primaryColor }}>${total.toFixed(2)}</span>
@@ -1207,10 +1218,10 @@ const TableOrder = () => {
                   onClick={() => setPaymentMethod(method)}
                   style={{
                     padding: '8px 4px',
-                    border: active ? `2px solid ${primaryColor}` : '1px solid #e5e7eb',
+                    border: active ? `2px solid ${primaryColor}` : (isDarkMode ? '1px solid rgba(255,255,255,0.12)' : '1px solid #e5e7eb'),
                     borderRadius: '8px',
-                    background: active ? `${primaryColor}15` : '#fff',
-                    color: active ? primaryColor : '#475569',
+                    background: active ? `${primaryColor}15` : (isDarkMode ? 'rgba(255,255,255,0.06)' : '#fff'),
+                    color: active ? primaryColor : (isDarkMode ? '#94a3b8' : '#475569'),
                     fontWeight: active ? '700' : '500',
                     fontSize: '11px',
                     cursor: processingOrder ? 'not-allowed' : 'pointer'
@@ -1322,17 +1333,17 @@ const TableOrder = () => {
       </div>
 
       {/* Addon Modal */}
-      <Modal show={showAddonModal} onHide={() => setShowAddonModal(false)} centered>
-        <Modal.Header closeButton style={{ borderBottom: '1px solid #eee' }}>
-          <Modal.Title style={{ fontSize: '18px', fontWeight: '600', color: '#333' }}>
+      <Modal show={showAddonModal} onHide={() => setShowAddonModal(false)} centered dialogClassName={isDarkMode ? 'dark-modal' : ''}>
+        <Modal.Header closeButton style={{ borderBottom: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #eee', background: isDarkMode ? 'rgba(15,15,30,0.5)' : 'transparent' }}>
+          <Modal.Title style={{ fontSize: '18px', fontWeight: '600', color: isDarkMode ? '#e2e8f0' : '#333' }}>
             <i className="bi bi-plus-circle me-2" style={{ color: primaryColor }}></i>
             Select Addons
           </Modal.Title>
         </Modal.Header>
-        <Modal.Body style={{ padding: '20px' }}>
+        <Modal.Body style={{ padding: '20px', background: isDarkMode ? 'rgba(15,15,30,0.8)' : 'transparent' }}>
           {/* Item Header */}
           {selectedItemForAddon && (
-            <div style={{ background: 'linear-gradient(135deg, #f8f9fa 0%, #fff 100%)', borderRadius: '10px', padding: '15px', marginBottom: '20px', border: '1px solid #eee' }}>
+            <div style={{ background: isDarkMode ? 'rgba(255,255,255,0.08)' : 'linear-gradient(135deg, #f8f9fa 0%, #fff 100%)', borderRadius: '10px', padding: '15px', marginBottom: '20px', border: isDarkMode ? '1px solid rgba(255,255,255,0.12)' : '1px solid #eee' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
                 <div style={{
                   width: '18px',
@@ -1342,7 +1353,7 @@ const TableOrder = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  background: '#fff'
+                  background: isDarkMode ? 'rgba(255,255,255,0.1)' : '#fff'
                 }}>
                   <div style={{
                     width: '10px',
@@ -1351,30 +1362,30 @@ const TableOrder = () => {
                     background: selectedItemForAddon.isVeg ? '#28a745' : '#dc3545'
                   }}></div>
                 </div>
-                <div style={{ fontSize: '16px', fontWeight: '700', color: '#333' }}>{selectedItemForAddon.name}</div>
+                <div style={{ fontSize: '16px', fontWeight: '700', color: isDarkMode ? '#e2e8f0' : '#333' }}>{selectedItemForAddon.name}</div>
               </div>
               <div style={{ fontSize: '18px', fontWeight: '700', color: primaryColor }}>{formatCurrency(selectedItemForAddon.price)}</div>
             </div>
           )}
 
-          <div style={{ fontSize: '14px', fontWeight: '600', color: '#333', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ fontSize: '14px', fontWeight: '600', color: isDarkMode ? '#e2e8f0' : '#333', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <i className="bi bi-grid-3x3-gap" style={{ color: primaryColor }}></i>
             Available Addons
           </div>
 
           {addonsLoading ? (
-            <div style={{ textAlign: 'center', padding: '30px', color: '#999' }}>
+            <div style={{ textAlign: 'center', padding: '30px', color: isDarkMode ? '#64748b' : '#999' }}>
               <Spinner animation="border" size="sm" style={{ color: primaryColor }} />
               <p style={{ margin: '10px 0 0', fontSize: '13px' }}>Loading addons...</p>
             </div>
           ) : !selectedItemForAddon?.addonsId ? (
-            <div style={{ textAlign: 'center', padding: '30px', color: '#999', background: '#f8f9fa', borderRadius: '10px' }}>
-              <i className="bi bi-x-circle" style={{ fontSize: '2.5rem', display: 'block', marginBottom: '10px', color: '#ddd' }}></i>
+            <div style={{ textAlign: 'center', padding: '30px', color: isDarkMode ? '#64748b' : '#999', background: isDarkMode ? 'rgba(255,255,255,0.04)' : '#f8f9fa', borderRadius: '10px' }}>
+              <i className="bi bi-x-circle" style={{ fontSize: '2.5rem', display: 'block', marginBottom: '10px', color: isDarkMode ? '#404854' : '#ddd' }}></i>
               <p style={{ margin: 0, fontWeight: '500' }}>No addons for this item</p>
             </div>
           ) : itemAddons.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '30px', color: '#999', background: '#f8f9fa', borderRadius: '10px' }}>
-              <i className="bi bi-inbox" style={{ fontSize: '2.5rem', display: 'block', marginBottom: '10px', color: '#ddd' }}></i>
+            <div style={{ textAlign: 'center', padding: '30px', color: isDarkMode ? '#64748b' : '#999', background: isDarkMode ? 'rgba(255,255,255,0.04)' : '#f8f9fa', borderRadius: '10px' }}>
+              <i className="bi bi-inbox" style={{ fontSize: '2.5rem', display: 'block', marginBottom: '10px', color: isDarkMode ? '#404854' : '#ddd' }}></i>
               <p style={{ margin: 0, fontWeight: '500' }}>No addons available</p>
             </div>
           ) : (
@@ -1390,8 +1401,8 @@ const TableOrder = () => {
                       padding: '6px 10px',
                       marginBottom: '5px',
                       borderRadius: '6px',
-                      border: isSelected ? `2px solid ${primaryColor}` : '1px solid #e0e0e0',
-                      background: isSelected ? '#fff8f8' : '#fafafa',
+                      border: isSelected ? `2px solid ${primaryColor}` : (isDarkMode ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e0e0e0'),
+                      background: isSelected ? (isDarkMode ? `${primaryColor}15` : '#fff8f8') : (isDarkMode ? 'rgba(255,255,255,0.04)' : '#fafafa'),
                       transition: 'all 0.2s',
                       boxShadow: isSelected ? '0 2px 6px rgba(215,68,64,0.1)' : 'none',
                       display: 'flex',
@@ -1400,7 +1411,7 @@ const TableOrder = () => {
                       gap: '8px'
                     }}
                   >
-                    <div style={{ flex: 1, fontWeight: '600', color: '#333', fontSize: '13px' }}>
+                    <div style={{ flex: 1, fontWeight: '600', color: isDarkMode ? '#e2e8f0' : '#333', fontSize: '13px' }}>
                       {addon.name}
                     </div>
 
@@ -1418,8 +1429,8 @@ const TableOrder = () => {
                         style={{
                           width: '24px',
                           height: '24px',
-                          border: '1px solid #ddd',
-                          background: quantity === 0 ? '#f0f0f0' : '#fff',
+                          border: isDarkMode ? '1px solid rgba(255,255,255,0.1)' : '1px solid #ddd',
+                          background: quantity === 0 ? (isDarkMode ? 'rgba(255,255,255,0.04)' : '#f0f0f0') : (isDarkMode ? 'rgba(255,255,255,0.06)' : '#fff'),
                           borderRadius: '4px',
                           cursor: quantity === 0 ? 'not-allowed' : 'pointer',
                           fontWeight: '700',
@@ -1427,7 +1438,7 @@ const TableOrder = () => {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          color: quantity === 0 ? '#ccc' : '#333'
+                          color: quantity === 0 ? (isDarkMode ? '#475569' : '#ccc') : (isDarkMode ? '#e2e8f0' : '#333')
                         }}
                       >−</button>
                       <span style={{
@@ -1435,7 +1446,7 @@ const TableOrder = () => {
                         minWidth: '20px',
                         textAlign: 'center',
                         fontSize: '13px',
-                        color: quantity > 0 ? primaryColor : '#999'
+                        color: quantity > 0 ? primaryColor : (isDarkMode ? '#64748b' : '#999')
                       }}>
                         {quantity}
                       </span>
@@ -1469,7 +1480,7 @@ const TableOrder = () => {
                       fontWeight: '700',
                       color: primaryColor,
                       fontSize: '13px',
-                      background: '#fff',
+                      background: isDarkMode ? 'rgba(255,255,255,0.06)' : '#fff',
                       padding: '3px 8px',
                       borderRadius: '4px',
                       minWidth: '60px',
@@ -1485,24 +1496,24 @@ const TableOrder = () => {
 
           {/* Total with addons */}
           {selectedAddons.length > 0 && selectedItemForAddon && (
-            <div style={{ background: '#f8f9fa', borderRadius: '8px', padding: '12px', marginTop: '15px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px', fontSize: '13px', color: '#666' }}>
+            <div style={{ background: isDarkMode ? 'rgba(255,255,255,0.04)' : '#f8f9fa', borderRadius: '8px', padding: '12px', marginTop: '15px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px', fontSize: '13px', color: isDarkMode ? '#94a3b8' : '#666' }}>
                 <span>Item Price:</span>
                 <span>{formatCurrency(selectedItemForAddon.price)}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px', fontSize: '13px', color: '#666' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px', fontSize: '13px', color: isDarkMode ? '#94a3b8' : '#666' }}>
                 <span>Addons ({selectedAddons.reduce((sum, a) => sum + (a.quantity || 1), 0)}):</span>
                 <span>+{formatCurrency(selectedAddons.reduce((sum, a) => sum + (a.price * (a.quantity || 1)), 0))}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px dashed #ddd', fontWeight: '600' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '8px', borderTop: isDarkMode ? '1px dashed rgba(255,255,255,0.12)' : '1px dashed #ddd', fontWeight: '600', color: isDarkMode ? '#e2e8f0' : 'inherit' }}>
                 <span>Total:</span>
                 <span style={{ color: primaryColor }}>{formatCurrency(selectedItemForAddon.price + selectedAddons.reduce((sum, a) => sum + (a.price * (a.quantity || 1)), 0))}</span>
               </div>
             </div>
           )}
         </Modal.Body>
-        <Modal.Footer style={{ borderTop: '1px solid #eee', padding: '15px 20px' }}>
-          <Button variant="light" onClick={() => setShowAddonModal(false)} style={{ borderRadius: '8px', fontWeight: '500' }}>
+        <Modal.Footer style={{ borderTop: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #eee', padding: '15px 20px', background: isDarkMode ? 'rgba(15,15,30,0.5)' : 'transparent' }}>
+          <Button variant={isDarkMode ? 'dark' : 'light'} onClick={() => setShowAddonModal(false)} style={{ borderRadius: '8px', fontWeight: '500' }}>
             Cancel
           </Button>
           <Button

@@ -786,4 +786,39 @@ public interface OrdersRepository extends JpaRepository<OrdersEntity, Long> {
 		@Param("deliveryId") Long deliveryId
 	);
 
+	@Modifying
+	@Transactional
+	@Query(value = """
+		UPDATE orders SET
+		    status          = 'DELIVERED',
+		    delivery_status = 'DELIVERED',
+		    payment_method  = :paymentMethod,
+		    payment_status  = 'COMPLETED',
+		    delivery_id     = :deliveryId,
+		    completed_at    = COALESCE(completed_at, NOW()),
+		    updated_at      = NOW()
+		WHERE id = :orderId
+		  AND UPPER(status) NOT IN ('COMPLETED','DELIVERED')
+	""", nativeQuery = true)
+	int updateOrderStatusDelivered(
+		@Param("orderId") Long orderId,
+		@Param("paymentMethod") String paymentMethod,
+		@Param("deliveryId") Long deliveryId
+	);
+
+	@Query(value = "SELECT CAST(o.total_amount AS TEXT) as amt, CAST(o.delivery_fee AS TEXT) as fee, o.order_number, o.status FROM orders o WHERE o.id = :orderId", nativeQuery = true)
+	Object[] findOrderBasicInfo(@Param("orderId") Long orderId);
+
+	@Query(value = "SELECT status FROM orders WHERE id = :orderId", nativeQuery = true)
+	String findOrderStatus(@Param("orderId") Long orderId);
+
+	@Query(value = "SELECT total_amount FROM orders WHERE id = :orderId", nativeQuery = true)
+	BigDecimal findOrderTotalAmount(@Param("orderId") Long orderId);
+
+	@Query(value = "SELECT delivery_fee FROM orders WHERE id = :orderId", nativeQuery = true)
+	BigDecimal findOrderDeliveryFee(@Param("orderId") Long orderId);
+
+	@Query(value = "SELECT order_number FROM orders WHERE id = :orderId", nativeQuery = true)
+	String findOrderNumber(@Param("orderId") Long orderId);
+
 }

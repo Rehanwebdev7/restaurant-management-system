@@ -38,4 +38,9 @@ public interface OtpLogsRepository extends JpaRepository<OtpLogsEntity, Long> {
 
     // Custom Methods
     Page<OtpLogsEntity> findAll(Pageable pageable);
+
+	Optional<OtpLogsEntity> findFirstByIdentifierAndOtpCodeAndIsVerifiedFalseAndExpiresAtAfterOrderByCreatedAtDesc(
+		String identifier, String otpCode, java.time.LocalDateTime now);
+
+	void deleteByIdentifierAndIsVerifiedFalse(String identifier);
 }

@@ -87,6 +87,39 @@ public class DelOrdersController {
 		}
 	}
 
+	// ***** Api - Send Delivery OTP to Customer *****
+	@PostMapping("/send-otp")
+	public ResponseEntity<Object> sendDeliveryOtp(@RequestHeader("access_token") String token,
+			@RequestBody Map<String, Object> body) {
+		try {
+			Long orderId = Long.valueOf(body.get("orderId").toString());
+			Map<String, Object> result = delOrdersService.sendDeliveryOtp(orderId, token);
+			return ApiResponse.responseBuilder(result, "SUCCESS", HttpStatus.OK, "OTP sent successfully");
+		} catch (SecurityException e) {
+			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.UNAUTHORIZED, e.getMessage());
+		} catch (RuntimeException e) {
+			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.BAD_REQUEST, e.getMessage());
+		} catch (Exception e) {
+			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error");
+		}
+	}
+
+	// ***** Api - Verify OTP & Complete Delivery *****
+	@PostMapping("/verify-otp")
+	public ResponseEntity<Object> verifyOtpAndComplete(@RequestHeader("access_token") String token,
+			@RequestBody Map<String, Object> payload) {
+		try {
+			String result = delOrdersService.verifyOtpAndComplete(payload, token);
+			return ApiResponse.responseBuilder(result, "SUCCESS", HttpStatus.OK, "Order delivered successfully");
+		} catch (SecurityException e) {
+			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.UNAUTHORIZED, e.getMessage());
+		} catch (RuntimeException e) {
+			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.BAD_REQUEST, e.getMessage());
+		} catch (Exception e) {
+			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error");
+		}
+	}
+
 	@GetMapping("/filter")
 	public ResponseEntity<Object> getOrdersWithFilters(@RequestHeader("access_token") String token,
 

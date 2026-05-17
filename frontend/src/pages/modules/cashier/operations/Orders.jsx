@@ -7,9 +7,11 @@ import { toast } from 'react-toastify';
 import { server_api } from '../../../../utils/constants';
 import '../../../../styles/tables.css';
 import { useTheme } from '../../../../contexts/ThemeContext';
+import { useDarkMode } from '../../../../contexts/DarkModeContext';
 
 const Orders = () => {
   const { primaryColor, primaryContrast } = useTheme();
+  const { isDarkMode } = useDarkMode();
   const [loading, setLoading] = useState(false);
   const [orders, setOrders] = useState([]);
   const [pagination, setPagination] = useState({
@@ -479,11 +481,11 @@ const Orders = () => {
             Order Details - {selectedOrder?.orderNumber || `#${selectedOrder?.id}`}
           </Modal.Title>
         </Modal.Header>
-        <Modal.Body id="printable-order">
+        <Modal.Body id="printable-order" style={{ background: isDarkMode ? 'rgba(15,15,30,0.5)' : 'transparent' }}>
           {selectedOrder && (
             <>
               {/* Order Info */}
-              <div className="d-flex justify-content-between align-items-center mb-3 pb-3" style={{ borderBottom: '1px solid #eee' }}>
+              <div className="d-flex justify-content-between align-items-center mb-3 pb-3" style={{ borderBottom: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #eee' }}>
                 <div>
                   <div className="text-muted small">Order Date</div>
                   <div className="fw-semibold">{formatDateTime(selectedOrder.createdAt)}</div>
@@ -495,7 +497,7 @@ const Orders = () => {
               </div>
 
               {/* Customer Info */}
-              <div className="mb-3 pb-3" style={{ borderBottom: '1px solid #eee' }}>
+              <div className="mb-3 pb-3" style={{ borderBottom: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #eee' }}>
                 <div className="fw-bold mb-2" style={{ color: primaryColor }}>Customer Details</div>
                 <Row>
                   <Col sm={6} className="mb-2">
@@ -524,8 +526,8 @@ const Orders = () => {
               {/* Order Items */}
               <div className="mb-3">
                 <div className="fw-bold mb-2" style={{ color: primaryColor }}>Order Items</div>
-                <Table size="sm" bordered>
-                  <thead style={{ backgroundColor: '#f8f9fa' }}>
+                <Table size="sm" bordered variant={isDarkMode ? 'dark' : undefined}>
+                  <thead style={{ backgroundColor: isDarkMode ? '#1e293b' : '#f8f9fa' }}>
                     <tr>
                       <th>Item</th>
                       <th className="text-center" style={{ width: '60px' }}>Qty</th>
@@ -547,11 +549,11 @@ const Orders = () => {
                           const addonTotal = addon.price || 0;
                           const addonUnitPrice = addonQty > 0 ? addonTotal / addonQty : 0;
                           return (
-                            <tr key={`${idx}-addon-${addonIdx}`} style={{ backgroundColor: '#fafafa' }}>
-                              <td style={{ paddingLeft: '20px', color: '#666', fontSize: '13px' }}>+ {addon.addonName || addon.name}</td>
-                              <td className="text-center" style={{ color: '#666', fontSize: '13px' }}>{addonQty}</td>
-                              <td className="text-end" style={{ color: '#666', fontSize: '13px' }}>{formatCurrency(addonUnitPrice)}</td>
-                              <td className="text-end" style={{ color: '#666', fontSize: '13px' }}>{formatCurrency(addonTotal)}</td>
+                            <tr key={`${idx}-addon-${addonIdx}`} style={{ backgroundColor: isDarkMode ? 'rgba(255,255,255,0.04)' : '#fafafa' }}>
+                              <td style={{ paddingLeft: '20px', color: isDarkMode ? '#94a3b8' : '#666', fontSize: '13px' }}>+ {addon.addonName || addon.name}</td>
+                              <td className="text-center" style={{ color: isDarkMode ? '#94a3b8' : '#666', fontSize: '13px' }}>{addonQty}</td>
+                              <td className="text-end" style={{ color: isDarkMode ? '#94a3b8' : '#666', fontSize: '13px' }}>{formatCurrency(addonUnitPrice)}</td>
+                              <td className="text-end" style={{ color: isDarkMode ? '#94a3b8' : '#666', fontSize: '13px' }}>{formatCurrency(addonTotal)}</td>
                             </tr>
                           );
                         })}
@@ -559,25 +561,25 @@ const Orders = () => {
                     ))}
                   </tbody>
                   <tfoot>
-                    <tr style={{ backgroundColor: '#f8f9fa' }}>
-                      <td colSpan="3" className="text-end" style={{ color: '#666' }}>Subtotal</td>
+                    <tr style={{ backgroundColor: isDarkMode ? '#1e293b' : '#f8f9fa' }}>
+                      <td colSpan="3" className="text-end" style={{ color: isDarkMode ? '#94a3b8' : '#666' }}>Subtotal</td>
                       <td className="text-end fw-semibold">{formatCurrency(selectedOrder.subtotal || 0)}</td>
                     </tr>
                     {selectedOrder.deliveryFee > 0 && (
-                      <tr style={{ backgroundColor: '#f8f9fa' }}>
-                        <td colSpan="3" className="text-end" style={{ color: '#666' }}>Delivery Fee</td>
+                      <tr style={{ backgroundColor: isDarkMode ? '#1e293b' : '#f8f9fa' }}>
+                        <td colSpan="3" className="text-end" style={{ color: isDarkMode ? '#94a3b8' : '#666' }}>Delivery Fee</td>
                         <td className="text-end fw-semibold">{formatCurrency(selectedOrder.deliveryFee)}</td>
                       </tr>
                     )}
                     {selectedOrder.discountAmount > 0 && (
-                      <tr style={{ backgroundColor: '#f8f9fa' }}>
-                        <td colSpan="3" className="text-end" style={{ color: '#666' }}>Discount</td>
+                      <tr style={{ backgroundColor: isDarkMode ? '#1e293b' : '#f8f9fa' }}>
+                        <td colSpan="3" className="text-end" style={{ color: isDarkMode ? '#94a3b8' : '#666' }}>Discount</td>
                         <td className="text-end fw-semibold" style={{ color: '#dc3545' }}>-{formatCurrency(selectedOrder.discountAmount)}</td>
                       </tr>
                     )}
                     {selectedOrder.taxAmount > 0 && (
-                      <tr style={{ backgroundColor: '#f8f9fa' }}>
-                        <td colSpan="3" className="text-end" style={{ color: '#666' }}>Tax</td>
+                      <tr style={{ backgroundColor: isDarkMode ? '#1e293b' : '#f8f9fa' }}>
+                        <td colSpan="3" className="text-end" style={{ color: isDarkMode ? '#94a3b8' : '#666' }}>Tax</td>
                         <td className="text-end fw-semibold">{formatCurrency(selectedOrder.taxAmount)}</td>
                       </tr>
                     )}
@@ -591,7 +593,7 @@ const Orders = () => {
             </>
           )}
         </Modal.Body>
-        <Modal.Footer>
+        <Modal.Footer style={{ background: isDarkMode ? 'rgba(15,15,30,0.5)' : 'transparent', borderTop: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : undefined }}>
           <Button
             style={{ backgroundColor: primaryColor, borderColor: primaryColor, color: primaryContrast }}
             onClick={() => {

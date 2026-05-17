@@ -57,24 +57,12 @@ const DeliverySidebar = ({ collapsed, visible, onLogout }) => {
   };
 
   const navItems = [
-    {
-      path: '/delivery/dashboard',
-      icon: 'bi bi-speedometer2',
-      label: 'Dashboard',
-      exact: true
-    },
-    {
-      path: '/delivery/orders',
-      icon: 'bi bi-box2-heart',
-      label: 'Active Orders',
-      exact: false
-    },
-    {
-      path: '/delivery/history',
-      icon: 'bi bi-clock-history',
-      label: 'Order History',
-      exact: false
-    }
+    { path: '/delivery/dashboard', icon: 'bi bi-speedometer2', label: 'Dashboard', exact: true },
+    { path: '/delivery/orders', icon: 'bi bi-box2-heart', label: 'Active Orders', exact: false },
+    { path: '/delivery/history', icon: 'bi bi-clock-history', label: 'Order History', exact: false },
+    { path: '/delivery/wallet', icon: 'bi bi-wallet2', label: 'Wallet & Earnings', exact: false },
+    { path: '/delivery/bank-accounts', icon: 'bi bi-bank', label: 'Bank Accounts', exact: false },
+    { path: '/delivery/withdraw', icon: 'bi bi-arrow-up-circle', label: 'Withdrawal', exact: false }
   ];
 
   const isActive = (path, exact = false) => {

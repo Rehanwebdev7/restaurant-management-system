@@ -55,6 +55,9 @@ import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import com.rms.common.util.StatusFilterUtil;
+import com.rms.common.entities.OtpLogsEntity;
+import com.rms.common.repositories.OtpLogsRepository;
+import java.util.Random;
 
 @Service
 @Qualifier("delOrdersService")
@@ -86,6 +89,9 @@ public class DelOrdersService implements OrdersServiceIMP {
 
 	@Autowired
 	private MenuItemsRepository menuItemsRepository;
+
+	@Autowired
+	private OtpLogsRepository otpLogsRepository;
 
 	public DelOrdersService(OrdersRepository ordersrepository, CustomersRepository customersrepository,
 			CustomerDeliveryAddressesRepository customerdeliveryaddressesrepository,
@@ -250,27 +256,32 @@ public class DelOrdersService implements OrdersServiceIMP {
 			throw new RuntimeException("status and paymentMethod are required");
 		}
 
-		// ================= FETCH ORDER =================
-		OrdersEntity existingEntity = ordersrepository.findById(orderId)
-				.orElseThrow(() -> new RuntimeException("Order not found"));
+		// ================= FETCH ORDER BASIC INFO (separate queries to avoid 1664-column limit) =================
+		String currentStatus = ordersrepository.findOrderStatus(orderId);
+		if (currentStatus == null) {
+			throw new RuntimeException("Order not found");
+		}
+		BigDecimal totalAmount = ordersrepository.findOrderTotalAmount(orderId);
+		if (totalAmount == null) totalAmount = BigDecimal.ZERO;
+		BigDecimal deliveryFee = ordersrepository.findOrderDeliveryFee(orderId);
+		if (deliveryFee == null) deliveryFee = BigDecimal.ZERO;
+		String orderNumber = ordersrepository.findOrderNumber(orderId);
+		if (orderNumber == null) orderNumber = orderId.toString();
 
-		System.out.println("Order fetched: " + existingEntity.getId());
+		System.out.println("Order basic info fetched: " + orderNumber);
 
 		// ================= PREVENT DUPLICATE COMPLETION =================
-		if ("COMPLETED".equalsIgnoreCase(existingEntity.getStatus())
-				|| "DELIVERED".equalsIgnoreCase(existingEntity.getStatus())) {
+		if ("COMPLETED".equalsIgnoreCase(currentStatus) || "DELIVERED".equalsIgnoreCase(currentStatus)) {
 			throw new RuntimeException("Order already completed");
 		}
 
-		// ================= UPDATE ORDER =================
-		existingEntity.setStatus(status.toUpperCase());
-		existingEntity.setDeliveryStatus(deliveryStatus.toUpperCase());
-		existingEntity.setPaymentMethod(paymentMethod.toLowerCase());
-		existingEntity.setCompletedAt(LocalDateTime.now());
-		existingEntity.setDeliveryId(deliveryUser);
-		existingEntity.setPaymentStatus("COMPLETED");
+		// ================= UPDATE ORDER VIA NATIVE QUERY =================
+		int updated = ordersrepository.updateOrderStatusDelivered(orderId, paymentMethod.toLowerCase(), deliveryUserId);
+		if (updated == 0) {
+			throw new RuntimeException("Order update failed or already completed");
+		}
 
-		System.out.println("Order status updated → " + status);
+		System.out.println("Order status updated → DELIVERED via native query");
 		System.out.println("Payment method → " + paymentMethod);
 
 		// ================= PAYMENT GATEWAY LOGIC =================
@@ -296,8 +307,8 @@ public class DelOrdersService implements OrdersServiceIMP {
 			Map<String, Object> outstandingPayload = new HashMap<>();
 
 			outstandingPayload.put("userId", deliveryUserId);
-			outstandingPayload.put("orderId", existingEntity.getOrderNumber());
-			outstandingPayload.put("amount", existingEntity.getTotalAmount());
+			outstandingPayload.put("orderId", orderNumber);
+			outstandingPayload.put("amount", totalAmount);
 			outstandingPayload.put("mode", "CREDIT");
 			outstandingPayload.put("service", "ORDER_DELIVERY");
 			outstandingPayload.put("remark", "Cash collected from customer");
@@ -306,13 +317,13 @@ public class DelOrdersService implements OrdersServiceIMP {
 		}
 
 		// ================= WALLET TRANSACTION =================
-		if (existingEntity.getDeliveryFee() != null && existingEntity.getDeliveryFee().compareTo(BigDecimal.ZERO) > 0) {
+		if (deliveryFee != null && deliveryFee.compareTo(BigDecimal.ZERO) > 0) {
 
 			Map<String, Object> walletPayload = new HashMap<>();
 
 			walletPayload.put("userId", deliveryUserId);
-			walletPayload.put("orderId", existingEntity.getId());
-			walletPayload.put("amount", existingEntity.getDeliveryFee());
+			walletPayload.put("orderId", orderId);
+			walletPayload.put("amount", deliveryFee);
 			walletPayload.put("mode", "credit");
 			walletPayload.put("remarks", "Order delivered successfully");
 			walletPayload.put("bankRefId", bankRefId != null ? bankRefId : "AUTO_" + orderId);
@@ -325,8 +336,6 @@ public class DelOrdersService implements OrdersServiceIMP {
 			System.out.println("Wallet transaction completed");
 		}
 
-		// ================= SAVE ORDER =================
-		ordersrepository.save(existingEntity);
 		System.out.println("Order saved successfully");
 		System.out.println("====== completeOrderAndProcessPayment() END ======");
 
@@ -1003,5 +1012,84 @@ public class DelOrdersService implements OrdersServiceIMP {
 			workbook.write(out);
 			return new ByteArrayInputStream(out.toByteArray());
 		}
+	}
+
+	@Transactional
+	public Map<String, Object> sendDeliveryOtp(Long orderId, String token) throws Exception {
+		Authorization.authorizeDelivery(token);
+		tokenUtil.decryptAndStoreToken(token);
+
+		String currentStatus = ordersrepository.findOrderStatus(orderId);
+		if (currentStatus == null) {
+			throw new RuntimeException("Order not found");
+		}
+		if (!"OUT_FOR_DELIVERY".equalsIgnoreCase(currentStatus)) {
+			throw new RuntimeException("Order must be in OUT_FOR_DELIVERY status to generate OTP");
+		}
+
+		// Invalidate any previous unverified OTPs for this order
+		String identifier = "DELIVERY_" + orderId;
+		otpLogsRepository.deleteByIdentifierAndIsVerifiedFalse(identifier);
+
+		// Generate 4-digit OTP
+		String otpCode = String.format("%04d", new Random().nextInt(10000));
+
+		OtpLogsEntity otp = new OtpLogsEntity();
+		otp.setIdentifier(identifier);
+		otp.setOtpCode(otpCode);
+		otp.setOtpType("DELIVERY_COMPLETION");
+		otp.setType("delivery");
+		otp.setIsVerified(false);
+		otp.setIsUsed(false);
+		otp.setAttemptCount(0);
+		otp.setExpiresAt(LocalDateTime.now().plusMinutes(10));
+		otp.setCreatedAt(LocalDateTime.now());
+		otp.setUpdatedAt(LocalDateTime.now());
+		otp.setVerifiedAt(null);
+		otp.setUsedAt(null);
+
+		otpLogsRepository.save(otp);
+
+		System.out.println("✅ OTP generated for order " + orderId + ": " + otpCode);
+
+		Map<String, Object> result = new LinkedHashMap<>();
+		result.put("orderId", orderId);
+		result.put("otp", otpCode); // Remove in production; send via SMS
+		result.put("message", "OTP generated. Share with customer.");
+		return result;
+	}
+
+	@Transactional(rollbackFor = Exception.class)
+	public String verifyOtpAndComplete(Map<String, Object> payload, String token) throws Exception {
+		Authorization.authorizeDelivery(token);
+
+		Long orderId = Long.valueOf(payload.get("orderId").toString());
+		String otpCode = payload.get("otpCode").toString().trim();
+		String paymentMethod = payload.getOrDefault("paymentMethod", "cash").toString();
+
+		String identifier = "DELIVERY_" + orderId;
+		LocalDateTime now = LocalDateTime.now();
+
+		OtpLogsEntity otp = otpLogsRepository
+				.findFirstByIdentifierAndOtpCodeAndIsVerifiedFalseAndExpiresAtAfterOrderByCreatedAtDesc(
+						identifier, otpCode, now)
+				.orElseThrow(() -> new RuntimeException("Invalid or expired OTP"));
+
+		// Mark OTP verified
+		otp.setIsVerified(true);
+		otp.setIsUsed(true);
+		otp.setVerifiedAt(now);
+		otp.setUsedAt(now);
+		otp.setUpdatedAt(now);
+		otpLogsRepository.save(otp);
+
+		// Complete the order
+		Map<String, Object> completionPayload = new LinkedHashMap<>();
+		completionPayload.put("orderId", orderId);
+		completionPayload.put("status", "DELIVERED");
+		completionPayload.put("deliveryStatus", "DELIVERED");
+		completionPayload.put("paymentMethod", paymentMethod);
+
+		return completeOrderAndProcessPayment(completionPayload, token);
 	}
 }

@@ -4,10 +4,12 @@ import DeliveryLayout from '../layouts/DeliveryLayout';
 import { useAuth } from '../contexts/AuthContext';
 import AuthGuard from '../contexts/AuthGuard';
 
-// Delivery Pages
 import Dashboard from '../pages/modules/delivery/Dashboard';
 import ActiveOrders from '../pages/modules/delivery/ActiveOrders';
 import OrderHistory from '../pages/modules/delivery/OrderHistory';
+import Wallet from '../pages/modules/delivery/Wallet';
+import BankAccounts from '../pages/modules/delivery/BankAccounts';
+import WithdrawalRequest from '../pages/modules/delivery/WithdrawalRequest';
 import MyProfile from '../pages/profile/MyProfile';
 
 const DeliveryRoutes = () => {
@@ -19,12 +21,12 @@ const DeliveryRoutes = () => {
         <Route element={<DeliveryLayout onLogout={logout} />}>
           <Route path="/" element={<Navigate to="/delivery/dashboard" replace />} />
           <Route path="/delivery" element={<Navigate to="/delivery/dashboard" replace />} />
-
-          {/* Delivery Module Routes */}
           <Route path="/delivery/dashboard" element={<Dashboard />} />
           <Route path="/delivery/orders" element={<ActiveOrders />} />
           <Route path="/delivery/history" element={<OrderHistory />} />
-
+          <Route path="/delivery/wallet" element={<Wallet />} />
+          <Route path="/delivery/bank-accounts" element={<BankAccounts />} />
+          <Route path="/delivery/withdraw" element={<WithdrawalRequest />} />
           <Route path="/profile" element={<MyProfile />} />
           <Route path="*" element={<Navigate to="/delivery/dashboard" replace />} />
         </Route>
