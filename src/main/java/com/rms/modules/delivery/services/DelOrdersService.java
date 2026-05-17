@@ -705,187 +705,24 @@ public class DelOrdersService implements OrdersServiceIMP {
 //    }
 
 	@Override
+	@Transactional
 	public String updateOrders(OrdersEntity ordersEntity, String token) throws Exception {
-
-		System.out.println("====== updateOrders() START ======");
-
-		// 🔐 DELIVERY AUTH
+		System.out.println("=== updateOrders START ===");
 		Authorization.authorizeDelivery(token);
-
-		// 🔓 TOKEN → DELIVERY USER ID
 		tokenUtil.decryptAndStoreToken(token);
 		Long deliveryUserId = tokenUtil.getCurrentUserId().longValue();
-		System.out.println("Delivery User ID from token: " + deliveryUserId);
 
-		// ================= FETCH DELIVERY USER =================
-		UsersEntity deliveryUser = usersrepository.findById(deliveryUserId)
-				.orElseThrow(() -> new RuntimeException("Delivery user not found"));
+		Long orderId = ordersEntity.getId();
+		String newStatus = ordersEntity.getStatus();
 
-		// ================= FETCH ORDER =================
-		OrdersEntity existingEntity = ordersrepository.findById(ordersEntity.getId())
-				.orElseThrow(() -> new RuntimeException("Orders not found"));
-
-		System.out.println("Order fetched. ID: " + existingEntity.getId());
-		String oldStatus = existingEntity.getStatus();
-
-		// ================= UPDATE NON-FK FIELDS =================
-		for (Field field : OrdersEntity.class.getDeclaredFields()) {
-			field.setAccessible(true);
-			Object value = field.get(ordersEntity);
-
-			// ❌ FK fields skip
-			if (value != null && !field.getName().endsWith("Id")) {
-				field.set(existingEntity, value);
-				System.out.println("Updated field: " + field.getName());
-			}
+		if (orderId == null || newStatus == null || newStatus.isBlank()) {
+			throw new RuntimeException("Order ID and status are required");
 		}
 
-		// ================= HANDLE FOREIGN KEYS =================
-
-		if (ordersEntity.getCustomerId() != null && ordersEntity.getCustomerId().getId() != null) {
-			existingEntity.setCustomerId(
-					fetchReferenceById(ordersEntity.getCustomerId(), customersrepository, "Customers not found"));
+		int updated = ordersrepository.updateOrderStatusByDelivery(orderId, newStatus.toUpperCase(), deliveryUserId);
+		if (updated == 0) {
+			throw new RuntimeException("Order not found or update failed");
 		}
-
-		if (ordersEntity.getCustomerDeliveryAddressesId() != null
-				&& ordersEntity.getCustomerDeliveryAddressesId().getId() != null) {
-
-			existingEntity
-					.setCustomerDeliveryAddressesId(fetchReferenceById(ordersEntity.getCustomerDeliveryAddressesId(),
-							customerdeliveryaddressesrepository, "Customer delivery address not found"));
-		}
-
-		if (ordersEntity.getBranchId() != null && ordersEntity.getBranchId().getId() != null) {
-			existingEntity
-					.setBranchId(fetchReferenceById(ordersEntity.getBranchId(), usersRepository, "Branch not found"));
-		}
-
-		if (ordersEntity.getCaptainId() != null && ordersEntity.getCaptainId().getId() != null) {
-			existingEntity.setCaptainId(
-					fetchReferenceById(ordersEntity.getCaptainId(), usersrepository, "Captain not found"));
-		}
-
-		if (ordersEntity.getRestaurantId() != null && ordersEntity.getRestaurantId().getId() != null) {
-			existingEntity.setRestaurantId(
-					fetchReferenceById(ordersEntity.getRestaurantId(), usersrepository, "Restaurant not found"));
-		}
-
-		// ================= 🔥 FORCE DELIVERY ID FROM TOKEN =================
-		existingEntity.setDeliveryId(deliveryUser);
-
-		// ================= DELIVERY STATUS TIME TRACKING =================
-
-		// 🇮🇳 Asia/Kolkata time
-		LocalDateTime indiaTime =
-		        ZonedDateTime.now(ZoneId.of("Asia/Kolkata")).toLocalDateTime();
-
-		// 🔹 DELIVERY ACCEPTED TIME
-		if ("ACCEPTED_ORDER".equalsIgnoreCase(existingEntity.getDeliveryStatus())
-		        && existingEntity.getDeliveryAcceptAt() == null) {
-
-		    existingEntity.setDeliveryAcceptAt(indiaTime);
-		    System.out.println("🕒 Delivery accepted time set: " + indiaTime);
-		}
-
-		// 🔹 ORDER DELIVERED TIME
-//		if ("DELIVERED".equalsIgnoreCase(existingEntity.getDeliveryStatus())
-//		        && existingEntity.getCompletedAt() == null) {
-//
-//		    existingEntity.setCompletedAt(indiaTime);
-//		    System.out.println("🕒 Order completed time set: " + indiaTime);
-//		}
-
-		// ================= SAVE ORDER =================
-		ordersrepository.save(existingEntity);
-		System.out.println("Order updated successfully");
-
-		if (ordersEntity.getRawItems() != null && !ordersEntity.getRawItems().isEmpty()) {
-			orderItemsRepository.deleteByOrderId_Id(existingEntity.getId());
-			List<OrderItemsEntity> newItems = new ArrayList<>();
-			for (Map<String, Object> rawItem : ordersEntity.getRawItems()) {
-				OrderItemsEntity item = new OrderItemsEntity();
-				Object menuItemIdRaw = rawItem.get("menu_item_id");
-				if (menuItemIdRaw != null) {
-					Long menuItemId = Long.parseLong(menuItemIdRaw.toString());
-					MenuItemsEntity menuItem = menuItemsRepository.findById(menuItemId)
-						.orElseThrow(() -> new RuntimeException("MenuItem not found: " + menuItemId));
-					item.setMenuItemId(menuItem);
-					item.setMenuItemName(menuItem.getName());
-				}
-				if (rawItem.get("quantity") != null)
-					item.setQuantity(Integer.parseInt(rawItem.get("quantity").toString()));
-				if (rawItem.get("price") != null)
-					item.setPrice(new java.math.BigDecimal(rawItem.get("price").toString()));
-				if (rawItem.get("special_instructions") != null)
-					item.setSpecialInstructions(rawItem.get("special_instructions").toString());
-				if (item.getPrice() != null && item.getQuantity() != null)
-					item.setItemTotal(item.getPrice().multiply(new java.math.BigDecimal(item.getQuantity())));
-				item.setOrderId(existingEntity);
-				newItems.add(item);
-			}
-			orderItemsRepository.saveAll(newItems);
-		}
-		
-		// ================= CUSTOMER NOTIFICATION (DELIVERY ACCEPT) =================
-		if ("ACCEPTED _ORDER".equalsIgnoreCase(existingEntity.getDeliveryStatus())
-		        && existingEntity.getCustomerId() != null) {
-
-		    Map<String, Object> data = new LinkedHashMap<>();
-		    data.put("type", "DELIVERY_STATUS_UPDATE");
-		    data.put("status", existingEntity.getDeliveryStatus());
-		    data.put("orderId", existingEntity.getOrderNumber());
-		    data.put("orderType", existingEntity.getOrderType());
-		    data.put("amount", existingEntity.getTotalAmount());
-		    data.put("paymentMethod", existingEntity.getPaymentMethod());
-
-		    System.out.println("\n📢 CMD → Sending notification to CUSTOMER (DELIVERY ACCEPTED)");
-		    System.out.println("Customer ID : " + existingEntity.getCustomerId().getId());
-		    System.out.println("Payload : " + data);
-
-		    constant.sendNotificationToUser(
-		            existingEntity.getCustomerId().getId(),
-		            "🚚 Delivery Update ",
-		            "Your order #" + existingEntity.getOrderNumber()
-		                    + " has been accepted by delivery partner",
-		            data
-		    );
-
-		    System.out.println("✅ Customer notification sent (Delivery Accepted)");
-		}
-
-
-		// ================= 🔥 WALLET TRANSACTION LOGIC =================
-		String newStatus = existingEntity.getDeliveryStatus();
-
-		boolean isFinalStatus = "COMPLETED".equalsIgnoreCase(newStatus) || "DELIVERED".equalsIgnoreCase(newStatus);
-
-		boolean statusChanged = oldStatus == null || !oldStatus.equalsIgnoreCase(newStatus);
-
-		if (isFinalStatus && statusChanged) {
-
-			System.out.println("Final status detected: " + newStatus);
-			 existingEntity.setCompletedAt(indiaTime);
-			if (existingEntity.getDeliveryFee() != null && existingEntity.getDeliveryFee().doubleValue() > 0) {
-
-				Map<String, Object> payload = new HashMap<>();
-
-				payload.put("userId", deliveryUserId);
-				payload.put("orderId", existingEntity.getId());
-				payload.put("amount", existingEntity.getDeliveryFee());
-				payload.put("mode", "credit");
-				payload.put("remarks", "Delivered successfully");
-				payload.put("bankRefId", existingEntity.getBankRefNum());
-				payload.put("bankDetailId", 1);
-
-				System.out.println("Wallet payload created: " + payload);
-
-				javaProcedures.walletTransactionProcedure(payload);
-
-				System.out.println("Wallet transaction executed successfully");
-			}
-		}
-
-		System.out.println("====== updateOrders() END ======");
 
 		return "Updated Successfully";
 	}

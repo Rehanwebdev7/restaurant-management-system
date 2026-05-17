@@ -2,9 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Container, Spinner } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { ApiGet } from '../../../../ApiServices/ApiServices';
+import { useDarkMode } from '../../../../contexts/DarkModeContext';
+import { useTheme } from '../../../../contexts/ThemeContext';
 
 const DiningTables = () => {
   const navigate = useNavigate();
+  const { isDarkMode } = useDarkMode();
+  const { primaryColor } = useTheme();
   const [sections, setSections] = useState([]);
   const [tables, setTables] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -40,14 +44,13 @@ const DiningTables = () => {
     });
   };
 
-  // Status mapping based on reference design
-  // 1 = Available (Blank), 2 = Running, 3 = Printed, 4 = Paid, 5 = Running KOT
+  // Status mapping: 1=Available, 2=Running, 3=Printed, 4=Paid, 5=Running KOT
   const statusConfig = {
-    1: { text: 'Available Table', color: '#6b7280', bgColor: '#ffffff', borderColor: '#e5e7eb' },
-    2: { text: 'Running Table', color: '#3b82f6', bgColor: '#dbeafe', borderColor: '#93c5fd' },
-    3: { text: 'Printed Table', color: '#22c55e', bgColor: '#dcfce7', borderColor: '#86efac' },
-    4: { text: 'Paid Table', color: '#f97316', bgColor: '#ffedd5', borderColor: '#fdba74' },
-    5: { text: 'Running KOT', color: '#eab308', bgColor: '#fef9c3', borderColor: '#fde047' }
+    1: { text: 'Available Table', color: isDarkMode ? '#94a3b8' : '#6b7280', bgColor: isDarkMode ? 'rgba(255,255,255,0.04)' : '#ffffff', borderColor: isDarkMode ? 'rgba(255,255,255,0.15)' : '#e5e7eb' },
+    2: { text: 'Running Table',   color: '#3b82f6', bgColor: isDarkMode ? 'rgba(59,130,246,0.15)' : '#dbeafe',  borderColor: isDarkMode ? 'rgba(59,130,246,0.4)' : '#93c5fd' },
+    3: { text: 'Printed Table',   color: '#22c55e', bgColor: isDarkMode ? 'rgba(34,197,94,0.15)' : '#dcfce7',   borderColor: isDarkMode ? 'rgba(34,197,94,0.4)' : '#86efac' },
+    4: { text: 'Paid Table',      color: '#f97316', bgColor: isDarkMode ? 'rgba(249,115,22,0.15)' : '#ffedd5',  borderColor: isDarkMode ? 'rgba(249,115,22,0.4)' : '#fdba74' },
+    5: { text: 'Running KOT',     color: '#eab308', bgColor: isDarkMode ? 'rgba(234,179,8,0.15)' : '#fef9c3',   borderColor: isDarkMode ? 'rgba(234,179,8,0.4)' : '#fde047' }
   };
 
   const getStatusConfig = (status) => statusConfig[status] || statusConfig[1];
@@ -87,7 +90,7 @@ const DiningTables = () => {
   const groupedTables = getTablesBySection();
 
   return (
-    <Container fluid className="py-3" style={{ background: '#f8fafc', minHeight: '100vh' }}>
+    <Container fluid className="py-3" style={{ minHeight: '100vh' }}>
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
           <Spinner animation="border" role="status">
@@ -106,7 +109,7 @@ const DiningTables = () => {
         gap: '16px'
       }}>
         <h4 style={{
-          color: '#1f2937',
+          color: isDarkMode ? '#e2e8f0' : '#1f2937',
           fontWeight: '700',
           margin: 0,
           fontSize: '20px'
@@ -129,7 +132,7 @@ const DiningTables = () => {
                 alignItems: 'center',
                 gap: '6px',
                 fontSize: '12px',
-                color: '#4b5563'
+                color: isDarkMode ? '#94a3b8' : '#4b5563'
               }}
             >
               <div style={{
@@ -154,10 +157,10 @@ const DiningTables = () => {
               <h5 style={{
                 fontSize: '16px',
                 fontWeight: '700',
-                color: '#374151',
+                color: isDarkMode ? '#e2e8f0' : '#374151',
                 marginBottom: '16px',
                 paddingBottom: '8px',
-                borderBottom: '2px solid #e5e7eb'
+                borderBottom: isDarkMode ? '2px solid rgba(255,255,255,0.12)' : '2px solid #e5e7eb'
               }}>
                 {section.name}
               </h5>
@@ -206,7 +209,7 @@ const DiningTables = () => {
                       <div style={{
                         fontSize: '13px',
                         fontWeight: '600',
-                        color: '#1f2937',
+                        color: isDarkMode ? config.color : '#1f2937',
                         marginBottom: '8px'
                       }}>
                         {table.tableNumber || `Table ${table.id}`}
@@ -293,11 +296,11 @@ const DiningTables = () => {
           textAlign: 'center',
           marginTop: '24px',
           padding: '12px',
-          background: '#fff',
+          background: isDarkMode ? 'rgba(255,255,255,0.05)' : '#fff',
           borderRadius: '8px',
           fontSize: '13px',
-          color: '#666',
-          border: '1px solid #e5e7eb'
+          color: isDarkMode ? '#94a3b8' : '#666',
+          border: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e5e7eb'
         }}>
           Total <strong>{tables.length}</strong> tables across <strong>{groupedTables.length}</strong> sections
         </div>

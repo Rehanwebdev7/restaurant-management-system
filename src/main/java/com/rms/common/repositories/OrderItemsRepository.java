@@ -106,4 +106,12 @@ public interface OrderItemsRepository extends JpaRepository<OrderItemsEntity, Lo
 	                                 @Param("from") LocalDateTime from,
 	                                 @Param("to") LocalDateTime to);
 
+	@Query(nativeQuery = true, value = """
+		    SELECT oi.id, oi.menu_item_name, oi.quantity, oi.price, oi.item_total, oi.addons_total, oi.status
+		    FROM order_items oi
+		    WHERE oi.order_id = :orderId
+		    ORDER BY oi.id
+		""")
+	List<Object[]> findItemSummaryByOrderId(@Param("orderId") Long orderId);
+
 }

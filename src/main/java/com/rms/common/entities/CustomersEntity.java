@@ -54,7 +54,32 @@ public class CustomersEntity {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    @JsonIgnoreProperties({
+            "hibernateLazyInitializer",
+            "handler",
+            "password",
+            "parentId",
+            "branchId",
+            "isActive",
+            "isDeleted",
+            "lastLogin",
+            "lastLoginAt",
+            "createdAt",
+            "updatedAt",
+            "approvalStatus",
+            "approvalNotes",
+            "balance",
+            "outstandingBalance",
+            "isOrderStopped",
+            "orderStoppedAt",
+            "orderStoppedBy",
+            "acceptsTakeaway",
+            "acceptsDelivery",
+            "acceptsDineInReserve",
+            "acceptsDineInNow",
+            "dineInProximityMeters",
+            "tableReservationAdvanceAmount"
+    })
     private UsersEntity userId;
 
     @Column(name = "is_deleted")

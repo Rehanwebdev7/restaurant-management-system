@@ -760,4 +760,30 @@ public interface OrdersRepository extends JpaRepository<OrdersEntity, Long> {
 		@Param("kitchenId") Long kitchenId
 	);
 
+	@Modifying
+	@Transactional
+	@Query(value = """
+		UPDATE orders SET
+		    status          = :status,
+		    delivery_status = :status,
+		    delivery_id     = :deliveryId,
+		    delivery_accept_at = CASE
+		        WHEN :status = 'OUT_FOR_DELIVERY'
+		        THEN COALESCE(delivery_accept_at, NOW())
+		        ELSE delivery_accept_at
+		    END,
+		    completed_at = CASE
+		        WHEN :status IN ('DELIVERED', 'COMPLETED')
+		        THEN COALESCE(completed_at, NOW())
+		        ELSE completed_at
+		    END,
+		    updated_at = NOW()
+		WHERE id = :orderId
+	""", nativeQuery = true)
+	int updateOrderStatusByDelivery(
+		@Param("orderId") Long orderId,
+		@Param("status") String status,
+		@Param("deliveryId") Long deliveryId
+	);
+
 }

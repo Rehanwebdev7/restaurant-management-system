@@ -217,8 +217,8 @@ const KitchenDisplay = () => {
     }
   `;
 
-  // Status mapping for API
-  const statusMapping = {
+  // Status mapping for API — static constant, never changes
+  const STATUS_MAPPING = {
     all: '',
     pending: 'PENDING',
     accepted: 'ACCEPTED_ORDER',
@@ -241,7 +241,7 @@ const KitchenDisplay = () => {
       if (status === 'pending') {
         response = await ApiGet('/api/kitchen/orders/filter', {
           searchValue: search,
-          status: statusMapping[status] || '',
+          status: STATUS_MAPPING[status] || '',
           pageNumber: page - 1,
           pageSize: pageSize,
           fromDate: startDate,
@@ -254,7 +254,7 @@ const KitchenDisplay = () => {
           pageSize: pageSize
         };
 
-        if (statusMapping[status]) params.status = statusMapping[status];
+        if (STATUS_MAPPING[status]) params.status = STATUS_MAPPING[status];
         if (startDate) params.fromDate = startDate;
         if (endDate) params.toDate = endDate;
         if (search) params.searchValue = search;
@@ -263,7 +263,8 @@ const KitchenDisplay = () => {
       }
 
       if (response.success) {
-        const data = response.success.data?.data || response.success.data || {};
+        const respBody = response.success.data;
+        const data = respBody?.data || respBody || {};
         const records = data?.records || [];
         setOrders(Array.isArray(records) ? records : []);
         setPagination(prev => ({
@@ -272,18 +273,19 @@ const KitchenDisplay = () => {
           totalPages: data?.totalPages || 0
         }));
       } else {
-        console.error(`Failed to fetch orders:`, response.fail);
+        console.error(`[KitchenDisplay] fetchOrders failed:`, response.fail);
+        setError(response.fail || 'Failed to load orders. Please refresh or re-login.');
         setOrders([]);
       }
     } catch (err) {
       setError('Failed to fetch orders. Please try again.');
-      console.error('Error fetching orders:', err);
+      console.error('[KitchenDisplay] fetchOrders error:', err);
       setOrders([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [fromDate, toDate]);
 
   // Fetch order status counts
   const fetchStatusCounts = useCallback(async () => {
@@ -293,11 +295,12 @@ const KitchenDisplay = () => {
         toDate: toDate
       });
       if (response.success) {
-        const data = response.success.data?.data || {};
+        const respBody = response.success.data;
+        const data = respBody?.data || respBody || {};
         setStatusCounts(data);
       }
     } catch (err) {
-      console.error('Error fetching status counts:', err);
+      console.error('[KitchenDisplay] fetchStatusCounts error:', err);
     }
   }, [fromDate, toDate]);
 
@@ -331,12 +334,10 @@ const KitchenDisplay = () => {
     }
   }, [orderDetailsCache, orderDetailsLoading]);
 
-  // Initial load and auto-refresh setup
+  // Order list fetch + auto-refresh interval
   useEffect(() => {
     fetchOrders(activeTab, true, searchValue, pagination.page, pagination.pageSize, fromDate, toDate);
-    fetchStatusCounts();
 
-    // Auto-refresh every 15 seconds
     autoRefreshInterval.current = setInterval(() => {
       fetchOrders(activeTab, false, searchValue, pagination.page, pagination.pageSize, fromDate, toDate);
       fetchStatusCounts();
@@ -347,7 +348,12 @@ const KitchenDisplay = () => {
         clearInterval(autoRefreshInterval.current);
       }
     };
-  }, [activeTab, pagination.page, pagination.pageSize, fromDate, toDate, fetchStatusCounts]);
+  }, [activeTab, pagination.page, pagination.pageSize, fetchOrders]);
+
+  // Status counts — fetch on mount and when dates change
+  useEffect(() => {
+    fetchStatusCounts();
+  }, [fetchStatusCounts]);
 
   // Handle tab change
   const handleTabChange = (tabId) => {

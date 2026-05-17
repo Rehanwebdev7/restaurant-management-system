@@ -132,7 +132,9 @@ public class CashCustomersService implements CustomersServiceIMP {
 		response.put("pageSize", page.getSize());
 		response.put("currentPage", page.getNumber() + 1);
 		response.put("totalPages", page.getTotalPages());
-		response.put("records", page.getContent());
+		response.put("records", page.getContent().stream()
+				.map(customer -> toSafeCustomerRecord((CustomersEntity) customer))
+				.toList());
 
 		return response;
 	}
@@ -153,7 +155,9 @@ public class CashCustomersService implements CustomersServiceIMP {
 		response.put("pageSize", page.getSize());
 		response.put("currentPage", page.getNumber() + 1);
 		response.put("totalPages", page.getTotalPages());
-		response.put("records", page.getContent());
+		response.put("records", page.getContent().stream()
+				.map(customer -> toSafeCustomerRecord((CustomersEntity) customer))
+				.toList());
 		return response;
 	}
 
@@ -467,5 +471,25 @@ public class CashCustomersService implements CustomersServiceIMP {
 			workbook.write(out);
 			return new ByteArrayInputStream(out.toByteArray());
 		}
+	}
+
+	private Map<String, Object> toSafeCustomerRecord(CustomersEntity customer) {
+		Map<String, Object> record = new LinkedHashMap<>();
+		record.put("id", customer.getId());
+		record.put("name", customer.getName());
+		record.put("email", customer.getEmail());
+		record.put("mobileNumber", customer.getMobileNumber());
+		record.put("photoUrl", customer.getPhotoUrl());
+		record.put("drivePhotoUrl", customer.getDrivePhotoUrl());
+		record.put("dateOfBirth", customer.getDateOfBirth());
+		record.put("isActive", customer.getIsActive());
+		record.put("isFirstOrder", customer.getIsFirstOrder());
+		record.put("createdAt", customer.getCreatedAt());
+		record.put("updatedAt", customer.getUpdatedAt());
+		record.put("allowCod", customer.getAllowCod());
+		record.put("referalCode", customer.getReferalCode());
+		record.put("referredById", customer.getReferredById());
+		record.put("walletBalance", customer.getWalletBalance());
+		return record;
 	}
 }

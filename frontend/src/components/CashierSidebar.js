@@ -75,12 +75,12 @@ const CashierSidebar = ({ collapsed, visible, onLogout }) => {
       label: 'Dashboard',
       exact: true
     },
-    // {
-    //   path: '/cashier/dining-tables',
-    //   icon: 'bi bi-grid-3x3',
-    //   label: 'Dining Tables',
-    //   exact: true
-    // },
+    {
+      path: '/cashier/dining-tables',
+      icon: 'bi bi-grid-3x3',
+      label: 'Dining',
+      exact: true
+    },
     {
       path: '/cashier/delivery',
       icon: 'bi bi-truck',

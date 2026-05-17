@@ -379,6 +379,34 @@ public class KitOrdersService implements OrdersServiceIMP {
 		return ordersrepository.findById(id).orElseThrow(() -> new RuntimeException("Orders not found"));
 	}
 
+	public Map<String, Object> getKitchenOrderDetail(Long orderId, String token) throws Exception {
+		Authorization.authorizeKitchen(token);
+
+		if (!ordersrepository.existsById(orderId)) {
+			throw new RuntimeException("Order not found");
+		}
+
+		List<Object[]> itemRows = orderItemsRepository.findItemSummaryByOrderId(orderId);
+		List<Map<String, Object>> items = new ArrayList<>();
+		for (Object[] row : itemRows) {
+			Map<String, Object> item = new LinkedHashMap<>();
+			item.put("id",           row[0]);
+			item.put("menuItemName", row[1]);
+			item.put("quantity",     row[2]);
+			item.put("price",        row[3]);
+			item.put("itemTotal",    row[4]);
+			item.put("addonsTotal",  row[5]);
+			item.put("status",       row[6]);
+			item.put("addonItems",   new ArrayList<>());
+			items.add(item);
+		}
+
+		Map<String, Object> response = new LinkedHashMap<>();
+		response.put("id",         orderId);
+		response.put("orderItems", items);
+		return response;
+	}
+
 	@Override
 	public String addOrders(OrdersEntity ordersEntity, String token) throws Exception {
 		Authorization.authorizeKitchen(token);

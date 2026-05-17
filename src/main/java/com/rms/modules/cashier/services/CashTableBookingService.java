@@ -190,7 +190,9 @@ public class CashTableBookingService implements TableBookingServiceIMP {
 		// Concurrent booking protection for immediate seating (status=1 or null required)
 		if (!isReservation && newEntity.getTableId() != null) {
 			DiningTablesEntity fetchedTable = newEntity.getTableId();
-			if (fetchedTable.getStatus() != null && fetchedTable.getStatus() != 1) {
+			Integer tableStatus = fetchedTable.getStatus();
+			boolean isAvailable = tableStatus == null || tableStatus == 0 || tableStatus == 1;
+			if (!isAvailable) {
 				throw new RuntimeException("Table is not available. It may already be occupied or reserved.");
 			}
 		}
@@ -220,7 +222,9 @@ public class CashTableBookingService implements TableBookingServiceIMP {
 			DiningTablesEntity diningTable = newEntity.getTableId();
 			if (isReservation) {
 				LocalDateTime holdFrom = bookingAt.minusMinutes(bufferMinutes);
-				if (!now.isBefore(holdFrom) && (diningTable.getStatus() == null || diningTable.getStatus() == 1)) {
+				Integer tableStatus = diningTable.getStatus();
+				boolean isAvailable = tableStatus == null || tableStatus == 0 || tableStatus == 1;
+				if (!now.isBefore(holdFrom) && isAvailable) {
 					diningTable.setStatus(3);
 					diningTable.setUpdatedAt(now);
 					diningtablesrepository.save(diningTable);

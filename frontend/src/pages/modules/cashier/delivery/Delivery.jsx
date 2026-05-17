@@ -725,9 +725,9 @@ const Delivery = () => {
 
   const processOrder = async () => {
 
-    // Validate delivery address
-    if (!selectedAddress && !customerInfo.address?.trim()) {
-      toast.error('Please provide delivery address');
+    // Validate delivery address - must select a saved address
+    if (!selectedAddress) {
+      toast.error('Please select a delivery address for this customer');
       return;
     }
 
@@ -1808,62 +1808,93 @@ const Delivery = () => {
               </div>
 
               {/* Right: Order Summary & Details */}
-              <div style={{ width: '280px', overflowY: 'auto', padding: '12px', background: '#fff', borderLeft: '1px solid #f0f0f0' }}>
+              <div style={{ width: '300px', overflowY: 'auto', padding: '12px', background: isDarkMode ? 'rgba(15,15,30,0.98)' : '#fff', borderLeft: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : '#f0f0f0'}` }}>
                 {/* Order Type */}
-                <div style={{ background: '#f0f9ff', border: `1px solid ${primaryColor}40`, borderRadius: '8px', padding: '10px', marginBottom: '12px', textAlign: 'center' }}>
+                <div style={{ background: isDarkMode ? 'rgba(59,130,246,0.15)' : '#f0f9ff', border: `1px solid ${primaryColor}40`, borderRadius: '8px', padding: '10px', marginBottom: '12px', textAlign: 'center' }}>
                   <div style={{ fontSize: '11px', fontWeight: '600', color: primaryColor, textTransform: 'uppercase', letterSpacing: '0.5px' }}>🚗 Delivery Order</div>
                 </div>
 
-                {/* Customer Info */}
+                {/* Customer Search - Live */}
                 <div style={{ marginBottom: '12px' }}>
-                  <div style={{ fontSize: '11px', fontWeight: '600', color: '#6b7280', marginBottom: '6px', textTransform: 'uppercase' }}>Customer</div>
-                  <div style={{ background: '#f3f4f6', borderRadius: '6px', padding: '8px', fontSize: '12px', color: '#666', border: '1px solid #e5e7eb' }}>
-                    Select customer to see details
-                  </div>
+                  <div style={{ fontSize: '11px', fontWeight: '600', color: isDarkMode ? '#94a3b8' : '#6b7280', marginBottom: '6px', textTransform: 'uppercase' }}>Customer <span style={{ color: '#dc3545' }}>*</span></div>
+                  {selectedCustomer ? (
+                    <div style={{ background: isDarkMode ? 'rgba(34,197,94,0.1)' : '#f0fdf4', border: `1px solid ${isDarkMode ? 'rgba(34,197,94,0.3)' : '#86efac'}`, borderRadius: '6px', padding: '8px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <div style={{ fontSize: '13px', fontWeight: '600', color: isDarkMode ? '#86efac' : '#166534' }}>{selectedCustomer.name}</div>
+                        <div style={{ fontSize: '11px', color: isDarkMode ? '#4ade80' : '#15803d' }}>{selectedCustomer.mobileNumber}</div>
+                      </div>
+                      <button onClick={clearSelectedCustomer} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc3545', fontSize: '18px', lineHeight: 1, padding: '0 4px' }}>×</button>
+                    </div>
+                  ) : (
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type="text"
+                        value={customerSearch}
+                        onChange={(e) => { setCustomerSearch(e.target.value); setShowCustomerDropdown(true); }}
+                        onFocus={() => { if (customerSearch) setShowCustomerDropdown(true); }}
+                        placeholder="Search by name or mobile..."
+                        style={{ width: '100%', padding: '8px 10px', border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.15)' : '#d1d5db'}`, borderRadius: '6px', fontSize: '13px', background: isDarkMode ? 'rgba(255,255,255,0.06)' : '#f9fafb', color: isDarkMode ? '#e2e8f0' : '#1f2937', outline: 'none', boxSizing: 'border-box' }}
+                      />
+                      {showCustomerDropdown && customerList.length > 0 && (
+                        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: isDarkMode ? '#1e1e3a' : '#fff', border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.12)' : '#e5e7eb'}`, borderRadius: '6px', zIndex: 9999, maxHeight: '160px', overflowY: 'auto', boxShadow: '0 6px 16px rgba(0,0,0,0.2)' }}>
+                          {customerList.map(c => (
+                            <div key={c.id}
+                              onClick={() => { handleSelectCustomer(c); setShowCustomerDropdown(false); }}
+                              style={{ padding: '8px 10px', cursor: 'pointer', borderBottom: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : '#f3f4f6'}`, color: isDarkMode ? '#e2e8f0' : '#1f2937', fontSize: '13px' }}
+                              onMouseEnter={e => e.currentTarget.style.background = isDarkMode ? 'rgba(255,255,255,0.08)' : '#f3f4f6'}
+                              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                            >
+                              <div style={{ fontWeight: '600' }}>{c.name}</div>
+                              <div style={{ fontSize: '11px', color: isDarkMode ? '#94a3b8' : '#9ca3af' }}>{c.mobileNumber}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
-                {/* Address Info */}
+                {/* Address Selector */}
                 <div style={{ marginBottom: '12px' }}>
-                  <div style={{ fontSize: '11px', fontWeight: '600', color: '#6b7280', marginBottom: '6px', textTransform: 'uppercase' }}>📍 Address</div>
-                  <div style={{ background: '#f3f4f6', borderRadius: '6px', padding: '8px', fontSize: '12px', color: '#666', border: '1px solid #e5e7eb' }}>
-                    Select address at checkout
+                  <div style={{ fontSize: '11px', fontWeight: '600', color: isDarkMode ? '#94a3b8' : '#6b7280', marginBottom: '6px', textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>📍 Address</span>
+                    {selectedCustomer && <button onClick={() => setShowAddAddressModal(true)} style={{ fontSize: '10px', padding: '2px 7px', background: primaryColor, color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>+ Add</button>}
                   </div>
+                  {selectedCustomer && customerAddresses.length > 0 ? (
+                    <select value={selectedAddress?.id || ''} onChange={e => { const a = customerAddresses.find(x => x.id === parseInt(e.target.value)); if (a) setSelectedAddress(a); }}
+                      style={{ width: '100%', padding: '8px', border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.15)' : '#d1d5db'}`, borderRadius: '6px', fontSize: '12px', background: isDarkMode ? 'rgba(255,255,255,0.06)' : '#f9fafb', color: isDarkMode ? '#e2e8f0' : '#1f2937' }}>
+                      {customerAddresses.map(a => <option key={a.id} value={a.id}>{a.addressLine1}{a.landmark ? ` (${a.landmark})` : ''}</option>)}
+                    </select>
+                  ) : (
+                    <div style={{ background: isDarkMode ? 'rgba(255,255,255,0.04)' : '#f3f4f6', borderRadius: '6px', padding: '8px', fontSize: '12px', color: isDarkMode ? '#64748b' : '#9ca3af', border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : '#e5e7eb'}` }}>
+                      {selectedCustomer ? 'No saved addresses — click + Add above' : 'Select customer first'}
+                    </div>
+                  )}
                 </div>
 
                 {/* Pricing Breakdown */}
-                <div style={{ background: '#f8fafc', borderRadius: '8px', padding: '12px', border: '1px solid #e5e7eb', marginBottom: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid #e5e7eb' }}>
-                    <span style={{ fontSize: '13px', color: '#666' }}>Subtotal</span>
-                    <span style={{ fontSize: '14px', fontWeight: '600', color: '#1f2937' }}>{formatCurrency(subtotal)}</span>
+                <div style={{ background: isDarkMode ? 'rgba(255,255,255,0.04)' : '#f8fafc', borderRadius: '8px', padding: '12px', border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : '#e5e7eb'}`, marginBottom: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', paddingBottom: '8px', borderBottom: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : '#e5e7eb'}` }}>
+                    <span style={{ fontSize: '13px', color: isDarkMode ? '#94a3b8' : '#666' }}>Subtotal</span>
+                    <span style={{ fontSize: '14px', fontWeight: '600', color: isDarkMode ? '#e2e8f0' : '#1f2937' }}>{formatCurrency(subtotal)}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '13px', color: '#666' }}>Tax (5%)</span>
-                    <span style={{ fontSize: '13px', color: '#666' }}>{formatCurrency(subtotal * 0.05)}</span>
+                    <span style={{ fontSize: '13px', color: isDarkMode ? '#94a3b8' : '#666' }}>Tax (5%)</span>
+                    <span style={{ fontSize: '13px', color: isDarkMode ? '#94a3b8' : '#666' }}>{formatCurrency(subtotal * 0.05)}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '13px', color: '#666' }}>Delivery</span>
-                    <span style={{ fontSize: '13px', color: '#666' }}>$40</span>
+                    <span style={{ fontSize: '13px', color: isDarkMode ? '#94a3b8' : '#666' }}>Delivery</span>
+                    <span style={{ fontSize: '13px', color: isDarkMode ? '#94a3b8' : '#666' }}>$40</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px', borderTop: '1px solid #e5e7eb' }}>
-                    <span style={{ fontSize: '14px', fontWeight: '700', color: '#1f2937' }}>TOTAL</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px', borderTop: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : '#e5e7eb'}` }}>
+                    <span style={{ fontSize: '14px', fontWeight: '700', color: isDarkMode ? '#e2e8f0' : '#1f2937' }}>TOTAL</span>
                     <span style={{ fontSize: '18px', fontWeight: '700', color: primaryColor }}>{formatCurrency(subtotal + (subtotal * 0.05) + 40)}</span>
                   </div>
                 </div>
 
                 {/* Special Instructions */}
-                <textarea
-                  placeholder="Add special instructions..."
-                  style={{
-                    width: '100%',
-                    height: '50px',
-                    padding: '8px',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '6px',
-                    fontSize: '12px',
-                    resize: 'none',
-                    fontFamily: 'inherit',
-                    marginBottom: '12px'
-                  }}
+                <textarea placeholder="Add special instructions..."
+                  style={{ width: '100%', height: '50px', padding: '8px', border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.12)' : '#e5e7eb'}`, borderRadius: '6px', fontSize: '12px', resize: 'none', fontFamily: 'inherit', marginBottom: '12px', background: isDarkMode ? 'rgba(255,255,255,0.06)' : '#fff', color: isDarkMode ? '#e2e8f0' : '#1f2937' }}
                 />
               </div>
             </div>
@@ -2696,7 +2727,7 @@ const Delivery = () => {
         </Modal.Header>
         <Modal.Body style={{ padding: '20px' }}>
           {selectedCustomer && (
-            <div style={{ background: '#f0f9ff', padding: '10px 12px', borderRadius: '8px', marginBottom: '15px', fontSize: '13px' }}>
+            <div style={{ background: isDarkMode ? 'rgba(59,130,246,0.12)' : '#f0f9ff', color: isDarkMode ? '#94a3b8' : 'inherit', padding: '10px 12px', borderRadius: '8px', marginBottom: '15px', fontSize: '13px' }}>
               <i className="bi bi-person-fill me-2" style={{ color: primaryColor }}></i>
               Adding address for: <strong>{selectedCustomer.name}</strong>
             </div>
@@ -2823,7 +2854,7 @@ const Delivery = () => {
 
       {/* Order Success Modal with Print Option */}
       <Modal show={showSuccessModal} onHide={handleCloseSuccessModal} centered size="md">
-        <Modal.Header closeButton style={{ borderBottom: '1px solid #eee', background: '#f0fdf4' }}>
+        <Modal.Header closeButton style={{ borderBottom: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #eee', background: isDarkMode ? 'rgba(22,163,74,0.1)' : '#f0fdf4' }}>
           <Modal.Title style={{ fontSize: '18px', fontWeight: '600', color: '#16a34a' }}>
             <i className="bi bi-check-circle-fill me-2"></i>
             Order Placed Successfully!
@@ -2835,7 +2866,7 @@ const Delivery = () => {
             <div style={{
               width: '80px',
               height: '80px',
-              background: '#dcfce7',
+              background: isDarkMode ? 'rgba(22,163,74,0.15)' : '#dcfce7',
               borderRadius: '50%',
               display: 'flex',
               alignItems: 'center',
@@ -2844,44 +2875,44 @@ const Delivery = () => {
             }}>
               <i className="bi bi-check-lg" style={{ fontSize: '40px', color: '#16a34a' }}></i>
             </div>
-            <h5 style={{ color: '#333', marginBottom: '5px' }}>Order #{lastOrderData?.orderNumber}</h5>
-            <p style={{ color: '#666', fontSize: '13px', margin: 0 }}>{lastOrderData?.createdAt}</p>
+            <h5 style={{ color: isDarkMode ? '#e2e8f0' : '#333', marginBottom: '5px' }}>Order #{lastOrderData?.orderNumber}</h5>
+            <p style={{ color: isDarkMode ? '#94a3b8' : '#666', fontSize: '13px', margin: 0 }}>{lastOrderData?.createdAt}</p>
           </div>
 
           {/* Delivery Address */}
           {lastOrderData?.deliveryAddress && (
-            <div style={{ background: '#fef3c7', borderRadius: '8px', padding: '10px 12px', marginBottom: '15px', fontSize: '12px' }}>
-              <div style={{ fontWeight: '600', color: '#92400e', marginBottom: '3px' }}>
+            <div style={{ background: isDarkMode ? 'rgba(251,191,36,0.1)' : '#fef3c7', borderRadius: '8px', padding: '10px 12px', marginBottom: '15px', fontSize: '12px' }}>
+              <div style={{ fontWeight: '600', color: isDarkMode ? '#fbbf24' : '#92400e', marginBottom: '3px' }}>
                 <i className="bi bi-geo-alt-fill me-1"></i>Delivery Address
               </div>
-              <div style={{ color: '#78350f' }}>{lastOrderData.deliveryAddress}</div>
+              <div style={{ color: isDarkMode ? '#d97706' : '#78350f' }}>{lastOrderData.deliveryAddress}</div>
             </div>
           )}
 
           {/* Order Summary Preview */}
-          <div style={{ background: '#f8f9fa', borderRadius: '10px', padding: '15px', marginBottom: '15px' }}>
-            <div style={{ fontSize: '13px', fontWeight: '600', color: '#333', marginBottom: '10px' }}>Order Summary</div>
+          <div style={{ background: isDarkMode ? 'rgba(255,255,255,0.05)' : '#f8f9fa', borderRadius: '10px', padding: '15px', marginBottom: '15px' }}>
+            <div style={{ fontSize: '13px', fontWeight: '600', color: isDarkMode ? '#e2e8f0' : '#333', marginBottom: '10px' }}>Order Summary</div>
             <div style={{ maxHeight: '150px', overflowY: 'auto' }}>
               {lastOrderData?.items?.map((item, index) => (
-                <div key={index} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: '1px dotted #ddd', fontSize: '13px' }}>
+                <div key={index} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: isDarkMode ? '1px dotted rgba(255,255,255,0.12)' : '1px dotted #ddd', fontSize: '13px', color: isDarkMode ? '#cbd5e1' : 'inherit' }}>
                   <span>{item.name} x{item.quantity}</span>
                   <span style={{ fontWeight: '600' }}>{formatCurrency(item.totalPrice * item.quantity)}</span>
                 </div>
               ))}
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '10px', marginTop: '10px', borderTop: '1px solid #ddd' }}>
-              <span style={{ fontWeight: '600' }}>Total</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '10px', marginTop: '10px', borderTop: isDarkMode ? '1px solid rgba(255,255,255,0.12)' : '1px solid #ddd' }}>
+              <span style={{ fontWeight: '600', color: isDarkMode ? '#e2e8f0' : 'inherit' }}>Total</span>
               <span style={{ fontWeight: '700', color: primaryColor, fontSize: '16px' }}>{formatCurrency(lastOrderData?.total)}</span>
             </div>
           </div>
 
           {/* Customer & Payment Info */}
-          <div style={{ display: 'flex', gap: '10px', fontSize: '12px', color: '#666' }}>
-            <div style={{ flex: 1, background: '#f0f0f0', padding: '10px', borderRadius: '8px' }}>
+          <div style={{ display: 'flex', gap: '10px', fontSize: '12px', color: isDarkMode ? '#94a3b8' : '#666' }}>
+            <div style={{ flex: 1, background: isDarkMode ? 'rgba(255,255,255,0.06)' : '#f0f0f0', padding: '10px', borderRadius: '8px' }}>
               <i className="bi bi-person me-1"></i>
               {lastOrderData?.customer?.name || 'Walk-in Customer'}
             </div>
-            <div style={{ flex: 1, background: '#f0f0f0', padding: '10px', borderRadius: '8px' }}>
+            <div style={{ flex: 1, background: isDarkMode ? 'rgba(255,255,255,0.06)' : '#f0f0f0', padding: '10px', borderRadius: '8px' }}>
               <i className="bi bi-credit-card me-1"></i>
               {lastOrderData?.paymentMethod}
             </div>
@@ -2941,7 +2972,7 @@ const Delivery = () => {
             </div>
           </div>
         </Modal.Body>
-        <Modal.Footer style={{ borderTop: '1px solid #eee', padding: '15px 20px', justifyContent: 'center', gap: '10px' }}>
+        <Modal.Footer style={{ borderTop: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #eee', padding: '15px 20px', justifyContent: 'center', gap: '10px' }}>
           <Button
             variant="outline-secondary"
             onClick={handleCloseSuccessModal}

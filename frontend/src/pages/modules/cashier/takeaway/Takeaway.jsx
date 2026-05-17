@@ -1579,7 +1579,7 @@ const Takeaway = () => {
             style={{
               height: '100%',
               overflow: 'hidden',
-              background: '#fff',
+              background: isDarkMode ? 'rgba(15,15,30,0.98)' : '#fff',
               borderRadius: '12px',
               boxShadow: '0 4px 30px rgba(0,0,0,0.2)',
               display: 'flex',
@@ -1638,7 +1638,7 @@ const Takeaway = () => {
             {/* Main Content - Two Columns */}
             <div style={{ flex: 1, overflow: 'hidden', display: 'flex' }}>
               {/* Left Column: Cart Items */}
-              <div style={{ flex: 1, overflowY: 'auto', padding: '16px', borderRight: '1px solid #eee' }}>
+              <div style={{ flex: 1, overflowY: 'auto', padding: '16px', borderRight: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #eee' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {cart.map(item => {
                     const itemKey = item.cartItemId || item.id;
@@ -1648,8 +1648,8 @@ const Takeaway = () => {
                         key={itemKey}
                         style={{
                           padding: '12px',
-                          background: '#fff',
-                          border: '1px solid #eee',
+                          background: isDarkMode ? 'rgba(255,255,255,0.05)' : '#fff',
+                          border: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #eee',
                           borderRadius: '8px',
                           display: 'flex',
                           gap: '12px',
@@ -1657,9 +1657,9 @@ const Takeaway = () => {
                         }}
                       >
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: '14px', fontWeight: '700', color: '#333', marginBottom: '4px' }}>{item.name}</div>
+                          <div style={{ fontSize: '14px', fontWeight: '700', color: isDarkMode ? '#e2e8f0' : '#333', marginBottom: '4px' }}>{item.name}</div>
                           {item.addons && item.addons.length > 0 && (
-                            <div style={{ fontSize: '11px', color: '#666', marginBottom: '6px', lineHeight: '1.3' }}>
+                            <div style={{ fontSize: '11px', color: isDarkMode ? '#94a3b8' : '#666', marginBottom: '6px', lineHeight: '1.3' }}>
                               {item.addons.map(a => `${a.name} x${a.quantity || 1}`).join(', ')}
                             </div>
                           )}
@@ -1671,8 +1671,8 @@ const Takeaway = () => {
                             style={{
                               width: '28px',
                               height: '28px',
-                              border: '1px solid #ddd',
-                              background: '#fff',
+                              border: isDarkMode ? '1px solid rgba(255,255,255,0.12)' : '1px solid #ddd',
+                              background: isDarkMode ? 'rgba(255,255,255,0.06)' : '#fff',
                               borderRadius: '6px',
                               cursor: 'pointer',
                               fontWeight: '700',
@@ -1680,7 +1680,7 @@ const Takeaway = () => {
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              color: '#333'
+                              color: isDarkMode ? '#e2e8f0' : '#333'
                             }}
                           >
                             −
@@ -1691,8 +1691,8 @@ const Takeaway = () => {
                             style={{
                               width: '28px',
                               height: '28px',
-                              border: '1px solid #ddd',
-                              background: '#fff',
+                              border: isDarkMode ? '1px solid rgba(255,255,255,0.12)' : '1px solid #ddd',
+                              background: isDarkMode ? 'rgba(255,255,255,0.06)' : '#fff',
                               borderRadius: '6px',
                               cursor: 'pointer',
                               fontWeight: '700',
@@ -1700,7 +1700,7 @@ const Takeaway = () => {
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              color: '#333'
+                              color: isDarkMode ? '#e2e8f0' : '#333'
                             }}
                           >
                             +
@@ -1730,11 +1730,11 @@ const Takeaway = () => {
               </div>
 
               {/* Right Column: Order Summary */}
-              <div style={{ width: '280px', overflowY: 'auto', padding: '16px', background: '#f8fafc', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ width: '280px', overflowY: 'auto', padding: '16px', background: isDarkMode ? 'rgba(10,10,25,0.6)' : '#f8fafc', display: 'flex', flexDirection: 'column' }}>
                 {/* Order Type Badge */}
                 <div
                   style={{
-                    background: '#e3f2fd',
+                    background: isDarkMode ? 'rgba(59,130,246,0.12)' : '#e3f2fd',
                     border: `2px solid ${primaryColor}`,
                     borderRadius: '8px',
                     padding: '10px',
@@ -1742,21 +1742,21 @@ const Takeaway = () => {
                     textAlign: 'center'
                   }}
                 >
-                  <div style={{ fontSize: '11px', fontWeight: '600', color: '#666', marginBottom: '4px' }}>ORDER TYPE</div>
+                  <div style={{ fontSize: '11px', fontWeight: '600', color: isDarkMode ? '#94a3b8' : '#666', marginBottom: '4px' }}>ORDER TYPE</div>
                   <div style={{ fontSize: '16px', fontWeight: '700', color: primaryColor }}>🛍️ TAKEAWAY</div>
                 </div>
 
                 {/* Customer Section */}
                 <div style={{ marginBottom: '16px' }}>
-                  <div style={{ fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '8px', textTransform: 'uppercase' }}>Customer</div>
+                  <div style={{ fontSize: '12px', fontWeight: '600', color: isDarkMode ? '#94a3b8' : '#666', marginBottom: '8px', textTransform: 'uppercase' }}>Customer</div>
                   <div
                     style={{
-                      background: '#fff',
-                      border: '1px solid #e0e0e0',
+                      background: isDarkMode ? 'rgba(255,255,255,0.05)' : '#fff',
+                      border: isDarkMode ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e0e0e0',
                       borderRadius: '6px',
                       padding: '10px 12px',
                       fontSize: '13px',
-                      color: '#999',
+                      color: isDarkMode ? '#64748b' : '#999',
                       textAlign: 'center'
                     }}
                   >
@@ -1767,46 +1767,47 @@ const Takeaway = () => {
                 {/* Pricing Breakdown */}
                 <div
                   style={{
-                    background: '#fff',
-                    border: '1px solid #eee',
+                    background: isDarkMode ? 'rgba(255,255,255,0.05)' : '#fff',
+                    border: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #eee',
                     borderRadius: '8px',
                     padding: '12px',
                     marginBottom: '16px'
                   }}
                 >
-                  <div style={{ fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '12px' }}>PRICING</div>
+                  <div style={{ fontSize: '12px', fontWeight: '600', color: isDarkMode ? '#94a3b8' : '#666', marginBottom: '12px' }}>PRICING</div>
 
                   {/* Subtotal */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid #eee' }}>
-                    <span style={{ fontSize: '13px', color: '#666' }}>Subtotal</span>
-                    <span style={{ fontSize: '13px', fontWeight: '600', color: '#333' }}>{formatCurrency(subtotal)}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', paddingBottom: '10px', borderBottom: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #eee' }}>
+                    <span style={{ fontSize: '13px', color: isDarkMode ? '#94a3b8' : '#666' }}>Subtotal</span>
+                    <span style={{ fontSize: '13px', fontWeight: '600', color: isDarkMode ? '#e2e8f0' : '#333' }}>{formatCurrency(subtotal)}</span>
                   </div>
 
                   {/* Tax */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #eee' }}>
-                    <span style={{ fontSize: '13px', color: '#666' }}>Tax (5%)</span>
-                    <span style={{ fontSize: '13px', fontWeight: '600', color: '#333' }}>{formatCurrency((subtotal * 5) / 100)}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', paddingBottom: '12px', borderBottom: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #eee' }}>
+                    <span style={{ fontSize: '13px', color: isDarkMode ? '#94a3b8' : '#666' }}>Tax (5%)</span>
+                    <span style={{ fontSize: '13px', fontWeight: '600', color: isDarkMode ? '#e2e8f0' : '#333' }}>{formatCurrency((subtotal * 5) / 100)}</span>
                   </div>
 
                   {/* Total */}
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '14px', fontWeight: '700', color: '#333' }}>Total</span>
+                    <span style={{ fontSize: '14px', fontWeight: '700', color: isDarkMode ? '#e2e8f0' : '#333' }}>Total</span>
                     <span style={{ fontSize: '18px', fontWeight: '700', color: primaryColor }}>{formatCurrency(total)}</span>
                   </div>
                 </div>
 
                 {/* Special Instructions */}
                 <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-                  <label style={{ fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '8px', textTransform: 'uppercase' }}>Notes</label>
+                  <label style={{ fontSize: '12px', fontWeight: '600', color: isDarkMode ? '#94a3b8' : '#666', marginBottom: '8px', textTransform: 'uppercase' }}>Notes</label>
                   <textarea
                     placeholder="Special instructions..."
                     style={{
                       flex: 1,
                       padding: '10px',
-                      border: '1px solid #ddd',
+                      border: isDarkMode ? '1px solid rgba(255,255,255,0.12)' : '1px solid #ddd',
                       borderRadius: '6px',
                       fontSize: '12px',
-                      color: '#333',
+                      color: isDarkMode ? '#e2e8f0' : '#333',
+                      background: isDarkMode ? 'rgba(255,255,255,0.04)' : '#fff',
                       resize: 'none',
                       fontFamily: 'inherit'
                     }}
@@ -1816,7 +1817,7 @@ const Takeaway = () => {
             </div>
 
             {/* Footer - Action Buttons */}
-            <div style={{ padding: '16px 20px', borderTop: '1px solid #eee', background: '#fff', display: 'flex', gap: '12px', flexShrink: 0 }}>
+            <div style={{ padding: '16px 20px', borderTop: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #eee', background: isDarkMode ? 'rgba(15,15,30,0.98)' : '#fff', display: 'flex', gap: '12px', flexShrink: 0 }}>
               <button
                 onClick={() => {
                   clearCart();
@@ -1825,9 +1826,9 @@ const Takeaway = () => {
                 style={{
                   flex: 1,
                   padding: '12px',
-                  background: '#fff',
-                  color: '#666',
-                  border: '1px solid #ddd',
+                  background: isDarkMode ? 'rgba(255,255,255,0.06)' : '#fff',
+                  color: isDarkMode ? '#94a3b8' : '#666',
+                  border: isDarkMode ? '1px solid rgba(255,255,255,0.12)' : '1px solid #ddd',
                   borderRadius: '8px',
                   fontWeight: '600',
                   fontSize: '14px',
@@ -1835,12 +1836,12 @@ const Takeaway = () => {
                   transition: 'all 0.2s'
                 }}
                 onMouseEnter={(e) => {
-                  e.target.style.background = '#f8f9fa';
-                  e.target.style.borderColor = '#ccc';
+                  e.target.style.background = isDarkMode ? 'rgba(255,255,255,0.08)' : '#f8f9fa';
+                  e.target.style.borderColor = isDarkMode ? 'rgba(255,255,255,0.16)' : '#ccc';
                 }}
                 onMouseLeave={(e) => {
-                  e.target.style.background = '#fff';
-                  e.target.style.borderColor = '#ddd';
+                  e.target.style.background = isDarkMode ? 'rgba(255,255,255,0.06)' : '#fff';
+                  e.target.style.borderColor = isDarkMode ? 'rgba(255,255,255,0.12)' : '#ddd';
                 }}
               >
                 <i className="bi bi-trash me-2"></i>Clear
@@ -2453,7 +2454,7 @@ const Takeaway = () => {
 
       {/* Order Success Modal with Print Option */}
       <Modal show={showSuccessModal} onHide={handleCloseSuccessModal} centered size="md">
-        <Modal.Header closeButton style={{ borderBottom: '1px solid #eee', background: '#f0fdf4' }}>
+        <Modal.Header closeButton style={{ borderBottom: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #eee', background: isDarkMode ? 'rgba(22,163,74,0.1)' : '#f0fdf4' }}>
           <Modal.Title style={{ fontSize: '18px', fontWeight: '600', color: '#16a34a' }}>
             <i className="bi bi-check-circle-fill me-2"></i>
             Order Placed Successfully!
@@ -2465,7 +2466,7 @@ const Takeaway = () => {
             <div style={{
               width: '80px',
               height: '80px',
-              background: '#dcfce7',
+              background: isDarkMode ? 'rgba(22,163,74,0.15)' : '#dcfce7',
               borderRadius: '50%',
               display: 'flex',
               alignItems: 'center',
@@ -2474,33 +2475,33 @@ const Takeaway = () => {
             }}>
               <i className="bi bi-check-lg" style={{ fontSize: '40px', color: '#16a34a' }}></i>
             </div>
-            <p style={{ color: '#666', fontSize: '13px', margin: 0 }}>{lastOrderData?.createdAt}</p>
+            <p style={{ color: isDarkMode ? '#94a3b8' : '#666', fontSize: '13px', margin: 0 }}>{lastOrderData?.createdAt}</p>
           </div>
 
           {/* Order Summary Preview */}
-          <div style={{ background: '#f8f9fa', borderRadius: '10px', padding: '15px', marginBottom: '15px' }}>
-            <div style={{ fontSize: '13px', fontWeight: '600', color: '#333', marginBottom: '10px' }}>Order Summary</div>
+          <div style={{ background: isDarkMode ? 'rgba(255,255,255,0.05)' : '#f8f9fa', borderRadius: '10px', padding: '15px', marginBottom: '15px' }}>
+            <div style={{ fontSize: '13px', fontWeight: '600', color: isDarkMode ? '#e2e8f0' : '#333', marginBottom: '10px' }}>Order Summary</div>
             <div style={{ maxHeight: '150px', overflowY: 'auto' }}>
               {lastOrderData?.items?.map((item, index) => (
-                <div key={index} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: '1px dotted #ddd', fontSize: '13px' }}>
+                <div key={index} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: isDarkMode ? '1px dotted rgba(255,255,255,0.12)' : '1px dotted #ddd', fontSize: '13px', color: isDarkMode ? '#cbd5e1' : 'inherit' }}>
                   <span>{item.name} x{item.quantity}</span>
                   <span style={{ fontWeight: '600' }}>{formatCurrency(item.totalPrice * item.quantity)}</span>
                 </div>
               ))}
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '10px', marginTop: '10px', borderTop: '1px solid #ddd' }}>
-              <span style={{ fontWeight: '600' }}>Total</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '10px', marginTop: '10px', borderTop: isDarkMode ? '1px solid rgba(255,255,255,0.12)' : '1px solid #ddd' }}>
+              <span style={{ fontWeight: '600', color: isDarkMode ? '#e2e8f0' : 'inherit' }}>Total</span>
               <span style={{ fontWeight: '700', color: primaryColor, fontSize: '16px' }}>{formatCurrency(lastOrderData?.total)}</span>
             </div>
           </div>
 
           {/* Customer & Payment Info */}
-          <div style={{ display: 'flex', gap: '10px', fontSize: '12px', color: '#666' }}>
-            <div style={{ flex: 1, background: '#f0f0f0', padding: '10px', borderRadius: '8px' }}>
+          <div style={{ display: 'flex', gap: '10px', fontSize: '12px', color: isDarkMode ? '#94a3b8' : '#666' }}>
+            <div style={{ flex: 1, background: isDarkMode ? 'rgba(255,255,255,0.06)' : '#f0f0f0', padding: '10px', borderRadius: '8px' }}>
               <i className="bi bi-person me-1"></i>
               {lastOrderData?.customer?.name || 'Walk-in Customer'}
             </div>
-            <div style={{ flex: 1, background: '#f0f0f0', padding: '10px', borderRadius: '8px' }}>
+            <div style={{ flex: 1, background: isDarkMode ? 'rgba(255,255,255,0.06)' : '#f0f0f0', padding: '10px', borderRadius: '8px' }}>
               <i className="bi bi-credit-card me-1"></i>
               {lastOrderData?.paymentMethod}
             </div>
@@ -2554,7 +2555,7 @@ const Takeaway = () => {
             </div>
           </div>
         </Modal.Body>
-        <Modal.Footer style={{ borderTop: '1px solid #eee', padding: '15px 20px', justifyContent: 'center', gap: '10px' }}>
+        <Modal.Footer style={{ borderTop: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #eee', padding: '15px 20px', justifyContent: 'center', gap: '10px' }}>
           <Button
             variant="outline-secondary"
             onClick={handleCloseSuccessModal}

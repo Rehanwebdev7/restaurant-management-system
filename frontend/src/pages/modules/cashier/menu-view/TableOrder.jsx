@@ -4,6 +4,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ApiGet, ApiPost, ApiPut } from '../../../../ApiServices/ApiServices';
 import { toast } from 'react-toastify';
 import { useTheme } from '../../../../contexts/ThemeContext';
+import { useDarkMode } from '../../../../contexts/DarkModeContext';
 
 const TableOrder = () => {
   const { tableId } = useParams();
@@ -11,6 +12,7 @@ const TableOrder = () => {
   const location = useLocation();
   const tableInfo = location.state?.tableInfo || { tableNumber: `Table ${tableId}` };
   const { primaryColor } = useTheme();
+  const { isDarkMode } = useDarkMode();
 
   const [categories, setCategories] = useState([{ id: 'all', name: 'All Items' }]);
   const [menuItems, setMenuItems] = useState([]);
@@ -296,13 +298,13 @@ const TableOrder = () => {
             <button
               onClick={() => navigate('/cashier/dining-tables')}
               style={{
-                background: '#fff',
-                border: '1px solid #e5e7eb',
+                background: isDarkMode ? 'rgba(255,255,255,0.06)' : '#fff',
+                border: isDarkMode ? '1px solid rgba(255,255,255,0.12)' : '1px solid #e5e7eb',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                color: '#666',
+                color: isDarkMode ? '#94a3b8' : '#666',
                 fontSize: '13px',
                 padding: '8px 14px',
                 borderRadius: '8px',
@@ -319,7 +321,7 @@ const TableOrder = () => {
               position: 'absolute',
               left: '50%',
               transform: 'translateX(-50%)',
-              color: '#1f2937',
+              color: isDarkMode ? '#e2e8f0' : '#1f2937',
               fontWeight: '700',
               fontSize: '16px',
               whiteSpace: 'nowrap'
@@ -330,9 +332,9 @@ const TableOrder = () => {
             {/* Right - Search Input */}
             <div style={{
               position: 'relative',
-              background: '#fff',
+              background: isDarkMode ? 'rgba(255,255,255,0.06)' : '#fff',
               borderRadius: '8px',
-              border: '1px solid #e5e7eb',
+              border: isDarkMode ? '1px solid rgba(255,255,255,0.12)' : '1px solid #e5e7eb',
               width: '250px',
               marginLeft: 'auto'
             }}>
@@ -341,7 +343,7 @@ const TableOrder = () => {
                 left: '12px',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                color: '#999',
+                color: isDarkMode ? '#64748b' : '#999',
                 fontSize: '14px'
               }}></i>
               <input
@@ -355,7 +357,9 @@ const TableOrder = () => {
                   border: 'none',
                   borderRadius: '8px',
                   fontSize: '13px',
-                  outline: 'none'
+                  outline: 'none',
+                  background: 'transparent',
+                  color: isDarkMode ? '#e2e8f0' : '#333'
                 }}
               />
             </div>
@@ -377,8 +381,8 @@ const TableOrder = () => {
                   padding: '8px 16px',
                   borderRadius: '20px',
                   border: 'none',
-                  background: selectedCategory === cat.id ? primaryColor : '#fff',
-                  color: selectedCategory === cat.id ? '#fff' : '#333',
+                  background: selectedCategory === cat.id ? primaryColor : (isDarkMode ? 'rgba(255,255,255,0.06)' : '#fff'),
+                  color: selectedCategory === cat.id ? '#fff' : (isDarkMode ? '#94a3b8' : '#333'),
                   fontSize: '13px',
                   fontWeight: '500',
                   cursor: 'pointer',

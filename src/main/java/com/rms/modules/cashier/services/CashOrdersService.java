@@ -638,14 +638,18 @@ public class CashOrdersService implements OrdersServiceIMP {
 			if (!addressExist.getCustomerId().getId().equals(customer.getId()))
 				throw new RuntimeException("Address does not belong to customer");
 
-			if (payload.get("distance") == null)
-				throw new RuntimeException("Distance required");
-
-			distance = Double.parseDouble(payload.get("distance").toString());
-			matchedZone = findMatchingDeliveryZone(distance, branch.getId());
-
-			deliveryCharge = matchedZone.getDeliveryCharge() != null ? matchedZone.getDeliveryCharge()
-					: BigDecimal.ZERO;
+			if (payload.get("distance") != null) {
+				distance = Double.parseDouble(payload.get("distance").toString());
+				if (distance > 0) {
+					try {
+						matchedZone = findMatchingDeliveryZone(distance, branch.getId());
+						deliveryCharge = matchedZone.getDeliveryCharge() != null ? matchedZone.getDeliveryCharge()
+								: BigDecimal.ZERO;
+					} catch (RuntimeException e) {
+						deliveryCharge = BigDecimal.ZERO;
+					}
+				}
+			}
 
 			System.out.println("\n════════════ DELIVERY DETAILS ═══════════");
 			System.out.println("Distance (KM)    : " + distance);

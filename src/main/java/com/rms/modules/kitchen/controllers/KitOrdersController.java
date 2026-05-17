@@ -218,7 +218,7 @@ public class KitOrdersController {
 	@GetMapping("/{id:\\d+}")
 	public ResponseEntity<Object> getById(@RequestHeader("access_token") String token, @PathVariable Long id) {
 		try {
-			OrdersEntity result = ordersServiceIMP.getOneOrders(id, token);
+			Map<String, Object> result = kitOrdersService.getKitchenOrderDetail(id, token);
 			return ApiResponse.responseBuilder(result, "SUCCESS", HttpStatus.OK, "Orders retrieved successfully");
 		} catch (SecurityException e) {
 			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.UNAUTHORIZED, e.getMessage());
