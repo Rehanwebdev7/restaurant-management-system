@@ -124,6 +124,21 @@ public class CustUsersController {
 		}
 	}
 
+	@GetMapping("/all-branches")
+	public ResponseEntity<Object> getAllBranches(@RequestParam("restaurantId") Long restaurantId) {
+		try {
+			if (restaurantId == null) {
+				throw new RuntimeException("RestaurantId is required");
+			}
+			List<Map<String, Object>> result = custUsersService.getAllBranchesByRestaurant(restaurantId);
+			return ApiResponse.responseBuilder(result, "SUCCESS", HttpStatus.OK, "Branches fetched successfully");
+		} catch (RuntimeException e) {
+			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.BAD_REQUEST, e.getMessage());
+		} catch (Exception e) {
+			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error");
+		}
+	}
+
 	// ***** Api- Get By User Id (from token) *****
 	@GetMapping("/getByUserId")
 	public ResponseEntity<Object> getByUserId(@RequestHeader("access_token") String token) {

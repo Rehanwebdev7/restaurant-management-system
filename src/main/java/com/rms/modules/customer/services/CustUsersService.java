@@ -180,6 +180,41 @@ public class CustUsersService implements UsersServiceIMP {
 		return nearestBranches;
 	}
 
+	// Get all branches without location filtering
+	public List<Map<String, Object>> getAllBranchesByRestaurant(Long restaurantId) {
+		UsersEntity restaurant = usersRepository.findById(restaurantId)
+				.orElseThrow(() -> new RuntimeException("Invalid restaurant id"));
+
+		List<UsersEntity> branchUsers = usersRepository.findByParentId_id(restaurant.getId());
+
+		if (branchUsers == null || branchUsers.isEmpty()) {
+			throw new RuntimeException("No branches found for this restaurant");
+		}
+
+		// Map all branches to response format (return all, filter on active status)
+		List<Map<String, Object>> branches = new ArrayList<>();
+		for (UsersEntity branch : branchUsers) {
+			if ("branch".equalsIgnoreCase(branch.getRole())) {
+				Map<String, Object> branchMap = new LinkedHashMap<>();
+				branchMap.put("branchId", branch.getId());
+				branchMap.put("branchName", branch.getName());
+				branchMap.put("address", branch.getCity() + " " + branch.getState());
+				branchMap.put("phone", branch.getMobile());
+				branchMap.put("distance_km", 0);
+				branchMap.put("time_text", "");
+				branchMap.put("time_minutes", 0);
+				branchMap.put("deliveryCharge", 0);
+				branches.add(branchMap);
+			}
+		}
+
+		if (branches.isEmpty()) {
+			throw new RuntimeException("No branches found for this restaurant");
+		}
+
+		return branches;
+	}
+
 //    ************************************************************************************
 
 	@Override

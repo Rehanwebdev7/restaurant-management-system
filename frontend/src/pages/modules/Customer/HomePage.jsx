@@ -1227,6 +1227,55 @@ const CustomerLanding = () => {
     }
   };
 
+  // Fetch all branches without location filtering
+  const fetchAllBranches = async (restId) => {
+    try {
+      setBranchesLoading(true);
+      const response = await ApiGet(`/api/public/customer/all-branches?restaurantId=${restId}`);
+
+      if (response.success) {
+        const branchData = response.success.data || [];
+        // Map API response to component structure
+        const mappedBranches = branchData.map(branch => ({
+          id: branch.branchId,
+          name: branch.branchName,
+          address: branch.address,
+          phone: branch.phone,
+          distance: null,
+          timeText: null,
+          timeMinutes: null,
+          deliveryCharge: branch.deliveryCharge
+        }));
+        setBranches(mappedBranches);
+
+        // Auto-select first branch or restore previously selected
+        if (mappedBranches.length > 0) {
+          const savedBranchId = localStorage.getItem('CustomerBranchId');
+          let branchToSelect = savedBranchId ?
+            mappedBranches.find(b => String(b.id) === String(savedBranchId)) : null;
+
+          if (!branchToSelect) {
+            branchToSelect = mappedBranches[0];
+            localStorage.setItem('CustomerBranchId', branchToSelect.id);
+          }
+          setSelectedBranch(branchToSelect);
+          console.log('Auto-selected branch:', branchToSelect.name);
+        }
+      } else {
+        const errorMsg = response.fail?.data?.message || 'Failed to fetch branches';
+        setBranches([]);
+        setSelectedBranch(null);
+        toast.error(errorMsg);
+      }
+    } catch (error) {
+      console.error('Error fetching all branches:', error);
+      toast.error('Failed to load branches. Please try again.');
+      setBranches([]);
+    } finally {
+      setBranchesLoading(false);
+    }
+  };
+
   // Location search API (returns plain array, not standard ApiGet format)
   const searchLocationApi = async (query) => {
     if (!query || query.trim().length < 2) {
@@ -1994,77 +2043,13 @@ const CustomerLanding = () => {
     }
   }, [themeLoading, restaurantId]);
 
-  // Get user's geolocation when restaurantId is available
+  // Fetch all branches without location requirement
   useEffect(() => {
-    // Wait for restaurantId to be available
     if (themeLoading || !restaurantId) {
       return;
     }
-
-    // If a branch was previously selected, use its saved lat/long
-    const savedBranchId = localStorage.getItem('CustomerBranchId');
-    const savedBranchLat = localStorage.getItem('CustomerBranchLat');
-    const savedBranchLng = localStorage.getItem('CustomerBranchLng');
-
-    if (savedBranchId && savedBranchLat && savedBranchLng) {
-      console.log('Using saved branch location:', { lat: savedBranchLat, lng: savedBranchLng });
-      setLocationStatus('granted');
-      fetchNearestBranches(parseFloat(savedBranchLat), parseFloat(savedBranchLng), restaurantId);
-      return;
-    }
-
-    // Check if Geolocation API is supported
-    if (!navigator.geolocation) {
-      console.warn('Geolocation is not supported by this browser');
-      setLocationStatus('error');
-      setBranchesLoading(false);
-      return;
-    }
-
-    // Request location permission
-    navigator.geolocation.getCurrentPosition(
-      // Success callback
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        console.log('Location obtained:', { latitude, longitude });
-        setUserLocation({ latitude, longitude });
-        setLocationStatus('granted');
-
-        // Fetch branches with user's location
-        fetchNearestBranches(latitude, longitude, restaurantId);
-      },
-      // Error callback
-      (error) => {
-        console.warn('Geolocation error:', error.message);
-
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            setLocationStatus('denied');
-            console.log('User denied location permission');
-            break;
-          case error.POSITION_UNAVAILABLE:
-            setLocationStatus('error');
-            console.log('Location information unavailable');
-            break;
-          case error.TIMEOUT:
-            setLocationStatus('error');
-            console.log('Location request timed out');
-            break;
-          default:
-            setLocationStatus('error');
-            console.log('Unknown location error');
-        }
-
-        // Fallback: Use default coordinates (Delhi)
-        fetchNearestBranches(28.6139, 77.2090, restaurantId);
-      },
-      // Options
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 300000 // Cache location for 5 minutes
-      }
-    );
+    console.log('Fetching all branches for restaurant:', restaurantId);
+    fetchAllBranches(restaurantId);
   }, [themeLoading, restaurantId]);
 
   // Auto-slide for banners (pause on hover)
@@ -4022,63 +4007,12 @@ const CustomerLanding = () => {
           </div>
         )}
 
-        {/* No Branch Modal */}
-        {showNoBranchModal && (
+        {/* No Branch Modal - COMMENTED OUT */}
+        {/* {showNoBranchModal && (
           <div className="no-branch-modal-overlay">
-            <div className="no-branch-modal">
-              <button onClick={() => setShowNoBranchModal(false)} style={{ position: 'absolute', top: '12px', right: '16px', background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#999', zIndex: 1 }}>
-                <i className="bi bi-x-lg"></i>
-              </button>
-              <div className="no-branch-modal-header">
-                <i className="bi bi-geo-alt"></i>
-                <h4>{noBranchMessage || 'No branches available'}</h4>
-                <p>Search for your location to find nearby branches</p>
-              </div>
-              <div className="no-branch-modal-body">
-                <div className="no-branch-modal-search">
-                  <div className="no-branch-modal-search-input">
-                    <i className="bi bi-search"></i>
-                    <input
-                      type="text"
-                      placeholder="Search your location..."
-                      value={modalLocationSearch}
-                      onChange={(e) => setModalLocationSearch(e.target.value)}
-                      autoFocus
-                    />
-                    {modalLocationSearch && (
-                      <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#999', padding: 0 }} onClick={() => { setModalLocationSearch(''); setModalLocationSuggestions([]); }}>
-                        <i className="bi bi-x"></i>
-                      </button>
-                    )}
-                  </div>
-                  {modalLocationSearching && (
-                    <div className="no-branch-modal-searching">
-                      <div className="spinner-border spinner-border-sm me-2" role="status" style={{ width: '14px', height: '14px', borderWidth: '2px' }}></div>
-                      Searching...
-                    </div>
-                  )}
-                  {modalLocationSuggestions.length > 0 && (
-                    <div className="no-branch-modal-suggestions">
-                      {modalLocationSuggestions.map((item, index) => (
-                        <div
-                          key={index}
-                          className="no-branch-modal-suggestion-item"
-                          onClick={() => handleModalSelectLocation(item.place_id, item.entity_title)}
-                        >
-                          <i className="bi bi-geo-alt"></i>
-                          <div>
-                            <div className="no-branch-modal-suggestion-title">{item.entity_title}</div>
-                            {item.entity_subtitle && <div className="no-branch-modal-suggestion-subtitle">{item.entity_subtitle}</div>}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+            ...
           </div>
-        )}
+        )} */}
 
         {/* Floating Cart Button — hidden when drawer is open */}
         {getTotalCartCount() > 0 && !showCart && (
@@ -4393,8 +4327,8 @@ const CustomerLanding = () => {
         </div>
       )}
 
-      {/* Location Modal */}
-      {showLocationModal && (
+      {/* Location Modal - COMMENTED OUT */}
+      {/* {showLocationModal && (
         <div
           className="location-modal-overlay"
           onClick={() => setShowLocationModal(false)}
@@ -4643,7 +4577,7 @@ const CustomerLanding = () => {
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Order Success Congratulation Modal */}
       {showOrderSuccess && (
