@@ -1,5 +1,6 @@
 package com.rms.controllers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rms.common.entities.BusinessSettingEntity;
 import com.rms.common.repositories.BusinessSettingRepository;
 import com.rms.common.response.ApiResponse;
@@ -63,7 +64,25 @@ public class GlobalThemeController {
         theme.put("fontName", setting.getFontName());
         theme.put("address", setting.getAddress());
         theme.put("phone", setting.getPhone());
+        theme.put("email", setting.getEmail());
+        theme.put("whatsappNumber", setting.getWhatsappNumber());
+        theme.put("aboutUs", setting.getAboutUs());
+        theme.put("ourMission", setting.getOurMission());
+        theme.put("ourVision", setting.getOurVision());
         theme.put("restaurantName", setting.getRestaurantId() != null ? setting.getRestaurantId().getName() : null);
+
+        // Parse socialMediaLinks JSON string → return as socialMediaDetails object
+        try {
+            String socialJson = setting.getSocialMediaLinks();
+            if (socialJson != null && !socialJson.isBlank()) {
+                Map<?, ?> socialMap = new ObjectMapper().readValue(socialJson, Map.class);
+                theme.put("socialMediaDetails", socialMap);
+            } else {
+                theme.put("socialMediaDetails", null);
+            }
+        } catch (Exception ignored) {
+            theme.put("socialMediaDetails", null);
+        }
 
         if (setting.getRestaurantId() != null) {
             Map<String, Object> restaurantInfo = new HashMap<>();

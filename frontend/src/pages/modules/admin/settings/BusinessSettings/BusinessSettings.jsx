@@ -158,7 +158,12 @@ const BusinessSettings = () => {
             ambulanceNumber: data.ambulanceNumber || '',
             googleMapEmbed: data.googleMapEmbed || '',
             address: data.address || '',
-            socialMediaLinks: data.socialMediaLinks || { facebook: '', instagram: '', twitter: '', youtube: '' },
+            socialMediaLinks: (() => {
+              const raw = data.socialMediaLinks;
+              if (!raw) return { facebook: '', instagram: '', twitter: '', youtube: '' };
+              if (typeof raw === 'object') return raw;
+              try { return JSON.parse(raw); } catch { return { facebook: '', instagram: '', twitter: '', youtube: '' }; }
+            })(),
             googleRatingUrl: data.googleRatingUrl || '',
             aboutUs: data.aboutUs || '',
             privacyPolicy: data.privacyPolicy || '',
@@ -1083,8 +1088,8 @@ const BusinessSettings = () => {
         )}
       </div>
 
-      {/* Business Information - removed per requirements */}
-      {false && <div className="bs-section-card" style={sectionCardStyle}>
+      {/* Business Information */}
+      <div className="bs-section-card" style={sectionCardStyle}>
         <SectionHeader icon="bi bi-building" title="Business Information" subtitle="Organisation details, compliance info, and contact details shown on invoices" sectionKey="business" />
         {expandedSections.business && (
           <div style={{ padding: '24px' }}>
@@ -1231,7 +1236,7 @@ const BusinessSettings = () => {
             </Row>
           </div>
         )}
-      </div>}
+      </div>
 
       {/* Referral Settings - removed per requirements */}
       {false && <div className="bs-section-card" style={sectionCardStyle}>

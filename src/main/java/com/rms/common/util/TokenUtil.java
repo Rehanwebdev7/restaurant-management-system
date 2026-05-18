@@ -104,6 +104,15 @@ public final class TokenUtil {
 				}
 			}
 			mock.put("id", customerId);
+
+			// Set parentId (restaurantId) from customer's linked restaurant
+			if (customersRepository != null) {
+				Optional<CustomersEntity> linkedCustomer = customersRepository.findById((long) customerId);
+				if (linkedCustomer.isPresent() && linkedCustomer.get().getUserId() != null) {
+					mock.put("parentId", linkedCustomer.get().getUserId().getId());
+					System.out.println("🔐 [MOCK_DEV_TOKEN] parentId set: " + linkedCustomer.get().getUserId().getId());
+				}
+			}
 			currentTokenData.set(mock);
 			return mock;
 		}

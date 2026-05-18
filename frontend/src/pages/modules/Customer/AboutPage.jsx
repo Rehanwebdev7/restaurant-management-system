@@ -118,15 +118,18 @@ const AboutPage = () => {
       <div className="info-page-content">
         <div className="info-card">
           <h2>Welcome to {theme.restaurantName}</h2>
-          <p>
-            Tucked away in the historic heart of Daryaganj, Delhi, our restaurant is more than just a place to eat—it's a journey into the soul of Old Delhi's iconic Mughlai cuisine. Inspired by the grandeur of royal kitchens and the timeless flavors of Purani Dilli, we bring together tradition, taste, and togetherness under one roof.
-          </p>
-          <p>
-            Our kitchen follows age-old recipes, slow-cooking techniques, and authentic spice blends to create dishes that are rich, aromatic, and deeply satisfying. From succulent kebabs and velvety curries to fragrant biryanis and freshly baked tandoori rotis and naans, every plate reflects our commitment to preserving the true essence of Mughlai food.
-          </p>
-          <p>
-            To make the experience even more fulfilling, we offer thoughtfully curated unlimited combo meals, allowing our guests to enjoy a wide variety of dishes without limits. These combos are designed for those who love to indulge, share, and explore multiple flavors in one memorable meal—perfect for families, friends, and food lovers.
-          </p>
+          {theme.aboutUs && (
+            <p>{theme.aboutUs}</p>
+          )}
+          {theme.ourMission && (
+            <p><strong>Our Mission:</strong> {theme.ourMission}</p>
+          )}
+          {theme.ourVision && (
+            <p><strong>Our Vision:</strong> {theme.ourVision}</p>
+          )}
+          {!theme.aboutUs && !theme.ourMission && !theme.ourVision && (
+            <p>Welcome to {theme.restaurantName}. We are committed to serving the finest food with exceptional hospitality.</p>
+          )}
         </div>
       </div>
     </div>

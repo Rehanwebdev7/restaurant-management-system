@@ -7,11 +7,11 @@
 
 /* ---- ROOT VARIABLES ---- */
 :root {
-  --light-bg: #fdf0ee;
+  --light-bg: var(--theme-background, #fdf0ee);
   --card-bg: #ffffff;
-  --surface-bg: #fdf0ee;
+  --surface-bg: var(--theme-background, #fdf0ee);
   --accent: var(--theme-primary);
-  --accent-hover: #D4621E;
+  --accent-hover: var(--theme-primary-dark, #D4621E);
   --text-primary: #1e293b;
   --text-secondary: #475569;
   --text-muted: #94a3b8;

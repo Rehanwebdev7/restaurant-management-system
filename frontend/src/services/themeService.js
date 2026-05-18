@@ -237,8 +237,13 @@ export const mapApiDataToTheme = (apiData) => {
     // Contact Info
     address: apiData.address || DEFAULT_THEME.address,
     phone: apiData.phone || DEFAULT_THEME.phone,
+    whatsappNumber: apiData.whatsappNumber || null,
     alternatePhone: apiData.alternatePhone || DEFAULT_THEME.alternatePhone,
-    email: apiData.restaurantId?.email || DEFAULT_THEME.email,
+    email: apiData.email || apiData.restaurantId?.email || DEFAULT_THEME.email,
+    // About Us Content
+    aboutUs: apiData.aboutUs || null,
+    ourMission: apiData.ourMission || null,
+    ourVision: apiData.ourVision || null,
     // Store original API colors separately for reference
     apiColors: {
       primary: primaryColor,
@@ -366,6 +371,7 @@ export const applyThemeToCSS = (theme) => {
       252 * 0.92 + _pb * 0.08,
     ].map(toHex).join('');
     root.style.setProperty('--theme-background', lightBg);
+    root.style.setProperty('--page-bg', lightBg);
 
     // Dark-mode tinted bg: blend primary at 10% over #0e0e16 (14, 14, 22)
     const darkBg = '#' + [
