@@ -41,15 +41,38 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) {
         System.out.println("🚀 [DATA INITIALIZER] Starting...");
 
-        // Ensure localhost domain is mapped so customer homepage works in dev
-        if (businessSettingRepository.findByDomainUrl("localhost").isEmpty()) {
-            businessSettingRepository.findAll().stream().findFirst().ifPresent(setting -> {
-                setting.setDomainUrl("localhost");
-                businessSettingRepository.save(setting);
-                System.out.println("✅ Mapped localhost domain to restaurant: " + setting.getId());
-            });
-        } else {
-            System.out.println("✅ localhost domain already mapped");
+        // Ensure localhost domain maps to Spice Garden (9800000001), not arbitrary first record
+        try {
+            UsersEntity spiceGarden = usersRepository.findByMobile("9800000001").orElse(null);
+            if (spiceGarden != null) {
+                java.util.Optional<BusinessSettingEntity> currentMapping =
+                        businessSettingRepository.findByDomainUrl("localhost");
+                boolean alreadyCorrect = currentMapping.isPresent() &&
+                        currentMapping.get().getRestaurantId() != null &&
+                        currentMapping.get().getRestaurantId().getId().equals(spiceGarden.getId());
+
+                if (!alreadyCorrect) {
+                    // Remove old wrong mapping
+                    currentMapping.ifPresent(old -> {
+                        old.setDomainUrl(null);
+                        businessSettingRepository.save(old);
+                    });
+                    // Map localhost to Spice Garden's settings
+                    businessSettingRepository.findByRestaurantId_Id(spiceGarden.getId())
+                            .ifPresentOrElse(
+                                    setting -> {
+                                        setting.setDomainUrl("localhost");
+                                        businessSettingRepository.save(setting);
+                                        System.out.println("✅ Mapped localhost → Spice Garden (primary=" + setting.getPrimaryColor() + ")");
+                                    },
+                                    () -> System.out.println("⚠️ Spice Garden business settings not found")
+                            );
+                } else {
+                    System.out.println("✅ localhost already mapped to Spice Garden");
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("⚠️ Error mapping localhost domain: " + e.getMessage());
         }
 
         // Check if "Free" plan already exists — if not, create it
