@@ -740,6 +740,11 @@ public interface OrdersRepository extends JpaRepository<OrdersEntity, Long> {
 	@Query(value = """
 		UPDATE orders SET
 		    status     = :status,
+		    delivery_status = CASE
+		        WHEN :status IN ('READY_FOR_ORDER','READY')     THEN 'READY_FOR_ORDER'
+		        WHEN :status IN ('ACCEPTED_ORDER','CONFIRMED')  THEN 'CONFIRMED'
+		        ELSE delivery_status
+		    END,
 		    kitchen_id = :kitchenId,
 		    kitchen_accept_at = CASE
 		        WHEN :status IN ('ACCEPTED_ORDER','CONFIRMED')
