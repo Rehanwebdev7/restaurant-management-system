@@ -106,6 +106,15 @@ public class DataInitializer implements CommandLineRunner {
         // Seed banner sliders for Spice Garden
         initializeSpiceGardenSliders();
 
+        // Seed About Us content for Spice Garden
+        initializeSpiceGardenAboutUs();
+
+        // Restore Spice Garden logo URL in DB (from Pexels back to uploaded file)
+        restoreSpiceGardenLogo();
+
+        // Mark some items as trending/recommended
+        markSpiceGardenTrendingItems();
+
         // Add food images by item/category name
         initializeMenuImages();
 
@@ -575,6 +584,71 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 
+    private void initializeSpiceGardenAboutUs() {
+        try {
+            UsersEntity spiceGarden = usersRepository.findByMobile("9800000001").orElse(null);
+            if (spiceGarden == null) return;
+
+            java.util.Optional<BusinessSettingEntity> setting = businessSettingRepository.findByRestaurantId_Id(spiceGarden.getId());
+            if (setting.isEmpty()) {
+                System.out.println("✅ Spice Garden About Us already set");
+                return;
+            }
+
+            BusinessSettingEntity bse = setting.get();
+            String currentAboutUs = bse.getAboutUs();
+            if (currentAboutUs != null && !currentAboutUs.trim().isEmpty()) {
+                System.out.println("✅ Spice Garden About Us already set");
+                return;
+            }
+
+            bse.setAboutUs("Welcome to Spice Garden — your destination for authentic Indian flavors in the heart of the city. We take pride in crafting every dish with fresh ingredients, traditional spices, and a whole lot of love. From sizzling starters to hearty biryanis, every bite tells a story.");
+            bse.setOurMission("To serve genuine Indian cuisine that brings families and friends together — consistently fresh, flavorful, and memorable.");
+            bse.setOurVision("To be the most loved Indian restaurant brand, known for quality food, warm hospitality, and a dining experience that feels like home.");
+            businessSettingRepository.save(bse);
+            System.out.println("✅ Spice Garden About Us seeded");
+        } catch (Exception e) {
+            System.out.println("⚠️ Error seeding About Us: " + e.getMessage());
+        }
+    }
+
+    private void markSpiceGardenTrendingItems() {
+        try {
+            UsersEntity spiceGarden = usersRepository.findByMobile("9800000001").orElse(null);
+            UsersEntity branch = usersRepository.findByMobileAndRole("9800000002", "branch").orElse(null);
+            if (spiceGarden == null || branch == null) return;
+
+            String[] trendingNames = {
+                "Paneer Tikka",
+                "Chicken Tikka",
+                "Dal Makhani",
+                "Butter Chicken",
+                "Chicken Biryani",
+                "Gulab Jamun (2 pcs)"
+            };
+
+            java.util.List<MenuItemsEntity> items = menuItemsRepository.findByBranchId_IdAndIsDeletedFalse(branch.getId());
+            int updated = 0;
+            for (MenuItemsEntity item : items) {
+                for (String name : trendingNames) {
+                    if (item.getName().equalsIgnoreCase(name) && !item.getIsRecommended()) {
+                        item.setIsRecommended(true);
+                        menuItemsRepository.save(item);
+                        updated++;
+                        break;
+                    }
+                }
+            }
+            if (updated > 0) {
+                System.out.println("✅ Spice Garden trending items marked: " + updated);
+            } else {
+                System.out.println("✅ Spice Garden trending items already marked");
+            }
+        } catch (Exception e) {
+            System.out.println("⚠️ Error marking trending items: " + e.getMessage());
+        }
+    }
+
     private MenuCategoryEntity mkCat(UsersEntity restaurant, UsersEntity branch,
                                       String name, int priority, String taxPct, String iconUrl) {
         MenuCategoryEntity cat = new MenuCategoryEntity();
@@ -613,5 +687,25 @@ public class DataInitializer implements CommandLineRunner {
         item.setRatingCount(0);
         item.setCreatedAt(LocalDateTime.now());
         menuItemsRepository.save(item);
+    }
+
+    private void restoreSpiceGardenLogo() {
+        try {
+            UsersEntity spiceGarden = usersRepository.findByMobile("9800000001").orElse(null);
+            if (spiceGarden == null) return;
+
+            businessSettingRepository.findByRestaurantId_Id(spiceGarden.getId()).ifPresent(bse -> {
+                String current = bse.getLogoUrl();
+                if (current != null && current.contains("pexels.com")) {
+                    bse.setLogoUrl("http://localhost:8090/rms/uploads/branding_42/logo_42.png");
+                    businessSettingRepository.save(bse);
+                    System.out.println("✅ Spice Garden logo restored to uploaded file");
+                } else {
+                    System.out.println("✅ Spice Garden logo already correct: " + current);
+                }
+            });
+        } catch (Exception e) {
+            System.out.println("⚠️ Error restoring logo: " + e.getMessage());
+        }
     }
 }
