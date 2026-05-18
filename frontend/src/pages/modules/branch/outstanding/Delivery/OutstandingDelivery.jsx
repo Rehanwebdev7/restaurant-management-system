@@ -303,12 +303,12 @@ const OutstandingDelivery = () => {
                   <td>{delivery.email || 'N/A'}</td>
                   <td>
                     <Badge bg={delivery.outstandingBalance > 0 ? 'danger' : 'success'}>
-                      ₹{delivery.outstandingBalance ?? 0}
+                      ${delivery.outstandingBalance ?? 0}
                     </Badge>
                   </td>
                   <td>
                     <Badge bg="info">
-                      ₹{delivery.balance ?? 0}
+                      ${delivery.balance ?? 0}
                     </Badge>
                   </td>
                   <td>{getStatusBadge(delivery.isActive)}</td>

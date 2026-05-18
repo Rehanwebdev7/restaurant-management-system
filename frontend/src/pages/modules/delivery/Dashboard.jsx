@@ -92,8 +92,8 @@ const Dashboard = () => {
       <Row className="g-3 mb-4">
         <Col lg={3} md={6}><StatCard title="Today's Deliveries" value={stats.todayDeliveries} icon="bi bi-check-circle" color="#10b981" /></Col>
         <Col lg={3} md={6}><StatCard title="Active Orders" value={stats.activeOrders} icon="bi bi-clock" color="#f59e0b" /></Col>
-        <Col lg={3} md={6}><StatCard title="Wallet Balance" value={Number(stats.walletBalance).toFixed(2)} icon="bi bi-wallet2" color="#3b82f6" prefix="₹" /></Col>
-        <Col lg={3} md={6}><StatCard title="Outstanding" value={Number(stats.outstandingBalance).toFixed(2)} icon="bi bi-exclamation-circle" color={stats.outstandingBalance > 0 ? '#ef4444' : '#6b7280'} prefix="₹" /></Col>
+        <Col lg={3} md={6}><StatCard title="Wallet Balance" value={Number(stats.walletBalance).toFixed(2)} icon="bi bi-wallet2" color="#3b82f6" prefix="$" /></Col>
+        <Col lg={3} md={6}><StatCard title="Outstanding" value={Number(stats.outstandingBalance).toFixed(2)} icon="bi bi-exclamation-circle" color={stats.outstandingBalance > 0 ? '#ef4444' : '#6b7280'} prefix="$" /></Col>
       </Row>
 
       <Row className="g-3">
@@ -127,8 +127,8 @@ const Dashboard = () => {
               {[
                 { label: 'Completed Deliveries', value: stats.todayDeliveries },
                 { label: 'Pending Orders', value: stats.activeOrders },
-                { label: 'Wallet Balance', value: `₹${Number(stats.walletBalance).toFixed(2)}` },
-                { label: 'Outstanding to Clear', value: `₹${Number(stats.outstandingBalance).toFixed(2)}`, color: stats.outstandingBalance > 0 ? '#ef4444' : undefined }
+                { label: 'Wallet Balance', value: `$${Number(stats.walletBalance).toFixed(2)}` },
+                { label: 'Outstanding to Clear', value: `$${Number(stats.outstandingBalance).toFixed(2)}`, color: stats.outstandingBalance > 0 ? '#ef4444' : undefined }
               ].map(({ label, value, color }) => (
                 <div key={label} className="mb-3 pb-3" style={{ borderBottom: `1px solid ${isDarkMode ? '#334155' : '#e2e8f0'}` }}>
                   <small className="text-muted d-block">{label}</small>

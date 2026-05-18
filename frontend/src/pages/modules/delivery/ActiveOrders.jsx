@@ -170,7 +170,7 @@ const ActiveOrders = () => {
                       {getStatusLabel(order.deliveryStatus || order.status)}
                     </Badge>
                   </div>
-                  <span className="fs-6 fw-bold" style={{ color: primaryColor }}>₹{order.totalAmount}</span>
+                  <span className="fs-6 fw-bold" style={{ color: primaryColor }}>${order.totalAmount}</span>
                 </Card.Header>
                 <Card.Body style={{ backgroundColor: isDarkMode ? '#0f172a' : '#ffffff' }}>
                   <div className="mb-3 d-flex justify-content-between">
@@ -184,7 +184,7 @@ const ActiveOrders = () => {
                     {order.deliveryFee > 0 && (
                       <div className="text-end">
                         <small className="text-muted d-block">Delivery Fee</small>
-                        <span className="fw-bold text-success">₹{order.deliveryFee}</span>
+                        <span className="fw-bold text-success">${order.deliveryFee}</span>
                       </div>
                     )}
                   </div>
@@ -257,7 +257,7 @@ const ActiveOrders = () => {
             {(paymentMethod === 'cash' || paymentMethod === 'upi') && (
               <div className="mt-2 p-2 rounded" style={{ backgroundColor: '#fef3c7', color: '#92400e', fontSize: '0.85rem' }}>
                 <i className="bi bi-info-circle me-1"></i>
-                ₹{otpModal.order?.totalAmount} will be added to your outstanding balance
+                ${otpModal.order?.totalAmount} will be added to your outstanding balance
               </div>
             )}
           </Form.Group>

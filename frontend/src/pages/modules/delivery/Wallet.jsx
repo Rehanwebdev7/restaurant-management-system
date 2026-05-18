@@ -77,7 +77,7 @@ const Wallet = () => {
             <Card.Body>
               <i className="bi bi-wallet2 fs-2 mb-2" style={{ color: '#3b82f6' }}></i>
               <div className="text-muted small mb-1">Wallet Balance</div>
-              <div className="fw-bold" style={{ fontSize: '2rem', color: '#1d4ed8' }}>₹{Number(walletBalance).toFixed(2)}</div>
+              <div className="fw-bold" style={{ fontSize: '2rem', color: '#1d4ed8' }}>${Number(walletBalance).toFixed(2)}</div>
               <Button
                 size="sm" className="mt-3"
                 style={{ backgroundColor: primaryColor, borderColor: primaryColor, color: primaryContrast }}
@@ -93,7 +93,7 @@ const Wallet = () => {
             <Card.Body>
               <i className="bi bi-exclamation-circle fs-2 mb-2" style={{ color: outstandingBalance > 0 ? '#ef4444' : '#22c55e' }}></i>
               <div className="text-muted small mb-1">Outstanding (Cash Collected)</div>
-              <div className="fw-bold" style={{ fontSize: '2rem', color: outstandingBalance > 0 ? '#dc2626' : '#15803d' }}>₹{Number(outstandingBalance).toFixed(2)}</div>
+              <div className="fw-bold" style={{ fontSize: '2rem', color: outstandingBalance > 0 ? '#dc2626' : '#15803d' }}>${Number(outstandingBalance).toFixed(2)}</div>
               {outstandingBalance > 0 && <div className="text-muted small mt-2">Submit to branch to clear</div>}
               {outstandingBalance === 0 && <div className="text-success small mt-2">All clear!</div>}
             </Card.Body>
@@ -141,11 +141,11 @@ const Wallet = () => {
                         <td style={{ padding: '10px 14px' }}>
                           <Badge bg={tx.mode === 0 ? 'success' : 'danger'}>{tx.mode === 0 ? 'Credit' : 'Debit'}</Badge>
                         </td>
-                        <td style={{ padding: '10px 14px', color: tp }}>₹{Number(tx.opBal || 0).toFixed(2)}</td>
+                        <td style={{ padding: '10px 14px', color: tp }}>${Number(tx.opBal || 0).toFixed(2)}</td>
                         <td style={{ padding: '10px 14px', color: tx.mode === 0 ? '#16a34a' : '#dc2626', fontWeight: 'bold' }}>
-                          {tx.mode === 0 ? '+' : '-'}₹{Number(tx.amount || 0).toFixed(2)}
+                          {tx.mode === 0 ? '+' : '-'}${Number(tx.amount || 0).toFixed(2)}
                         </td>
-                        <td style={{ padding: '10px 14px', color: tp }}>₹{Number(tx.closingBal || 0).toFixed(2)}</td>
+                        <td style={{ padding: '10px 14px', color: tp }}>${Number(tx.closingBal || 0).toFixed(2)}</td>
                         <td style={{ padding: '10px 14px', color: tp }}>{tx.message || '—'}</td>
                         <td style={{ padding: '10px 14px', color: tp, whiteSpace: 'nowrap' }}>{formatDate(tx.date)}</td>
                       </tr>
@@ -182,11 +182,11 @@ const Wallet = () => {
                           <Badge bg={entry.mode === 0 ? 'warning' : 'success'}>{entry.mode === 0 ? 'Owed' : 'Cleared'}</Badge>
                         </td>
                         <td style={{ padding: '10px 14px', color: tp }}>{entry.service || '—'}</td>
-                        <td style={{ padding: '10px 14px', color: tp }}>₹{Number(entry.openingBal || 0).toFixed(2)}</td>
+                        <td style={{ padding: '10px 14px', color: tp }}>${Number(entry.openingBal || 0).toFixed(2)}</td>
                         <td style={{ padding: '10px 14px', color: entry.mode === 0 ? '#dc2626' : '#16a34a', fontWeight: 'bold' }}>
-                          {entry.mode === 0 ? '+' : '-'}₹{Number(entry.amount || 0).toFixed(2)}
+                          {entry.mode === 0 ? '+' : '-'}${Number(entry.amount || 0).toFixed(2)}
                         </td>
-                        <td style={{ padding: '10px 14px', color: tp }}>₹{Number(entry.closingBal || 0).toFixed(2)}</td>
+                        <td style={{ padding: '10px 14px', color: tp }}>${Number(entry.closingBal || 0).toFixed(2)}</td>
                         <td style={{ padding: '10px 14px', color: tp }}>{entry.orderId || '—'}</td>
                         <td style={{ padding: '10px 14px', color: tp }}>{entry.remark || '—'}</td>
                         <td style={{ padding: '10px 14px', color: tp, whiteSpace: 'nowrap' }}>{formatDate(entry.date)}</td>

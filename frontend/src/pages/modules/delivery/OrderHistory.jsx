@@ -114,7 +114,7 @@ const OrderHistory = () => {
                         {order.customerPhone}
                       </td>
                       <td style={{ padding: '12px 16px', color: tp, fontWeight: 'bold' }}>
-                        ₹{order.totalAmount}
+                        ${order.totalAmount}
                       </td>
                       <td style={{ padding: '12px 16px', color: tp }}>
                         {formatDate(order.createdAt)}
@@ -142,13 +142,13 @@ const OrderHistory = () => {
               <Col md={4}>
                 <div>
                   <small className="text-muted d-block">Total Earnings</small>
-                  <span className="fs-4 fw-bold" style={{ color: '#10b981' }}>₹{orders.reduce((sum, o) => sum + o.totalAmount, 0)}</span>
+                  <span className="fs-4 fw-bold" style={{ color: '#10b981' }}>${orders.reduce((sum, o) => sum + o.totalAmount, 0)}</span>
                 </div>
               </Col>
               <Col md={4}>
                 <div>
                   <small className="text-muted d-block">Average Per Order</small>
-                  <span className="fs-4 fw-bold" style={{ color: '#f59e0b' }}>₹{Math.round(orders.reduce((sum, o) => sum + o.totalAmount, 0) / orders.length) || 0}</span>
+                  <span className="fs-4 fw-bold" style={{ color: '#f59e0b' }}>${Math.round(orders.reduce((sum, o) => sum + o.totalAmount, 0) / orders.length) || 0}</span>
                 </div>
               </Col>
             </Row>

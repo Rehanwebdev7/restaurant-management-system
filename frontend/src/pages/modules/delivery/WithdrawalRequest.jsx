@@ -49,7 +49,7 @@ const WithdrawalRequest = () => {
   const handleSubmit = async () => {
     const amount = parseFloat(form.amount);
     if (!amount || amount <= 0) { toast.error('Enter valid amount'); return; }
-    if (amount > walletBalance) { toast.error(`Amount exceeds wallet balance (₹${Number(walletBalance).toFixed(2)})`); return; }
+    if (amount > walletBalance) { toast.error(`Amount exceeds wallet balance ($${Number(walletBalance).toFixed(2)})`); return; }
     setSubmitting(true);
     try {
       const payload = {
@@ -107,13 +107,13 @@ const WithdrawalRequest = () => {
             <Card.Body>
               <div className="mb-4 p-3 rounded text-center" style={{ backgroundColor: '#eff6ff' }}>
                 <small className="text-muted d-block">Available Wallet Balance</small>
-                <span style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#1d4ed8' }}>₹{Number(walletBalance).toFixed(2)}</span>
+                <span style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#1d4ed8' }}>${Number(walletBalance).toFixed(2)}</span>
               </div>
 
               <Form.Group className="mb-3">
                 <Form.Label style={{ color: tp }}>Amount *</Form.Label>
                 <div className="input-group">
-                  <span className="input-group-text" style={{ backgroundColor: isDarkMode ? '#0f172a' : '#e9ecef', color: tp, borderColor: cBorder }}>₹</span>
+                  <span className="input-group-text" style={{ backgroundColor: isDarkMode ? '#0f172a' : '#e9ecef', color: tp, borderColor: cBorder }}>$</span>
                   <Form.Control
                     type="number"
                     placeholder="Enter amount"
@@ -188,7 +188,7 @@ const WithdrawalRequest = () => {
                     <tbody>
                       {requests.map((req, i) => (
                         <tr key={req.id || i} style={{ borderBottom: `1px solid ${cBorder}` }}>
-                          <td style={{ padding: '10px 14px', color: tp, fontWeight: 'bold' }}>₹{Number(req.amount || 0).toFixed(2)}</td>
+                          <td style={{ padding: '10px 14px', color: tp, fontWeight: 'bold' }}>${Number(req.amount || 0).toFixed(2)}</td>
                           <td style={{ padding: '10px 14px' }}>{getStatusBadge(req.status)}</td>
                           <td style={{ padding: '10px 14px', color: tp }}>{req.remark || '—'}</td>
                           <td style={{ padding: '10px 14px', color: tp, whiteSpace: 'nowrap' }}>{formatDate(req.date)}</td>

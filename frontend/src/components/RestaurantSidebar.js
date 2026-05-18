@@ -258,7 +258,7 @@ const RestaurantSidebar = ({ collapsed, visible, onLogout }) => {
                 src={logoUrl}
                 alt={restaurantName || "Restaurant"}
                 className="sidebar-logo-img"
-                onError={(e) => { e.target.style.display = 'none'; }}
+                onError={(e) => { e.target.onerror = null; e.target.src = '/app-favicon.svg'; }}
               />
             ) : (
               <div className="sidebar-logo-initial">
