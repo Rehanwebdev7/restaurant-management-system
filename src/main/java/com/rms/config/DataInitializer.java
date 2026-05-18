@@ -97,6 +97,9 @@ public class DataInitializer implements CommandLineRunner {
                 }
             );
 
+        // Seed proper Veg/NonVeg menu for Spice Garden branch
+        initializeSpiceGardenMenu();
+
         // Add food images by item/category name
         initializeMenuImages();
 
@@ -424,5 +427,137 @@ public class DataInitializer implements CommandLineRunner {
         } catch (Exception e) {
             System.out.println("⚠️ Could not update menu images: " + e.getMessage());
         }
+    }
+
+    private void initializeSpiceGardenMenu() {
+        try {
+            UsersEntity restaurant = usersRepository.findByMobile("9800000001").orElse(null);
+            UsersEntity branch = usersRepository.findByMobileAndRole("9800000002", "branch").orElse(null);
+            if (restaurant == null || branch == null) {
+                System.out.println("⚠️ Spice Garden restaurant/branch not found. Skipping menu seed.");
+                return;
+            }
+
+            // Idempotent — skip if already seeded
+            boolean alreadyDone = menuCategoryRepository
+                .findByBranchId_IdAndIsActiveTrueAndIsDeletedFalse(branch.getId())
+                .stream().anyMatch(c -> "Veg Starters".equals(c.getName()));
+            if (alreadyDone) {
+                System.out.println("✅ Spice Garden menu already seeded");
+                return;
+            }
+
+            // Soft-delete existing categories + their items for this branch
+            java.util.List<MenuCategoryEntity> oldCats = menuCategoryRepository
+                .findByBranchId_IdAndIsActiveTrueAndIsDeletedFalse(branch.getId());
+            for (MenuCategoryEntity cat : oldCats) {
+                java.util.List<MenuItemsEntity> oldItems = menuItemsRepository
+                    .findByMenuCategoryId_IdAndIsDeletedFalse(cat.getId());
+                oldItems.forEach(i -> { i.setIsDeleted(true); i.setIsActive(false); });
+                menuItemsRepository.saveAll(oldItems);
+                cat.setIsDeleted(true); cat.setIsActive(false); cat.setUpdatedAt(LocalDateTime.now());
+            }
+            menuCategoryRepository.saveAll(oldCats);
+
+            String b = "https://images.unsplash.com/";
+
+            // --- Create 7 categories ---
+            MenuCategoryEntity vegStarters   = mkCat(restaurant, branch, "Veg Starters",        1, "5", b + "photo-1567188040759-fb8a883dc6d8?w=200&h=200&fit=crop");
+            MenuCategoryEntity nonVegStarters = mkCat(restaurant, branch, "Non-Veg Starters",    2, "5", b + "photo-1599487488170-d11ec9c172f0?w=200&h=200&fit=crop");
+            MenuCategoryEntity vegMain        = mkCat(restaurant, branch, "Veg Main Course",     3, "5", b + "photo-1546069901-ba9599a7e63c?w=200&h=200&fit=crop");
+            MenuCategoryEntity nonVegMain     = mkCat(restaurant, branch, "Non-Veg Main Course", 4, "5", b + "photo-1603894584373-5ac82b2ae398?w=200&h=200&fit=crop");
+            MenuCategoryEntity biryani        = mkCat(restaurant, branch, "Biryani",             5, "5", b + "photo-1563379091339-03b21ab4a4f8?w=200&h=200&fit=crop");
+            MenuCategoryEntity beverages      = mkCat(restaurant, branch, "Beverages",           6, "0", b + "photo-1544145945-f90425340c7e?w=200&h=200&fit=crop");
+            MenuCategoryEntity desserts       = mkCat(restaurant, branch, "Desserts",            7, "0", b + "photo-1551024506-0bccd828d307?w=200&h=200&fit=crop");
+
+            // --- Veg Starters ---
+            mkItem(restaurant, branch, vegStarters, "Paneer Tikka",       280, true,  b + "photo-1567188040759-fb8a883dc6d8?w=400&h=300&fit=crop");
+            mkItem(restaurant, branch, vegStarters, "Veg Spring Roll",    180, true,  b + "photo-1563245372-f21724e3856d?w=400&h=300&fit=crop");
+            mkItem(restaurant, branch, vegStarters, "Hara Bhara Kabab",   220, true,  b + "photo-1513042966880-9b1c57e02b72?w=400&h=300&fit=crop");
+            mkItem(restaurant, branch, vegStarters, "Samosa (2 pcs)",     120, true,  b + "photo-1601050760570-4f22af6c0d76?w=400&h=300&fit=crop");
+
+            // --- Non-Veg Starters ---
+            mkItem(restaurant, branch, nonVegStarters, "Chicken Tikka",   320, false, b + "photo-1599487488170-d11ec9c172f0?w=400&h=300&fit=crop");
+            mkItem(restaurant, branch, nonVegStarters, "Seekh Kebab",     350, false, b + "photo-1529193591184-b1d58069ecdd?w=400&h=300&fit=crop");
+            mkItem(restaurant, branch, nonVegStarters, "Fish Fry",        380, false, b + "photo-1580822184713-fc5400e7fe10?w=400&h=300&fit=crop");
+            mkItem(restaurant, branch, nonVegStarters, "Chicken Wings",   300, false, b + "photo-1527477396000-e27163b481c2?w=400&h=300&fit=crop");
+
+            // --- Veg Main Course ---
+            mkItem(restaurant, branch, vegMain, "Dal Makhani",            250, true,  b + "photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop");
+            mkItem(restaurant, branch, vegMain, "Palak Paneer",           280, true,  b + "photo-1565557623262-b51c2513a641?w=400&h=300&fit=crop");
+            mkItem(restaurant, branch, vegMain, "Paneer Butter Masala",   300, true,  b + "photo-1631452180519-c014fe946bc7?w=400&h=300&fit=crop");
+            mkItem(restaurant, branch, vegMain, "Shahi Paneer",           320, true,  b + "photo-1588166524941-3bf61a9c41db?w=400&h=300&fit=crop");
+            mkItem(restaurant, branch, vegMain, "Aloo Matar",             200, true,  b + "photo-1547592180-85f173990554?w=400&h=300&fit=crop");
+
+            // --- Non-Veg Main Course ---
+            mkItem(restaurant, branch, nonVegMain, "Butter Chicken",      380, false, b + "photo-1603894584373-5ac82b2ae398?w=400&h=300&fit=crop");
+            mkItem(restaurant, branch, nonVegMain, "Mutton Rogan Josh",   450, false, b + "photo-1574653853027-5382a3d23a15?w=400&h=300&fit=crop");
+            mkItem(restaurant, branch, nonVegMain, "Chicken Masala",      350, false, b + "photo-1548943487-a2e4e43b4853?w=400&h=300&fit=crop");
+            mkItem(restaurant, branch, nonVegMain, "Mutton Keema",        400, false, b + "photo-1574484284002-952d92456975?w=400&h=300&fit=crop");
+            mkItem(restaurant, branch, nonVegMain, "Egg Curry",           280, false, b + "photo-1455619452474-d2be8b1e70cd?w=400&h=300&fit=crop");
+
+            // --- Biryani ---
+            mkItem(restaurant, branch, biryani, "Veg Biryani",            280, true,  b + "photo-1563379091339-03b21ab4a4f8?w=400&h=300&fit=crop");
+            mkItem(restaurant, branch, biryani, "Paneer Biryani",         320, true,  b + "photo-1563379091339-03b21ab4a4f8?w=400&h=300&fit=crop");
+            mkItem(restaurant, branch, biryani, "Chicken Biryani",        350, false, b + "photo-1589302168068-964664d93dc0?w=400&h=300&fit=crop");
+            mkItem(restaurant, branch, biryani, "Mutton Biryani",         420, false, b + "photo-1563379091339-03b21ab4a4f8?w=400&h=300&fit=crop");
+            mkItem(restaurant, branch, biryani, "Egg Biryani",            300, false, b + "photo-1563379091339-03b21ab4a4f8?w=400&h=300&fit=crop");
+
+            // --- Beverages ---
+            mkItem(restaurant, branch, beverages, "Mango Lassi",           80, true,  b + "photo-1540146037884-0b3c8c6a89e6?w=400&h=300&fit=crop");
+            mkItem(restaurant, branch, beverages, "Sweet Lassi",           70, true,  b + "photo-1488477181946-6428a0291777?w=400&h=300&fit=crop");
+            mkItem(restaurant, branch, beverages, "Masala Chai",           40, true,  b + "photo-1556742400-b5b7c512e389?w=400&h=300&fit=crop");
+            mkItem(restaurant, branch, beverages, "Cold Coffee",          120, true,  b + "photo-1461023058943-07fcbe16d735?w=400&h=300&fit=crop");
+            mkItem(restaurant, branch, beverages, "Fresh Lime Soda",       60, true,  b + "photo-1513558161293-cdaf765ed2fd?w=400&h=300&fit=crop");
+            mkItem(restaurant, branch, beverages, "Mango Shake",          100, true,  b + "photo-1553361371-9b22f78e8b1d?w=400&h=300&fit=crop");
+
+            // --- Desserts ---
+            mkItem(restaurant, branch, desserts, "Gulab Jamun (2 pcs)",    80, true,  b + "photo-1602853186960-c8e4bdfbdaf9?w=400&h=300&fit=crop");
+            mkItem(restaurant, branch, desserts, "Kulfi Falooda",         120, true,  b + "photo-1497034825429-c343d7c6a68f?w=400&h=300&fit=crop");
+            mkItem(restaurant, branch, desserts, "Rasmalai",              100, true,  b + "photo-1490474418585-ba9bad8fd0ea?w=400&h=300&fit=crop");
+            mkItem(restaurant, branch, desserts, "Ice Cream",              80, true,  b + "photo-1563805042-7684c019e1cb?w=400&h=300&fit=crop");
+
+            System.out.println("✅ Spice Garden menu seeded: 7 categories, 33 items");
+        } catch (Exception e) {
+            System.out.println("⚠️ Error seeding Spice Garden menu: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private MenuCategoryEntity mkCat(UsersEntity restaurant, UsersEntity branch,
+                                      String name, int priority, String taxPct, String iconUrl) {
+        MenuCategoryEntity cat = new MenuCategoryEntity();
+        cat.setRestaurantId(restaurant);
+        cat.setBranchId(branch);
+        cat.setName(name);
+        cat.setPriority(priority);
+        cat.setTaxPercentage(new java.math.BigDecimal(taxPct));
+        cat.setIconUrl(iconUrl);
+        cat.setIsActive(true);
+        cat.setIsDeleted(false);
+        cat.setCreatedAt(LocalDateTime.now());
+        cat.setUpdatedAt(LocalDateTime.now());
+        return menuCategoryRepository.save(cat);
+    }
+
+    private void mkItem(UsersEntity restaurant, UsersEntity branch, MenuCategoryEntity category,
+                        String name, int price, boolean isVeg, String imageUrl) {
+        MenuItemsEntity item = new MenuItemsEntity();
+        item.setRestaurantId(restaurant);
+        item.setBranchId(branch);
+        item.setMenuCategoryId(category);
+        item.setName(name);
+        item.setMrp(new java.math.BigDecimal(price));
+        item.setPrice(new java.math.BigDecimal(price));
+        item.setDietaryType(isVeg);
+        item.setImageUrl(imageUrl);
+        item.setIsActive(true);
+        item.setIsDeleted(false);
+        item.setIsRecommended(false);
+        item.setAvailableOnline(true);
+        item.setSystemRating(new java.math.BigDecimal("4.5"));
+        item.setRatingCount(0);
+        item.setCreatedAt(LocalDateTime.now());
+        menuItemsRepository.save(item);
     }
 }
