@@ -12,12 +12,16 @@ import org.springframework.stereotype.Component;
 
 import com.rms.common.entities.CustomersEntity;
 import com.rms.common.entities.UsersEntity;
+import com.rms.common.repositories.CustomersRepository;
 
 @Component
 public final class TokenUtil {
 
 //    @Autowired
 //    private UsersRepository usersRepository;
+
+	@Autowired(required = false)
+	private CustomersRepository customersRepository;
 
 	private static final ThreadLocal<JSONObject> currentTokenData = new ThreadLocal<>();
 	private static final ThreadLocal<String> currentDecryptedToken = new ThreadLocal<>();
@@ -84,12 +88,22 @@ public final class TokenUtil {
 
 	public JSONObject decryptAndStoreToken(String encryptedToken) throws Exception {
 
-		// Dev mock token — return customer ID 1
+		// Dev mock token — resolve real test customer ID from database
 		if ("MOCK_DEV_TOKEN".equals(encryptedToken)) {
 			JSONObject mock = new JSONObject();
-			mock.put("id", 1);
 			mock.put("userType", "customer");
 			mock.put("timestamp", 9999999999L);
+
+			// Try to find real test customer ID from DB, fallback to 1
+			int customerId = 1;
+			if (customersRepository != null) {
+				Optional<CustomersEntity> testCustomer = customersRepository.findByMobileNumber("9000000004");
+				if (testCustomer.isPresent()) {
+					customerId = testCustomer.get().getId().intValue();
+					System.out.println("🔐 [MOCK_DEV_TOKEN] Using real customer ID: " + customerId);
+				}
+			}
+			mock.put("id", customerId);
 			currentTokenData.set(mock);
 			return mock;
 		}

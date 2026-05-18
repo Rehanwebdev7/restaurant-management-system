@@ -119,6 +119,13 @@ public class DataInitializer implements CommandLineRunner {
                 return;
             }
 
+            // Link customer to restaurant if not already linked
+            if (customer.getUserId() == null) {
+                customer.setUserId(restaurant);
+                customersRepository.save(customer);
+                System.out.println("✅ Linked test customer " + customer.getMobileNumber() + " to restaurant");
+            }
+
             // Skip if today's test orders already exist
             Long todayCount = ordersRepository.countTodayOrdersByKitchen(kitchenUser.getId());
             if (todayCount != null && todayCount >= 3) {
@@ -235,6 +242,13 @@ public class DataInitializer implements CommandLineRunner {
                     newCustomer.setUpdatedAt(LocalDateTime.now());
                     return customersRepository.save(newCustomer);
                 });
+
+            // Link customer to restaurant if not already linked
+            if (customer.getUserId() == null) {
+                customer.setUserId(restaurant);
+                customersRepository.save(customer);
+                System.out.println("✅ Linked test customer " + customer.getMobileNumber() + " to restaurant");
+            }
 
             // Get first 2 menu items
             var menuItems = menuItemsRepository.findAll();
