@@ -37,6 +37,9 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired
     private MenuCategoryRepository menuCategoryRepository;
 
+    @Autowired
+    private SlidersRepository slidersRepository;
+
     @Override
     public void run(String... args) {
         System.out.println("🚀 [DATA INITIALIZER] Starting...");
@@ -99,6 +102,9 @@ public class DataInitializer implements CommandLineRunner {
 
         // Seed proper Veg/NonVeg menu for Spice Garden branch
         initializeSpiceGardenMenu();
+
+        // Seed banner sliders for Spice Garden
+        initializeSpiceGardenSliders();
 
         // Add food images by item/category name
         initializeMenuImages();
@@ -524,6 +530,51 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 
+    private void initializeSpiceGardenSliders() {
+        try {
+            UsersEntity restaurant = usersRepository.findByMobile("9800000001").orElse(null);
+            if (restaurant == null) return;
+
+            // Skip if sliders already exist for this restaurant
+            if (!slidersRepository.findByRestaurantId_IdAndPlatformIgnoreCase(restaurant.getId(), "web").isEmpty()) {
+                System.out.println("✅ Spice Garden sliders already exist");
+                return;
+            }
+
+            // 3 banner slides using Pexels (free, no API key needed)
+            String[][] slides = {
+                {
+                    "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+                    "Welcome to Spice Garden",
+                    "Authentic flavors, crafted with love"
+                },
+                {
+                    "https://images.pexels.com/photos/958545/pexels-photo-958545.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+                    "Explore Our Menu",
+                    "Veg & Non-Veg delicacies for every taste"
+                },
+                {
+                    "https://images.pexels.com/photos/1279330/pexels-photo-1279330.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+                    "Fresh Biryani & More",
+                    "Order now and enjoy a royal feast"
+                }
+            };
+
+            for (String[] slide : slides) {
+                SlidersEntity slider = new SlidersEntity();
+                slider.setRestaurantId(restaurant);
+                slider.setImageUrl(slide[0]);
+                slider.setTitle(slide[1]);
+                slider.setDescription(slide[2]);
+                slider.setPlatform("web");
+                slidersRepository.save(slider);
+            }
+            System.out.println("✅ Spice Garden sliders seeded: 3 banners");
+        } catch (Exception e) {
+            System.out.println("⚠️ Error seeding sliders: " + e.getMessage());
+        }
+    }
+
     private MenuCategoryEntity mkCat(UsersEntity restaurant, UsersEntity branch,
                                       String name, int priority, String taxPct, String iconUrl) {
         MenuCategoryEntity cat = new MenuCategoryEntity();
@@ -550,7 +601,10 @@ public class DataInitializer implements CommandLineRunner {
         item.setMrp(new java.math.BigDecimal(price));
         item.setPrice(new java.math.BigDecimal(price));
         item.setDietaryType(isVeg);
-        item.setImageUrl(imageUrl);
+        // Ensure Unsplash URLs render correctly
+        String fixedUrl = (imageUrl != null && imageUrl.contains("unsplash.com") && !imageUrl.contains("auto=format"))
+                ? imageUrl + "&auto=format&q=80" : imageUrl;
+        item.setImageUrl(fixedUrl);
         item.setIsActive(true);
         item.setIsDeleted(false);
         item.setIsRecommended(false);
