@@ -111,10 +111,12 @@ public class CustMenuItemsService implements MenuItemsServiceIMP {
 	    System.out.println("Input recommended    : " + recommended);
 	    System.out.println("Input token          : " + token);
 
-	    // 🔐 AUTH
-	    System.out.println("Authorizing customer...");
-	    Authorization.authorizeCustomer(token);
-	    System.out.println("Authorization SUCCESS");
+	    // 🔐 AUTH (skip if token is null - public endpoint)
+	    if (token != null) {
+	        System.out.println("Authorizing customer...");
+	        Authorization.authorizeCustomer(token);
+	        System.out.println("Authorization SUCCESS");
+	    }
 
 	    // ================= BRANCH VALIDATION =================
 	    System.out.println("Fetching branch user from DB for branchId: " + branchId);

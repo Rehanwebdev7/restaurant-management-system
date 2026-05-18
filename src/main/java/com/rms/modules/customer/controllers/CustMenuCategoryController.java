@@ -28,14 +28,48 @@ public class CustMenuCategoryController {
     @Autowired
     @Qualifier("custMenuCategoryService")
     private MenuCategoryServiceIMP menuCategoryServiceIMP;
-    
+
     @Autowired
     private CustMenuCategoryService custMenuCategoryService;
-    
-    
-    @GetMapping("/filter") 
+
+    @GetMapping("/public/filter")
+    public ResponseEntity<Object> getMenuItemsWithFiltersPublic(
+            @RequestParam(value = "branchId", required = false) Long branchId,
+            @RequestParam(value = "fromDate", required = false) String fromDateStr,
+            @RequestParam(value = "toDate", required = false) String toDateStr,
+            @RequestParam(value = "searchValue", required = false) String searchValue,
+            @RequestParam(defaultValue = "0") Integer pageNumber,
+            @RequestParam(defaultValue = "10") Integer pageSize) {
+
+        try {
+            LocalDate fromDate = null;
+            LocalDate toDate = null;
+
+            if (fromDateStr != null && !fromDateStr.isBlank() && toDateStr != null && !toDateStr.isBlank()) {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                fromDate = LocalDate.parse(fromDateStr, formatter);
+                toDate = LocalDate.parse(toDateStr, formatter);
+            }
+
+            Map<String, Object> result = custMenuCategoryService.getMenuCategoriesWithFilters(fromDate, toDate, searchValue,
+                    pageNumber, pageSize, null, branchId);
+
+            return ApiResponse.responseBuilder(result, "SUCCESS", HttpStatus.OK, "Menu items retrieved successfully");
+
+        } catch (DateTimeParseException e) {
+            return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.BAD_REQUEST,
+                    "Invalid date format. Please use yyyy-MM-dd (e.g. 2025-11-06)");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Unable to fetch menu items. Please try again later");
+        }
+    }
+
+    @GetMapping("/filter")
    	public ResponseEntity<Object> getMenuItemsWithFilters(@RequestHeader("access_token") String token,
 
+   			@RequestParam(value = "branchId", required = false) Long branchId,
    			@RequestParam(value = "fromDate", required = false) String fromDateStr,
    			@RequestParam(value = "toDate", required = false) String toDateStr,
    			@RequestParam(value = "searchValue", required = false) String searchValue,
@@ -55,7 +89,7 @@ public class CustMenuCategoryController {
    			}
 
    			Map<String, Object> result = custMenuCategoryService.getMenuCategoriesWithFilters(fromDate, toDate, searchValue,
-   					pageNumber, pageSize, token);
+   					pageNumber, pageSize, token, branchId);
 
    			return ApiResponse.responseBuilder(result, "SUCCESS", HttpStatus.OK, "Menu items retrieved successfully");
 

@@ -1231,10 +1231,10 @@ const CustomerLanding = () => {
   const fetchAllBranches = async (restId) => {
     try {
       setBranchesLoading(true);
-      const response = await ApiGet(`/api/public/customer/all-branches?restaurantId=${restId}`);
+      const response = await ApiGet(`/api/customer/users/all-branches?restaurantId=${restId}`);
 
       if (response.success) {
-        const branchData = response.success.data || [];
+        const branchData = response.success.data?.data || [];
         // Map API response to component structure
         const mappedBranches = branchData.map(branch => ({
           id: branch.branchId,
@@ -1419,7 +1419,7 @@ const CustomerLanding = () => {
         setHasMoreCategories(true);
       }
 
-      const endpoint = `/api/public/customer/menucategories/filter?branchId=${branchId}&pageNumber=${pageNumber}&pageSize=12`;
+      const endpoint = `/api/customer/menu_category/public/filter?branchId=${branchId}&pageNumber=${pageNumber}&pageSize=12`;
       const response = await ApiGet(endpoint);
 
       if (response.success) {
@@ -1564,7 +1564,7 @@ const CustomerLanding = () => {
       }
 
       // Build endpoint - if categoryId is 'all' or 'recommended', don't include categoryId
-      let endpoint = `/api/public/customer/menu_items/advanceFilter?branchId=${branchId}&pageNumber=${pageNumber}&pageSize=12`;
+      let endpoint = `/api/customer/menu_items/public/advanceFilter?branchId=${branchId}&pageNumber=${pageNumber}&pageSize=12`;
       if (categoryId && categoryId !== 'all' && categoryId !== 'recommended') {
         endpoint += `&categoryId=${categoryId}`;
       }
@@ -1661,7 +1661,7 @@ const CustomerLanding = () => {
         return;
       }
       setTrendingLoading(true);
-      const endpoint = `/api/public/customer/menu_items/advanceFilter?branchId=${bId}&pageNumber=0&pageSize=6&recommended=true`;
+      const endpoint = `/api/customer/menu_items/public/advanceFilter?branchId=${bId}&pageNumber=0&pageSize=6&recommended=true`;
       const response = await ApiGet(endpoint);
 
       if (response.success) {

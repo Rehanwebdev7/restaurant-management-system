@@ -30,6 +30,39 @@ public class CustMenuItemsController {
 	@Autowired
 	private CustMenuItemsService custMenuItemsService;
 
+	@GetMapping("/public/advanceFilter")
+	public ResponseEntity<Object> getMenuItemsPublic(@RequestParam(required = false) Long branchId,
+			@RequestParam(required = false) Long categoryId, @RequestParam(required = false) Long subcategoryId,
+			@RequestParam(required = false) String searchValue, @RequestParam(required = false) Boolean recommended, @RequestParam(required = false) Boolean dietaryType,
+			@RequestParam(defaultValue = "0") Integer pageNumber, @RequestParam(defaultValue = "10") Integer pageSize) {
+
+		try {
+
+			if(branchId==null) {
+				throw new RuntimeException("Required parameter branchId is null/empty.");
+			}
+			Map<String, Object> result = custMenuItemsService.getMenuItemsWithFilters_WithDietAndRecommend(branchId, categoryId,
+					subcategoryId, searchValue, pageNumber, pageSize, dietaryType,recommended, null);
+
+			return ApiResponse.responseBuilder(result, "SUCCESS", HttpStatus.OK, "Menu items retrieved successfully");
+
+		} catch (SecurityException e) {
+
+			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.UNAUTHORIZED, e.getMessage());
+
+		}catch (RuntimeException e) {
+
+			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.BAD_REQUEST, e.getMessage());
+
+		} catch (Exception e) {
+
+			e.printStackTrace();
+
+			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.INTERNAL_SERVER_ERROR,
+					"Unable to fetch menu items. Please try again later");
+		}
+	}
+
 	@GetMapping("/advanceFilter")
 	public ResponseEntity<Object> getMenuItems(@RequestHeader("access_token") String token, @RequestParam(required = false) Long branchId,
 			@RequestParam(required = false) Long categoryId, @RequestParam(required = false) Long subcategoryId,

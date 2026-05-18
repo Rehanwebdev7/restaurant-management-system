@@ -17,6 +17,9 @@ public class DataInitializer implements CommandLineRunner {
     private SubscriptionPlanRepository subscriptionPlanRepository;
 
     @Autowired
+    private BusinessSettingRepository businessSettingRepository;
+
+    @Autowired
     private CustomersRepository customersRepository;
 
     @Autowired
@@ -31,9 +34,23 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired
     private MenuItemsRepository menuItemsRepository;
 
+    @Autowired
+    private MenuCategoryRepository menuCategoryRepository;
+
     @Override
     public void run(String... args) {
         System.out.println("🚀 [DATA INITIALIZER] Starting...");
+
+        // Ensure localhost domain is mapped so customer homepage works in dev
+        if (businessSettingRepository.findByDomainUrl("localhost").isEmpty()) {
+            businessSettingRepository.findAll().stream().findFirst().ifPresent(setting -> {
+                setting.setDomainUrl("localhost");
+                businessSettingRepository.save(setting);
+                System.out.println("✅ Mapped localhost domain to restaurant: " + setting.getId());
+            });
+        } else {
+            System.out.println("✅ localhost domain already mapped");
+        }
 
         // Check if "Free" plan already exists — if not, create it
         subscriptionPlanRepository
@@ -56,6 +73,9 @@ public class DataInitializer implements CommandLineRunner {
                     System.out.println("✅ Free plan created successfully!");
                 }
             );
+
+        // Add food images by item/category name
+        initializeMenuImages();
 
         // Initialize kitchen orders for testing
         initializeKitchenOrders();
@@ -291,5 +311,81 @@ public class DataInitializer implements CommandLineRunner {
         orderItem.setUpdatedAt(LocalDateTime.now());
 
         orderItemsRepository.save(orderItem);
+    }
+
+    private void initializeMenuImages() {
+        try {
+            java.util.Map<String, String> itemImages = new java.util.HashMap<>();
+            // Starters
+            itemImages.put("Paneer Tikka",        "https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?w=400&h=300&fit=crop");
+            itemImages.put("Veg Spring Rolls",    "https://images.unsplash.com/photo-1563245372-f21724e3856d?w=400&h=300&fit=crop");
+            itemImages.put("Samosa (2 pcs)",      "https://images.unsplash.com/photo-1601050760570-4f22af6c0d76?w=400&h=300&fit=crop");
+            itemImages.put("Hara Bhara Kabab",    "https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?w=400&h=300&fit=crop");
+            itemImages.put("Chicken Tikka",       "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=400&h=300&fit=crop");
+            itemImages.put("Seekh Kebab",         "https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?w=400&h=300&fit=crop");
+            itemImages.put("Chicken Wings",       "https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=400&h=300&fit=crop");
+            // Main Course
+            itemImages.put("Dal Makhani",         "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop");
+            itemImages.put("Palak Paneer",        "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&h=300&fit=crop");
+            itemImages.put("Paneer Butter Masala","https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&h=300&fit=crop");
+            itemImages.put("Aloo Matar",          "https://images.unsplash.com/photo-1547592180-85f173990554?w=400&h=300&fit=crop");
+            itemImages.put("Shahi Paneer",        "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&h=300&fit=crop");
+            itemImages.put("Butter Chicken",      "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=400&h=300&fit=crop");
+            itemImages.put("Mutton Rogan Josh",   "https://images.unsplash.com/photo-1574653853027-5382a3d23a15?w=400&h=300&fit=crop");
+            itemImages.put("Chicken Masala",      "https://images.unsplash.com/photo-1548943487-a2e4e43b4853?w=400&h=300&fit=crop");
+            itemImages.put("Mutton Keema",        "https://images.unsplash.com/photo-1574484284002-952d92456975?w=400&h=300&fit=crop");
+            // Biryani
+            itemImages.put("Veg Biryani",         "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=400&h=300&fit=crop");
+            itemImages.put("Paneer Biryani",      "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=400&h=300&fit=crop");
+            itemImages.put("Chicken Biryani",     "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=400&h=300&fit=crop");
+            itemImages.put("Mutton Biryani",      "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=400&h=300&fit=crop");
+            itemImages.put("Egg Biryani",         "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=400&h=300&fit=crop");
+            // Breads
+            itemImages.put("Butter Naan",         "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&h=300&fit=crop");
+            itemImages.put("Tandoori Roti",       "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&h=300&fit=crop");
+            itemImages.put("Garlic Naan",         "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&h=300&fit=crop");
+            itemImages.put("Paratha",             "https://images.unsplash.com/photo-1606491956689-2ea866880c84?w=400&h=300&fit=crop");
+            // Desserts
+            itemImages.put("Gulab Jamun (2 pcs)", "https://images.unsplash.com/photo-1551024506-0bccd828d307?w=400&h=300&fit=crop");
+            itemImages.put("Kulfi Falooda",       "https://images.unsplash.com/photo-1497034825429-c343d7c6a68f?w=400&h=300&fit=crop");
+            itemImages.put("Rasmalai",            "https://images.unsplash.com/photo-1490474418585-ba9bad8fd0ea?w=400&h=300&fit=crop");
+            // Beverages
+            itemImages.put("Mango Lassi",         "https://images.unsplash.com/photo-1543362906-acfc16c67564?w=400&h=300&fit=crop");
+            itemImages.put("Masala Chai",         "https://images.unsplash.com/photo-1571934811356-5cc061b6821f?w=400&h=300&fit=crop");
+            itemImages.put("Cold Coffee",         "https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=400&h=300&fit=crop");
+            itemImages.put("Fresh Lime Soda",     "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400&h=300&fit=crop");
+            itemImages.put("Rose Milk",           "https://images.unsplash.com/photo-1560343776-97e7d202ff0e?w=400&h=300&fit=crop");
+
+            int updated = 0;
+            for (MenuItemsEntity item : menuItemsRepository.findAll()) {
+                if ((item.getImageUrl() == null || item.getImageUrl().isBlank()) && itemImages.containsKey(item.getName())) {
+                    item.setImageUrl(itemImages.get(item.getName()));
+                    menuItemsRepository.save(item);
+                    updated++;
+                }
+            }
+            System.out.println("✅ Menu item images updated: " + updated);
+
+            java.util.Map<String, String> catImages = new java.util.HashMap<>();
+            catImages.put("Starters",     "https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?w=200&h=200&fit=crop");
+            catImages.put("Main Course",  "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=200&h=200&fit=crop");
+            catImages.put("Biryani",      "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=200&h=200&fit=crop");
+            catImages.put("Breads",       "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=200&h=200&fit=crop");
+            catImages.put("Desserts",     "https://images.unsplash.com/photo-1551024506-0bccd828d307?w=200&h=200&fit=crop");
+            catImages.put("Beverages",    "https://images.unsplash.com/photo-1544145945-f90425340c7e?w=200&h=200&fit=crop");
+            catImages.put("Recommended",  "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=200&h=200&fit=crop");
+
+            int catUpdated = 0;
+            for (MenuCategoryEntity cat : menuCategoryRepository.findAll()) {
+                if ((cat.getIconUrl() == null || cat.getIconUrl().isBlank()) && catImages.containsKey(cat.getName())) {
+                    cat.setIconUrl(catImages.get(cat.getName()));
+                    menuCategoryRepository.save(cat);
+                    catUpdated++;
+                }
+            }
+            System.out.println("✅ Menu category images updated: " + catUpdated);
+        } catch (Exception e) {
+            System.out.println("⚠️ Could not update menu images: " + e.getMessage());
+        }
     }
 }

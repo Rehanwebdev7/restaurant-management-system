@@ -89,31 +89,9 @@ public class CustMenuCategoryService implements MenuCategoryServiceIMP {
             String searchValue,
             Integer pageNumber,
             Integer pageSize,
-            String token
+            String token,
+            Long branchId
     ) throws Exception {
-
-        // 🔐 CASHIER AUTH
-        Authorization.authorizeCashier(token);
-
-        // 🔓 TOKEN
-        tokenUtil.decryptAndStoreToken(token);
-        Integer cashierId = tokenUtil.getCurrentUserId();
-
-        // ================= CASHIER =================
-        UsersEntity cashier = usersRepository.findById(cashierId.longValue())
-                .orElseThrow(() -> new RuntimeException("Cashier not found from token"));
-
-        // ================= BRANCH =================
-        UsersEntity branchUser = cashier.getBranchId();
-        if (branchUser == null) {
-            throw new RuntimeException("Branch not mapped with cashier");
-        }
-
-        // ================= RESTAURANT =================
-        UsersEntity restaurantUser = branchUser.getParentId();
-        if (restaurantUser == null) {
-            throw new RuntimeException("Restaurant not mapped with branch");
-        }
 
         Specification<MenuCategoryEntity> spec = (root, query, cb) -> {
 
@@ -129,11 +107,11 @@ public class CustMenuCategoryService implements MenuCategoryServiceIMP {
             // ================= SOFT DELETE =================
             predicates.add(cb.isFalse(root.get("isDeleted")));
 
-            // ================= BRANCH FILTER (FROM CASHIER) =================
-            predicates.add(cb.equal(branchJoin.get("id"), branchUser.getId()));
+            // ================= BRANCH FILTER =================
+            if (branchId != null) {
+                predicates.add(cb.equal(branchJoin.get("id"), branchId));
+            }
 
-            // ================= RESTAURANT FILTER =================
-            predicates.add(cb.equal(parentJoin.get("id"), restaurantUser.getId()));
 
             // ================= DATE FILTER =================
             if (fromDate != null && toDate != null) {

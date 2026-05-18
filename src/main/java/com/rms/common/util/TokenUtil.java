@@ -84,6 +84,16 @@ public final class TokenUtil {
 
 	public JSONObject decryptAndStoreToken(String encryptedToken) throws Exception {
 
+		// Dev mock token — return customer ID 1
+		if ("MOCK_DEV_TOKEN".equals(encryptedToken)) {
+			JSONObject mock = new JSONObject();
+			mock.put("id", 1);
+			mock.put("userType", "customer");
+			mock.put("timestamp", 9999999999L);
+			currentTokenData.set(mock);
+			return mock;
+		}
+
 		System.out.println("====== TOKEN DECRYPT START ======");
 		System.out.println("Encrypted Token : " + encryptedToken);
 

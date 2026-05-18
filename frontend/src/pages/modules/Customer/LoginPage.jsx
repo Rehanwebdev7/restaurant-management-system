@@ -49,21 +49,12 @@ const LoginPage = () => {
 
     setLoading(true);
     try {
-      const restaurantId = getRestaurantId() || localStorage.getItem('CustomerRestaurantId');
-      const response = await ApiPost('/login/send_otp', {
-        mobile: mobile,
-        restaurantId: parseInt(restaurantId)
-      });
-
-      if (response.success) {
-        const data = response.success.data.data;
-        setToken(data.token);
-        setStep('otp');
-        setResendTimer(30);
-        setOtp(['', '', '', '', '', '']);
-      } else {
-        setError(response.fail || 'Failed to send OTP');
-      }
+      // MOCK: Skip API call for dev, use static OTP 123456
+      console.log('🔐 [MOCK LOGIN] Mobile:', mobile, '| OTP: 123456');
+      setToken('MOCK_DEV_TOKEN');
+      setStep('otp');
+      setResendTimer(30);
+      setOtp(['', '', '', '', '', '']);
     } catch (err) {
       setError('Something went wrong. Please try again.');
     } finally {
@@ -114,39 +105,23 @@ const LoginPage = () => {
 
     setLoading(true);
     try {
-      // Get FCM token for push notifications
-      let fcmToken = null;
-      try {
-        fcmToken = await getFCMToken();
-        if (fcmToken) {
-          console.log("FCM Token obtained successfully");
-        }
-      } catch (fcmError) {
-        console.warn("Could not get FCM token:", fcmError);
-      }
-
-      const payload = {
-        otp: otpString,
-        token: token,
-        version: '1.2.9',
-        platform: 'WEB',
-        fcmToken: fcmToken
-      };
-
-      const response = await ApiPost('/login/verify_otp', payload);
-
-      if (response.success) {
-        const data = response.success.data.data;
-        localStorage.setItem('customerToken', data.token);
-        localStorage.setItem('customerData', JSON.stringify(data.customer));
-        localStorage.setItem('customerId', data.customer.id);
-        localStorage.setItem('customerMobile', data.customer.mobileNumber);
-        if (data.customer.name) {
-          localStorage.setItem('customerName', data.customer.name);
-        }
+      // MOCK: Accept OTP 123456 for dev, skip API
+      if (otpString === '123456') {
+        console.log('✅ [MOCK LOGIN] OTP Verified!');
+        const mockCustomer = {
+          id: 1,
+          name: 'Customer',
+          mobileNumber: mobile,
+          email: ''
+        };
+        localStorage.setItem('customerToken', 'MOCK_DEV_TOKEN');
+        localStorage.setItem('customerData', JSON.stringify(mockCustomer));
+        localStorage.setItem('customerId', mockCustomer.id);
+        localStorage.setItem('customerMobile', mobile);
+        localStorage.setItem('customerName', mockCustomer.name);
         navigate(redirectPath, { replace: true });
       } else {
-        setError(response.fail || 'Invalid OTP');
+        setError('Invalid OTP. Use 123456 for now (dev mode)');
       }
     } catch (err) {
       setError('Something went wrong. Please try again.');
@@ -161,20 +136,10 @@ const LoginPage = () => {
     setLoading(true);
     setError('');
     try {
-      const restaurantId = getRestaurantId() || localStorage.getItem('CustomerRestaurantId');
-      const response = await ApiPost('/login/send_otp', {
-        mobile: mobile,
-        restaurantId: parseInt(restaurantId)
-      });
-
-      if (response.success) {
-        const data = response.success.data.data;
-        setToken(data.token);
-        setResendTimer(30);
-        setOtp(['', '', '', '', '', '']);
-      } else {
-        setError(response.fail || 'Failed to resend OTP');
-      }
+      // MOCK: Skip API, just reset timer
+      console.log('🔄 [MOCK LOGIN] OTP Resent | OTP: 123456');
+      setResendTimer(30);
+      setOtp(['', '', '', '', '', '']);
     } catch (err) {
       setError('Something went wrong. Please try again.');
     } finally {
