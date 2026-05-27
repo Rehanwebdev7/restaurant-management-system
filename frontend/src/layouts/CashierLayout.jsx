@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import CashierSidebar from '../components/CashierSidebar';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import '../styles/superadmin-ui.css';
 
 const CashierLayout = ({ onLogout }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
+import '../styles/superadmin-ui.css';
 
 const MainLayout = ({ onLogout }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);

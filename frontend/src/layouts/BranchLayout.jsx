@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import BranchSidebar from '../components/BranchSidebar';
 import Header from '../components/Header';
+import '../styles/superadmin-ui.css';
 
 const BranchLayout = ({ onLogout }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);

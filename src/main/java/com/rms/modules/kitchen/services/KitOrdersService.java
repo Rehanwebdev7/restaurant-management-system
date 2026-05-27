@@ -275,14 +275,13 @@ public class KitOrdersService implements OrdersServiceIMP {
 
 		UsersEntity kitchenUser = resolveKitchenUser(token);
 		UsersEntity branchUser = requireBranchUser(kitchenUser);
-		UsersEntity restaurantUser = requireRestaurantUser(branchUser);
 
 		LocalDateTime fromDateTime = fromDate != null ? fromDate.atStartOfDay() : null;
 		LocalDateTime toDateTime = toDate != null ? toDate.atTime(LocalTime.MAX) : null;
 		String normalizedStatus = status != null && !status.isBlank() ? OrderStatusVocab.canonical(status) : null;
 
 		Pageable pageable = PageRequest.of(Math.max(pageNumber, 0), pageSize, Sort.by(Sort.Direction.DESC, "id"));
-		Page<Object[]> page = ordersRepository.findBranchOrderSummaries(branchUser.getId(), restaurantUser.getId(),
+		Page<Object[]> page = ordersRepository.findBranchOrderSummaries(branchUser.getId(),
 				fromDateTime, toDateTime, normalizedStatus, searchValue, pageable);
 
 		return buildSummaryResponse(page);
@@ -368,7 +367,7 @@ public class KitOrdersService implements OrdersServiceIMP {
 		UsersEntity restaurantUser = requireRestaurantUser(branchUser);
 
 		Pageable pageable = PageRequest.of(Math.max(pageNumber, 0), pageSize, Sort.by(Sort.Direction.DESC, "id"));
-		Page<Object[]> page = ordersrepository.findBranchOrderSummaries(branchUser.getId(), restaurantUser.getId(),
+		Page<Object[]> page = ordersrepository.findBranchOrderSummaries(branchUser.getId(),
 				null, null, null, null, pageable);
 		return buildSummaryResponse(page);
 	}
@@ -542,6 +541,24 @@ public class KitOrdersService implements OrdersServiceIMP {
 				throw new RuntimeException("Orders not found");
 			}
 			ordersrepository.updateOrderStatusByKitchen(ordersEntity.getId(), ordersEntity.getStatus(), kitchenUserId);
+
+			String newStatus = ordersEntity.getStatus();
+			Long branchId = ordersrepository.findBranchIdByOrderId(ordersEntity.getId());
+			if (branchId != null) {
+				String orderNumber = ordersrepository.findOrderNumber(ordersEntity.getId());
+				Map<String, Object> data = new LinkedHashMap<>();
+				data.put("orderId", ordersEntity.getId());
+
+				if ("READY".equalsIgnoreCase(newStatus) || "READY_FOR_ORDER".equalsIgnoreCase(newStatus)) {
+					constant.sendNotificationByBranchAndRole(branchId, "DELIVERY",
+							"Order Ready for Pickup",
+							"Order #" + orderNumber + " is ready for delivery", data);
+				} else if ("CONFIRMED".equalsIgnoreCase(newStatus) || "ACCEPTED_ORDER".equalsIgnoreCase(newStatus)) {
+					constant.sendNotificationByBranchAndRole(branchId, "DELIVERY",
+							"New Delivery Assigned",
+							"Order #" + orderNumber + " has been confirmed", data);
+				}
+			}
 			return "Updated Successfully";
 		}
 

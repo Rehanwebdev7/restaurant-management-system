@@ -40,4 +40,5 @@ public interface OrderPaymentsRepository extends JpaRepository<OrderPaymentsEnti
     // Custom Methods
     Page<OrderPaymentsEntity> findAll(Pageable pageable);
 	Page<OrderPaymentsEntity> findAll(Specification<OrderPaymentsEntity> spec, Pageable pageable);
+    Optional<OrderPaymentsEntity> findByGatewayTransactionId(String gatewayTransactionId);
 }

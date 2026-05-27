@@ -20,7 +20,7 @@ public class OrderItemsEntity {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id")
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private OrdersEntity orderId;

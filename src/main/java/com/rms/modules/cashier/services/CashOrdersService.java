@@ -47,6 +47,7 @@ import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Row;
@@ -73,6 +74,7 @@ import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import com.rms.common.util.StatusFilterUtil;
+import com.rms.common.util.OrderStatusVocab;
 
 @Service
 @Qualifier("cashOrdersService")
@@ -189,7 +191,14 @@ public class CashOrdersService implements OrdersServiceIMP {
 
 	private Map<String, Object> buildSummaryResponse(Page<OrdersEntity> page) {
 		List<BranchOrderSummaryDTO> records = page.getContent().stream()
-				.map(BranchOrderSummaryDTO::fromOrderEntity)
+				.map(order -> {
+					BranchOrderSummaryDTO dto = BranchOrderSummaryDTO.fromOrderEntity(order);
+					if (dto != null) {
+						dto.setOrderItemsCount(order.getOrderItems() != null ? (long) order.getOrderItems().size() : 0L);
+					}
+					return dto;
+				})
+				.filter(java.util.Objects::nonNull)
 				.collect(Collectors.toCollection(ArrayList::new));
 
 		Map<String, Object> response = new LinkedHashMap<>();
@@ -265,17 +274,16 @@ public class CashOrdersService implements OrdersServiceIMP {
 		tokenUtil.decryptAndStoreToken(token);
 		Integer currentUserId = tokenUtil.getCurrentUserId();
 		String currentRole = tokenUtil.getCurrentUserType();
-		System.out.println("1");
 		UsersEntity operator = usersrepository.findById(currentUserId.longValue())
 				.orElseThrow(() -> new RuntimeException("User not found"));
-		System.out.println("2");
+
+		if (operator.getBranchId() == null) {
+			throw new RuntimeException("User branch not assigned");
+		}
+
 		// 📅 Date range
 		LocalDateTime fromDateTime = fromDate.atStartOfDay();
 		LocalDateTime toDateTime = toDate.atTime(LocalTime.MAX);
-
-		List<OrdersEntity> ordersList = "captain".equalsIgnoreCase(currentRole)
-				? ordersrepository.findByCaptainIdAndCreatedAtBetween(operator, fromDateTime, toDateTime)
-				: ordersrepository.findByCashierIdAndCreatedAtBetween(operator, fromDateTime, toDateTime);
 
 		DateTimeFormatter dateTimeFormat = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
 
@@ -297,58 +305,70 @@ public class CashOrdersService implements OrdersServiceIMP {
 
 			int rowNum = 1;
 
-			for (OrdersEntity order : ordersList) {
+			// Get cashier orders via native query (no EAGER load)
+			List<Object[]> orderRows = ordersrepository.findOrdersByCashierForExport(currentUserId.longValue(), operator.getBranchId().getId(), fromDateTime, toDateTime);
 
-				Row row = sheet.createRow(rowNum++);
-
-				// 1️⃣ Order Number
-				row.createCell(0).setCellValue(order.getOrderNumber() != null ? order.getOrderNumber() : "");
-
-				// 2️⃣ Order Type
-				row.createCell(1).setCellValue(order.getOrderType() != null ? order.getOrderType() : "");
-
-				// 3️⃣ Customer (Name + Mobile)
-				String customer = "";
-				if (order.getCustomerId() != null) {
-					customer = order.getCustomerId().getName() + " (" + order.getCustomerId().getMobileNumber() + ")";
-				}
-				row.createCell(2).setCellValue(customer);
-
-				// 4️⃣ ITEMS (Flatten order_items)
-				StringBuilder itemsBuilder = new StringBuilder();
-				if (order.getOrderItems() != null && !order.getOrderItems().isEmpty()) {
-					for (OrderItemsEntity item : order.getOrderItems()) {
-						itemsBuilder.append(item.getMenuItemName()).append(" x").append(item.getQuantity())
-								.append(", ");
+			if ("captain".equalsIgnoreCase(currentRole)) {
+				// Captain flow - still uses full entity (no overflow risk with small captain orders)
+				List<OrdersEntity> captainOrders = ordersrepository.findByCaptainIdAndCreatedAtBetween(operator, fromDateTime, toDateTime);
+				for (OrdersEntity order : captainOrders) {
+					Row row = sheet.createRow(rowNum++);
+					row.createCell(0).setCellValue(order.getOrderNumber() != null ? order.getOrderNumber() : "");
+					row.createCell(1).setCellValue(order.getOrderType() != null ? order.getOrderType() : "");
+					String customer = order.getCustomerId() != null ? order.getCustomerId().getName() + " (" + order.getCustomerId().getMobileNumber() + ")" : "";
+					row.createCell(2).setCellValue(customer);
+					StringBuilder itemsBuilder = new StringBuilder();
+					if (order.getOrderItems() != null && !order.getOrderItems().isEmpty()) {
+						for (OrderItemsEntity item : order.getOrderItems()) {
+							itemsBuilder.append(item.getMenuItemName()).append(" x").append(item.getQuantity()).append(", ");
+						}
+						itemsBuilder.setLength(itemsBuilder.length() - 2);
 					}
-					// remove last comma
-					itemsBuilder.setLength(itemsBuilder.length() - 2);
+					row.createCell(3).setCellValue(itemsBuilder.toString());
+					row.createCell(4).setCellValue(order.getTotalAmount() != null ? order.getTotalAmount().doubleValue() : 0.0);
+					row.createCell(5).setCellValue(order.getStatus() != null ? order.getStatus() : "");
+					String payment = (order.getPaymentStatus() != null ? order.getPaymentStatus() : "") + (order.getPaymentMethod() != null ? " (" + order.getPaymentMethod() + ")" : "");
+					row.createCell(6).setCellValue(payment);
+					row.createCell(7).setCellValue(order.getDeliveryId() != null ? order.getDeliveryId().getName() : "");
+					row.createCell(8).setCellValue(order.getCreatedAt() != null ? order.getCreatedAt().format(dateTimeFormat) : "");
 				}
-				row.createCell(3).setCellValue(itemsBuilder.toString());
+			} else {
+				// Cashier flow - use native query to avoid EAGER loading
+				for (Object[] orderRow : orderRows) {
+					BranchOrderSummaryDTO dto = BranchOrderSummaryDTO.fromRow(orderRow);
+					if (dto == null) continue;
 
-				// 5️⃣ Total Amount
-				row.createCell(4)
-						.setCellValue(order.getTotalAmount() != null ? order.getTotalAmount().doubleValue() : 0.0);
+					Row row = sheet.createRow(rowNum++);
+					row.createCell(0).setCellValue(dto.getOrderNumber() != null ? dto.getOrderNumber() : "");
+					row.createCell(1).setCellValue(dto.getOrderType() != null ? dto.getOrderType() : "");
+					String customer = dto.getCustomerName() != null && dto.getCustomerPhone() != null
+							? dto.getCustomerName() + " (" + dto.getCustomerPhone() + ")"
+							: (dto.getCustomerName() != null ? dto.getCustomerName() : "");
+					row.createCell(2).setCellValue(customer);
 
-				// 6️⃣ Order Status
-				row.createCell(5).setCellValue(order.getStatus() != null ? order.getStatus() : "");
+					// Items for this order
+					StringBuilder itemsBuilder = new StringBuilder();
+					List<Object[]> itemRows = orderItemsRepository.findItemSummaryByOrderId(dto.getId());
+					if (itemRows != null && !itemRows.isEmpty()) {
+						for (Object[] itemRow : itemRows) {
+							String itemName = (String) itemRow[1];
+							Integer qty = ((Number) itemRow[2]).intValue();
+							itemsBuilder.append(itemName).append(" x").append(qty).append(", ");
+						}
+						if (itemsBuilder.length() > 0) {
+							itemsBuilder.setLength(itemsBuilder.length() - 2);
+						}
+					}
+					row.createCell(3).setCellValue(itemsBuilder.toString());
 
-				// 7️⃣ Payment (Status + Method)
-				String payment = "";
-				if (order.getPaymentStatus() != null) {
-					payment = order.getPaymentStatus();
+					row.createCell(4).setCellValue(dto.getTotalAmount() != null ? dto.getTotalAmount().doubleValue() : 0.0);
+					row.createCell(5).setCellValue(dto.getStatus() != null ? dto.getStatus() : "");
+					String payment = (dto.getPaymentStatus() != null ? dto.getPaymentStatus() : "")
+							+ (dto.getPaymentMethod() != null ? " (" + dto.getPaymentMethod() + ")" : "");
+					row.createCell(6).setCellValue(payment);
+					row.createCell(7).setCellValue("");
+					row.createCell(8).setCellValue(dto.getCreatedAt() != null ? dto.getCreatedAt().format(dateTimeFormat) : "");
 				}
-				if (order.getPaymentMethod() != null) {
-					payment += " (" + order.getPaymentMethod() + ")";
-				}
-				row.createCell(6).setCellValue(payment);
-				// 8️⃣ Restaurant Name
-				// 1️⃣1️⃣ Delivery Partner
-				row.createCell(7).setCellValue(order.getDeliveryId() != null ? order.getDeliveryId().getName() : "");
-
-				// 8️⃣ Created At
-				row.createCell(8)
-						.setCellValue(order.getCreatedAt() != null ? order.getCreatedAt().format(dateTimeFormat) : "");
 			}
 
 			// 🔧 Auto-size
@@ -390,71 +410,42 @@ public class CashOrdersService implements OrdersServiceIMP {
 		}
 		Long restaurantId = branchUser.getParentId().getId();
 
-		Specification<OrdersEntity> spec = (root, query, cb) -> {
+		// Expand status aliases (e.g. CONFIRMED → CONFIRMED,ACCEPTED_ORDER)
+		boolean isCaptain = "captain".equalsIgnoreCase(currentRole);
+		Set<String> statusSet = (status != null && !status.isBlank())
+				? OrderStatusVocab.splitAndNormalize(status)
+				: java.util.Set.of();
+		String statusFilter = statusSet.isEmpty() ? null : String.join(",", statusSet);
 
-			List<Predicate> predicates = new ArrayList<>();
+		LocalDateTime fromDateTime = fromDate != null ? fromDate.atStartOfDay() : null;
+		LocalDateTime toDateTime = toDate != null ? toDate.atTime(LocalTime.MAX) : null;
 
-			if ("captain".equalsIgnoreCase(currentRole)) {
-				predicates.add(cb.equal(root.get("captainId").get("id"), cashierId));
-			} else {
-				predicates.add(cb.equal(root.get("cashierId").get("id"), cashierId));
-			}
+		String normPaymentStatus = (paymentStatus != null && !paymentStatus.isBlank()) ? paymentStatus.toLowerCase() : null;
+		String normPaymentMethod = (paymentMethod != null && !paymentMethod.isBlank()) ? paymentMethod.toLowerCase() : null;
+		String normSearch = (searchValue != null && !searchValue.isBlank()) ? searchValue : null;
+		String searchPattern = normSearch != null ? "%" + normSearch.toLowerCase() + "%" : null;
 
-			// ✅ BRANCH FILTER
-			predicates.add(cb.equal(root.get("branchId").get("id"), branchId));
+		Pageable pageable = PageRequest.of(Math.max(pageNumber != null ? pageNumber : 0, 0), pageSize != null ? pageSize : 10);
 
-			// ✅ RESTAURANT FILTER
-			predicates.add(cb.equal(root.get("restaurantId").get("id"), restaurantId));
+		Page<Object[]> page = ordersrepository.findOrdersByCashierSummaries(
+				isCaptain, cashierId, branchId, restaurantId,
+				fromDateTime, toDateTime,
+				statusFilter, normPaymentStatus, normPaymentMethod,
+				normSearch, searchPattern,
+				pageable);
 
-			// ================= DATE FILTER =================
-			if (fromDate != null && toDate != null) {
-				predicates
-						.add(cb.between(root.get("createdAt"), fromDate.atStartOfDay(), toDate.atTime(LocalTime.MAX)));
-			}
+		List<BranchOrderSummaryDTO> records = page.getContent().stream()
+				.map(BranchOrderSummaryDTO::fromRow)
+				.filter(java.util.Objects::nonNull)
+				.collect(Collectors.toCollection(ArrayList::new));
 
-			// ================= STATUS FILTER =================
-			Predicate statusPred = StatusFilterUtil.buildStatusPredicate(cb, root.get("status"), status);
-			if (statusPred != null) {
-				predicates.add(statusPred);
-			}
-
-			if (paymentStatus != null && !paymentStatus.trim().isEmpty()) {
-				predicates.add(cb.equal(cb.lower(root.get("paymentStatus")), paymentStatus.toLowerCase()));
-			}
-
-			// ================= PAYMENT METHOD FILTER =================
-			if (paymentMethod != null && !paymentMethod.trim().isEmpty()) {
-				predicates.add(cb.equal(cb.lower(root.get("paymentMethod")), paymentMethod.toLowerCase()));
-			}
-
-			// ================= SEARCH FILTER =================
-			if (searchValue != null && !searchValue.isBlank()) {
-
-				String pattern = "%" + searchValue.toLowerCase() + "%";
-				List<Predicate> searchPredicates = new ArrayList<>();
-
-				searchPredicates.add(cb.like(cb.lower(root.get("orderNumber")), pattern));
-				searchPredicates.add(cb.like(cb.lower(root.get("orderType")), pattern));
-				searchPredicates.add(cb.like(cb.lower(root.get("tableNumber")), pattern));
-				searchPredicates.add(cb.like(cb.lower(root.get("paymentStatus")), pattern));
-				searchPredicates.add(cb.like(cb.lower(root.get("paymentMethod")), pattern));
-
-				try {
-					BigDecimal amount = new BigDecimal(searchValue);
-					searchPredicates.add(cb.equal(root.get("totalAmount"), amount));
-				} catch (Exception ignored) {
-				}
-
-				predicates.add(cb.or(searchPredicates.toArray(new Predicate[0])));
-			}
-
-			return cb.and(predicates.toArray(new Predicate[0]));
-		};
-
-		// ================= PAGINATION =================
-		Pageable pageable = PageRequest.of(Math.max(pageNumber, 0), pageSize, Sort.by(Sort.Direction.DESC, "id"));
-		Page<OrdersEntity> page = ordersRepository.findAll(spec, pageable);
-		return buildSummaryResponse(page);
+		Map<String, Object> response = new LinkedHashMap<>();
+		response.put("totalRecords", page.getTotalElements());
+		response.put("pageSize", page.getSize());
+		response.put("currentPage", page.getNumber() + 1);
+		response.put("totalPages", page.getTotalPages());
+		response.put("records", records);
+		return response;
 	}
 
 	public Map<String, Object> getOrdersWithFilters(LocalDate fromDate, LocalDate toDate, String status,
@@ -1879,6 +1870,7 @@ public class CashOrdersService implements OrdersServiceIMP {
 	}
 
 	@Override
+	@Transactional
 	public String updateOrders(OrdersEntity ordersEntity, String token) throws Exception {
 		Authorization.authorizeCashier(token);
 
@@ -1904,16 +1896,94 @@ public class CashOrdersService implements OrdersServiceIMP {
 				throw new RuntimeException("Orders not found");
 			}
 
+			if ("CANCELLED".equalsIgnoreCase(ordersEntity.getStatus())) {
+				orderItemsRepository.updateStatusByOrderId(ordersEntity.getId(), "CANCELLED");
+			}
+
 			if (isPaidStatus(ordersEntity.getPaymentStatus())
 					&& !isPaidStatus(previousPaymentStatus)
 					&& "DINING".equalsIgnoreCase(orderType)
 					&& tableBookingId != null) {
 				TableBookingEntity tableBooking = tableBookingRepository.findById(tableBookingId).orElse(null);
-				if (tableBooking != null && tableBooking.getTableId() != null) {
-					diningTableReleaseScheduler.scheduleRelease(tableBooking.getTableId().getId());
+				if (tableBooking != null) {
+					tableBooking.setStatus("COMPLETED");
+					tableBookingRepository.save(tableBooking);
+					if (tableBooking.getTableId() != null) {
+						diningTableReleaseScheduler.scheduleRelease(tableBooking.getTableId().getId());
+					}
 				}
 			}
 
+			// KOT re-send: reset to PENDING so kitchen sees it in New Orders
+			if (ordersEntity.getStatus() == null && ordersEntity.getPaymentStatus() == null) {
+				ordersrepository.resetOrderToPending(ordersEntity.getId());
+			}
+
+			return "Record Updated Successfully";
+		}
+
+		// Fast path: items-only update — avoids full entity load (prevents 1664-column PostgreSQL overflow)
+		if (ordersEntity.getRawItems() != null && !ordersEntity.getRawItems().isEmpty()
+				&& ordersEntity.getPaymentStatus() == null && ordersEntity.getStatus() == null
+				&& ordersEntity.getCustomerId() == null && ordersEntity.getBranchId() == null) {
+			if (!ordersrepository.existsById(ordersEntity.getId())) {
+				throw new RuntimeException("Orders not found");
+			}
+			OrdersEntity orderRef = ordersrepository.getReferenceById(ordersEntity.getId());
+			// Append-only: do NOT delete existing items — kitchen already received them
+			List<OrderItemsEntity> fastItems = new ArrayList<>();
+			for (Map<String, Object> rawItem : ordersEntity.getRawItems()) {
+				OrderItemsEntity item = new OrderItemsEntity();
+				Object menuItemIdRaw = rawItem.get("menu_item_id");
+				if (menuItemIdRaw != null) {
+					Long menuItemId = Long.parseLong(menuItemIdRaw.toString());
+					MenuItemsEntity menuItem = menuItemsRepository.findById(menuItemId)
+						.orElseThrow(() -> new RuntimeException("MenuItem not found: " + menuItemId));
+					item.setMenuItemId(menuItem);
+					item.setMenuItemName(menuItem.getName());
+				}
+				if (rawItem.get("quantity") != null)
+					item.setQuantity(Integer.parseInt(rawItem.get("quantity").toString()));
+				if (rawItem.get("price") != null) {
+					Object priceVal = rawItem.get("price");
+					if (priceVal instanceof java.math.BigDecimal) {
+						item.setPrice((java.math.BigDecimal) priceVal);
+					} else if (priceVal instanceof Number) {
+						item.setPrice(java.math.BigDecimal.valueOf(((Number) priceVal).doubleValue()));
+					} else {
+						item.setPrice(new java.math.BigDecimal(priceVal.toString()));
+					}
+				}
+				if (rawItem.get("special_instructions") != null)
+					item.setSpecialInstructions(rawItem.get("special_instructions").toString());
+				if (item.getPrice() != null && item.getQuantity() != null)
+					item.setItemTotal(item.getPrice().multiply(new java.math.BigDecimal(item.getQuantity())));
+				item.setOrderId(orderRef);
+				fastItems.add(item);
+			}
+			orderItemsRepository.saveAll(fastItems);
+
+			// Reset to PENDING so kitchen sees new items need attention
+			ordersrepository.resetOrderToPending(ordersEntity.getId());
+
+			// Recalculate total from ALL items (existing + new)
+			List<OrderItemsEntity> allItems = orderItemsRepository.findByOrderId_Id(ordersEntity.getId());
+			java.math.BigDecimal subtotal = allItems.stream().map(i -> {
+				java.math.BigDecimal p = i.getPrice() != null
+					? i.getPrice().multiply(java.math.BigDecimal.valueOf(i.getQuantity()))
+					: java.math.BigDecimal.ZERO;
+				java.math.BigDecimal a = i.getAddonsTotal() != null ? i.getAddonsTotal() : java.math.BigDecimal.ZERO;
+				return p.add(a);
+			}).reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+
+			Object[] charges = ordersrepository.findChargesById(ordersEntity.getId());
+			java.math.BigDecimal taxAmount = safeChargeVal(charges, 0);
+			java.math.BigDecimal serCharge = safeChargeVal(charges, 1);
+			java.math.BigDecimal deliveryFee = safeChargeVal(charges, 2);
+			java.math.BigDecimal discount = safeChargeVal(charges, 3);
+			java.math.BigDecimal totalAmount = subtotal.add(taxAmount).add(serCharge).add(deliveryFee).subtract(discount);
+
+			ordersrepository.updateOrderTotals(ordersEntity.getId(), subtotal, totalAmount, ordersEntity.getPaymentMethod());
 			return "Record Updated Successfully";
 		}
 
@@ -2301,6 +2371,35 @@ public class CashOrdersService implements OrdersServiceIMP {
 	 * Recalculates order subtotal and totalAmount from current order items.
 	 * Called after any order update to ensure totals are accurate.
 	 */
+	public List<Map<String, Object>> getOrdersByTableBookingId(Long tableBookingId, String token) throws Exception {
+		Authorization.authorizeCashier(token);
+		List<OrdersEntity> allOrders = ordersrepository.findByTableBookingId_IdOrderByIdAsc(tableBookingId);
+		return allOrders.stream()
+			.filter(o -> !"COMPLETED".equalsIgnoreCase(o.getStatus()) && !"CANCELLED".equalsIgnoreCase(o.getStatus()))
+			.map(o -> {
+				Map<String, Object> m = new java.util.LinkedHashMap<>();
+				m.put("id", o.getId());
+				m.put("orderNumber", o.getOrderNumber());
+				m.put("status", o.getStatus());
+				m.put("paymentMethod", o.getPaymentMethod());
+				List<OrderItemsEntity> items = orderItemsRepository.findByOrderId_Id(o.getId());
+				List<Map<String, Object>> itemMaps = items.stream().map(item -> {
+					Map<String, Object> im = new java.util.LinkedHashMap<>();
+					im.put("id", item.getId());
+					im.put("menuItemId", item.getMenuItemId() != null ? item.getMenuItemId().getId() : null);
+					im.put("menuItemName", item.getMenuItemName());
+					im.put("quantity", item.getQuantity());
+					im.put("price", item.getPrice());
+					im.put("addonsTotal", item.getAddonsTotal());
+					im.put("status", item.getStatus());
+					return im;
+				}).collect(java.util.stream.Collectors.toList());
+				m.put("orderItems", itemMaps);
+				return m;
+			})
+			.collect(java.util.stream.Collectors.toList());
+	}
+
 	private void recalculateOrderTotals(OrdersEntity order) {
 		List<OrderItemsEntity> items = orderItemsRepository.findByOrderId_Id(order.getId());
 
@@ -2329,5 +2428,45 @@ public class CashOrdersService implements OrdersServiceIMP {
 			.subtract(discount);
 
 		order.setTotalAmount(totalAmount);
+	}
+
+	private static java.math.BigDecimal safeChargeVal(Object[] arr, int idx) {
+		if (arr == null || idx >= arr.length || arr[idx] == null) return java.math.BigDecimal.ZERO;
+		Object v = arr[idx];
+		if (v instanceof java.math.BigDecimal) return (java.math.BigDecimal) v;
+		if (v instanceof Number) return java.math.BigDecimal.valueOf(((Number) v).doubleValue());
+		return java.math.BigDecimal.ZERO;
+	}
+
+	public void cancelOrderItem(Long orderItemId, String token) throws Exception {
+		Authorization.authorizeCashier(token);
+
+		// Use native query — avoids JPA eager loading → PostgreSQL 1664-column overflow
+		Long orderId = orderItemsRepository.findOrderIdByItemId(orderItemId);
+		if (orderId == null) throw new RuntimeException("Order item not found: " + orderItemId);
+
+		orderItemsRepository.updateStatusById(orderItemId, "CANCELLED");
+
+		// findItemSummaryByOrderId is native: id,name,qty,price,item_total,addons_total,status (indices 0-6)
+		List<Object[]> rows = orderItemsRepository.findItemSummaryByOrderId(orderId);
+		java.math.BigDecimal subtotal = rows.stream()
+			.filter(r -> !"CANCELLED".equals(r[6] != null ? r[6].toString() : ""))
+			.map(r -> {
+				java.math.BigDecimal price = r[3] != null ? new java.math.BigDecimal(r[3].toString()) : java.math.BigDecimal.ZERO;
+				int qty = r[2] != null ? ((Number) r[2]).intValue() : 1;
+				java.math.BigDecimal addons = r[5] != null ? new java.math.BigDecimal(r[5].toString()) : java.math.BigDecimal.ZERO;
+				return price.multiply(java.math.BigDecimal.valueOf(qty)).add(addons);
+			})
+			.reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+
+		Object[] charges = ordersrepository.findChargesById(orderId);
+		java.math.BigDecimal taxAmount = safeChargeVal(charges, 0);
+		java.math.BigDecimal serCharge = safeChargeVal(charges, 1);
+		java.math.BigDecimal deliveryFee = safeChargeVal(charges, 2);
+		java.math.BigDecimal discount = safeChargeVal(charges, 3);
+		java.math.BigDecimal totalAmount = subtotal.add(taxAmount).add(serCharge).add(deliveryFee).subtract(discount);
+
+		ordersrepository.updateOrderTotals(orderId, subtotal, totalAmount, null);
+		ordersrepository.resetOrderToPending(orderId);
 	}
 }

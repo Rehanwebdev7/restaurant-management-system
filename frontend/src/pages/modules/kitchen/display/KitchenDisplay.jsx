@@ -5,12 +5,16 @@ import { toast } from 'react-toastify';
 import { useDarkMode } from '../../../../contexts/DarkModeContext';
 import { useTheme } from '../../../../contexts/ThemeContext';
 import { getContrastColor } from '../../../../services/themeService';
+import { onForegroundMessage } from '../../../../firebase/firebase';
 
 const KitchenDisplay = () => {
   // Get current date in YYYY-MM-DD format
   const getCurrentDate = () => {
     const today = new Date();
-    return today.toISOString().split('T')[0];
+    const y = today.getFullYear();
+    const m = String(today.getMonth() + 1).padStart(2, '0');
+    const d = String(today.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   };
 
   const [loading, setLoading] = useState(true);
@@ -313,7 +317,7 @@ const KitchenDisplay = () => {
       return;
     }
 
-    if (orderDetailsCache[order.id] || orderDetailsLoading[order.id]) {
+    if (orderDetailsLoading[order.id]) {
       return;
     }
 
@@ -354,6 +358,18 @@ const KitchenDisplay = () => {
   useEffect(() => {
     fetchStatusCounts();
   }, [fetchStatusCounts]);
+
+  // FCM foreground notifications
+  useEffect(() => {
+    const unsubscribe = onForegroundMessage((payload) => {
+      const title = payload?.notification?.title || 'New Notification';
+      const body = payload?.notification?.body || '';
+      toast.info(`${title}: ${body}`, { autoClose: 6000 });
+      fetchOrders(activeTab, false, searchValue, pagination.page, pagination.pageSize, fromDate, toDate);
+      fetchStatusCounts();
+    });
+    return () => { if (typeof unsubscribe === 'function') unsubscribe(); };
+  }, [activeTab, fetchOrders, fetchStatusCounts, searchValue, pagination.page, pagination.pageSize, fromDate, toDate]);
 
   // Handle tab change
   const handleTabChange = (tabId) => {
@@ -507,7 +523,7 @@ const KitchenDisplay = () => {
   const getResolvedOrderItemsCount = (order) => {
     const resolvedItems = getResolvedOrderItems(order);
     if (resolvedItems.length > 0) {
-      return resolvedItems.length;
+      return resolvedItems.filter(i => i.status !== 'CANCELLED').length;
     }
     return Number(getResolvedOrder(order)?.orderItemsCount || 0);
   };
@@ -793,8 +809,13 @@ const KitchenDisplay = () => {
                             </div>
                           ) : getResolvedOrderItems(order).length > 0 ? (
                             getResolvedOrderItems(order).map((item, idx, arr) => (
-                              <div key={idx} style={{ fontSize: '13px', marginBottom: '8px', paddingBottom: '8px', borderBottom: idx < arr.length - 1 ? `1px dashed ${cBorder}` : 'none', color: tp }}>
-                                <div className="fw-bold">{item.quantity}x {item.menuItemName || item.name || 'Item'}</div>
+                              <div key={idx} style={{ fontSize: '13px', marginBottom: '8px', paddingBottom: '8px', borderBottom: idx < arr.length - 1 ? `1px dashed ${cBorder}` : 'none', color: item.status === 'CANCELLED' ? '#9ca3af' : tp, opacity: item.status === 'CANCELLED' ? 0.6 : 1 }}>
+                                <div className="fw-bold" style={{ textDecoration: item.status === 'CANCELLED' ? 'line-through' : 'none' }}>
+                                  {item.quantity}x {item.menuItemName || item.name || 'Item'}
+                                  {item.status === 'CANCELLED' && (
+                                    <span style={{ marginLeft: 6, fontSize: '11px', color: '#ef4444', fontWeight: 700, textDecoration: 'none' }}>CANCELLED</span>
+                                  )}
+                                </div>
                                 {item.specialInstructions && (
                                   <div style={{ fontSize: '12px', color: '#f59e0b', marginTop: '4px' }}>
                                     <i className="bi bi-info-circle me-1"></i>

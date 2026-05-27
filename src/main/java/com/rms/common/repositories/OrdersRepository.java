@@ -150,7 +150,6 @@ public interface OrdersRepository extends JpaRepository<OrdersEntity, Long> {
 			    COALESCE((SELECT COUNT(1) FROM order_items oi WHERE oi.order_id = o.id), 0) AS order_items_count
 			FROM orders o
 			WHERE o.branch_id = :branchId
-			  AND o.restaurant_id = :restaurantId
 			  AND (CAST(:fromDate AS timestamp) IS NULL OR o.created_at >= CAST(:fromDate AS timestamp))
 			  AND (CAST(:toDate AS timestamp) IS NULL OR o.created_at <= CAST(:toDate AS timestamp))
 			  AND (CAST(:status AS text) IS NULL OR CAST(:status AS text) = '' OR UPPER(o.status) = UPPER(CAST(:status AS text)))
@@ -170,7 +169,6 @@ public interface OrdersRepository extends JpaRepository<OrdersEntity, Long> {
 			SELECT COUNT(*)
 			FROM orders o
 			WHERE o.branch_id = :branchId
-			  AND o.restaurant_id = :restaurantId
 			  AND (CAST(:fromDate AS timestamp) IS NULL OR o.created_at >= CAST(:fromDate AS timestamp))
 			  AND (CAST(:toDate AS timestamp) IS NULL OR o.created_at <= CAST(:toDate AS timestamp))
 			  AND (CAST(:status AS text) IS NULL OR CAST(:status AS text) = '' OR UPPER(o.status) = UPPER(CAST(:status AS text)))
@@ -188,7 +186,6 @@ public interface OrdersRepository extends JpaRepository<OrdersEntity, Long> {
 			""", nativeQuery = true)
 	Page<Object[]> findBranchOrderSummaries(
 			@Param("branchId") Long branchId,
-			@Param("restaurantId") Long restaurantId,
 			@Param("fromDate") LocalDateTime fromDate,
 			@Param("toDate") LocalDateTime toDate,
 			@Param("status") String status,
@@ -222,7 +219,6 @@ public interface OrdersRepository extends JpaRepository<OrdersEntity, Long> {
 			    COALESCE((SELECT COUNT(1) FROM order_items oi WHERE oi.order_id = o.id), 0) AS order_items_count
 			FROM orders o
 			WHERE o.branch_id = :branchId
-			  AND o.restaurant_id = :restaurantId
 			  AND (CAST(:fromDate AS timestamp) IS NULL OR o.created_at >= CAST(:fromDate AS timestamp))
 			  AND (CAST(:toDate AS timestamp) IS NULL OR o.created_at <= CAST(:toDate AS timestamp))
 			  AND (CAST(:status AS text) IS NULL OR CAST(:status AS text) = '' OR UPPER(o.status) = UPPER(CAST(:status AS text)))
@@ -825,5 +821,105 @@ public interface OrdersRepository extends JpaRepository<OrdersEntity, Long> {
 
 	@Query(value = "SELECT order_number FROM orders WHERE id = :orderId", nativeQuery = true)
 	String findOrderNumber(@Param("orderId") Long orderId);
+
+	@Query(value = "SELECT tax_amount, ser_charge_amount, delivery_fee, discount_amount FROM orders WHERE id = :id", nativeQuery = true)
+	Object[] findChargesById(@Param("id") Long id);
+
+	@Modifying
+	@Transactional
+	@Query(value = "UPDATE orders SET subtotal = :subtotal, total_amount = :totalAmount, payment_method = COALESCE(CAST(:paymentMethod AS text), payment_method), updated_at = CURRENT_TIMESTAMP WHERE id = :id", nativeQuery = true)
+	int updateOrderTotals(@Param("id") Long id, @Param("subtotal") java.math.BigDecimal subtotal, @Param("totalAmount") java.math.BigDecimal totalAmount, @Param("paymentMethod") String paymentMethod);
+
+	@Query(value = "SELECT total_amount FROM orders WHERE id = :id", nativeQuery = true)
+	java.math.BigDecimal findTotalAmountById(@Param("id") Long id);
+
+	@Query(value = "SELECT restaurant_id FROM orders WHERE id = :id", nativeQuery = true)
+	Long findRestaurantIdByOrderId(@Param("id") Long id);
+
+	@Query(value = "SELECT branch_id FROM orders WHERE id = :id", nativeQuery = true)
+	Long findBranchIdByOrderId(@Param("id") Long id);
+
+	@Modifying
+	@Transactional
+	@Query(value = "UPDATE orders SET status = 'PENDING', updated_at = CURRENT_TIMESTAMP WHERE id = :id AND UPPER(status) NOT IN ('CANCELLED','COMPLETED','PAID','SERVED')", nativeQuery = true)
+	int resetOrderToPending(@Param("id") Long id);
+
+	@Query(value = """
+		SELECT o.id, o.order_number, o.order_type, o.status, o.payment_status, o.payment_method,
+		       o.customer_name, o.customer_phone, o.customer_email, o.table_number, o.coupon_code,
+		       o.subtotal, o.tax_amount, o.discount_amount, o.delivery_fee, o.total_amount,
+		       o.created_at, o.updated_at, o.completed_at, o.estimated_time, o.special_instructions,
+		       o.delivery_status, COALESCE((SELECT COUNT(1) FROM order_items oi WHERE oi.order_id = o.id), 0) AS order_items_count
+		FROM orders o
+		WHERE o.cashier_id = :cashierId
+		  AND o.branch_id = :branchId
+		  AND (CAST(:fromDate AS timestamp) IS NULL OR o.created_at >= CAST(:fromDate AS timestamp))
+		  AND (CAST(:toDate AS timestamp) IS NULL OR o.created_at <= CAST(:toDate AS timestamp))
+		ORDER BY o.id DESC
+		""", nativeQuery = true)
+	List<Object[]> findOrdersByCashierForExport(
+			@Param("cashierId") Long cashierId,
+			@Param("branchId") Long branchId,
+			@Param("fromDate") LocalDateTime fromDate,
+			@Param("toDate") LocalDateTime toDate);
+
+	@Query(value = """
+		SELECT o.id, o.order_number, o.order_type, o.status, o.payment_status, o.payment_method,
+		       o.customer_name, o.customer_phone, o.customer_email, o.table_number, o.coupon_code,
+		       o.subtotal, o.tax_amount, o.discount_amount, o.delivery_fee, o.total_amount,
+		       o.created_at, o.updated_at, o.completed_at, o.estimated_time, o.special_instructions,
+		       o.delivery_status,
+		       COALESCE((SELECT COUNT(1) FROM order_items oi WHERE oi.order_id = o.id), 0) AS order_items_count
+		FROM orders o
+		WHERE ((:isCaptain = false AND o.cashier_id = :userId) OR (:isCaptain = true AND o.captain_id = :userId))
+		  AND o.branch_id = :branchId
+		  AND o.restaurant_id = :restaurantId
+		  AND (CAST(:fromDate AS timestamp) IS NULL OR o.created_at >= CAST(:fromDate AS timestamp))
+		  AND (CAST(:toDate AS timestamp) IS NULL OR o.created_at <= CAST(:toDate AS timestamp))
+		  AND (:statusFilter IS NULL OR UPPER(o.status) = ANY(STRING_TO_ARRAY(:statusFilter, ',')))
+		  AND (:paymentStatus IS NULL OR LOWER(o.payment_status) = LOWER(:paymentStatus))
+		  AND (:paymentMethod IS NULL OR LOWER(o.payment_method) = LOWER(:paymentMethod))
+		  AND (:searchValue IS NULL OR (
+		       LOWER(o.order_number) LIKE LOWER(:searchPattern)
+		    OR LOWER(o.order_type) LIKE LOWER(:searchPattern)
+		    OR LOWER(CAST(o.table_number AS text)) LIKE LOWER(:searchPattern)
+		    OR LOWER(o.payment_status) LIKE LOWER(:searchPattern)
+		    OR LOWER(o.payment_method) LIKE LOWER(:searchPattern)
+		  ))
+		ORDER BY o.id DESC
+		""",
+		countQuery = """
+		SELECT COUNT(1)
+		FROM orders o
+		WHERE ((:isCaptain = false AND o.cashier_id = :userId) OR (:isCaptain = true AND o.captain_id = :userId))
+		  AND o.branch_id = :branchId
+		  AND o.restaurant_id = :restaurantId
+		  AND (CAST(:fromDate AS timestamp) IS NULL OR o.created_at >= CAST(:fromDate AS timestamp))
+		  AND (CAST(:toDate AS timestamp) IS NULL OR o.created_at <= CAST(:toDate AS timestamp))
+		  AND (:statusFilter IS NULL OR UPPER(o.status) = ANY(STRING_TO_ARRAY(:statusFilter, ',')))
+		  AND (:paymentStatus IS NULL OR LOWER(o.payment_status) = LOWER(:paymentStatus))
+		  AND (:paymentMethod IS NULL OR LOWER(o.payment_method) = LOWER(:paymentMethod))
+		  AND (:searchValue IS NULL OR (
+		       LOWER(o.order_number) LIKE LOWER(:searchPattern)
+		    OR LOWER(o.order_type) LIKE LOWER(:searchPattern)
+		    OR LOWER(CAST(o.table_number AS text)) LIKE LOWER(:searchPattern)
+		    OR LOWER(o.payment_status) LIKE LOWER(:searchPattern)
+		    OR LOWER(o.payment_method) LIKE LOWER(:searchPattern)
+		  ))
+		""",
+		nativeQuery = true)
+	Page<Object[]> findOrdersByCashierSummaries(
+			@Param("isCaptain") boolean isCaptain,
+			@Param("userId") Long userId,
+			@Param("branchId") Long branchId,
+			@Param("restaurantId") Long restaurantId,
+			@Param("fromDate") LocalDateTime fromDate,
+			@Param("toDate") LocalDateTime toDate,
+			@Param("statusFilter") String statusFilter,
+			@Param("paymentStatus") String paymentStatus,
+			@Param("paymentMethod") String paymentMethod,
+			@Param("searchValue") String searchValue,
+			@Param("searchPattern") String searchPattern,
+			Pageable pageable);
 
 }

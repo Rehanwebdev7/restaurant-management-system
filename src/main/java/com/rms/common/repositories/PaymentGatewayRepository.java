@@ -27,4 +27,7 @@ public interface PaymentGatewayRepository extends JpaRepository<PaymentGatewayEn
 
 	Optional<PaymentGatewayEntity> findByRestaurantId_IdAndVendornameAndStatusAndOnOf(
 		Long restaurantId, String vendorname, Boolean status, String onOf);
+
+	Optional<PaymentGatewayEntity> findFirstByVendornameAndStatusAndOnOf(
+		String vendorname, Boolean status, String onOf);
 }

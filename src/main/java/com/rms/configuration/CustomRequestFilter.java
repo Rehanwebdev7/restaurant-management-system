@@ -230,14 +230,14 @@ public class CustomRequestFilter implements Filter {
 
         // 7️⃣ Define public endpoints (no token required)
         List<String> publicEndpoints = Arrays.asList(
-                "/sendOTP", 
+                "/sendOTP",
                 "/verifyOTP",
-                "/login", 
+                "/login",
                 "/decrypt",
-                "/register", 
+                "/register",
                 "/api/customer/generate-link",
-                "/confirmation", 
-                "/update", 
+                "/confirmation",
+                "/update",
                 "/generate_balance_link",
                 "/verify_otp",
                 "/send_otp",
@@ -246,6 +246,8 @@ public class CustomRequestFilter implements Filter {
                 "/api/public/customer",
                 "/api/global/",
                 "/api/ccavenue",
+                "/api/paypal/webhook",
+                "/api/stripe/webhook",
                 "/api/admin/file-migration"
         );
 

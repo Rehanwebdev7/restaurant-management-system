@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import RestaurantSidebar from '../components/RestaurantSidebar';
 import Header from '../components/Header';
 import { ApiGet, ApiPost } from '../ApiServices/ApiServices';
+import '../styles/superadmin-ui.css';
 
 const MarqueeTicker = () => {
   const [messages, setMessages] = useState([]);

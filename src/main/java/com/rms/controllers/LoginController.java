@@ -9,8 +9,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.rms.common.entities.DeviceTokenEntity;
 import com.rms.common.entities.SubscriptionEntity;
 import com.rms.common.entities.UsersEntity;
+import com.rms.common.repositories.DeviceTokenRepository;
 import com.rms.common.repositories.SubscriptionRepository;
 import com.rms.common.repositories.UsersRepository;
 import com.rms.common.response.ApiResponse;
@@ -25,6 +27,9 @@ public class LoginController {
 
 	@Autowired
 	private SubscriptionRepository subscriptionRepository;
+
+	@Autowired
+	private DeviceTokenRepository deviceTokenRepository;
 
 	@PostMapping("/api/auth/change-password")
 	public ResponseEntity<Object> changePassword(
@@ -137,6 +142,16 @@ public class LoginController {
 					responseData.put("maxKitchen", sub.getPlan().getMaxKitchen());
 					responseData.put("maxDeliveryBoy", sub.getPlan().getMaxDeliveryBoy());
 				}
+			}
+
+			String fcmToken = (String) payload.get("fcmToken");
+			if (fcmToken != null && !fcmToken.isBlank()) {
+				DeviceTokenEntity dt = deviceTokenRepository.findFirstByUserstId_Id(user.getId())
+						.orElse(new DeviceTokenEntity());
+				dt.setToken(fcmToken);
+				dt.setPlatform("web");
+				dt.setUserstId(user);
+				deviceTokenRepository.save(dt);
 			}
 
 			return ApiResponse.responseBuilder(responseData, "SUCCESS", HttpStatus.OK, "Login successful");

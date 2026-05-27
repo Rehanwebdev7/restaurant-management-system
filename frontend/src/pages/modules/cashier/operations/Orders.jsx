@@ -179,7 +179,7 @@ const Orders = () => {
       'COMPLETED': 'success',
       'CANCELLED': 'danger',
     };
-    return <Badge bg={statusColors[status] || 'secondary'}>{status?.replace(/_/g, ' ') || 'N/A'}</Badge>;
+    return <Badge bg={statusColors[status] || 'secondary'} style={{ whiteSpace: 'nowrap', fontSize: '11px', padding: '5px 8px' }}>{status?.replace(/_/g, ' ') || 'N/A'}</Badge>;
   };
 
   const getOrderTypeBadge = (type) => {
@@ -345,7 +345,7 @@ const Orders = () => {
                           <summary style={{ listStyle: 'none' }}>
                             <span style={{ color: primaryColor, display: 'inline-flex', alignItems: 'center', textDecoration: 'underline' }}>
                               <i className="bi bi-eye me-1"></i>
-                              View ({order.orderItems?.length || 0} items)
+                              View ({Number(order.orderItemsCount) || 0} items)
                             </span>
                           </summary>
                           <div style={{ marginTop: '8px', paddingLeft: '10px', borderLeft: '2px solid #e2e8f0', textAlign: 'left' }}>

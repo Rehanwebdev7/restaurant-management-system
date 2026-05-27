@@ -114,4 +114,17 @@ public interface OrderItemsRepository extends JpaRepository<OrderItemsEntity, Lo
 		""")
 	List<Object[]> findItemSummaryByOrderId(@Param("orderId") Long orderId);
 
+	@org.springframework.data.jpa.repository.Modifying
+	@org.springframework.transaction.annotation.Transactional
+	@Query(value = "UPDATE order_items SET status = :status WHERE order_id = :orderId", nativeQuery = true)
+	int updateStatusByOrderId(@Param("orderId") Long orderId, @Param("status") String status);
+
+	@org.springframework.data.jpa.repository.Modifying
+	@org.springframework.transaction.annotation.Transactional
+	@Query(value = "UPDATE order_items SET status = :status WHERE id = :itemId", nativeQuery = true)
+	int updateStatusById(@Param("itemId") Long itemId, @Param("status") String status);
+
+	@Query(value = "SELECT order_id FROM order_items WHERE id = :itemId", nativeQuery = true)
+	Long findOrderIdByItemId(@Param("itemId") Long itemId);
+
 }

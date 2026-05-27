@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { getCurrentTheme } from '../../../services/themeService';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { ApiGet, ApiPost } from '../../../ApiServices/CustomerApiServices';
+import PayPalButton from '../../../components/PayPalButton';
+import StripeButton from '../../../components/StripeButton';
 import apiClient from '../../../api/apiClient';
 import { toast } from 'react-toastify';
 import { server_api } from '../../../utils/constants';
@@ -136,6 +138,10 @@ const CustomerLanding = () => {
   const [processingOrder, setProcessingOrder] = useState(false);
   const [showOrderSummaryDetails, setShowOrderSummaryDetails] = useState(false);
   const [showOrderSuccess, setShowOrderSuccess] = useState(false);
+  const [showPayPalModal, setShowPayPalModal] = useState(false);
+  const [payPalOrderId, setPayPalOrderId] = useState(null);
+  const [showStripeModal, setShowStripeModal] = useState(false);
+  const [stripeOrderId, setStripeOrderId] = useState(null);
 
   // Coupon States
   const [coupons, setCoupons] = useState({ global: [], suggested: [], firstOrder: [] });
@@ -765,6 +771,33 @@ const CustomerLanding = () => {
 
       const result = await ApiPost('/api/customer/orders/adds', orderData);
       if (result.success) {
+        const orderResponseData = result.success.data?.data;
+        const createdOrderId = orderResponseData?.orderId || orderResponseData?.order?.id || orderResponseData?.id;
+
+        // ===== PAYPAL PAYMENT GATEWAY =====
+        if (selectedPaymentMethod === 'paypal') {
+          if (!createdOrderId) {
+            toast.error('Order created but ID missing for PayPal payment');
+            return;
+          }
+          setPayPalOrderId(createdOrderId);
+          setShowPayPalModal(true);
+          setProcessingOrder(false);
+          return;
+        }
+
+        // ===== STRIPE PAYMENT GATEWAY =====
+        if (selectedPaymentMethod === 'stripe') {
+          if (!createdOrderId) {
+            toast.error('Order created but ID missing for Stripe payment');
+            return;
+          }
+          setStripeOrderId(createdOrderId);
+          setShowStripeModal(true);
+          setProcessingOrder(false);
+          return;
+        }
+
         // ===== CCAVENUE PAYMENT GATEWAY INTEGRATION =====
         // If payment method is PG (Payment Gateway), redirect to CCAvenue
         if (selectedPaymentMethod === 'PG') {
@@ -886,6 +919,48 @@ const CustomerLanding = () => {
     } finally {
       setProcessingOrder(false);
     }
+  };
+
+  const handlePayPalSuccess = () => {
+    setShowPayPalModal(false);
+    setPayPalOrderId(null);
+    clearCart();
+    closePaymentModal();
+    setShowCart(false);
+    setShowOrderSuccess(true);
+  };
+
+  const handlePayPalError = (error) => {
+    toast.error('PayPal payment failed. Please try again.');
+    setShowPayPalModal(false);
+    setPayPalOrderId(null);
+  };
+
+  const handlePayPalCancel = () => {
+    setShowPayPalModal(false);
+    setPayPalOrderId(null);
+    toast.info('Payment cancelled');
+  };
+
+  const handleStripeSuccess = () => {
+    setShowStripeModal(false);
+    setStripeOrderId(null);
+    clearCart();
+    closePaymentModal();
+    setShowCart(false);
+    setShowOrderSuccess(true);
+  };
+
+  const handleStripeError = (error) => {
+    toast.error('Card payment failed. Please try again.');
+    setShowStripeModal(false);
+    setStripeOrderId(null);
+  };
+
+  const handleStripeCancel = () => {
+    setShowStripeModal(false);
+    setStripeOrderId(null);
+    toast.info('Payment cancelled');
   };
 
   // Update addon quantity in cart - uses cartItemId for items with addons
@@ -4607,6 +4682,81 @@ const CustomerLanding = () => {
             <button className="order-success-btn" onClick={() => setShowOrderSuccess(false)}>
               Continue ordering
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* PayPal Payment Modal */}
+      {showPayPalModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.6)', zIndex: 9999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: '16px', padding: '24px',
+            width: '360px', maxWidth: '90vw', boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h5 style={{ margin: 0, fontWeight: 700, color: '#1f2937' }}>Pay with PayPal</h5>
+              <button
+                onClick={handlePayPalCancel}
+                style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#6b7280' }}
+              >✕</button>
+            </div>
+            <p style={{ color: '#6b7280', fontSize: '13px', marginBottom: '16px' }}>
+              Amount: <strong style={{ color: '#1f2937' }}>${getGrandTotal().toFixed(2)}</strong>
+            </p>
+            {payPalOrderId ? (
+              <PayPalButton
+                orderId={payPalOrderId}
+                amount={getGrandTotal()}
+                apiPrefix="customer"
+                onSuccess={handlePayPalSuccess}
+                onError={handlePayPalError}
+                onCancel={handlePayPalCancel}
+              />
+            ) : (
+              <div style={{ textAlign: 'center', padding: '20px', color: '#6b7280' }}>Loading...</div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {showStripeModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.6)', zIndex: 9999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: '16px', padding: '24px',
+            width: '380px', maxWidth: '90vw', boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h5 style={{ margin: 0, fontWeight: 700, color: '#1f2937' }}>
+                <i className="bi bi-credit-card me-2"></i>Pay with Card
+              </h5>
+              <button
+                onClick={handleStripeCancel}
+                style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#6b7280' }}
+              >✕</button>
+            </div>
+            <p style={{ color: '#6b7280', fontSize: '13px', marginBottom: '16px' }}>
+              Amount: <strong style={{ color: '#1f2937' }}>${getGrandTotal().toFixed(2)}</strong>
+            </p>
+            {stripeOrderId ? (
+              <StripeButton
+                orderId={stripeOrderId}
+                amount={getGrandTotal()}
+                apiPrefix="customer"
+                onSuccess={handleStripeSuccess}
+                onError={handleStripeError}
+                onCancel={handleStripeCancel}
+              />
+            ) : (
+              <div style={{ textAlign: 'center', padding: '20px', color: '#6b7280' }}>Loading...</div>
+            )}
           </div>
         </div>
       )}

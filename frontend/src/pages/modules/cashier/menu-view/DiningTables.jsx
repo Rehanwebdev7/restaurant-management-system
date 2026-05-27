@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Spinner } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import { ApiGet } from '../../../../ApiServices/ApiServices';
+import { ApiGet, ApiPut } from '../../../../ApiServices/ApiServices';
 import { useDarkMode } from '../../../../contexts/DarkModeContext';
 import { useTheme } from '../../../../contexts/ThemeContext';
 
@@ -42,6 +42,13 @@ const DiningTables = () => {
     navigate(`/cashier/table-order/${table.id}`, {
       state: { tableInfo: table }
     });
+  };
+
+  const releaseTable = async (e, tableId) => {
+    e.stopPropagation();
+    if (!window.confirm('Is this table really done? Release it?')) return;
+    await ApiPut('/api/cashier/dining_tables/update', { id: tableId, status: 1 });
+    fetchAll();
   };
 
   // Status mapping: 1=Available, 2=Running, 3=Printed, 4=Paid, 5=Running KOT

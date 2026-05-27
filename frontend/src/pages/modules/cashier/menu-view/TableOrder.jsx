@@ -5,6 +5,8 @@ import { ApiGet, ApiPost, ApiPut } from '../../../../ApiServices/ApiServices';
 import { toast } from 'react-toastify';
 import { useTheme } from '../../../../contexts/ThemeContext';
 import { useDarkMode } from '../../../../contexts/DarkModeContext';
+import PayPalButton from '../../../../components/PayPalButton';
+import StripeButton from '../../../../components/StripeButton';
 
 const TableOrder = () => {
   const { tableId } = useParams();
@@ -22,10 +24,86 @@ const TableOrder = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('CASH');
   const [processingOrder, setProcessingOrder] = useState(false);
+  const [showPayPalModal, setShowPayPalModal] = useState(false);
+  const [payPalOrderId, setPayPalOrderId] = useState(null);
+  const [showGatewayModal, setShowGatewayModal] = useState(false);
+  const [showStripeModal, setShowStripeModal] = useState(false);
+  const [gatewayOrderId, setGatewayOrderId] = useState(null);
+
+  const [existingOrderId, setExistingOrderId] = useState(null);
+  const [existingOrderNumber, setExistingOrderNumber] = useState(null);
+  const [activeBookingId, setActiveBookingId] = useState(null);
+  const [orderLoading, setOrderLoading] = useState(false);
 
   useEffect(() => {
     fetchMenuData();
+    loadExistingOrder();
+    // Suppress PayPal cross-origin "Script error" from React dev overlay
+    const handler = (e) => { if (e.message === 'Script error.') e.stopImmediatePropagation(); };
+    window.addEventListener('error', handler);
+    return () => window.removeEventListener('error', handler);
   }, []);
+
+  const loadExistingOrder = async () => {
+    setOrderLoading(true);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+
+      // Step 1: Find active booking for this table today
+      const bookingRes = await ApiGet('/api/cashier/table_booking/byBookingdate', { bookingDate: today });
+      if (!bookingRes.success) return;
+
+      const bookings = bookingRes.success.data?.data || [];
+      const activeBooking = bookings.find((b) => {
+        const bTableId = b?.tableId?.id || b?.tableId;
+        const bStatus = (b?.status || '').toUpperCase();
+        return String(bTableId) === String(tableId) && !['CANCELLED', 'NO_SHOW', 'COMPLETED'].includes(bStatus);
+      });
+      if (!activeBooking?.id) return;
+
+      // Always remember this booking ID — needed to create new orders even when previous order is terminal
+      setActiveBookingId(activeBooking.id);
+
+      // Step 2: Get orders for this booking directly (includes items in response)
+      const ordersRes = await ApiGet('/api/cashier/orders/byTableBookingId', { tableBookingId: activeBooking.id });
+      if (!ordersRes.success) return;
+
+      const orderList = ordersRes.success.data?.data || [];
+      if (!Array.isArray(orderList) || orderList.length === 0) return;
+
+      // Most recent order (ascending by id, so take last)
+      const latestOrder = orderList[orderList.length - 1];
+      if (!latestOrder?.id) return;
+
+      // Skip terminal-status orders — don't load them as existing (treat as fresh start)
+      const TERMINAL = ['SERVED', 'COMPLETED', 'PAID', 'CANCELLED'];
+      if (TERMINAL.includes((latestOrder.status || '').toUpperCase())) return;
+
+      setExistingOrderId(latestOrder.id);
+      setExistingOrderNumber(latestOrder.orderNumber);
+      if (latestOrder.paymentMethod) setPaymentMethod(latestOrder.paymentMethod);
+
+      if (Array.isArray(latestOrder.orderItems) && latestOrder.orderItems.length > 0) {
+        const loadedCart = latestOrder.orderItems.filter(item => item.status !== 'CANCELLED').map((item) => ({
+          id: item.menuItemId,
+          cartItemId: `existing-${item.id}`,
+          name: item.menuItemName,
+          price: parseFloat(item.price || 0),
+          totalPrice: parseFloat(item.price || 0),
+          quantity: item.quantity || 1,
+          addons: [],
+          addonsTotal: parseFloat(item.addonsTotal || 0),
+          isExisting: true,
+        }));
+        setCart(loadedCart);
+        setShowMobileCart(true);
+      }
+    } catch (err) {
+      console.error('loadExistingOrder error:', err);
+    } finally {
+      setOrderLoading(false);
+    }
+  };
 
   const fetchMenuData = async () => {
     setMenuLoading(true);
@@ -136,7 +214,7 @@ const TableOrder = () => {
   };
 
   const filteredItems = menuItems.filter(item => {
-    const matchesCategory = selectedCategory === 'all' || item.categoryId === selectedCategory;
+    const matchesCategory = selectedCategory === 'all' || (item.menuCategoryId?.id ?? item.menuCategoryId) === selectedCategory;
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesCategory && matchesSearch;
   });
@@ -151,11 +229,12 @@ const TableOrder = () => {
     }
   };
 
-  // Update quantity
+  // Update quantity — block changes on kitchen-accepted (isExisting) items
   const updateQuantity = (cartItemId, delta) => {
     setCart(cart.map(item => {
       const itemKey = item.cartItemId || item.id;
       if (itemKey === cartItemId) {
+        if (item.isExisting) return item; // Kitchen item — qty locked
         const newQty = item.quantity + delta;
         return newQty > 0 ? { ...item, quantity: newQty } : item;
       }
@@ -166,6 +245,23 @@ const TableOrder = () => {
   // Remove from cart
   const removeFromCart = (cartItemId) => {
     setCart(cart.filter(item => (item.cartItemId || item.id) !== cartItemId));
+  };
+
+  const handleCancelItem = async (item) => {
+    const cartItemId = item.cartItemId || '';
+    const orderItemId = cartItemId.startsWith('existing-')
+      ? parseInt(cartItemId.replace('existing-', ''))
+      : null;
+    if (!orderItemId) return;
+    if (!window.confirm(`Cancel "${item.name}"? This will also cancel it in the kitchen.`)) return;
+    try {
+      const res = await ApiPut('/api/cashier/orders/cancel-item', { orderItemId });
+      if (!res.success) throw new Error(res.fail || 'Cancel failed');
+      setCart(prev => prev.filter(i => i.cartItemId !== item.cartItemId));
+      toast.success(`${item.name} cancelled`);
+    } catch (err) {
+      toast.error(err.message || 'Cancel failed');
+    }
   };
 
   // Calculate totals (use totalPrice for items with addons)
@@ -212,7 +308,7 @@ const TableOrder = () => {
     tableBookingId: { id: Number(bookingId) },
     orderType: 'DINING',
     paymentMethod,
-    items: cart.map((item) => ({
+    items: cart.filter(item => !item.isExisting).map((item) => ({
       menu_item_id: String(item.id),
       quantity: item.quantity,
       price: item.price,
@@ -227,45 +323,144 @@ const TableOrder = () => {
   });
 
   const submitOrder = async (collectPayment = false) => {
-    if (cart.length === 0 || processingOrder) {
-      return;
-    }
+    if (cart.length === 0 || processingOrder) return;
 
     setProcessingOrder(true);
     try {
-      const bookingId = await ensureTableBooking();
-      const orderResponse = await ApiPost('/api/cashier/orders/adds', buildDiningPayload(bookingId));
-      if (!orderResponse.success) {
-        throw new Error(orderResponse.fail || 'Failed to place dining order');
-      }
+      let orderId = existingOrderId;
 
-      const createdOrder = orderResponse.success.data?.data || orderResponse.success.data || {};
-      const orderId = createdOrder?.id;
+      if (existingOrderId) {
+        // Only send NEW items to kitchen — existing items already in DB, don't resend
+        const newItems = cart.filter(item => !item.isExisting);
+        const rawItems = newItems.map((item) => ({
+          menu_item_id: String(item.id),
+          quantity: item.quantity,
+          price: item.totalPrice || item.price,
+          special_instructions: '',
+          addonItems: item.addons && item.addons.length > 0
+            ? item.addons.map((addon) => ({ addons_item_id: String(addon.id || addon.addons_item_id) }))
+            : [],
+        }));
+
+        const updatePayload = {
+          id: existingOrderId,
+          paymentMethod,
+          ...(rawItems.length > 0 ? { rawItems } : {}),
+        };
+
+        const updateRes = await ApiPut('/api/cashier/orders/update', updatePayload);
+        if (!updateRes.success) throw new Error(updateRes.fail || 'Failed to update order');
+
+        // Prevent duplicate appends on next save — mark all items as now existing in DB
+        setCart(prev => prev.map(item => ({ ...item, isExisting: true })));
+
+      } else {
+        // Use known booking from loadExistingOrder, else fall back to ensureTableBooking
+        const bookingId = activeBookingId || await ensureTableBooking();
+        const orderResponse = await ApiPost('/api/cashier/orders/adds', buildDiningPayload(bookingId));
+        if (!orderResponse.success) throw new Error(orderResponse.fail || 'Failed to place dining order');
+
+        const createdOrder = orderResponse.success.data?.data || orderResponse.success.data || {};
+        orderId = createdOrder?.id;
+        if (!orderId) throw new Error('Order created but order ID missing');
+
+        // Track new order so subsequent saves update it (not create duplicates)
+        setExistingOrderId(orderId);
+        setExistingOrderNumber(createdOrder?.orderNumber || null);
+        setActiveBookingId(bookingId);
+        setCart(prev => prev.map(item => ({ ...item, isExisting: true })));
+      }
 
       if (collectPayment) {
-        if (!orderId) {
-          throw new Error('Order created but order ID missing for payment collection');
+        if (paymentMethod === 'PG') {
+          // Show gateway selection modal (PayPal or Stripe)
+          setGatewayOrderId(orderId);
+          setShowGatewayModal(true);
+          setProcessingOrder(false);
+          return;
+        } else {
+          // Handle CASH, UPI, CARD immediately
+          const paymentUpdate = await ApiPut('/api/cashier/orders/update', {
+            id: orderId,
+            paymentStatus: 'SUCCESS',
+            status: 'COMPLETED',
+            paymentMethod,
+          });
+          if (!paymentUpdate.success) throw new Error(paymentUpdate.fail || 'Failed to collect payment');
+          // Mark dining table as Paid (status 4); backend scheduler releases to Available after 5 min
+          await ApiPut('/api/cashier/dining_tables/update', { id: parseInt(tableId), status: 4 });
+          toast.success('Order paid successfully!');
+          setCart([]);
+          setExistingOrderId(null);
+          setExistingOrderNumber(null);
+          setActiveBookingId(null);
+          setShowMobileCart(false);
+          navigate('/cashier/dining-tables');
         }
-        const paymentUpdate = await ApiPut('/api/cashier/orders/update', {
-          id: orderId,
-          paymentStatus: 'SUCCESS',
-          status: 'COMPLETED',
-          paymentMethod
-        });
-        if (!paymentUpdate.success) {
-          throw new Error(paymentUpdate.fail || 'Failed to collect payment');
-        }
+      } else {
+        toast.success('Order saved successfully!');
       }
-
-      toast.success(collectPayment ? 'Dining order paid successfully' : 'Dining order saved successfully');
-      setCart([]);
-      setShowMobileCart(false);
-      navigate('/cashier/operations/orders');
     } catch (error) {
-      toast.error(error.message || 'Failed to process dining order');
-    } finally {
+      toast.error(error.message || 'Failed to process order');
       setProcessingOrder(false);
+    } finally {
+      if (!showPayPalModal) {
+        setProcessingOrder(false);
+      }
     }
+  };
+
+  const clearOrderState = () => {
+    setCart([]);
+    setExistingOrderId(null);
+    setExistingOrderNumber(null);
+    setActiveBookingId(null);
+    setShowMobileCart(false);
+    setProcessingOrder(false);
+  };
+
+  const handlePayPalSuccess = (result) => {
+    toast.success('Payment completed successfully!');
+    setShowPayPalModal(false);
+    setPayPalOrderId(null);
+    clearOrderState();
+    navigate('/cashier/operations/orders');
+  };
+
+  const handlePayPalError = (error) => {
+    toast.error('PayPal payment failed: ' + (error?.message || 'Unknown error'));
+    setProcessingOrder(false);
+  };
+
+  const handlePayPalCancel = () => {
+    setShowPayPalModal(false);
+    setPayPalOrderId(null);
+    setProcessingOrder(false);
+  };
+
+  const handleStripeSuccess = (result) => {
+    toast.success('Card payment successful!');
+    setShowStripeModal(false);
+    setGatewayOrderId(null);
+    clearOrderState();
+    navigate('/cashier/operations/orders');
+  };
+
+  const handleStripeError = (error) => {
+    toast.error('Card payment failed: ' + (error?.message || 'Unknown error'));
+    setProcessingOrder(false);
+  };
+
+  const handleStripeCancel = () => {
+    setShowStripeModal(false);
+    setGatewayOrderId(null);
+    setProcessingOrder(false);
+  };
+
+  const handleGatewayClose = () => {
+    setShowGatewayModal(false);
+    setGatewayOrderId(null);
+    setProcessingOrder(false);
   };
 
   return (
@@ -327,17 +522,35 @@ const TableOrder = () => {
               Back
             </button>
 
-            {/* Center - Table Name */}
+            {/* Center - Table Name + Order Badge */}
             <div style={{
               position: 'absolute',
               left: '50%',
               transform: 'translateX(-50%)',
-              color: isDarkMode ? '#e2e8f0' : '#1f2937',
-              fontWeight: '700',
-              fontSize: '16px',
-              whiteSpace: 'nowrap'
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '4px'
             }}>
-              {tableInfo.tableNumber}
+              <div style={{ color: isDarkMode ? '#e2e8f0' : '#1f2937', fontWeight: '700', fontSize: '16px', whiteSpace: 'nowrap' }}>
+                {tableInfo.tableNumber}
+              </div>
+              {orderLoading && (
+                <span style={{ fontSize: '10px', color: isDarkMode ? '#94a3b8' : '#6b7280' }}>Loading order...</span>
+              )}
+              {existingOrderNumber && !orderLoading && (
+                <span style={{
+                  background: '#fef3c7',
+                  color: '#92400e',
+                  fontSize: '10px',
+                  fontWeight: '600',
+                  padding: '2px 8px',
+                  borderRadius: '20px',
+                  whiteSpace: 'nowrap'
+                }}>
+                  #{existingOrderNumber} · Running
+                </span>
+              )}
             </div>
 
             {/* Right - Search Input */}
@@ -698,20 +911,38 @@ const TableOrder = () => {
                   </div>
 
                   {/* Remove Button */}
-                  <button
-                    onClick={() => removeFromCart(itemKey)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      color: '#ef4444',
-                      padding: '4px',
-                      fontSize: '16px',
-                      flexShrink: 0
-                    }}
-                  >
-                    <i className="bi bi-trash"></i>
-                  </button>
+                  {item.isExisting ? (
+                    <button
+                      onClick={() => handleCancelItem(item)}
+                      title="Item cancel karo"
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: '#ef4444',
+                        padding: '4px',
+                        fontSize: '14px',
+                        flexShrink: 0
+                      }}
+                    >
+                      ✕
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => removeFromCart(itemKey)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: '#ef4444',
+                        padding: '4px',
+                        fontSize: '16px',
+                        flexShrink: 0
+                      }}
+                    >
+                      <i className="bi bi-trash"></i>
+                    </button>
+                  )}
                 </div>
               );})
             )}
@@ -794,7 +1025,8 @@ const TableOrder = () => {
           }}>
             <button
               type="button"
-              disabled={processingOrder}
+              disabled={cart.length === 0 || processingOrder}
+              onClick={() => submitOrder(false)}
               style={{
                 padding: '10px 6px',
                 border: 'none',
@@ -803,7 +1035,8 @@ const TableOrder = () => {
                 color: '#92400e',
                 fontWeight: '600',
                 fontSize: '11px',
-                cursor: processingOrder ? 'not-allowed' : 'pointer',
+                cursor: cart.length === 0 || processingOrder ? 'not-allowed' : 'pointer',
+                opacity: cart.length === 0 || processingOrder ? 0.6 : 1,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1146,19 +1379,36 @@ const TableOrder = () => {
                     ${itemPrice * item.quantity}
                   </div>
 
-                  <button
-                    onClick={() => removeFromCart(itemKey)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      color: '#ef4444',
-                      padding: '4px',
-                      fontSize: '16px'
-                    }}
-                  >
-                    <i className="bi bi-trash"></i>
-                  </button>
+                  {item.isExisting ? (
+                    <button
+                      onClick={() => handleCancelItem(item)}
+                      title="Item cancel karo"
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: '#ef4444',
+                        padding: '4px',
+                        fontSize: '14px'
+                      }}
+                    >
+                      ✕
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => removeFromCart(itemKey)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: '#ef4444',
+                        padding: '4px',
+                        fontSize: '16px'
+                      }}
+                    >
+                      <i className="bi bi-trash"></i>
+                    </button>
+                  )}
                 </div>
               );
             })
@@ -1241,7 +1491,8 @@ const TableOrder = () => {
           }}>
             <button
               type="button"
-              disabled={processingOrder}
+              disabled={cart.length === 0 || processingOrder}
+              onClick={() => submitOrder(false)}
               style={{
                 padding: '12px 6px',
                 border: 'none',
@@ -1250,7 +1501,8 @@ const TableOrder = () => {
                 color: '#92400e',
                 fontWeight: '600',
                 fontSize: '12px',
-                cursor: processingOrder ? 'not-allowed' : 'pointer',
+                cursor: cart.length === 0 || processingOrder ? 'not-allowed' : 'pointer',
+                opacity: cart.length === 0 || processingOrder ? 0.6 : 1,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1524,6 +1776,155 @@ const TableOrder = () => {
             Add to Cart
           </Button>
         </Modal.Footer>
+      </Modal>
+
+      {/* Gateway Selection Modal */}
+      <Modal
+        show={showGatewayModal}
+        onHide={handleGatewayClose}
+        centered
+        size="sm"
+        className={isDarkMode ? 'dark-modal' : ''}
+      >
+        <Modal.Header
+          closeButton
+          style={{
+            background: isDarkMode ? 'rgba(15,15,30,0.8)' : '#fff',
+            borderBottom: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #eee'
+          }}
+        >
+          <Modal.Title style={{ color: isDarkMode ? '#e2e8f0' : '#1f2937', fontWeight: '700' }}>
+            Choose Payment Method
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body
+          style={{
+            background: isDarkMode ? 'rgba(15,15,30,0.95)' : '#f9fafb',
+            padding: '24px'
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <Button
+              variant="warning"
+              style={{ fontWeight: '600', padding: '12px', borderRadius: '8px' }}
+              onClick={() => {
+                setShowGatewayModal(false);
+                setPayPalOrderId(gatewayOrderId);
+                setShowPayPalModal(true);
+              }}
+            >
+              <i className="bi bi-paypal me-2"></i>
+              Pay with PayPal
+            </Button>
+            <Button
+              variant="primary"
+              style={{ fontWeight: '600', padding: '12px', borderRadius: '8px' }}
+              onClick={() => {
+                setShowGatewayModal(false);
+                setShowStripeModal(true);
+              }}
+            >
+              <i className="bi bi-credit-card me-2"></i>
+              Pay with Card (Stripe)
+            </Button>
+          </div>
+        </Modal.Body>
+      </Modal>
+
+      {/* PayPal Payment Modal */}
+      <Modal
+        show={showPayPalModal}
+        onHide={handlePayPalCancel}
+        centered
+        size="sm"
+        className={isDarkMode ? 'dark-modal' : ''}
+        backdrop="static"
+        keyboard={false}
+      >
+        <Modal.Header
+          closeButton
+          style={{
+            background: isDarkMode ? 'rgba(15,15,30,0.8)' : '#fff',
+            borderBottom: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #eee'
+          }}
+        >
+          <Modal.Title style={{ color: isDarkMode ? '#e2e8f0' : '#1f2937', fontWeight: '700' }}>
+            Pay with PayPal
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body
+          style={{
+            background: isDarkMode ? 'rgba(15,15,30,0.95)' : '#f9fafb',
+            padding: '20px'
+          }}
+        >
+          {payPalOrderId ? (
+            <div style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <PayPalButton
+                orderId={payPalOrderId}
+                amount={total}
+                onSuccess={handlePayPalSuccess}
+                onError={handlePayPalError}
+                onCancel={handlePayPalCancel}
+              />
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', color: isDarkMode ? '#94a3b8' : '#6b7280' }}>
+              <Spinner animation="border" role="status" size="sm" className="mb-2">
+                <span className="visually-hidden">Loading...</span>
+              </Spinner>
+              <p>Loading PayPal...</p>
+            </div>
+          )}
+        </Modal.Body>
+      </Modal>
+
+      {/* Stripe Card Payment Modal */}
+      <Modal
+        show={showStripeModal}
+        onHide={handleStripeCancel}
+        centered
+        size="sm"
+        className={isDarkMode ? 'dark-modal' : ''}
+        backdrop="static"
+        keyboard={false}
+      >
+        <Modal.Header
+          closeButton
+          style={{
+            background: isDarkMode ? 'rgba(15,15,30,0.8)' : '#fff',
+            borderBottom: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #eee'
+          }}
+        >
+          <Modal.Title style={{ color: isDarkMode ? '#e2e8f0' : '#1f2937', fontWeight: '700' }}>
+            <i className="bi bi-credit-card me-2"></i>
+            Pay with Card
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body
+          style={{
+            background: isDarkMode ? 'rgba(15,15,30,0.95)' : '#f9fafb',
+            padding: '20px'
+          }}
+        >
+          {gatewayOrderId ? (
+            <StripeButton
+              orderId={gatewayOrderId}
+              amount={total}
+              onSuccess={handleStripeSuccess}
+              onError={handleStripeError}
+              onCancel={handleStripeCancel}
+              apiPrefix="cashier"
+            />
+          ) : (
+            <div style={{ textAlign: 'center', color: isDarkMode ? '#94a3b8' : '#6b7280' }}>
+              <Spinner animation="border" role="status" size="sm" className="mb-2">
+                <span className="visually-hidden">Loading...</span>
+              </Spinner>
+              <p>Loading...</p>
+            </div>
+          )}
+        </Modal.Body>
       </Modal>
     </Container>
   );

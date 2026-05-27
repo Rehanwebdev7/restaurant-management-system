@@ -22,7 +22,7 @@ import java.io.ByteArrayInputStream;
 import org.springframework.http.HttpHeaders;
 
 @RestController
-@RequestMapping("api/cashier/orders")
+@RequestMapping("/api/cashier/orders")
 public class CashOrdersController {
 
 	@Autowired
@@ -427,7 +427,39 @@ public class CashOrdersController {
 		}
 	}
 
+	@GetMapping("/byTableBookingId")
+	public ResponseEntity<Object> getOrdersByTableBookingId(@RequestHeader("access_token") String token,
+			@RequestParam Long tableBookingId) {
+		try {
+			List<Map<String, Object>> result = cashOrdersService.getOrdersByTableBookingId(tableBookingId, token);
+			return ApiResponse.responseBuilder(result, "SUCCESS", HttpStatus.OK, "Orders fetched successfully");
+		} catch (SecurityException e) {
+			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.UNAUTHORIZED, e.getMessage());
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error");
+		}
+	}
+
 	// ***** Api- XL File Download *****
+	@PutMapping("/cancel-item")
+	public ResponseEntity<Object> cancelOrderItem(
+			@RequestBody Map<String, Object> body,
+			@RequestHeader("access_token") String token) {
+		try {
+			Long orderItemId = Long.parseLong(body.get("orderItemId").toString());
+			cashOrdersService.cancelOrderItem(orderItemId, token);
+			return ApiResponse.responseBuilder(null, "SUCCESS", HttpStatus.OK, "Item cancelled successfully");
+		} catch (SecurityException e) {
+			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.UNAUTHORIZED, e.getMessage());
+		} catch (RuntimeException e) {
+			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.BAD_REQUEST, e.getMessage());
+		} catch (Throwable e) {
+			e.printStackTrace();
+			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error");
+		}
+	}
+
 	@GetMapping("/download")
 	public ResponseEntity<byte[]> downloadUsersExcel(@RequestHeader("access_token") String token,
 			@RequestParam(defaultValue = "0") int pageNumber, @RequestParam(defaultValue = "100") int pageSize) {

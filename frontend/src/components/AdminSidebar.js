@@ -6,7 +6,7 @@ import superadminService from '../services/superadminService';
 
 const AdminSidebar = ({ collapsed, visible, onLogout }) => {
   const location = useLocation();
-  const { logoUrl, restaurantName } = useTheme();
+  useTheme();
   const { } = useAuth();
   const [expandedMenus, setExpandedMenus] = useState({});
   const [clickedMenu, setClickedMenu] = useState(null);
@@ -240,13 +240,18 @@ const AdminSidebar = ({ collapsed, visible, onLogout }) => {
     <div className={`dms-sidebar ${collapsed ? 'collapsed' : ''} ${visible ? 'show' : ''}`}>
       <div className="sidebar-header">
         <div className="sidebar-brand">
-          <div className="brand-logo">
+          <div className="brand-logo" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 4px', background: 'transparent' }}>
             <img
-              src={logoUrl || "/app-favicon.svg"}
-              alt={restaurantName || "Restaurant"}
-              className="sidebar-logo-img"
-              onError={(e) => { e.target.src = "/app-favicon.svg"; }}
+              src="/app-favicon.svg"
+              alt="Platform"
+              style={{ width: '36px', height: '36px', objectFit: 'contain', flexShrink: 0 }}
             />
+            {!collapsed && (
+              <div style={{ lineHeight: 1.3 }}>
+                <div style={{ color: '#fff', fontWeight: 700, fontSize: '14px', whiteSpace: 'nowrap' }}>Super Admin</div>
+                <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px' }}>Platform Panel</div>
+              </div>
+            )}
           </div>
         </div>
       </div>

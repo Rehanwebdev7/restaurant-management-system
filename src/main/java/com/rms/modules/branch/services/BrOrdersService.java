@@ -299,7 +299,7 @@ public class BrOrdersService implements OrdersServiceIMP {
 		Pageable pageable = PageRequest.of(Math.max(pageNumber, 0), Math.max(pageSize, 1));
 
 		Page<Object[]> page = ordersrepository.findBranchOrderSummaries(scope.branchUser().getId(),
-				scope.restaurantUser().getId(), toStartOfDay(fromDate), toEndOfDay(toDate),
+				toStartOfDay(fromDate), toEndOfDay(toDate),
 				normalizeFilterValue(status), normalizeFilterValue(searchValue), pageable);
 
 		return buildBranchOrderSummaryResponse(page);
@@ -316,7 +316,7 @@ public class BrOrdersService implements OrdersServiceIMP {
 		BranchScope scope = resolveBranchScope(token);
 		Pageable pageable = PageRequest.of(Math.max(pageNumber, 0), Math.max(pageSize, 1));
 		Page<Object[]> page = ordersrepository.findBranchOrderSummaries(scope.branchUser().getId(),
-				scope.restaurantUser().getId(), null, null, null, null, pageable);
+				null, null, null, null, pageable);
 		return buildBranchOrderSummaryResponse(page);
 	}
 
