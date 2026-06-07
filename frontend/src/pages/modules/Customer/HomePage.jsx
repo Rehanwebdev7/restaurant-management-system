@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { getCurrentTheme } from '../../../services/themeService';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { ApiGet, ApiPost } from '../../../ApiServices/CustomerApiServices';
@@ -24,8 +24,108 @@ const ALL_SUBCATEGORY = { id: 'all_sub', name: 'All' };
 
 const CustomerLanding = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const currentPath = location.pathname;
+
+  const isMenuPage = currentPath === '/menu' || currentPath === '/' || currentPath === '/home';
+  const isSignaturePage = currentPath === '/signature';
+  const isWhyUsPage = currentPath === '/why-us';
+  const isGalleryPage = currentPath === '/gallery';
+  const isContactPage = currentPath === '/contact';
+
+  // Dynamic Hero content config
+  const getHeroContent = () => {
+    if (isSignaturePage) {
+      return {
+        bg: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1600&q=80',
+        subtitle: 'OUR SPECIAL SIGNATURE DISHES',
+        title: <>Chef's Special <br /> <span>Dishes</span></>,
+        description: 'Enjoy our delicious food made by our best chefs to give you a wonderful dining experience.',
+        showButtons: false
+      };
+    } else if (isWhyUsPage) {
+      return {
+        bg: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1600&q=80',
+        subtitle: 'GREAT FOOD & FRIENDLY SERVICE',
+        title: <>Our Story of <br /> <span>Great Taste</span></>,
+        description: 'We use high-quality fresh ingredients, follow strict hygiene standards, and offer warm hospitality to make your visit special.',
+        showButtons: false
+      };
+    } else if (isGalleryPage) {
+      return {
+        bg: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=1600&q=80',
+        subtitle: 'OUR RESTAURANT & FOOD PHOTOS',
+        title: <>A Photo <br /> <span>Gallery</span></>,
+        description: 'Browse through photos of our delicious dishes, beautiful dining area, and happy moments of our customers.',
+        showButtons: false
+      };
+    } else if (isContactPage) {
+      return {
+        bg: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=1600&q=80',
+        subtitle: 'EASY TABLE BOOKING & LOCATIONS',
+        title: <>Book Your <br /> Table <span>Online</span></>,
+        description: 'Book your table in advance for a smooth visit. We are ready to serve you with warm hospitality.',
+        showButtons: true
+      };
+    } else {
+      // Menu Page / Home
+      return {
+        bg: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1600&q=80',
+        subtitle: 'FRESH & DELICIOUS MEALS',
+        title: <>Delicious Food <br /> & Great <span>Taste</span></>,
+        description: "Enjoy great food and a wonderful dining atmosphere. Every dish is prepared with fresh and high-quality ingredients.",
+        showButtons: true
+      };
+    }
+  };
+
+  const heroContent = getHeroContent();
+
+  // Scroll to top or specific hash on route transitions
+  useEffect(() => {
+    if (location.hash) {
+      const id = location.hash.replace('#', '');
+      setTimeout(() => {
+        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+      }, 300);
+    } else {
+      window.scrollTo(0, 0);
+    }
+  }, [currentPath, location.hash]);
+
   const { restaurantId, loading: themeLoading, socialMediaDetails } = useTheme();
   const [searchTerm, setSearchTerm] = useState('');
+  const [themeMode, setThemeMode] = useState(() => {
+    return localStorage.getItem('customerThemeMode') || 'dark';
+  });
+  const [activeTestimonial, setActiveTestimonial] = useState(0);
+  const [reservation, setReservation] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    guests: 2,
+    date: '',
+    time: '',
+    notes: ''
+  });
+
+  const handleReservationSubmit = (e) => {
+    e.preventDefault();
+    if (!reservation.name || !reservation.phone || !reservation.date || !reservation.time) {
+      toast.error('Please fill in all required fields.');
+      return;
+    }
+    toast.success('Table reserved successfully! A confirmation details SMS has been sent.');
+    setReservation({
+      name: '',
+      email: '',
+      phone: '',
+      guests: 2,
+      date: '',
+      time: '',
+      notes: ''
+    });
+  };
   const [selectedBranch, setSelectedBranch] = useState(null);
   const [showBranchDropdown, setShowBranchDropdown] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORY);
@@ -683,6 +783,7 @@ const CustomerLanding = () => {
       return;
     }
 
+    setShowCart(false);
     setShowPaymentModal(true);
     fetchPaymentGateways();
     fetchAddresses();
@@ -2082,9 +2183,9 @@ const CustomerLanding = () => {
       const pendingCheckout = localStorage.getItem('pendingCheckout');
       if (pendingCheckout === 'true') {
         localStorage.removeItem('pendingCheckout');
-        // Open cart modal and payment modal after login
-        setShowCart(true);
-        // Small delay to ensure cart opens first, then open payment modal
+        // Open checkout page after login
+        setShowCart(false);
+        // Small delay to ensure state settles before opening checkout
         setTimeout(() => {
           setShowPaymentModal(true);
           fetchPaymentGateways();
@@ -2159,7 +2260,7 @@ const CustomerLanding = () => {
         }
       `}</style>
 
-      <div className="landing-container">
+      <div className={`landing-container ${themeMode === 'light' ? 'light-mode' : 'dark-mode'}`}>
         {/* Mobile Menu Overlay */}
         <div
           className={`mobile-menu-overlay ${showMobileMenu ? 'active' : ''}`}
@@ -2219,6 +2320,28 @@ const CustomerLanding = () => {
             <div className="mobile-menu-item" onClick={() => { navigate('/orders'); setShowMobileMenu(false); }}>
               <i className="bi bi-bag-check"></i>
               <span>My Orders</span>
+            </div>
+
+            {/* Router navigation for mobile */}
+            <div className="mobile-menu-item" onClick={() => { navigate('/menu'); setShowMobileMenu(false); }}>
+              <i className="bi bi-book"></i>
+              <span>Special Menu</span>
+            </div>
+            <div className="mobile-menu-item" onClick={() => { navigate('/signature'); setShowMobileMenu(false); }}>
+              <i className="bi bi-star"></i>
+              <span>Signature Dishes</span>
+            </div>
+            <div className="mobile-menu-item" onClick={() => { navigate('/why-us'); setShowMobileMenu(false); }}>
+              <i className="bi bi-bookmark-star"></i>
+              <span>Why Choose Us</span>
+            </div>
+            <div className="mobile-menu-item" onClick={() => { navigate('/gallery'); setShowMobileMenu(false); }}>
+              <i className="bi bi-images"></i>
+              <span>Our Gallery</span>
+            </div>
+            <div className="mobile-menu-item" onClick={() => { navigate('/contact'); setShowMobileMenu(false); }}>
+              <i className="bi bi-calendar-check"></i>
+              <span>Book A Table</span>
             </div>
 
             <div className="mobile-menu-divider"></div>
@@ -2371,6 +2494,15 @@ const CustomerLanding = () => {
             </div>
           </div>
 
+          <nav className="desktop-nav-links">
+            <span className={isMenuPage ? 'active' : ''} onClick={() => navigate('/menu')}>Home</span>
+            <span className={isSignaturePage ? 'active' : ''} onClick={() => navigate('/signature')}>Signature</span>
+            <span className={isWhyUsPage ? 'active' : ''} onClick={() => navigate('/why-us')}>Why Us</span>
+            <span className={isGalleryPage ? 'active' : ''} onClick={() => navigate('/gallery')}>Gallery</span>
+            <span className={isWhyUsPage && location.hash === '#testimonials' ? 'active' : ''} onClick={() => navigate('/why-us#testimonials')}>Reviews</span>
+            <span className={isContactPage ? 'active' : ''} onClick={() => navigate('/contact')}>Contact</span>
+          </nav>
+
           {/* Mobile Logo */}
           <div className="mobile-header-logo">
             <img
@@ -2447,6 +2579,17 @@ const CustomerLanding = () => {
             >
               <i className="bi bi-geo-alt-fill"></i>
             </button>
+            <button
+              className="btn-icon-only"
+              onClick={() => {
+                const newMode = themeMode === 'light' ? 'dark' : 'light';
+                setThemeMode(newMode);
+                localStorage.setItem('customerThemeMode', newMode);
+              }}
+              title={themeMode === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+            >
+              {themeMode === 'light' ? <i className="bi bi-moon-fill"></i> : <i className="bi bi-sun-fill"></i>}
+            </button>
             {isCustomerLoggedIn ? (
               <>
                 <button
@@ -2517,6 +2660,19 @@ const CustomerLanding = () => {
                 </span>
               </label>
             </div>
+
+            {/* Theme Toggle Button */}
+            <button
+              className="btn-theme-toggle"
+              onClick={() => {
+                const newMode = themeMode === 'light' ? 'dark' : 'light';
+                setThemeMode(newMode);
+                localStorage.setItem('customerThemeMode', newMode);
+              }}
+              title={themeMode === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+            >
+              {themeMode === 'light' ? <i className="bi bi-moon-fill"></i> : <i className="bi bi-sun-fill"></i>}
+            </button>
 
             {/* Wishlist Button - Desktop */}
             <div className="wishlist-container desktop-signin">
@@ -2659,68 +2815,144 @@ const CustomerLanding = () => {
           </div>
         </header>
 
-        {/* Marquee / Ticker - show only the first active message */}
-        {marqueeMessages.length > 0 && marqueeMessages.slice(0, 1).map((msg) => (
-          <div key={msg.id} className="marquee-bar" style={{
-            background: msg.bgColor || '#1a1a2e',
-            color: msg.textColor || '#ffffff'
+        {/* Marquee / Ticker - all active messages in one scrolling bar */}
+        {marqueeMessages.length > 0 && (
+          <div className="marquee-bar" style={{
+            background: marqueeMessages[0].bgColor || '#1a1a2e',
+            color: marqueeMessages[0].textColor || '#ffffff'
           }}>
             <div className="marquee-track" style={{
-              animationDuration: `${msg.speed || 30}s`
+              animationDuration: `${marqueeMessages[0].speed || 30}s`
             }}>
-              <span className="marquee-content">{msg.message}</span>
-              <span className="marquee-content">{msg.message}</span>
+              {marqueeMessages.map(msg => (
+                <span key={msg.id} className="marquee-content">{msg.message} &nbsp;&nbsp;&nbsp; 🍽️ &nbsp;&nbsp;&nbsp; </span>
+              ))}
+              {marqueeMessages.map(msg => (
+                <span key={`r-${msg.id}`} className="marquee-content">{msg.message} &nbsp;&nbsp;&nbsp; 🍽️ &nbsp;&nbsp;&nbsp; </span>
+              ))}
             </div>
           </div>
-        ))}
+        )}
 
-        {/* Promotional Banners Slider - Desktop shown here, mobile below */}
-        <section className="banners-section">
-          <div className="banner-slider" onMouseEnter={() => setBannerHovered(true)} onMouseLeave={() => setBannerHovered(false)}>
-            <div
-              className="banner-slides"
-              style={{ transform: `translateX(-${currentBannerSlide * 100}%)` }}
-            >
-              {banners.map(banner => (
-                <div key={banner.id} className="banner-slide">
-                  <img
-                    src={banner.image}
-                    alt={banner.title}
-                    className="banner-slide-image"
-                    onError={handleImageError}
-                  />
-                  <div className="banner-slide-overlay">
-                    {banner.tag && <span className="banner-tag">{banner.tag}</span>}
-                    {banner.title && <div className="banner-title">{banner.title}</div>}
-                    {banner.subtitle && <div className="banner-subtitle">{banner.subtitle}</div>}
-                  </div>
-                </div>
-              ))}
+        {/* Luxury Hero Section */}
+        <section className="luxury-hero" id="home" style={{ backgroundImage: `url(${heroContent.bg})` }}>
+          <div className="hero-bg-overlay"></div>
+          <div className="hero-content">
+            <span className="hero-subtitle-tag animate-fade-in-up">{heroContent.subtitle}</span>
+            <h1 className="hero-title animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+              {heroContent.title}
+            </h1>
+            <p className="hero-description animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+              {heroContent.description}
+            </p>
+            {heroContent.showButtons && (
+              <div className="hero-actions animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+                <button className="btn-reserve" onClick={() => {
+                  if (isContactPage) {
+                    document.getElementById('reservation-section')?.scrollIntoView({ behavior: 'smooth' });
+                  } else {
+                    navigate('/contact');
+                  }
+                }}>
+                  <i className="bi bi-calendar-check"></i> Book Table
+                </button>
+                <button className="btn-explore-menu" onClick={() => {
+                  if (isMenuPage) {
+                    document.getElementById('menu-section')?.scrollIntoView({ behavior: 'smooth' });
+                  } else {
+                    navigate('/menu');
+                  }
+                }}>
+                  Explore Menu <i className="bi bi-arrow-right"></i>
+                </button>
+              </div>
+            )}
+          </div>
+          
+          {/* Scroll Indicator */}
+          <div className="hero-scroll-indicator" onClick={() => {
+            if (isMenuPage) {
+              document.getElementById('menu-section')?.scrollIntoView({ behavior: 'smooth' });
+            } else if (isSignaturePage) {
+              document.getElementById('recommendations')?.scrollIntoView({ behavior: 'smooth' });
+            } else if (isWhyUsPage) {
+              document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+            } else if (isGalleryPage) {
+              document.getElementById('gallery')?.scrollIntoView({ behavior: 'smooth' });
+            } else if (isContactPage) {
+              document.getElementById('reservation-section')?.scrollIntoView({ behavior: 'smooth' });
+            }
+          }}>
+            <span>SCROLL DOWN</span>
+            <div className="indicator-arrow">
+              <i className="bi bi-chevron-down"></i>
             </div>
+          </div>
+        </section>
 
-            {/* Navigation Arrows */}
-            <button className="banner-nav-btn prev" onClick={prevSlide}>
-              <i className="bi bi-chevron-left"></i>
-            </button>
-            <button className="banner-nav-btn next" onClick={nextSlide}>
-              <i className="bi bi-chevron-right"></i>
-            </button>
+        {/* Experience Highlights */}
+        {isMenuPage && (
+          <section className="experience-highlights-section">
+            <div className="section-header text-center">
+              <span className="section-subheading">DINING EXPERIENCE</span>
+              <h2 className="section-title">Why Customers Choose Us</h2>
+            </div>
+            <div className="experience-highlights-grid">
+              <div className="experience-highlight-card">
+                <div className="experience-highlight-icon">
+                  <i className="bi bi-bag-check"></i>
+                </div>
+                <h3>Thoughtful Service</h3>
+                <p>Friendly staff, smooth ordering, and a calm dining flow from start to finish.</p>
+              </div>
+              <div className="experience-highlight-card">
+                <div className="experience-highlight-icon">
+                  <i className="bi bi-flower1"></i>
+                </div>
+                <h3>Fresh Everyday</h3>
+                <p>Ingredients are selected fresh so every order keeps the same quality and consistency.</p>
+              </div>
+              <div className="experience-highlight-card">
+                <div className="experience-highlight-icon">
+                  <i className="bi bi-stars"></i>
+                </div>
+                <h3>Special Taste</h3>
+                <p>Classic flavors and chef specials prepared to be delicious and memorable for you.</p>
+              </div>
+            </div>
+          </section>
+        )}
 
-            {/* Dots Navigation */}
-            <div className="banner-dots">
-              {banners.map((_, index) => (
-                <button
-                  key={index}
-                  className={`banner-dot ${currentBannerSlide === index ? 'active' : ''}`}
-                  onClick={() => goToSlide(index)}
-                />
-              ))}
+        {/* Special Offers Section */}
+        {isMenuPage && (
+          <>
+            <section className="luxury-offers-section" id="offers">
+          <div className="section-header text-center">
+            <span className="section-subheading">EXCLUSIVE OFFERS</span>
+            <h2 className="section-title">Special Discounts For You</h2>
+          </div>
+          <div className="offers-grid">
+            <div className="offer-card gold-gradient">
+              <div className="offer-badge">50% OFF</div>
+              <div className="offer-content">
+                <h3>Welcome Feast</h3>
+                <p>Enjoy a 50% discount on your first order. Use coupon code below at checkout.</p>
+                <div className="coupon-code">FIRST50</div>
+              </div>
+            </div>
+            <div className="offer-card dark-gold-gradient">
+              <div className="offer-badge">FREE DELIVERY</div>
+              <div className="offer-content">
+                <h3>Weekend Special</h3>
+                <p>Get free delivery for all orders above $40 on Friday, Saturday, and Sunday.</p>
+                <div className="coupon-code">WEEKEND40</div>
+              </div>
             </div>
           </div>
         </section>
 
         {/* Categories */}
-        <section className="categories-section">
+        <section className="categories-section" id="menu-section">
           <div className="categories-container">
             <button
               className="category-scroll-btn left"
@@ -3012,56 +3244,15 @@ const CustomerLanding = () => {
             )}
           </section>
         )}
+          </>
+        )}
 
-        {/* Promotional Banners Slider - Mobile only (desktop shown above) */}
-        <section className="banners-section banners-section-mobile">
-          <div className="banner-slider" onMouseEnter={() => setBannerHovered(true)} onMouseLeave={() => setBannerHovered(false)}>
-            <div
-              className="banner-slides"
-              style={{ transform: `translateX(-${currentBannerSlide * 100}%)` }}
-            >
-              {banners.map(banner => (
-                <div key={banner.id} className="banner-slide">
-                  <img
-                    src={banner.image}
-                    alt={banner.title}
-                    className="banner-slide-image"
-                    onError={handleImageError}
-                  />
-                  <div className="banner-slide-overlay">
-                    {banner.tag && <span className="banner-tag">{banner.tag}</span>}
-                    {banner.title && <div className="banner-title">{banner.title}</div>}
-                    {banner.subtitle && <div className="banner-subtitle">{banner.subtitle}</div>}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Navigation Arrows */}
-            <button className="banner-nav-btn prev" onClick={prevSlide}>
-              <i className="bi bi-chevron-left"></i>
-            </button>
-            <button className="banner-nav-btn next" onClick={nextSlide}>
-              <i className="bi bi-chevron-right"></i>
-            </button>
-
-            {/* Dots Navigation */}
-            <div className="banner-dots">
-              {banners.map((_, index) => (
-                <button
-                  key={index}
-                  className={`banner-dot ${currentBannerSlide === index ? 'active' : ''}`}
-                  onClick={() => goToSlide(index)}
-                />
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Trending Section */}
-        <section className="trending-section">
-          <div className="section-header">
-            <h2 className="section-title">Trending this week</h2>
+        {/* Trending / Chef Recommendation Section */}
+        {isSignaturePage && (
+          <section className="trending-section" id="recommendations">
+          <div className="section-header text-center">
+            <span className="section-subheading">CHEF RECOMMENDATION</span>
+            <h2 className="section-title">Signature Dishes</h2>
           </div>
 
           <div className="trending-grid">
@@ -3108,6 +3299,385 @@ const CustomerLanding = () => {
             )}
           </div>
         </section>
+        )}
+
+        {/* Why Choose Us Section */}
+        {isWhyUsPage && (
+          <>
+          <section className="why-choose-us" id="features">
+          <div className="section-header text-center">
+            <span className="section-subheading">OUR VALUES</span>
+            <h2 className="section-title">Why Choose Our Restaurant</h2>
+          </div>
+          <div className="features-grid">
+            <div className="feature-card">
+              <div className="feature-icon">
+                <i className="bi bi-egg-fried"></i>
+              </div>
+              <h3>Quality Ingredients</h3>
+              <p>We source only organic, farm-fresh vegetables and premium cuts of meat to prepare delicious, healthy dishes.</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">
+                <i className="bi bi-award"></i>
+              </div>
+              <h3>Expert Chefs</h3>
+              <p>Our kitchen is run by professional chefs with many years of cooking experience.</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">
+                <i className="bi bi-lightning-charge"></i>
+              </div>
+              <h3>Great Service</h3>
+              <p>Your satisfaction is our goal. Enjoy friendly service and quick food delivery.</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">
+                <i className="bi bi-shield-check"></i>
+              </div>
+              <h3>Hygiene Standard</h3>
+              <p>We enforce 5-star clean standards. Daily sanitation, sterile equipment, and safe preparation policies.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Statistics Section */}
+        <section className="luxury-stats-section">
+          <div className="stats-grid">
+            <div className="stat-card">
+              <div className="stat-number">15K+</div>
+              <div className="stat-label">Happy Customers</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-number">120+</div>
+              <div className="stat-label">Signature Dishes</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-number">15+</div>
+              <div className="stat-label">Years of Ambiance</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-number">4.9★</div>
+              <div className="stat-label">Average Rating</div>
+            </div>
+          </div>
+        </section>
+
+        <section className="chef-spotlight-section">
+          <div className="chef-spotlight-card">
+            <div className="chef-spotlight-image">
+              <img
+                src="https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&w=900&q=80"
+                alt="Chef spotlight"
+              />
+            </div>
+            <div className="chef-spotlight-content">
+              <span className="section-subheading">CHEF SPOTLIGHT</span>
+              <h3>Prepared by Expert Chefs</h3>
+              <p>
+                Our kitchen team blends traditional Indian recipes with modern presentation, precise timing,
+                and high-quality ingredients to keep every plate memorable.
+              </p>
+              <div className="chef-spotlight-points">
+                <div className="chef-point">
+                  <i className="bi bi-check2-circle"></i>
+                  <span>Expert chefs with signature techniques</span>
+                </div>
+                <div className="chef-point">
+                  <i className="bi bi-check2-circle"></i>
+                  <span>Fresh ingredients prepared daily</span>
+                </div>
+                <div className="chef-point">
+                  <i className="bi bi-check2-circle"></i>
+                  <span>Balanced flavors with premium presentation</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="trust-strip-section">
+          <div className="trust-strip-grid">
+            <div className="trust-strip-item">
+              <div className="trust-strip-value">100%</div>
+              <div className="trust-strip-label">Fresh Prep</div>
+            </div>
+            <div className="trust-strip-item">
+              <div className="trust-strip-value">24/7</div>
+              <div className="trust-strip-label">Kitchen Support</div>
+            </div>
+            <div className="trust-strip-item">
+              <div className="trust-strip-value">A+</div>
+              <div className="trust-strip-label">Hygiene Standard</div>
+            </div>
+            <div className="trust-strip-item">
+              <div className="trust-strip-value">Fast</div>
+              <div className="trust-strip-label">Service Flow</div>
+            </div>
+          </div>
+        </section>
+
+        <section className="why-us-cta-section">
+          <div className="why-us-cta-card">
+            <div>
+              <span className="section-subheading">READY TO VISIT</span>
+              <h3>Experience the same flow, now with a stronger story.</h3>
+              <p>
+                Explore the menu, reserve a table, and enjoy a premium dining experience without any flow change.
+              </p>
+            </div>
+            <div className="why-us-cta-actions">
+              <button className="btn-reserve" onClick={() => navigate('/contact')}>
+                <i className="bi bi-calendar-check"></i> Book Table
+              </button>
+              <button className="btn-explore-menu" onClick={() => navigate('/menu')}>
+                View Menu <i className="bi bi-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+        </section>
+          </>
+        )}
+
+        {/* Restaurant Gallery Section */}
+        {isGalleryPage && (
+          <section className="restaurant-gallery" id="gallery">
+          <div className="section-header text-center">
+            <span className="section-subheading">VISUAL JOURNEY</span>
+            <h2 className="section-title">Our Dining Area</h2>
+          </div>
+          <div className="gallery-masonry">
+            <div className="gallery-item size-large">
+              <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80" alt="Restaurant Interior" />
+              <div className="gallery-overlay">
+                <span>Main Dining Room</span>
+              </div>
+            </div>
+            <div className="gallery-item size-tall">
+              <img src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80" alt="Special Dish" />
+              <div className="gallery-overlay">
+                <span>Delicious Platters</span>
+              </div>
+            </div>
+            <div className="gallery-item size-tall">
+              <img src="https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=600&q=80" alt="Cozy Dining Area" />
+              <div className="gallery-overlay">
+                <span>Cozy Lounge</span>
+              </div>
+            </div>
+            <div className="gallery-item size-large">
+              <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80" alt="Gourmet Food" />
+              <div className="gallery-overlay">
+                <span>Chef's Specials</span>
+              </div>
+            </div>
+          </div>
+        </section>
+        )}
+
+        {/* Customer Testimonials Section */}
+        {isWhyUsPage && (
+          <section className="testimonials-section" id="testimonials">
+          <div className="section-header text-center">
+            <span className="section-subheading">TESTIMONIALS</span>
+            <h2 className="section-title">What Our Customers Say</h2>
+          </div>
+          <div className="testimonial-slider-container">
+            <div className="testimonial-card-slide">
+              <div className="testimonial-stars">
+                <i className="bi bi-star-fill"></i>
+                <i className="bi bi-star-fill"></i>
+                <i className="bi bi-star-fill"></i>
+                <i className="bi bi-star-fill"></i>
+                <i className="bi bi-star-fill"></i>
+              </div>
+              <p className="testimonial-text">
+                {activeTestimonial === 0 && "“Absolutely delicious! The atmosphere is cozy, the service is fast, and the food is cooked to perfection. Best place to eat in years.”"}
+                {activeTestimonial === 1 && "“The steaks here are amazing, and the presentation of each dish looks great. Truly a wonderful meal.”"}
+                {activeTestimonial === 2 && "“Very clean, friendly staff, and an amazing collection of sweet desserts. Will definitely come back with family!”"}
+              </p>
+              <div className="testimonial-user">
+                <img 
+                  src={activeTestimonial === 0 ? "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80" : 
+                       activeTestimonial === 1 ? "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80" : 
+                       "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=150&q=80"} 
+                  alt="Customer" 
+                  className="testimonial-avatar" 
+                />
+                <div className="testimonial-meta">
+                  <h4>
+                    {activeTestimonial === 0 && "Sophia Loren"}
+                    {activeTestimonial === 1 && "David Marcus"}
+                    {activeTestimonial === 2 && "Emily Watson"}
+                  </h4>
+                  <span>
+                    {activeTestimonial === 0 && "Food Lover"}
+                    {activeTestimonial === 1 && "Food Critic"}
+                    {activeTestimonial === 2 && "Regular Customer"}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="testimonial-dots">
+              <span className={`dot ${activeTestimonial === 0 ? 'active' : ''}`} onClick={() => setActiveTestimonial(0)}></span>
+              <span className={`dot ${activeTestimonial === 1 ? 'active' : ''}`} onClick={() => setActiveTestimonial(1)}></span>
+              <span className={`dot ${activeTestimonial === 2 ? 'active' : ''}`} onClick={() => setActiveTestimonial(2)}></span>
+            </div>
+          </div>
+        </section>
+        )}
+
+        {/* Reservation Section */}
+        {isContactPage && (
+          <section className="reservation-section" id="reservation-section">
+          <div className="section-header text-center">
+            <span className="section-subheading">TABLE BOOKING</span>
+            <h2 className="section-title">Reserve A Table</h2>
+          </div>
+          <div className="reservation-container">
+            <form onSubmit={handleReservationSubmit} className="reservation-form">
+              <div className="form-row">
+                <div className="form-group-lux">
+                  <label>Full Name *</label>
+                  <input 
+                    type="text" 
+                    placeholder="Enter your name" 
+                    value={reservation.name}
+                    onChange={(e) => setReservation({...reservation, name: e.target.value})}
+                    required 
+                  />
+                </div>
+                <div className="form-group-lux">
+                  <label>Email Address</label>
+                  <input 
+                    type="email" 
+                    placeholder="Enter email address" 
+                    value={reservation.email}
+                    onChange={(e) => setReservation({...reservation, email: e.target.value})}
+                  />
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group-lux">
+                  <label>Mobile Number *</label>
+                  <input 
+                    type="tel" 
+                    placeholder="Enter 10 digit number" 
+                    value={reservation.phone}
+                    onChange={(e) => setReservation({...reservation, phone: e.target.value})}
+                    required 
+                  />
+                </div>
+                <div className="form-group-lux">
+                  <label>Number of Guests *</label>
+                  <select 
+                    value={reservation.guests}
+                    onChange={(e) => setReservation({...reservation, guests: parseInt(e.target.value)})}
+                    required
+                  >
+                    <option value="1">1 Person</option>
+                    <option value="2">2 Persons</option>
+                    <option value="3">3 Persons</option>
+                    <option value="4">4 Persons</option>
+                    <option value="5">5 Persons</option>
+                    <option value="6">6+ Persons</option>
+                  </select>
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group-lux">
+                  <label>Booking Date *</label>
+                  <input 
+                    type="date" 
+                    value={reservation.date}
+                    onChange={(e) => setReservation({...reservation, date: e.target.value})}
+                    required 
+                  />
+                </div>
+                <div className="form-group-lux">
+                  <label>Booking Time *</label>
+                  <input 
+                    type="time" 
+                    value={reservation.time}
+                    onChange={(e) => setReservation({...reservation, time: e.target.value})}
+                    required 
+                  />
+                </div>
+              </div>
+              <div className="form-group-lux">
+                <label>Special Notes (Optional)</label>
+                <textarea 
+                  rows="3" 
+                  placeholder="E.g., birthday celebration, window table request, food allergies..."
+                  value={reservation.notes}
+                  onChange={(e) => setReservation({...reservation, notes: e.target.value})}
+                ></textarea>
+              </div>
+              <div className="text-center mt-4">
+                <button type="submit" className="btn-book-submit">
+                  Confirm Reservation <i className="bi bi-calendar-plus"></i>
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+        )}
+
+        {/* Location & Contact Section */}
+        {isContactPage && (
+          <section className="location-contact-section" id="contact">
+          <div className="section-header text-center">
+            <span className="section-subheading">FIND US</span>
+            <h2 className="section-title">Location & Hours</h2>
+          </div>
+          <div className="location-grid">
+            <div className="contact-details-card">
+              <h3>Contact Info</h3>
+              <div className="contact-item">
+                <i className="bi bi-geo-alt"></i>
+                <div>
+                  <h4>Our Address</h4>
+                  <p>{contactAddress || '101, Luxury Boulevard, Regent District, NY'}</p>
+                </div>
+              </div>
+              <div className="contact-item">
+                <i className="bi bi-telephone"></i>
+                <div>
+                  <h4>Phone Number</h4>
+                  <p>{contactPhone || '+1 (555) 123-4567'}</p>
+                </div>
+              </div>
+              <div className="contact-item">
+                <i className="bi bi-envelope"></i>
+                <div>
+                  <h4>Email Address</h4>
+                  <p>{contactEmail || 'reservations@royaldining.com'}</p>
+                </div>
+              </div>
+              <div className="contact-item">
+                <i className="bi bi-clock"></i>
+                <div>
+                  <h4>Opening Hours</h4>
+                  <p>Mon - Fri: 11:00 AM - 11:00 PM</p>
+                  <p>Sat - Sun: 10:00 AM - 12:00 AM</p>
+                </div>
+              </div>
+            </div>
+            <div className="map-container-lux">
+              <iframe 
+                title="Restaurant Location"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.6175390977823!2d-73.98685838459392!3d40.74844047932822!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c259a9b3117469%3A0xd134e199a405a163!2sEmpire%20State%20Building!5e0!3m2!1sen!2sin!4v1655029367123!5m2!1sen!2sin" 
+                width="100%" 
+                height="100%" 
+                style={{ border: 0, borderRadius: '20px' }} 
+                allowFullScreen="" 
+                loading="lazy" 
+                referrerPolicy="no-referrer-when-downgrade"
+              ></iframe>
+            </div>
+          </div>
+        </section>
+        )}
 
         {/* Footer */}
         <footer className="main-footer" style={{ marginBottom: 0 }}>
@@ -3134,6 +3704,30 @@ const CustomerLanding = () => {
                     {socialMediaDetails?.youtube && <a href={socialMediaDetails.youtube} target="_blank" rel="noopener noreferrer" className="social-link" style={{ color: '#FF0000', backgroundColor: '#fff' }}><i className="bi bi-youtube"></i></a>}
                   </div>
                 )}
+                <div className="newsletter-box mt-4">
+                  <h5>Join Our Newsletter</h5>
+                  <p style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '10px' }}>Subscribe to get updates on luxury events and signature menus.</p>
+                  <form onSubmit={(e) => { e.preventDefault(); toast.success("Thank you for subscribing!"); e.target.reset(); }} className="newsletter-form">
+                    <input type="email" placeholder="Your Email Address" required style={{
+                      padding: '10px 14px',
+                      background: 'rgba(255,255,255,0.05)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: '8px 0 0 8px',
+                      color: '#fff',
+                      fontSize: '0.8rem',
+                      outline: 'none',
+                      width: '180px'
+                    }} />
+                    <button type="submit" style={{
+                      padding: '10px 16px',
+                      background: 'var(--accent)',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '0 8px 8px 0',
+                      cursor: 'pointer'
+                    }}><i className="bi bi-send"></i></button>
+                  </form>
+                </div>
               </div>
 
               {/* Quick Links */}
@@ -3401,7 +3995,7 @@ const CustomerLanding = () => {
         {/* Payment Modal */}
         {showPaymentModal && (
           <div className="payment-modal-overlay" onClick={closePaymentModal}>
-            <div className="payment-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="payment-modal checkout-shell" onClick={(e) => e.stopPropagation()}>
               <div className="payment-modal-header">
                 <button type="button" className="payment-modal-back" onClick={closePaymentModal}>
                   <i className="bi bi-arrow-left"></i>
@@ -3412,7 +4006,72 @@ const CustomerLanding = () => {
                 </button>
               </div>
 
-              <div className="payment-modal-body">
+              <div className="payment-modal-body checkout-modal-body">
+                <div className="checkout-summary-panel">
+                  <div className="checkout-summary-header">
+                    <span className="section-subheading">YOUR CART</span>
+                    <h4>Review Items Before Payment</h4>
+                  </div>
+
+                  <div className="checkout-summary-items">
+                    {getFilteredCartItems().map(item => {
+                      const itemKey = item.cartItemId || item.id;
+                      return (
+                        <div key={itemKey} className="checkout-summary-item">
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="checkout-summary-image"
+                            onError={handleImageError}
+                          />
+                          <div className="checkout-summary-info">
+                            <div className="checkout-summary-name">{item.name}</div>
+                            <div className="checkout-summary-meta">
+                              <span>{item.isVeg === true ? 'Veg' : 'Non-Veg'}</span>
+                              {item.prepTime && <span>{item.prepTime} min</span>}
+                            </div>
+                            {item.addons && item.addons.length > 0 && (
+                              <div className="checkout-summary-addons">
+                                {item.addons.map(addon => (
+                                  <span key={addon.id} className="cart-addon-tag">
+                                    {addon.name} x{addon.quantity}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <div className="checkout-summary-side">
+                            <button
+                              className="checkout-summary-remove"
+                              onClick={() => deleteItemFromCart(itemKey)}
+                              title="Remove item"
+                            >
+                              <i className="bi bi-x"></i>
+                            </button>
+                            <div className="checkout-summary-price">${getItemTotalWithAddons(item)}</div>
+                            <div className="checkout-summary-qty">
+                              <button type="button" onClick={() => removeFromCart(itemKey)}>−</button>
+                              <span>{item.quantity}</span>
+                              <button type="button" onClick={() => openAddonModal(item)}>+</button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="checkout-summary-total">
+                    <span>Total Amount</span>
+                    <strong>${getTotalCartAmount()}</strong>
+                  </div>
+
+                  <button type="button" className="checkout-summary-back" onClick={closePaymentModal}>
+                    <i className="bi bi-arrow-left"></i>
+                    Back to Cart
+                  </button>
+                </div>
+
+                <div className="checkout-form-panel">
                 {/* Customer Info Section */}
                 <div className="payment-section" style={{ paddingBottom: '6px' }}>
                   <h4 className="payment-section-title">Customer Details</h4>
@@ -3465,53 +4124,59 @@ const CustomerLanding = () => {
                       onClick={() => { setSelectedOrderType('DELIVERY'); fetchTaxDetails('DELIVERY'); }}
                       style={{
                         flex: 1,
-                        padding: '10px 12px',
+                        padding: '10px 10px',
                         border: selectedOrderType === 'DELIVERY' ? '2px solid #dc3545' : '1px solid #ddd',
                         borderRadius: '8px',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         gap: '8px',
-                        background: selectedOrderType === 'DELIVERY' ? '#fff5f5' : '#fff'
+                        background: selectedOrderType === 'DELIVERY' ? '#fff5f5' : '#fff',
+                        color: '#111827',
+                        minWidth: 0
                       }}
                     >
-                      <i className="bi bi-truck" style={{ fontSize: '16px', color: selectedOrderType === 'DELIVERY' ? '#dc3545' : '#666' }}></i>
-                      <span style={{ fontSize: '13px', fontWeight: 600 }}>Delivery</span>
-                      <span style={{ fontSize: '13px', color: '#28a745', fontWeight: 700, marginLeft: 'auto' }}>+${apiDeliveryCharge.toFixed(0)}</span>
+                      <i className="bi bi-truck" style={{ fontSize: '15px', color: selectedOrderType === 'DELIVERY' ? '#dc3545' : '#6b7280', flexShrink: 0 }}></i>
+                      <span style={{ fontSize: '12px', fontWeight: 700, color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Delivery</span>
+                      <span style={{ fontSize: '12px', color: '#16a34a', fontWeight: 800, marginLeft: 'auto', whiteSpace: 'nowrap' }}>+${apiDeliveryCharge.toFixed(0)}</span>
                     </div>
                     <div
                       onClick={() => { setSelectedOrderType('TAKEAWAY'); fetchTaxDetails('TAKEAWAY'); }}
                       style={{
                         flex: 1,
-                        padding: '10px 12px',
+                        padding: '10px 10px',
                         border: selectedOrderType === 'TAKEAWAY' ? '2px solid #dc3545' : '1px solid #ddd',
                         borderRadius: '8px',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         gap: '8px',
-                        background: selectedOrderType === 'TAKEAWAY' ? '#fff5f5' : '#fff'
+                        background: selectedOrderType === 'TAKEAWAY' ? '#fff5f5' : '#fff',
+                        color: '#111827',
+                        minWidth: 0
                       }}
                     >
-                      <i className="bi bi-bag" style={{ fontSize: '16px', color: selectedOrderType === 'TAKEAWAY' ? '#dc3545' : '#666' }}></i>
-                      <span style={{ fontSize: '13px', fontWeight: 600 }}>Takeaway</span>
+                      <i className="bi bi-bag" style={{ fontSize: '15px', color: selectedOrderType === 'TAKEAWAY' ? '#dc3545' : '#6b7280', flexShrink: 0 }}></i>
+                      <span style={{ fontSize: '12px', fontWeight: 700, color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Takeaway</span>
                     </div>
                     <div
                       onClick={() => { setSelectedOrderType('DINE_IN'); fetchTaxDetails('DINE_IN'); }}
                       style={{
                         flex: 1,
-                        padding: '10px 12px',
+                        padding: '10px 10px',
                         border: selectedOrderType === 'DINE_IN' ? '2px solid #dc3545' : '1px solid #ddd',
                         borderRadius: '8px',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         gap: '8px',
-                        background: selectedOrderType === 'DINE_IN' ? '#fff5f5' : '#fff'
+                        background: selectedOrderType === 'DINE_IN' ? '#fff5f5' : '#fff',
+                        color: '#111827',
+                        minWidth: 0
                       }}
                     >
-                      <i className="bi bi-cup-hot" style={{ fontSize: '16px', color: selectedOrderType === 'DINE_IN' ? '#dc3545' : '#666' }}></i>
-                      <span style={{ fontSize: '13px', fontWeight: 600 }}>Dine In</span>
+                      <i className="bi bi-cup-hot" style={{ fontSize: '15px', color: selectedOrderType === 'DINE_IN' ? '#dc3545' : '#6b7280', flexShrink: 0 }}></i>
+                      <span style={{ fontSize: '12px', fontWeight: 700, color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Dine In</span>
                     </div>
                   </div>
                 </div>
@@ -3710,11 +4375,12 @@ const CustomerLanding = () => {
                             display: 'flex',
                             alignItems: 'center',
                             gap: '8px',
-                            background: selectedPaymentMethod === gateway.paymentMethod ? '#fff5f5' : '#fff'
+                            background: selectedPaymentMethod === gateway.paymentMethod ? '#fff5f5' : '#fff',
+                            color: '#111827'
                           }}
                         >
-                          <i className={`bi ${gateway.paymentMethod === 'COD' ? 'bi-cash-stack' : 'bi-credit-card'}`} style={{ fontSize: '18px', color: selectedPaymentMethod === gateway.paymentMethod ? '#dc3545' : '#666' }}></i>
-                          <span style={{ fontSize: '13px', fontWeight: 600 }}>{gateway.title}</span>
+                          <i className={`bi ${gateway.paymentMethod === 'COD' ? 'bi-cash-stack' : 'bi-credit-card'}`} style={{ fontSize: '18px', color: selectedPaymentMethod === gateway.paymentMethod ? '#dc3545' : '#6b7280' }}></i>
+                          <span style={{ fontSize: '13px', fontWeight: 700, color: '#111827', lineHeight: 1.2 }}>{gateway.title}</span>
                           {selectedPaymentMethod === gateway.paymentMethod && (
                             <i className="bi bi-check-circle-fill" style={{ color: '#dc3545', fontSize: '14px', marginLeft: 'auto' }}></i>
                           )}
@@ -4057,6 +4723,8 @@ const CustomerLanding = () => {
                   </details>
                 </div>
               </div>
+
+                </div>
 
               <div className="payment-modal-footer">
                 <button

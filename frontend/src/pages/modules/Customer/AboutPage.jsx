@@ -83,6 +83,36 @@ const AboutPage = () => {
           margin-bottom: 20px;
           text-align: justify;
         }
+        .about-highlights {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 16px;
+          margin-top: 24px;
+        }
+        .about-highlight {
+          background: linear-gradient(135deg, #fafafa 0%, #f1f5f9 100%);
+          border: 1px solid #edf2f7;
+          border-radius: 14px;
+          padding: 18px 16px;
+        }
+        .about-highlight i {
+          color: ${primaryColor};
+          font-size: 1.25rem;
+          margin-bottom: 10px;
+          display: inline-flex;
+        }
+        .about-highlight h4 {
+          color: #222;
+          margin: 0 0 8px 0;
+          font-size: 1rem;
+        }
+        .about-highlight p {
+          margin: 0;
+          text-align: left;
+          font-size: 0.92rem;
+          line-height: 1.6;
+          color: #666;
+        }
         @media (max-width: 768px) {
           .hero-header {
             padding: 40px 20px 60px;
@@ -103,6 +133,9 @@ const AboutPage = () => {
           }
           .info-card p {
             font-size: 1rem;
+          }
+          .about-highlights {
+            grid-template-columns: 1fr;
           }
         }
       `}</style>
@@ -128,8 +161,26 @@ const AboutPage = () => {
             <p><strong>Our Vision:</strong> {theme.ourVision}</p>
           )}
           {!theme.aboutUs && !theme.ourMission && !theme.ourVision && (
-            <p>Welcome to {theme.restaurantName}. We are committed to serving the finest food with exceptional hospitality.</p>
+            <p>Welcome to {theme.restaurantName}. We are committed to serving delicious food with friendly service.</p>
           )}
+
+          <div className="about-highlights">
+            <div className="about-highlight">
+              <i className="bi bi-award"></i>
+              <h4>Quality First</h4>
+              <p>Every dish is prepared with consistency, hygiene, and careful attention to detail.</p>
+            </div>
+            <div className="about-highlight">
+              <i className="bi bi-people"></i>
+              <h4>Customer Focused</h4>
+              <p>Our team makes sure every customer has a warm, comfortable, and happy visit.</p>
+            </div>
+            <div className="about-highlight">
+              <i className="bi bi-heart"></i>
+              <h4>Made With Care</h4>
+              <p>We keep the taste familiar while improving our presentation and service.</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -24,7 +24,6 @@ const SuperAdminSidebar = ({ collapsed, visible, onLogout }) => {
       submenu: [
         { path: '/superadmin/subscription-plans', label: 'Subscription Plans' },
         { path: '/superadmin/subscriptions', label: 'Subscriptions' },
-        { path: '/superadmin/coupons', label: 'Coupons' },
       ]
     },
     { path: '/superadmin/reports', icon: 'bi bi-bar-chart', label: 'Reports' },

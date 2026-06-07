@@ -16,14 +16,12 @@ import AboutPage from "../pages/modules/Customer/AboutPage";
 import TermsPage from "../pages/modules/Customer/TermsPage";
 import PrivacyPage from "../pages/modules/Customer/PrivacyPage";
 import RefundPage from "../pages/modules/Customer/RefundPage";
-import ContactPage from "../pages/modules/Customer/ContactPage";
 import CustomerLoginPage from "../pages/modules/Customer/LoginPage";
 import CustomerProfilePage from "../pages/modules/Customer/ProfilePage";
 import CustomerOrdersPage from "../pages/modules/Customer/OrdersPage";
 import CustomerAddressesPage from "../pages/modules/Customer/AddressesPage";
 import PaymentResponsePage from "../pages/modules/Customer/PaymentResponsePage";
 import LocationPage from "../pages/modules/Customer/LocationPage";
-
 
 const LoginRoutes = () => {
     return (
@@ -55,6 +53,36 @@ const LoginRoutes = () => {
                     }
                 />
                 <Route
+                    path="/home"
+                    element={
+                        <CustomerLanding />
+                    }
+                />
+                <Route
+                    path="/signature"
+                    element={
+                        <CustomerLanding />
+                    }
+                />
+                <Route
+                    path="/why-us"
+                    element={
+                        <CustomerLanding />
+                    }
+                />
+                <Route
+                    path="/gallery"
+                    element={
+                        <CustomerLanding />
+                    }
+                />
+                <Route
+                    path="/contact"
+                    element={
+                        <CustomerLanding />
+                    }
+                />
+                <Route
                     path="/about"
                     element={
                         <AboutPage />
@@ -76,12 +104,6 @@ const LoginRoutes = () => {
                     path="/refund"
                     element={
                         <RefundPage />
-                    }
-                />
-                <Route
-                    path="/contact"
-                    element={
-                        <ContactPage />
                     }
                 />
                 <Route

@@ -119,6 +119,35 @@ const ContactPage = () => {
           font-size: 0.85rem;
           margin-top: 8px;
         }
+        .contact-actions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
+          margin-top: 24px;
+        }
+        .contact-action-btn {
+          border: none;
+          border-radius: 999px;
+          padding: 12px 18px;
+          font-weight: 600;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          transition: all 0.3s ease;
+        }
+        .contact-action-btn.primary {
+          background: ${primaryColor};
+          color: white;
+        }
+        .contact-action-btn.secondary {
+          background: #f8f9fa;
+          color: #333;
+          border: 1px solid #e5e7eb;
+        }
+        .contact-action-btn:hover {
+          transform: translateY(-2px);
+        }
         @media (max-width: 768px) {
           .hero-header {
             padding: 40px 20px 60px;
@@ -178,6 +207,17 @@ const ContactPage = () => {
                 <p>{contactEmail}</p>
               </div>
             )}
+          </div>
+
+          <div className="contact-actions">
+            <button className="contact-action-btn primary" onClick={() => navigate('/menu')}>
+              <i className="bi bi-arrow-left-right"></i>
+              Browse Menu
+            </button>
+            <button className="contact-action-btn secondary" onClick={() => navigate('/menu#home')}>
+              <i className="bi bi-calendar-check"></i>
+              Book From Home
+            </button>
           </div>
         </div>
       </div>
