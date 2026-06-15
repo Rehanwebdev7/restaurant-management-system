@@ -146,6 +146,7 @@ const RestaurantSidebar = ({ collapsed, visible, onLogout }) => {
         { path: '/restaurant/settings/business-settings', label: 'Business Settings' },
         { path: '/restaurant/settings/payment-gateway', label: 'Payment Gateway' },
         { path: '/restaurant/settings/slider', label: 'Slider' },
+        { path: '/restaurant/settings/gallery', label: 'Gallery' },
         { path: '/restaurant/settings/marquee-messages', label: 'Marquee Messages' }
       ]
     }

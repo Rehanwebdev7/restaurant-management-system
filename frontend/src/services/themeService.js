@@ -31,6 +31,34 @@ export const DEFAULT_THEME = {
   email: '',
 };
 
+const normalizeHex = (hex, fallback = DEFAULT_THEME.primary) => {
+  if (typeof hex !== 'string') return fallback;
+  const cleaned = hex.trim().replace('#', '');
+  if (/^[0-9a-fA-F]{6}$/.test(cleaned)) {
+    return `#${cleaned}`;
+  }
+  return fallback;
+};
+
+const blendHex = (from, to, ratio) => {
+  const start = normalizeHex(from).replace('#', '');
+  const end = normalizeHex(to).replace('#', '');
+  const mix = Math.max(0, Math.min(1, ratio));
+
+  const sr = parseInt(start.substring(0, 2), 16);
+  const sg = parseInt(start.substring(2, 4), 16);
+  const sb = parseInt(start.substring(4, 6), 16);
+  const tr = parseInt(end.substring(0, 2), 16);
+  const tg = parseInt(end.substring(2, 4), 16);
+  const tb = parseInt(end.substring(4, 6), 16);
+
+  const r = Math.round(sr + (tr - sr) * mix);
+  const g = Math.round(sg + (tg - sg) * mix);
+  const b = Math.round(sb + (tb - sb) * mix);
+
+  return `#${[r, g, b].map((value) => value.toString(16).padStart(2, '0')).join('')}`;
+};
+
 /**
  * Extract root domain from hostname (ignores subdomains)
  * Examples:
@@ -330,26 +358,41 @@ const lightenHex = (hex, percent) => {
  */
 export const applyThemeToCSS = (theme) => {
   const root = document.documentElement;
+  const primary = normalizeHex(theme.primary);
+  const secondary = normalizeHex(theme.secondary, blendHex(primary, '#0f172a', 0.2));
+  const tertiary = normalizeHex(theme.tertiary, blendHex(primary, '#14b8a6', 0.35));
+  const softSurface = blendHex(primary, '#ffffff', 0.94);
+  const softSurfaceAlt = blendHex(primary, '#f8fafc', 0.92);
+  const primaryRgb = hexToRgb(primary);
 
   // Apply color variables (both hex and RGB for rgba usage)
-  if (theme.primary) {
-    root.style.setProperty('--theme-primary', theme.primary);
-    root.style.setProperty('--theme-primary-rgb', hexToRgb(theme.primary));
-    root.style.setProperty('--theme-primary-dark', darkenHex(theme.primary, 15));
-    root.style.setProperty('--theme-primary-light', lightenHex(theme.primary, 30));
+  if (primary) {
+    root.style.setProperty('--theme-primary', primary);
+    root.style.setProperty('--theme-primary-rgb', primaryRgb);
+    root.style.setProperty('--theme-primary-dark', darkenHex(primary, 15));
+    root.style.setProperty('--theme-primary-light', lightenHex(primary, 30));
     // Aliases used by mesh-gradient tint system
-    root.style.setProperty('--primary-color', theme.primary);
-    root.style.setProperty('--primary-color-rgb', hexToRgb(theme.primary));
+    root.style.setProperty('--primary-color', primary);
+    root.style.setProperty('--primary-color-rgb', primaryRgb);
     // Auto contrast: #000 on light primaries, #fff on dark primaries
-    root.style.setProperty('--primary-color-contrast', getContrastColor(theme.primary));
+    root.style.setProperty('--primary-color-contrast', getContrastColor(primary));
+    root.style.setProperty('--theme-accent-soft', `rgba(${primaryRgb}, 0.10)`);
+    root.style.setProperty('--theme-accent-subtle', `rgba(${primaryRgb}, 0.06)`);
+    root.style.setProperty('--theme-accent-strong', `rgba(${primaryRgb}, 0.18)`);
+    root.style.setProperty('--theme-surface', softSurface);
+    root.style.setProperty('--theme-surface-alt', softSurfaceAlt);
+    root.style.setProperty('--theme-border', `rgba(${primaryRgb}, 0.12)`);
+    root.style.setProperty('--theme-shadow', `0 20px 60px rgba(${primaryRgb}, 0.15)`);
+    root.style.setProperty('--theme-auth-gradient', `linear-gradient(135deg, ${primary} 0%, ${secondary} 58%, ${tertiary} 100%)`);
+    root.style.setProperty('--theme-shell-gradient', `radial-gradient(circle at top left, rgba(${primaryRgb}, 0.18), transparent 30%), radial-gradient(circle at bottom right, rgba(${primaryRgb}, 0.12), transparent 28%)`);
   }
   if (theme.secondary) {
-    root.style.setProperty('--theme-secondary', theme.secondary);
-    root.style.setProperty('--theme-secondary-rgb', hexToRgb(theme.secondary));
+    root.style.setProperty('--theme-secondary', secondary);
+    root.style.setProperty('--theme-secondary-rgb', hexToRgb(secondary));
   }
   if (theme.tertiary) {
-    root.style.setProperty('--theme-tertiary', theme.tertiary);
-    root.style.setProperty('--theme-tertiary-rgb', hexToRgb(theme.tertiary));
+    root.style.setProperty('--theme-tertiary', tertiary);
+    root.style.setProperty('--theme-tertiary-rgb', hexToRgb(tertiary));
   }
   if (theme.fontColor) {
     root.style.setProperty('--theme-font-color', theme.fontColor);
@@ -357,8 +400,8 @@ export const applyThemeToCSS = (theme) => {
   }
   // Compute tinted backgrounds — always driven by primary color so the
   // whole UI gets a visible wash of the primary hue.
-  if (theme.primary) {
-    const _p  = theme.primary.replace('#', '');
+  if (primary) {
+    const _p  = primary.replace('#', '');
     const _pr = parseInt(_p.substring(0, 2), 16);
     const _pg = parseInt(_p.substring(2, 4), 16);
     const _pb = parseInt(_p.substring(4, 6), 16);
@@ -416,6 +459,9 @@ export const applyThemeToCSS = (theme) => {
   document.title = theme.restaurantName
     ? `${theme.restaurantName}`
     : 'Restaurant App';
+
+  root.dataset.brandTone = theme.restaurantName ? 'tenant' : 'default';
+  root.dataset.themeShell = theme.restaurantName ? 'branded' : 'default';
 
   console.log('Theme applied to CSS variables');
 };

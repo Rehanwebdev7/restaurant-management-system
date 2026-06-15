@@ -5,9 +5,12 @@ import { getCurrentTheme } from '../../../services/themeService';
 const ProfilePage = () => {
   const navigate = useNavigate();
   const theme = getCurrentTheme();
-  const primaryColor = theme.primary || '#667eea';
+  const primaryColor = theme.primary || '#b48a1d';
 
   const [customer, setCustomer] = useState(null);
+  const [themeMode, setThemeMode] = useState(() => {
+    return localStorage.getItem('customerThemeMode') || 'dark';
+  });
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -36,32 +39,49 @@ const ProfilePage = () => {
     return null;
   }
 
+  const isDark = themeMode === 'dark';
+  const bgColor = isDark ? '#05070c' : '#f5f2eb';
+  const cardBg = isDark ? '#0f172a' : '#ffffff';
+  const textColor = isDark ? '#f4efe6' : '#1c1917';
+  const textMuted = isDark ? '#94a3b8' : '#64748b';
+  const borderCol = isDark ? 'rgba(212, 175, 55, 0.15)' : 'rgba(0, 0, 0, 0.06)';
+  const accentGold = '#b48a1d';
+  const headerBg = isDark 
+    ? 'linear-gradient(135deg, #0f172a 0%, #05070c 100%)' 
+    : 'linear-gradient(135deg, #ffffff 0%, #f5f2eb 100%)';
+  const headerTextColor = isDark ? '#f4efe6' : '#1c1917';
+
   return (
     <div className="profile-page">
       <style>{`
         .profile-page {
           min-height: 100vh;
-          background: #fdf0ee;
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          background: ${bgColor};
+          color: ${textColor};
+          font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          transition: all 0.3s ease;
         }
 
         .profile-header {
-          background: linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}dd 50%, ${primaryColor}99 100%);
-          padding: 16px 24px 120px;
+          background: ${headerBg};
+          padding: 24px 24px 120px;
           position: relative;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+          border-bottom: 1px solid ${borderCol};
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
         }
 
         .header-top {
           display: flex;
           align-items: center;
           justify-content: space-between;
+          max-width: 600px;
+          margin: 0 auto;
         }
 
         .back-btn {
-          background: rgba(255, 255, 255, 0.2);
-          border: none;
-          color: white;
+          background: ${isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'};
+          border: 1px solid ${borderCol};
+          color: ${headerTextColor};
           width: 40px;
           height: 40px;
           border-radius: 50%;
@@ -74,77 +94,86 @@ const ProfilePage = () => {
         }
 
         .back-btn:hover {
-          background: rgba(255, 255, 255, 0.3);
+          background: ${accentGold};
+          color: #05070c;
+          border-color: ${accentGold};
+          transform: translateX(-2px);
         }
 
         .header-title {
-          color: white;
+          color: ${headerTextColor};
           font-size: 20px;
-          font-weight: 600;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 1px;
         }
 
         .logout-btn {
-          background: rgba(255, 255, 255, 0.25);
-          border: 1px solid rgba(255, 255, 255, 0.4);
-          color: white;
+          background: ${isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'};
+          border: 1px solid ${borderCol};
+          color: ${headerTextColor};
           padding: 9px 18px;
           border-radius: 20px;
           cursor: pointer;
           font-size: 13px;
-          font-weight: 600;
+          font-weight: 700;
           display: flex;
           align-items: center;
           gap: 6px;
           transition: all 0.3s ease;
-          letter-spacing: 0.3px;
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
         }
 
         .logout-btn:hover {
-          background: rgba(239, 68, 68, 0.85);
-          border-color: rgba(239, 68, 68, 1);
+          background: #ef4444;
+          border-color: #ef4444;
+          color: white;
+          transform: translateY(-1px);
         }
 
         .profile-content {
           max-width: 600px;
-          margin: -60px auto 40px;
+          margin: -80px auto 40px;
           padding: 0 20px;
           position: relative;
           z-index: 1;
         }
 
         .profile-card {
-          background: white;
-          border-radius: 16px;
+          background: ${cardBg};
+          border: 1px solid ${borderCol};
+          border-radius: 24px;
           overflow: hidden;
-          box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
         }
 
         .profile-avatar-section {
           text-align: center;
           padding: 40px 24px 32px;
-          border-bottom: 1px solid #f0f0f0;
-          background: linear-gradient(135deg, rgba(255,255,255,1) 0%, ${primaryColor}04 100%);
+          border-bottom: 1px solid ${borderCol};
+          background: linear-gradient(to bottom, ${cardBg} 0%, ${isDark ? '#0c101b' : '#faf9f6'} 100%);
         }
 
         .profile-avatar {
-          width: 120px;
-          height: 120px;
-          background: linear-gradient(135deg, ${primaryColor}, ${primaryColor}cc);
+          width: 110px;
+          height: 110px;
+          background: linear-gradient(135deg, ${accentGold}, #d4af37);
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           margin: 0 auto 20px;
-          border: 5px solid white;
-          box-shadow: 0 8px 32px rgba(0,0,0,0.15);
-          font-size: 48px;
-          color: white;
+          border: 4px solid ${isDark ? '#0f172a' : '#ffffff'};
+          box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+          font-size: 44px;
+          color: #05070c;
           font-weight: 700;
         }
 
         .profile-avatar i {
-          font-size: 56px;
-          color: white;
+          font-size: 50px;
+          color: #05070c;
         }
 
         .profile-avatar img {
@@ -155,30 +184,31 @@ const ProfilePage = () => {
         }
 
         .profile-name {
-          font-size: 26px;
+          font-size: 24px;
           font-weight: 800;
-          color: #1a1a2e;
+          color: ${textColor};
           margin-bottom: 6px;
           letter-spacing: -0.3px;
         }
 
         .profile-mobile {
-          color: #888;
+          color: ${textMuted};
           font-size: 15px;
-          font-weight: 500;
+          font-weight: 600;
         }
 
         .profile-details {
-          padding: 20px;
+          padding: 24px;
         }
 
         .detail-item {
           display: flex;
           align-items: center;
           padding: 16px;
-          background: #f8f9fa;
-          border-radius: 12px;
-          margin-bottom: 12px;
+          background: ${isDark ? 'rgba(255, 255, 255, 0.02)' : '#f8f9fa'};
+          border: 1px solid ${borderCol};
+          border-radius: 16px;
+          margin-bottom: 14px;
         }
 
         .detail-item:last-child {
@@ -188,7 +218,7 @@ const ProfilePage = () => {
         .detail-icon {
           width: 44px;
           height: 44px;
-          background: ${primaryColor}15;
+          background: rgba(180, 138, 29, 0.12);
           border-radius: 12px;
           display: flex;
           align-items: center;
@@ -198,7 +228,7 @@ const ProfilePage = () => {
 
         .detail-icon i {
           font-size: 20px;
-          color: ${primaryColor};
+          color: ${accentGold};
         }
 
         .detail-content {
@@ -206,34 +236,36 @@ const ProfilePage = () => {
         }
 
         .detail-label {
-          font-size: 12px;
-          color: #888;
+          font-size: 11px;
+          color: ${textMuted};
           text-transform: uppercase;
-          letter-spacing: 0.5px;
+          letter-spacing: 0.8px;
           margin-bottom: 2px;
+          font-weight: 700;
         }
 
         .detail-value {
           font-size: 16px;
           font-weight: 600;
-          color: #333;
+          color: ${textColor};
         }
 
         .menu-section {
-          background: white;
-          border-radius: 20px;
-          margin-top: 20px;
+          background: ${cardBg};
+          border: 1px solid ${borderCol};
+          border-radius: 24px;
+          margin-top: 24px;
           overflow: hidden;
-          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
         }
 
         .menu-item {
           display: flex;
           align-items: center;
-          padding: 18px 20px;
-          border-bottom: 1px solid #f0f0f0;
+          padding: 18px 24px;
+          border-bottom: 1px solid ${borderCol};
           cursor: pointer;
-          transition: all 0.2s;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .menu-item:last-child {
@@ -241,68 +273,89 @@ const ProfilePage = () => {
         }
 
         .menu-item:hover {
-          background: #f8f9fa;
+          background: ${isDark ? 'rgba(255, 255, 255, 0.03)' : '#f8f9fa'};
+          padding-left: 28px;
         }
 
         .menu-icon {
           width: 40px;
           height: 40px;
-          background: ${primaryColor}10;
+          background: rgba(180, 138, 29, 0.1);
           border-radius: 10px;
           display: flex;
           align-items: center;
           justify-content: center;
           margin-right: 14px;
+          transition: all 0.3s;
+        }
+
+        .menu-item:hover .menu-icon {
+          background: ${accentGold};
+        }
+
+        .menu-item:hover .menu-icon i {
+          color: #05070c;
         }
 
         .menu-icon i {
           font-size: 18px;
-          color: ${primaryColor};
+          color: ${accentGold};
+          transition: all 0.3s;
         }
 
         .menu-text {
           flex: 1;
           font-size: 15px;
-          font-weight: 500;
-          color: #333;
+          font-weight: 600;
+          color: ${textColor};
         }
 
         .menu-arrow {
-          color: #ccc;
+          color: ${textMuted};
+          transition: transform 0.3s;
+        }
+
+        .menu-item:hover .menu-arrow {
+          transform: translateX(4px);
+          color: ${accentGold};
         }
 
         .logout-section {
-          padding: 20px;
+          padding: 24px 0;
         }
 
         .logout-full-btn {
           width: 100%;
           padding: 16px;
-          background: #fff;
-          border: 2px solid #ff4757;
-          color: #ff4757;
-          border-radius: 12px;
+          background: transparent;
+          border: 2px solid #ef4444;
+          color: #ef4444;
+          border-radius: 16px;
           font-size: 16px;
-          font-weight: 600;
+          font-weight: 700;
           cursor: pointer;
-          transition: all 0.3s;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 10px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
         }
 
         .logout-full-btn:hover {
-          background: #ff4757;
+          background: #ef4444;
           color: white;
+          box-shadow: 0 8px 20px rgba(239, 68, 68, 0.25);
+          transform: translateY(-2px);
         }
 
         @media (max-width: 480px) {
           .profile-header {
-            padding: 15px 15px 80px;
+            padding: 16px 16px 80px;
           }
           .profile-content {
-            padding: 0 15px;
+            padding: 0 16px;
             margin-top: -50px;
           }
           .profile-avatar {

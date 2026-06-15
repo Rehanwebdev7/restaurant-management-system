@@ -5,32 +5,66 @@ import { getCurrentTheme } from '../../../services/themeService';
 const AboutPage = () => {
   const navigate = useNavigate();
   const theme = getCurrentTheme();
-  const primaryColor = theme.primary || '#667eea';
+  const primaryColor = theme.primary || '#b48a1d';
+
+  const [themeMode, setThemeMode] = React.useState(() => {
+    return localStorage.getItem('customerThemeMode') || 'dark';
+  });
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
+  const isDark = themeMode === 'dark';
+  const bgColor = isDark ? '#05070c' : '#f5f2eb';
+  const cardBg = isDark ? '#0f172a' : '#ffffff';
+  const textColor = isDark ? '#f4efe6' : '#1c1917';
+  const textMuted = isDark ? '#94a3b8' : '#64748b';
+  const borderCol = isDark ? 'rgba(212, 175, 55, 0.15)' : 'rgba(0, 0, 0, 0.06)';
+  const accentGold = '#b48a1d';
+  const headerBg = isDark 
+    ? 'linear-gradient(135deg, #0f172a 0%, #05070c 100%)' 
+    : 'linear-gradient(135deg, #ffffff 0%, #f5f2eb 100%)';
+  const headerTextColor = isDark ? '#f4efe6' : '#1c1917';
+
   return (
     <div className="info-page">
       <style>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
         .info-page {
           min-height: 100vh;
-          background: #f5f5f5;
+          background: ${bgColor};
+          color: ${textColor};
+          font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+          transition: all 0.3s ease;
+          overflow-x: hidden;
         }
+
         .hero-header {
-          background: linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}cc 50%, ${primaryColor}99 100%);
-          padding: 60px 20px 80px;
+          background: ${headerBg};
+          padding: 80px 20px 100px;
           text-align: center;
           position: relative;
+          border-bottom: 1px solid ${borderCol};
         }
+
         .back-button {
           position: absolute;
-          top: 20px;
-          left: 20px;
-          background: rgba(255, 255, 255, 0.2);
-          border: none;
-          color: white;
+          top: 24px;
+          left: 24px;
+          background: ${isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'};
+          border: 1px solid ${borderCol};
+          color: ${headerTextColor};
           width: 40px;
           height: 40px;
           border-radius: 50%;
@@ -39,103 +73,150 @@ const AboutPage = () => {
           align-items: center;
           justify-content: center;
           font-size: 1.2rem;
-          transition: all 0.3s ease;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
+
         .back-button:hover {
-          background: rgba(255, 255, 255, 0.3);
+          background: ${accentGold};
+          color: #05070c;
+          border-color: ${accentGold};
           transform: translateX(-3px);
         }
+
         .hero-header h1 {
-          color: white;
-          font-size: 3rem;
-          font-weight: 700;
+          color: ${headerTextColor};
+          font-size: clamp(2.2rem, 5vw, 3.5rem);
+          font-weight: 800;
           margin: 0 0 15px 0;
-          text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          text-transform: uppercase;
+          letter-spacing: 2px;
+          animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
+
         .hero-header .subtitle {
-          color: rgba(255, 255, 255, 0.9);
-          font-size: 1.1rem;
+          color: ${textMuted};
+          font-size: 1.15rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.15s forwards;
+          opacity: 0;
         }
+
         .info-page-content {
-          max-width: 900px;
-          margin: -40px auto 40px;
+          max-width: 850px;
+          margin: -60px auto 60px;
           padding: 0 20px;
           position: relative;
           z-index: 1;
+          animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.3s forwards;
+          opacity: 0;
         }
+
         .info-card {
-          background: white;
-          border-radius: 20px;
-          padding: 40px;
-          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+          background: ${cardBg};
+          border-radius: 24px;
+          padding: 48px;
+          border: 1px solid ${borderCol};
+          box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
         }
+
         .info-card h2 {
-          color: #333;
+          color: ${textColor};
           font-size: 1.8rem;
-          margin-bottom: 20px;
+          font-weight: 800;
+          margin-bottom: 24px;
           padding-bottom: 15px;
-          border-bottom: 2px solid #eee;
+          border-bottom: 1px solid ${borderCol};
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
         }
+
         .info-card p {
-          color: #666;
-          line-height: 1.9;
+          color: ${textColor};
+          line-height: 1.8;
           font-size: 1.05rem;
-          margin-bottom: 20px;
-          text-align: justify;
+          margin-bottom: 24px;
+          text-align: left;
+          opacity: 0.95;
         }
+
         .about-highlights {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 16px;
-          margin-top: 24px;
+          gap: 20px;
+          margin-top: 36px;
         }
+
         .about-highlight {
-          background: linear-gradient(135deg, #fafafa 0%, #f1f5f9 100%);
-          border: 1px solid #edf2f7;
-          border-radius: 14px;
-          padding: 18px 16px;
+          background: ${isDark ? 'rgba(255, 255, 255, 0.02)' : '#f8f9fa'};
+          border: 1px solid ${borderCol};
+          border-radius: 18px;
+          padding: 28px 20px;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
+
+        .about-highlight:hover {
+          transform: translateY(-8px) scale(1.02);
+          border-color: ${accentGold};
+          box-shadow: 0 15px 30px rgba(180, 138, 29, 0.1);
+        }
+
         .about-highlight i {
-          color: ${primaryColor};
-          font-size: 1.25rem;
-          margin-bottom: 10px;
+          color: ${accentGold};
+          font-size: 1.4rem;
+          margin-bottom: 16px;
           display: inline-flex;
+          width: 44px;
+          height: 44px;
+          background: rgba(180, 138, 29, 0.1);
+          border-radius: 12px;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.3s;
         }
+
+        .about-highlight:hover i {
+          background: ${accentGold};
+          color: #05070c;
+        }
+
         .about-highlight h4 {
-          color: #222;
-          margin: 0 0 8px 0;
-          font-size: 1rem;
+          color: ${textColor};
+          margin: 0 0 10px 0;
+          font-size: 1.1rem;
+          font-weight: 700;
         }
+
         .about-highlight p {
           margin: 0;
           text-align: left;
           font-size: 0.92rem;
           line-height: 1.6;
-          color: #666;
+          color: ${textMuted};
         }
+
         @media (max-width: 768px) {
           .hero-header {
-            padding: 40px 20px 60px;
+            padding: 60px 20px 80px;
           }
           .hero-header h1 {
-            font-size: 2rem;
+            font-size: 2.2rem;
           }
           .info-page-content {
-            padding: 0 15px;
-            margin-top: -30px;
+            padding: 0 16px;
+            margin-top: -40px;
           }
           .info-card {
-            padding: 25px 20px;
-            border-radius: 15px;
+            padding: 30px 24px;
+            border-radius: 20px;
           }
           .info-card h2 {
-            font-size: 1.4rem;
-          }
-          .info-card p {
-            font-size: 1rem;
+            font-size: 1.5rem;
           }
           .about-highlights {
             grid-template-columns: 1fr;
+            gap: 16px;
           }
         }
       `}</style>

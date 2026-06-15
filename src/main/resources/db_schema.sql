@@ -144,6 +144,21 @@ CREATE TABLE IF NOT EXISTS sliders (
     restaurant_id BIGINT REFERENCES users(id)
 );
 
+CREATE TABLE IF NOT EXISTS restaurant_gallery (
+    id BIGSERIAL PRIMARY KEY,
+    image_url VARCHAR(255),
+    drive_image_url VARCHAR(255),
+    title VARCHAR(255),
+    description VARCHAR(255),
+    category VARCHAR(100),
+    platform VARCHAR(100),
+    display_order INTEGER,
+    is_active BOOLEAN DEFAULT true,
+    restaurant_id BIGINT REFERENCES users(id),
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS marquee_messages (
     id BIGSERIAL PRIMARY KEY,
     restaurant_id BIGINT REFERENCES users(id),

@@ -28,15 +28,20 @@ function RoleBasedRoutes() {
 
   // Show loading spinner while checking auth status
   if (authState.loading) {
-    console.log('⏳ Auth loading...');
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh'
-      }}>
-        Loading...
+      <div className="app-loading-screen">
+        <div className="app-loading-card">
+          <div className="app-loading-mark">
+            <i className="bi bi-shop"></i>
+          </div>
+          <div className="app-loading-text">
+            <span className="app-loading-label">Loading restaurant workspace</span>
+            <strong>Preparing your SaaS dashboard</strong>
+          </div>
+          <div className="app-loading-spinner spinner-border" role="status" aria-label="Loading">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+        </div>
       </div>
     );
   }

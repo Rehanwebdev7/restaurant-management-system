@@ -6,9 +6,12 @@ import apiClient from '../../../api/apiClient';
 const OrdersPage = () => {
   const navigate = useNavigate();
   const theme = getCurrentTheme();
-  const primaryColor = theme.primary || '#667eea';
+  const primaryColor = theme.primary || '#b48a1d';
 
   const [orders, setOrders] = useState([]);
+  const [themeMode, setThemeMode] = useState(() => {
+    return localStorage.getItem('customerThemeMode') || 'dark';
+  });
   const [loading, setLoading] = useState(true);
   const [loadMoreLoading, setLoadMoreLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
@@ -201,17 +204,32 @@ const OrdersPage = () => {
     }
   };
 
+  const isDark = themeMode === 'dark';
+  const bgColor = isDark ? '#05070c' : '#f5f2eb';
+  const cardBg = isDark ? '#0f172a' : '#ffffff';
+  const textColor = isDark ? '#f4efe6' : '#1c1917';
+  const textMuted = isDark ? '#94a3b8' : '#64748b';
+  const borderCol = isDark ? 'rgba(212, 175, 55, 0.15)' : 'rgba(0, 0, 0, 0.06)';
+  const accentGold = '#b48a1d';
+  const headerBg = isDark 
+    ? 'linear-gradient(135deg, #0f172a 0%, #05070c 100%)' 
+    : 'linear-gradient(135deg, #ffffff 0%, #f5f2eb 100%)';
+  const headerTextColor = isDark ? '#f4efe6' : '#1c1917';
+
   return (
     <div className="orders-page">
       <style>{`
         .orders-page {
           min-height: 100vh;
-          background: #fdf0ee;
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          background: ${bgColor};
+          color: ${textColor};
+          font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          transition: all 0.3s ease;
         }
 
         .orders-header {
-          background: linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}dd 100%);
+          background: ${headerBg};
+          border-bottom: 1px solid ${borderCol};
           padding: 16px 24px;
           display: flex;
           align-items: center;
@@ -219,13 +237,13 @@ const OrdersPage = () => {
           position: sticky;
           top: 0;
           z-index: 100;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
 
         .back-btn {
-          background: rgba(255, 255, 255, 0.2);
-          border: none;
-          color: white;
+          background: ${isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'};
+          border: 1px solid ${borderCol};
+          color: ${headerTextColor};
           width: 40px;
           height: 40px;
           border-radius: 50%;
@@ -238,13 +256,18 @@ const OrdersPage = () => {
         }
 
         .back-btn:hover {
-          background: rgba(255, 255, 255, 0.3);
+          background: ${accentGold};
+          color: #05070c;
+          border-color: ${accentGold};
+          transform: translateX(-2px);
         }
 
         .header-title {
-          color: white;
+          color: ${headerTextColor};
           font-size: 20px;
-          font-weight: 600;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 1px;
         }
 
         .orders-content {
@@ -262,17 +285,19 @@ const OrdersPage = () => {
         }
 
         .order-card {
-          background: white;
-          border-radius: 12px;
+          background: ${cardBg};
+          border: 1px solid ${borderCol};
+          border-radius: 16px;
           overflow: hidden;
-          box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
           transition: all 0.3s ease;
-          border-left: 5px solid #ccc;
+          border-left: 5px solid ${borderCol};
         }
 
         .order-card:hover {
-          box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
           transform: translateY(-2px);
+          border-left-color: ${accentGold};
         }
 
         /* Status-based border colors */
@@ -764,15 +789,16 @@ const OrdersPage = () => {
         .empty-orders {
           text-align: center;
           padding: 60px 20px;
-          background: white;
-          border-radius: 20px;
-          box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+          background: ${cardBg};
+          border: 1px solid ${borderCol};
+          border-radius: 24px;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
         }
 
         .empty-orders-icon {
           width: 100px;
           height: 100px;
-          background: ${primaryColor}10;
+          background: rgba(180, 138, 29, 0.12);
           border-radius: 50%;
           display: flex;
           align-items: center;
@@ -782,35 +808,40 @@ const OrdersPage = () => {
 
         .empty-orders-icon i {
           font-size: 48px;
-          color: ${primaryColor};
+          color: ${accentGold};
         }
 
         .empty-orders h3 {
           font-size: 20px;
-          color: #333;
+          color: ${textColor};
           margin-bottom: 8px;
+          font-weight: 700;
         }
 
         .empty-orders p {
-          color: #666;
+          color: ${textMuted};
           margin-bottom: 24px;
         }
 
         .browse-btn {
-          background: ${primaryColor};
-          color: white;
+          background: ${accentGold};
+          color: #05070c;
           border: none;
           padding: 14px 32px;
           border-radius: 12px;
           font-size: 16px;
-          font-weight: 600;
+          font-weight: 700;
           cursor: pointer;
           transition: all 0.3s;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
         }
 
         .browse-btn:hover {
           transform: translateY(-2px);
-          box-shadow: 0 5px 20px ${primaryColor}40;
+          box-shadow: 0 8px 20px rgba(180, 138, 29, 0.25);
+          background: #fff;
+          color: #05070c;
         }
 
         .loading-container {

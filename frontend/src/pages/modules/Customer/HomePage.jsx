@@ -22,6 +22,40 @@ const FREQUENTLY_CATEGORY = { id: 'frequently', name: 'Order Again', icon: null 
 // "All subcategories" constant - used when user clicks "All {category}" in subcategory chips
 const ALL_SUBCATEGORY = { id: 'all_sub', name: 'All' };
 
+const DEFAULT_GALLERY_IMAGES = [
+  {
+    id: 'default-gallery-1',
+    title: 'Main Dining Room',
+    description: 'Elegant dining space',
+    image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80',
+  },
+  {
+    id: 'default-gallery-2',
+    title: 'Delicious Platters',
+    description: 'Chef curated dishes',
+    image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80',
+  },
+  {
+    id: 'default-gallery-3',
+    title: 'Cozy Lounge',
+    description: 'Relaxed ambience',
+    image: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=600&q=80',
+  },
+  {
+    id: 'default-gallery-4',
+    title: 'Chef Specials',
+    description: 'Signature food moments',
+    image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80',
+  },
+];
+
+const resolveImageUrl = (url) => {
+  if (!url) return null;
+  if (/^(blob:|data:|https?:\/\/)/i.test(url)) return url;
+  const baseUrl = server_api();
+  return url.startsWith('/') ? `${baseUrl}${url}` : `${baseUrl}/${url}`;
+};
+
 const CustomerLanding = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -214,6 +248,8 @@ const CustomerLanding = () => {
   // Sliders State
   const [sliders, setSliders] = useState([]);
   const [slidersLoading, setSlidersLoading] = useState(true);
+  const [galleryItems, setGalleryItems] = useState([]);
+  const [galleryLoading, setGalleryLoading] = useState(true);
 
   // Customer login state
   const [isCustomerLoggedIn, setIsCustomerLoggedIn] = useState(false);
@@ -1291,6 +1327,36 @@ const CustomerLanding = () => {
     }
   };
 
+  // Fetch gallery images from API
+  const fetchGallery = async (restId) => {
+    try {
+      setGalleryLoading(true);
+
+      if (!restId) {
+        console.warn('Restaurant ID not found');
+        setGalleryItems([]);
+        setGalleryLoading(false);
+        return;
+      }
+
+      const endpoint = `/api/public/customer/gallery/get_gallery?restaurantId=${restId}&platform=web`;
+      const response = await ApiGet(endpoint);
+
+      if (response.success) {
+        const galleryData = response.success.data.data || [];
+        setGalleryItems(Array.isArray(galleryData) ? galleryData : []);
+      } else {
+        console.error('Failed to fetch gallery:', response.fail);
+        setGalleryItems([]);
+      }
+    } catch (error) {
+      console.error('Error fetching gallery:', error);
+      setGalleryItems([]);
+    } finally {
+      setGalleryLoading(false);
+    }
+  };
+
   // Fetch marquee messages (live + scheduled)
   const fetchMarquee = async (restId) => {
     try {
@@ -1312,7 +1378,7 @@ const CustomerLanding = () => {
     id: slider.id,
     title: slider.title || '',
     subtitle: slider.description || '',
-    image: slider.imageUrl,
+    image: resolveImageUrl(slider.imageUrl || slider.driveImageUrl),
     gradient: 'linear-gradient(to right, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.2))',
   })) : [
     {
@@ -2209,6 +2275,7 @@ const CustomerLanding = () => {
   useEffect(() => {
     if (!themeLoading && restaurantId) {
       fetchSliders(restaurantId);
+      fetchGallery(restaurantId);
     }
   }, [themeLoading, restaurantId]);
 
@@ -2890,6 +2957,88 @@ const CustomerLanding = () => {
           </div>
         </section>
 
+        {/* Branches Section */}
+        {!!branches.length && (
+          <section className="branches-showcase-section">
+            <div className="section-header text-center">
+              <span className="section-subheading">OUR LOCATIONS</span>
+              <h2 className="section-title">All Branches</h2>
+              <p className="section-description">
+                Browse every branch of this restaurant and switch instantly.
+              </p>
+            </div>
+
+            {branchesLoading ? (
+              <div className="branches-loading-panel">
+                <div className="spinner-border" role="status"></div>
+                <span>Loading branches...</span>
+              </div>
+            ) : (
+              <div className="branches-showcase-grid">
+                {branches.map((branch) => {
+                  const isSelected = selectedBranch?.id === branch.id;
+                  return (
+                    <article
+                      key={branch.id}
+                      className={`branch-showcase-card ${isSelected ? 'selected' : ''}`}
+                    >
+                      <div className="branch-showcase-top">
+                        <div className="branch-showcase-icon">
+                          <i className="bi bi-shop"></i>
+                        </div>
+                        <div className="branch-showcase-badge">
+                          {isSelected ? 'Current Branch' : 'Available'}
+                        </div>
+                      </div>
+
+                      <h3 className="branch-showcase-name">{branch.name}</h3>
+                      <p className="branch-showcase-address">{branch.address || 'Address not available'}</p>
+
+                      <div className="branch-showcase-meta">
+                        {branch.phone && (
+                          <span>
+                            <i className="bi bi-telephone"></i> {branch.phone}
+                          </span>
+                        )}
+                        {branch.distance && (
+                          <span>
+                            <i className="bi bi-geo-alt"></i> {branch.distance.toFixed(2)} km
+                          </span>
+                        )}
+                      </div>
+
+                      <button
+                        className="branch-showcase-action"
+                        onClick={() => {
+                          const isSameBranch = selectedBranch?.id === branch.id;
+                          setSelectedBranch(branch);
+                          localStorage.setItem('CustomerBranchId', branch.id);
+                          localStorage.setItem('CustomerBranchDistance', branch.distance || 0);
+                          localStorage.setItem('CustomerBranchMinutes', branch.timeMinutes || 0);
+                          if (userLocation?.latitude && userLocation?.longitude) {
+                            localStorage.setItem('CustomerBranchLat', userLocation.latitude);
+                            localStorage.setItem('CustomerBranchLng', userLocation.longitude);
+                          }
+                          if (!isSameBranch) {
+                            setSelectedCategory(ALL_CATEGORY);
+                            setSelectedSubcategory(null);
+                            setSearchTerm('');
+                            fetchCategories(branch.id, 0, false);
+                            fetchTrendingItems(branch.id);
+                            fetchMenuItems(branch.id, 'all', null, 0, false, '', false);
+                          }
+                        }}
+                      >
+                        {isSelected ? 'Selected' : 'Select Branch'}
+                      </button>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        )}
+
         {/* Experience Highlights */}
         {isMenuPage && (
           <section className="experience-highlights-section">
@@ -3442,37 +3591,30 @@ const CustomerLanding = () => {
         {/* Restaurant Gallery Section */}
         {isGalleryPage && (
           <section className="restaurant-gallery" id="gallery">
-          <div className="section-header text-center">
-            <span className="section-subheading">VISUAL JOURNEY</span>
-            <h2 className="section-title">Our Dining Area</h2>
-          </div>
-          <div className="gallery-masonry">
-            <div className="gallery-item size-large">
-              <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80" alt="Restaurant Interior" />
-              <div className="gallery-overlay">
-                <span>Main Dining Room</span>
-              </div>
+            <div className="section-header text-center">
+              <span className="section-subheading">
+                {galleryLoading ? 'LOADING PHOTOS' : 'VISUAL JOURNEY'}
+              </span>
+              <h2 className="section-title">Our Dining Area</h2>
             </div>
-            <div className="gallery-item size-tall">
-              <img src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80" alt="Special Dish" />
-              <div className="gallery-overlay">
-                <span>Delicious Platters</span>
-              </div>
+            <div className="gallery-masonry">
+              {(galleryItems.length > 0 ? galleryItems : DEFAULT_GALLERY_IMAGES).map((item, index) => {
+                const gallerySize = index % 3 === 0 ? 'size-large' : 'size-tall';
+                const imageUrl = resolveImageUrl(item.imageUrl || item.driveImageUrl || item.image);
+                const label = item.title || item.category || 'Gallery';
+                const caption = item.description || item.subtitle || '';
+
+                return (
+                  <div className={`gallery-item ${gallerySize}`} key={item.id || `gallery-${index}`}>
+                    <img src={imageUrl} alt={label} />
+                    <div className="gallery-overlay">
+                      <span>{caption ? `${label} • ${caption}` : label}</span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            <div className="gallery-item size-tall">
-              <img src="https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=600&q=80" alt="Cozy Dining Area" />
-              <div className="gallery-overlay">
-                <span>Cozy Lounge</span>
-              </div>
-            </div>
-            <div className="gallery-item size-large">
-              <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80" alt="Gourmet Food" />
-              <div className="gallery-overlay">
-                <span>Chef's Specials</span>
-              </div>
-            </div>
-          </div>
-        </section>
+          </section>
         )}
 
         {/* Customer Testimonials Section */}

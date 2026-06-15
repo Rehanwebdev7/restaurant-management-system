@@ -34,6 +34,7 @@ import CancelledOrders from '../pages/modules/restaurant/orders/CancelledOrders/
 
 // Settings Components
 import Slider from '../pages/modules/restaurant/settings/Slider/Slider';
+import Gallery from '../pages/modules/restaurant/settings/Gallery/Gallery';
 import Coupons from '../pages/modules/restaurant/settings/Coupons/Coupons';
 import BankDetail from '../pages/modules/restaurant/settings/BankDetail/BankDetail';
 import MarqueeMessages from '../pages/modules/restaurant/settings/MarqueeMessages/MarqueeMessages';
@@ -113,6 +114,7 @@ const RestaurantRoutes = () => {
         {/* Settings Routes */}
         <Route path="/restaurant/settings/business-settings" element={<BusinessSettings />} />
         <Route path="/restaurant/settings/slider" element={<Slider />} />
+        <Route path="/restaurant/settings/gallery" element={<Gallery />} />
         <Route path="/restaurant/settings/coupons" element={<Coupons />} />
         <Route path="/restaurant/settings/bank-details" element={<BankDetail />} />
         <Route path="/restaurant/settings/marquee-messages" element={<MarqueeMessages />} />
