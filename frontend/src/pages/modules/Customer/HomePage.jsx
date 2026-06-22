@@ -56,12 +56,66 @@ const resolveImageUrl = (url) => {
   return url.startsWith('/') ? `${baseUrl}${url}` : `${baseUrl}/${url}`;
 };
 
+const resolveThemeAssetUrl = (url, fallback = '/app-favicon.svg') => {
+  const resolved = resolveImageUrl(url);
+  return resolved || fallback;
+};
+
+const getCategoryBgImage = (categoryName) => {
+  const name = (categoryName || '').toLowerCase();
+  
+  // Veg Starters
+  if (name.includes('veg') && (name.includes('starter') || name.includes('appetizer') || name.includes('snack') || name.includes('kebab'))) {
+    if (name.includes('non')) {
+      return 'https://images.unsplash.com/photo-1567620832903-9fc6debc209f?auto=format&fit=crop&w=600&q=80';
+    }
+    return 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80';
+  }
+  // Non-Veg Starters
+  if (name.includes('non') && (name.includes('starter') || name.includes('appetizer') || name.includes('snack') || name.includes('kebab') || name.includes('tikka'))) {
+    return 'https://images.unsplash.com/photo-1567620832903-9fc6debc209f?auto=format&fit=crop&w=600&q=80';
+  }
+  // Fallback Starters
+  if (name.includes('starter') || name.includes('appetizer') || name.includes('snack') || name.includes('soup') || name.includes('kebab') || name.includes('roll')) {
+    return 'https://images.unsplash.com/photo-1543353071-10c8ba85a904?auto=format&fit=crop&w=600&q=80'; // Mixed Fries/Starters
+  }
+  
+  // Veg Main Course
+  if (name.includes('veg') && (name.includes('main') || name.includes('course') || name.includes('curry') || name.includes('gravy') || name.includes('paneer') || name.includes('dal'))) {
+    if (name.includes('non')) {
+      return 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?auto=format&fit=crop&w=600&q=80'; // Butter Chicken Curry
+    }
+    return 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=600&q=80'; // Paneer Butter Masala
+  }
+  // Non-Veg Main Course
+  if (name.includes('non') && (name.includes('main') || name.includes('course') || name.includes('curry') || name.includes('chicken') || name.includes('mutton') || name.includes('meat') || name.includes('fish'))) {
+    return 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?auto=format&fit=crop&w=600&q=80'; // Butter Chicken Curry
+  }
+  // Fallback Mains
+  if (name.includes('main') || name.includes('course') || name.includes('curry') || name.includes('dinner') || name.includes('lunch') || name.includes('rice') || name.includes('biryani')) {
+    return 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80'; // Premium Main Course/Steak
+  }
+
+  // Drinks / Beverages
+  if (name.includes('drink') || name.includes('beverage') || name.includes('wine') || name.includes('mocktail') || name.includes('cocktail') || name.includes('juice') || name.includes('bar') || name.includes('tea') || name.includes('chai') || name.includes('soda') || name.includes('lassi')) {
+    return 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80'; // Drinks/Mocktail
+  }
+  
+  // Desserts / Sweets
+  if (name.includes('dessert') || name.includes('sweet') || name.includes('cake') || name.includes('ice cream') || name.includes('chocolate') || name.includes('bakery')) {
+    return 'https://images.unsplash.com/photo-1551024506-0bccd828d307?auto=format&fit=crop&w=600&q=80'; // Desserts
+  }
+  
+  return 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80'; // General fallback
+};
+
 const CustomerLanding = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const currentPath = location.pathname;
 
-  const isMenuPage = currentPath === '/menu' || currentPath === '/' || currentPath === '/home';
+  const isLandingPage = currentPath === '/' || currentPath === '/home';
+  const isMenuPage = currentPath === '/menu';
   const isSignaturePage = currentPath === '/signature';
   const isWhyUsPage = currentPath === '/why-us';
   const isGalleryPage = currentPath === '/gallery';
@@ -143,6 +197,87 @@ const CustomerLanding = () => {
     notes: ''
   });
 
+  const [restaurantHours, setRestaurantHours] = useState([]);
+  const [hoursLoading, setHoursLoading] = useState(false);
+  const [diningSections, setDiningSections] = useState([]);
+  const [sectionsLoading, setSectionsLoading] = useState(false);
+
+  const formatTime = (timeString) => {
+    if (!timeString) return '';
+    try {
+      const parts = timeString.split(':');
+      const hours = parseInt(parts[0]);
+      const minutes = parts[1];
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      const displayHours = hours % 12 || 12;
+      return `${displayHours}${minutes !== '00' ? ':' + minutes : ''}${ampm}`;
+    } catch (e) {
+      return timeString;
+    }
+  };
+
+  const renderHoursList = () => {
+    if (restaurantHours && restaurantHours.length > 0) {
+      const seenDays = new Set();
+      const uniqueHours = [];
+      
+      restaurantHours.forEach(hr => {
+        if (!hr.dayOfWeek) return;
+        const normalizedDay = hr.dayOfWeek.toUpperCase().trim();
+        if (!seenDays.has(normalizedDay)) {
+          seenDays.add(normalizedDay);
+          uniqueHours.push(hr);
+        }
+      });
+
+      const dayOrder = {
+        'MONDAY': 1, 'TUESDAY': 2, 'WEDNESDAY': 3, 'THURSDAY': 4,
+        'FRIDAY': 5, 'SATURDAY': 6, 'SUNDAY': 7
+      };
+
+      uniqueHours.sort((a, b) => {
+        const dayA = a.dayOfWeek.toUpperCase().trim();
+        const dayB = b.dayOfWeek.toUpperCase().trim();
+        return (dayOrder[dayA] || 99) - (dayOrder[dayB] || 99);
+      });
+
+      return uniqueHours.map((hr, index) => {
+        const timeText = hr.isClosed ? 'Closed' : `${formatTime(hr.openingTime)} to ${formatTime(hr.closingTime)}`;
+        const dayFormatted = hr.dayOfWeek.charAt(0).toUpperCase() + hr.dayOfWeek.slice(1).toLowerCase();
+        return (
+          <React.Fragment key={index}>
+            {dayFormatted}: {timeText}{index < uniqueHours.length - 1 && <br />}
+          </React.Fragment>
+        );
+      });
+    }
+    return (
+      <>
+        Monday – Thursday: 12PM to 10PM<br />
+        Friday: Closed<br />
+        Saturday: 1 Hour after Sabbath<br />
+        Sunday: 2PM to 10PM
+      </>
+    );
+  };
+
+  const renderDiningSections = () => {
+    if (diningSections && diningSections.length > 0) {
+      return diningSections.slice(0, 5).map((sec, index) => (
+        <li key={sec.id || index}>{sec.name}</li>
+      ));
+    }
+    return (
+      <>
+        <li>Main Area</li>
+        <li>Balcony Room</li>
+        <li>Sky Room</li>
+        <li>Lounge</li>
+        <li>VIP Room</li>
+      </>
+    );
+  };
+
   const handleReservationSubmit = (e) => {
     e.preventDefault();
     if (!reservation.name || !reservation.phone || !reservation.date || !reservation.time) {
@@ -162,6 +297,12 @@ const CustomerLanding = () => {
   };
   const [selectedBranch, setSelectedBranch] = useState(null);
   const [showBranchDropdown, setShowBranchDropdown] = useState(false);
+  const getBranchAddress = () => {
+    if (!selectedBranch || !selectedBranch.address || selectedBranch.address === 'null null' || selectedBranch.address.toLowerCase().includes('null')) {
+      return '340 Lexington Ave, New York, NY 10016';
+    }
+    return selectedBranch.address;
+  };
   const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORY);
   const [selectedSubcategory, setSelectedSubcategory] = useState(null);
   const [currentBannerSlide, setCurrentBannerSlide] = useState(0);
@@ -250,6 +391,22 @@ const CustomerLanding = () => {
   const [slidersLoading, setSlidersLoading] = useState(true);
   const [galleryItems, setGalleryItems] = useState([]);
   const [galleryLoading, setGalleryLoading] = useState(true);
+
+  // Premium Hero Slideshow States
+  const [activeHeroSlide, setActiveHeroSlide] = useState(0);
+  const heroSlideImages = [
+    'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1600&q=80', // Premium Steakhouse Fine Dining
+    'https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=1600&q=80', // Cozy Patios & Cocktails
+    'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1600&q=80', // Culinary Seafood Spread
+    'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1600&q=80', // Gourmet Plating Chef
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveHeroSlide((prev) => (prev + 1) % heroSlideImages.length);
+    }, 5500);
+    return () => clearInterval(timer);
+  }, []);
 
   // Customer login state
   const [isCustomerLoggedIn, setIsCustomerLoggedIn] = useState(false);
@@ -340,13 +497,81 @@ const CustomerLanding = () => {
   const primaryColor = theme.primary || '#4cb7ec';
   const secondaryColor = theme.secondary || '#4cb7ec8a';
   const fontColor = theme.fontColor || '#000000';
-  const logoUrl = theme.logoUrl || '/app-favicon.svg';
+  const logoUrl = resolveThemeAssetUrl(theme.logoUrl);
   const restaurantName = theme.restaurantName || 'RMS';
   const defaultImage = theme.feviconUrl || '/app-favicon.svg';
   // Contact Info from theme
-  const contactAddress = theme.address || '';
-  const contactPhone = theme.phone || '';
-  const contactEmail = theme.email || '';
+  const contactAddress = theme.address || '340 Lexington Ave, New York, NY 10016';
+  const contactPhone = theme.phone || '+1 (212) 972-2200';
+  const contactEmail = theme.email || 'info@lbsteaks.com';
+
+  useEffect(() => {
+    const selectors = [
+      '.motion-reveal',
+      '.motion-card',
+      '.category-card',
+      '.food-card',
+      '.filtered-item-card',
+      '.feature-card',
+      '.experience-highlight-card',
+      '.offer-card',
+      '.gallery-item',
+      '.branch-showcase-card',
+      '.trending-grid .food-card',
+      '.categories-section',
+      '.subcategories-section',
+      '.filtered-items-section',
+      '.experience-highlights-section',
+      '.luxury-offers-section',
+      '.trending-section',
+      '.why-choose-us',
+      '.luxury-stats-section',
+      '.chef-spotlight-section',
+      '.trust-strip-section',
+      '.why-us-cta-section',
+      '.restaurant-gallery',
+      '.branches-showcase-section',
+    ];
+
+    const elements = Array.from(document.querySelectorAll(selectors.join(',')));
+    if (elements.length === 0) return undefined;
+
+    let rafId = 0;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('motion-ready', 'motion-visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
+    );
+
+    rafId = window.requestAnimationFrame(() => {
+      elements.forEach((element, index) => {
+        element.classList.add('motion-ready');
+        element.style.setProperty('--motion-delay', `${Math.min(index * 70, 700)}ms`);
+        observer.observe(element);
+      });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(rafId);
+      observer.disconnect();
+    };
+  }, [
+    currentPath,
+    branches.length,
+    sliders.length,
+    categories.length,
+    subcategories.length,
+    menuItems.length,
+    trendingItems.length,
+    frequentlyOrderedItems.length,
+    galleryItems.length,
+  ]);
 
   // Add item to cart
   const addToCart = (item) => {
@@ -1247,6 +1472,12 @@ const CustomerLanding = () => {
     e.target.src = defaultImage;
   };
 
+  const handleLogoError = (e) => {
+    if (e.target.dataset.fallbackApplied === 'true') return;
+    e.target.dataset.fallbackApplied = 'true';
+    e.target.src = '/app-favicon.svg';
+  };
+
   // Scroll categories
   const scrollCategories = (direction) => {
     if (categoryScrollRef.current) {
@@ -1370,6 +1601,42 @@ const CustomerLanding = () => {
       }
     } catch (error) {
       console.error('Error fetching marquee:', error);
+    }
+  };
+
+  // Fetch restaurant hours from API
+  const fetchRestaurantHours = async () => {
+    try {
+      const token = localStorage.getItem('customerToken');
+      if (!token) return;
+      setHoursLoading(true);
+      const response = await ApiGet('/api/customer/restaurant_hours/all');
+      if (response.success) {
+        const hoursData = response.success.data?.data || [];
+        setRestaurantHours(hoursData);
+      }
+    } catch (error) {
+      console.error('Error fetching restaurant hours:', error);
+    } finally {
+      setHoursLoading(false);
+    }
+  };
+
+  // Fetch dining sections from API
+  const fetchDiningSections = async () => {
+    try {
+      const token = localStorage.getItem('customerToken');
+      if (!token) return;
+      setSectionsLoading(true);
+      const response = await ApiGet('/api/customer/section/all');
+      if (response.success) {
+        const sectionsData = response.success.data?.data || [];
+        setDiningSections(sectionsData);
+      }
+    } catch (error) {
+      console.error('Error fetching dining sections:', error);
+    } finally {
+      setSectionsLoading(false);
     }
   };
 
@@ -2286,6 +2553,14 @@ const CustomerLanding = () => {
     }
   }, [themeLoading, restaurantId]);
 
+  // Fetch restaurant hours when restaurantId or login status changes
+  useEffect(() => {
+    if (!themeLoading && restaurantId) {
+      fetchRestaurantHours();
+      fetchDiningSections();
+    }
+  }, [themeLoading, restaurantId, isCustomerLoggedIn]);
+
   // Fetch all branches without location requirement
   useEffect(() => {
     if (themeLoading || !restaurantId) {
@@ -2315,6 +2590,50 @@ const CustomerLanding = () => {
 
   const prevSlide = () => {
     setCurrentBannerSlide((prev) => (prev - 1 + banners.length) % banners.length);
+  };
+
+  const handleNavClick = (target) => {
+    if (target === 'home') {
+      navigate('/home');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (target === 'menus') {
+      navigate('/menu');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (target === 'order') {
+      setShowCart(true);
+    } else if (target === 'private-dining') {
+      navigate('/home');
+      setTimeout(() => {
+        document.getElementById('atmosphere-section')?.scrollIntoView({ behavior: 'smooth' });
+      }, 150);
+    } else if (target === 'reserve') {
+      navigate('/contact');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (target === 'gifts') {
+      toast.info('Gift cards coming soon!');
+    } else if (target === 'restaurant') {
+      navigate('/home');
+      setTimeout(() => {
+        document.getElementById('heritage-section')?.scrollIntoView({ behavior: 'smooth' });
+      }, 150);
+    } else if (target === 'gallery') {
+      navigate('/gallery');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handlePortraitCategoryClick = (category) => {
+    if (category) {
+      handleCategoryClick(category);
+    } else {
+      setSelectedCategory(ALL_CATEGORY);
+    }
+    if (currentPath !== '/menu') {
+      navigate('/menu');
+    }
+    setTimeout(() => {
+      document.getElementById('menu-section')?.scrollIntoView({ behavior: 'smooth' });
+    }, 200);
   };
 
   return (
@@ -2494,12 +2813,9 @@ const CustomerLanding = () => {
           </button>
 
           <div className="header-left">
-            <div className="header-logo">
-              <img
-                src={logoUrl || '/app-favicon.svg'}
-                alt={restaurantName}
-                style={{ height: '50px', objectFit: 'contain' }}
-              />
+            <div className="header-logo" onClick={() => handleNavClick('home')}>
+              <span className="logo-main">{restaurantName}</span>
+              <span className="logo-sub">STEAKHOUSE</span>
             </div>
 
             {/* Header Branch Selector */}
@@ -2562,21 +2878,15 @@ const CustomerLanding = () => {
           </div>
 
           <nav className="desktop-nav-links">
-            <span className={isMenuPage ? 'active' : ''} onClick={() => navigate('/menu')}>Home</span>
-            <span className={isSignaturePage ? 'active' : ''} onClick={() => navigate('/signature')}>Signature</span>
-            <span className={isWhyUsPage ? 'active' : ''} onClick={() => navigate('/why-us')}>Why Us</span>
-            <span className={isGalleryPage ? 'active' : ''} onClick={() => navigate('/gallery')}>Gallery</span>
-            <span className={isWhyUsPage && location.hash === '#testimonials' ? 'active' : ''} onClick={() => navigate('/why-us#testimonials')}>Reviews</span>
-            <span className={isContactPage ? 'active' : ''} onClick={() => navigate('/contact')}>Contact</span>
+            <span onClick={() => handleNavClick('home')}>HOME</span>
+            <span onClick={() => handleNavClick('menus')}>MENUS</span>
+            <span onClick={() => handleNavClick('order')}>ORDER</span>
+            <span onClick={() => handleNavClick('gallery')}>GALLERY</span>
           </nav>
 
           {/* Mobile Logo */}
-          <div className="mobile-header-logo">
-            <img
-              src={logoUrl || '/app-favicon.svg'}
-              alt={restaurantName}
-              style={{ height: '36px', objectFit: 'contain' }}
-            />
+          <div className="mobile-header-logo" onClick={() => handleNavClick('home')}>
+            {restaurantName}
           </div>
 
           {/* Mobile Branch Selector - shows only on mobile (left) */}
@@ -2608,7 +2918,6 @@ const CustomerLanding = () => {
                           localStorage.setItem('CustomerBranchLng', userLocation.longitude);
                         }
                         setShowBranchDropdown(false);
-                        // Force fetch even if same branch selected
                         if (!isSameBranch) {
                           setSelectedCategory(ALL_CATEGORY);
                           setSelectedSubcategory(null);
@@ -2681,172 +2990,130 @@ const CustomerLanding = () => {
             )}
           </div>
 
-          {/* Search - Desktop */}
-          <div className="header-search desktop-search">
-            <i className="bi bi-search"></i>
-            <input
-              type="text"
-              placeholder="Search for dishes, cuisines..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-
-          {/* Mobile Search Row */}
-          <div className="mobile-search-row">
-            <div className="header-search">
-              <i className="bi bi-search"></i>
-              <input
-                type="text"
-                placeholder="Search for dishes..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* Right side actions - Veg Toggle, Wishlist, Profile */}
+          {/* Desktop Right Side Actions - Utility Icons */}
           <div className="header-right-actions">
-            <div className="veg-toggle-container">
-              <span className={`veg-label ${vegOnly ? 'active' : ''}`}>
-                <span className="veg-dot"></span>
-                Veg Mode
-              </span>
-              <label className="veg-toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={vegOnly}
-                  onChange={() => {
-                    const newValue = !vegOnly;
-                    setVegOnly(newValue);
-                    localStorage.setItem('vegOnly', newValue.toString());
-                  }}
-                />
-                <span className="veg-toggle-slider">
-                  <span className="toggle-text">{vegOnly ? 'ON' : 'OFF'}</span>
-                </span>
-              </label>
-            </div>
-
-            {/* Theme Toggle Button */}
-            <button
-              className="btn-theme-toggle"
-              onClick={() => {
-                const newMode = themeMode === 'light' ? 'dark' : 'light';
-                setThemeMode(newMode);
-                localStorage.setItem('customerThemeMode', newMode);
-              }}
-              title={themeMode === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
-            >
-              {themeMode === 'light' ? <i className="bi bi-moon-fill"></i> : <i className="bi bi-sun-fill"></i>}
+            <button className="btn-find-table" onClick={() => handleNavClick('reserve')} style={{ marginRight: '16px' }}>
+              RESERVE NOW
             </button>
-
             {/* Wishlist Button - Desktop */}
             <div className="wishlist-container desktop-signin">
-              <button className="btn-wishlist" onClick={() => setShowWishlist(!showWishlist)}>
-                <i className="bi bi-bookmark"></i>
-                {getFilteredWishlistItems().length > 0 && (
-                  <span className="wishlist-badge">{getFilteredWishlistItems().length}</span>
+                <button className="btn-wishlist" onClick={() => setShowWishlist(!showWishlist)}>
+                  <i className="bi bi-bookmark"></i>
+                  {getFilteredWishlistItems().length > 0 && (
+                    <span className="wishlist-badge">{getFilteredWishlistItems().length}</span>
+                  )}
+                </button>
+
+                {/* Wishlist Dropdown — visible only on desktop */}
+                {showWishlist && !isMobileView && (
+                  <>
+                    <div className="wishlist-overlay" onClick={() => setShowWishlist(false)}></div>
+                    <div className="wishlist-dropdown">
+                      <div className="wishlist-header">
+                        <h3><i className="bi bi-bookmark-fill"></i>Saved Items</h3>
+                        <button className="wishlist-close" onClick={() => setShowWishlist(false)}>
+                          <i className="bi bi-x"></i>
+                        </button>
+                      </div>
+                      <div className="wishlist-content">
+                        {getFilteredWishlistItems().length === 0 ? (
+                          <div className="wishlist-empty">
+                            <i className="bi bi-bookmark"></i>
+                            <p>Your saved Items are empty</p>
+                            <p style={{ fontSize: '12px', marginTop: '8px', color: '#aaa' }}>
+                              Tap the save icon on items to add them here
+                            </p>
+                          </div>
+                        ) : (
+                          getFilteredWishlistItems().map(item => (
+                            <div key={item.id} className="wishlist-item">
+                              <div className="wishlist-item-image">
+                                <img src={item.image} alt={item.name} onError={handleImageError} />
+                              </div>
+                              <div className="wishlist-item-details">
+                                <div className="wishlist-item-name">{item.name}</div>
+                                <div className="wishlist-item-cuisine">
+                                  <span className={item.isVeg ? 'veg-icon' : 'nonveg-icon'}></span>
+                                  {item.description || item.category}
+                                </div>
+                                <div className="wishlist-item-price">
+                                  ${item.price}
+                                  {item.mrp > item.price && (
+                                    <span className="mrp-price">${item.mrp}</span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="wishlist-item-actions">
+                                <button
+                                    className="wishlist-add-cart"
+                                    onClick={(e) => addWishlistItemToCart(item, e)}
+                                    disabled={!item.isAvailable}
+                                >
+                                  <i className="bi bi-cart-plus"></i> Add
+                                </button>
+                                <button
+                                    className="wishlist-remove"
+                                    onClick={() => removeFromWishlist(item.id)}
+                                >
+                                  <i className="bi bi-trash"></i> Remove
+                                </button>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </>
                 )}
+              </div>
+
+              {/* Location Button */}
+              <button
+                className="btn-icon-only"
+                onClick={() => setShowLocationModal(true)}
+                title="Location"
+              >
+                <i className="bi bi-geo-alt-fill"></i>
               </button>
 
-              {/* Wishlist Dropdown — visible only on desktop */}
-              {showWishlist && !isMobileView && (
+              {/* Theme Toggle Button */}
+              <button
+                className="btn-theme-toggle"
+                onClick={() => {
+                  const newMode = themeMode === 'light' ? 'dark' : 'light';
+                  setThemeMode(newMode);
+                  localStorage.setItem('customerThemeMode', newMode);
+                }}
+                title={themeMode === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+              >
+                {themeMode === 'light' ? <i className="bi bi-moon-fill"></i> : <i className="bi bi-sun-fill"></i>}
+              </button>
+
+              {/* Desktop Login/Profile - hidden on mobile */}
+              {isCustomerLoggedIn ? (
                 <>
-                  <div className="wishlist-overlay" onClick={() => setShowWishlist(false)}></div>
-                  <div className="wishlist-dropdown">
-                    <div className="wishlist-header">
-                      <h3><i className="bi bi-bookmark-fill"></i>Saved Items</h3>
-                      <button className="wishlist-close" onClick={() => setShowWishlist(false)}>
-                        <i className="bi bi-x"></i>
-                      </button>
-                    </div>
-                    <div className="wishlist-content">
-                      {getFilteredWishlistItems().length === 0 ? (
-                        <div className="wishlist-empty">
-                          <i className="bi bi-bookmark"></i>
-                          <p>Your saved Items are empty</p>
-                          <p style={{ fontSize: '12px', marginTop: '8px', color: '#aaa' }}>
-                            Tap the save icon on items to add them here
-                          </p>
-                        </div>
-                      ) : (
-                        getFilteredWishlistItems().map(item => (
-                          <div key={item.id} className="wishlist-item">
-                            <div className="wishlist-item-image">
-                              <img src={item.image} alt={item.name} onError={handleImageError} />
-                            </div>
-                            <div className="wishlist-item-details">
-                              <div className="wishlist-item-name">{item.name}</div>
-                              <div className="wishlist-item-cuisine">
-                                <span className={item.isVeg ? 'veg-icon' : 'nonveg-icon'}></span>
-                                {item.description || item.category}
-                              </div>
-                              <div className="wishlist-item-price">
-                                ${item.price}
-                                {item.mrp > item.price && (
-                                  <span className="mrp-price">${item.mrp}</span>
-                                )}
-                              </div>
-                            </div>
-                            <div className="wishlist-item-actions">
-                              <button
-                                className="wishlist-add-cart"
-                                onClick={(e) => addWishlistItemToCart(item, e)}
-                                disabled={!item.isAvailable}
-                              >
-                                <i className="bi bi-cart-plus"></i> Add
-                              </button>
-                              <button
-                                className="wishlist-remove"
-                                onClick={() => removeFromWishlist(item.id)}
-                              >
-                                <i className="bi bi-trash"></i> Remove
-                              </button>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
+                  <button
+                    className="btn-icon-only"
+                    onClick={() => navigate('/orders')}
+                    title="My Orders"
+                  >
+                    <i className="bi bi-bag-check"></i>
+                  </button>
+                  <button
+                    className="btn-icon-only"
+                    onClick={() => navigate('/profile')}
+                    title="Profile"
+                  >
+                    <i className="bi bi-person-circle"></i>
+                  </button>
                 </>
+              ) : (
+                <button className="header-btn btn-signin desktop-signin" onClick={() => navigate('/login')}>
+                  <i className="bi bi-person"></i>
+                  Log In
+                </button>
               )}
             </div>
-
-            {/* Location Button */}
-            <button
-              className="btn-icon-only"
-              onClick={() => setShowLocationModal(true)}
-              title="Location"
-            >
-              <i className="bi bi-geo-alt-fill"></i>
-            </button>
-
-            {/* Desktop Login/Profile - hidden on mobile */}
-            {isCustomerLoggedIn ? (
-              <>
-                <button
-                  className="btn-icon-only"
-                  onClick={() => navigate('/orders')}
-                  title="My Orders"
-                >
-                  <i className="bi bi-bag-check"></i>
-                </button>
-                <button
-                  className="btn-icon-only"
-                  onClick={() => navigate('/profile')}
-                  title="Profile"
-                >
-                  <i className="bi bi-person-circle"></i>
-                </button>
-              </>
-            ) : (
-              <button className="header-btn btn-signin desktop-signin" onClick={() => navigate('/login')}>
-                <i className="bi bi-person"></i>
-                Log In
-              </button>
-            )}
-          </div>
 
           {/* Mobile Search Bar - Shows only on mobile */}
           <div className="mobile-search-bar">
@@ -2882,235 +3149,204 @@ const CustomerLanding = () => {
           </div>
         </header>
 
-        {/* Marquee / Ticker - all active messages in one scrolling bar */}
-        {marqueeMessages.length > 0 && (
-          <div className="marquee-bar" style={{
-            background: marqueeMessages[0].bgColor || '#1a1a2e',
-            color: marqueeMessages[0].textColor || '#ffffff'
-          }}>
-            <div className="marquee-track" style={{
-              animationDuration: `${marqueeMessages[0].speed || 30}s`
-            }}>
-              {marqueeMessages.map(msg => (
-                <span key={msg.id} className="marquee-content">{msg.message} &nbsp;&nbsp;&nbsp; 🍽️ &nbsp;&nbsp;&nbsp; </span>
-              ))}
-              {marqueeMessages.map(msg => (
-                <span key={`r-${msg.id}`} className="marquee-content">{msg.message} &nbsp;&nbsp;&nbsp; 🍽️ &nbsp;&nbsp;&nbsp; </span>
-              ))}
+        {/* Luxury Hero Section */}
+        {isLandingPage && (
+          <section className="luxury-hero motion-hero" id="home">
+          {/* Animated Slideshow Container */}
+          <div className="hero-slideshow">
+            {heroSlideImages.map((imgUrl, index) => (
+              <div
+                key={index}
+                className={`hero-slide ${index === activeHeroSlide ? 'active' : ''}`}
+                style={{ backgroundImage: `url(${imgUrl})` }}
+              ></div>
+            ))}
+          </div>
+
+          <div className="hero-bg-overlay"></div>
+          <div className="hero-content motion-hero-content">
+            <span className="hero-tagline animate-fade-in-up">PREMIUM STEAKHOUSE</span>
+            <h1 className="hero-title animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+              PREMIER KOSHER DINING EXPERIENCE
+            </h1>
+            <div className="hero-stars animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+              ★ ★ ★ ★ ★
+            </div>
+            <p className="hero-description animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+              GREAT FOOD. FINE DRINKS. EXCELLENT SERVICE.
+            </p>
+            <div className="hero-actions animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+              <button className="btn-explore-menu" onClick={() => handleNavClick('menus')}>
+                VIEW OUR MENU
+              </button>
             </div>
           </div>
-        )}
 
-        {/* Luxury Hero Section */}
-        <section className="luxury-hero" id="home" style={{ backgroundImage: `url(${heroContent.bg})` }}>
-          <div className="hero-bg-overlay"></div>
-          <div className="hero-content">
-            <span className="hero-subtitle-tag animate-fade-in-up">{heroContent.subtitle}</span>
-            <h1 className="hero-title animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-              {heroContent.title}
-            </h1>
-            <p className="hero-description animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-              {heroContent.description}
-            </p>
-            {heroContent.showButtons && (
-              <div className="hero-actions animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
-                <button className="btn-reserve" onClick={() => {
-                  if (isContactPage) {
-                    document.getElementById('reservation-section')?.scrollIntoView({ behavior: 'smooth' });
-                  } else {
-                    navigate('/contact');
-                  }
-                }}>
-                  <i className="bi bi-calendar-check"></i> Book Table
-                </button>
-                <button className="btn-explore-menu" onClick={() => {
-                  if (isMenuPage) {
-                    document.getElementById('menu-section')?.scrollIntoView({ behavior: 'smooth' });
-                  } else {
-                    navigate('/menu');
-                  }
-                }}>
-                  Explore Menu <i className="bi bi-arrow-right"></i>
-                </button>
-              </div>
-            )}
-          </div>
-          
           {/* Scroll Indicator */}
-          <div className="hero-scroll-indicator" onClick={() => {
-            if (isMenuPage) {
-              document.getElementById('menu-section')?.scrollIntoView({ behavior: 'smooth' });
-            } else if (isSignaturePage) {
-              document.getElementById('recommendations')?.scrollIntoView({ behavior: 'smooth' });
-            } else if (isWhyUsPage) {
-              document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
-            } else if (isGalleryPage) {
-              document.getElementById('gallery')?.scrollIntoView({ behavior: 'smooth' });
-            } else if (isContactPage) {
-              document.getElementById('reservation-section')?.scrollIntoView({ behavior: 'smooth' });
-            }
-          }}>
+          <div className="hero-scroll-indicator" onClick={() => handleNavClick('menus')}>
             <span>SCROLL DOWN</span>
             <div className="indicator-arrow">
               <i className="bi bi-chevron-down"></i>
             </div>
           </div>
         </section>
-
-        {/* Branches Section */}
-        {!!branches.length && (
-          <section className="branches-showcase-section">
-            <div className="section-header text-center">
-              <span className="section-subheading">OUR LOCATIONS</span>
-              <h2 className="section-title">All Branches</h2>
-              <p className="section-description">
-                Browse every branch of this restaurant and switch instantly.
-              </p>
-            </div>
-
-            {branchesLoading ? (
-              <div className="branches-loading-panel">
-                <div className="spinner-border" role="status"></div>
-                <span>Loading branches...</span>
-              </div>
-            ) : (
-              <div className="branches-showcase-grid">
-                {branches.map((branch) => {
-                  const isSelected = selectedBranch?.id === branch.id;
-                  return (
-                    <article
-                      key={branch.id}
-                      className={`branch-showcase-card ${isSelected ? 'selected' : ''}`}
-                    >
-                      <div className="branch-showcase-top">
-                        <div className="branch-showcase-icon">
-                          <i className="bi bi-shop"></i>
-                        </div>
-                        <div className="branch-showcase-badge">
-                          {isSelected ? 'Current Branch' : 'Available'}
-                        </div>
-                      </div>
-
-                      <h3 className="branch-showcase-name">{branch.name}</h3>
-                      <p className="branch-showcase-address">{branch.address || 'Address not available'}</p>
-
-                      <div className="branch-showcase-meta">
-                        {branch.phone && (
-                          <span>
-                            <i className="bi bi-telephone"></i> {branch.phone}
-                          </span>
-                        )}
-                        {branch.distance && (
-                          <span>
-                            <i className="bi bi-geo-alt"></i> {branch.distance.toFixed(2)} km
-                          </span>
-                        )}
-                      </div>
-
-                      <button
-                        className="branch-showcase-action"
-                        onClick={() => {
-                          const isSameBranch = selectedBranch?.id === branch.id;
-                          setSelectedBranch(branch);
-                          localStorage.setItem('CustomerBranchId', branch.id);
-                          localStorage.setItem('CustomerBranchDistance', branch.distance || 0);
-                          localStorage.setItem('CustomerBranchMinutes', branch.timeMinutes || 0);
-                          if (userLocation?.latitude && userLocation?.longitude) {
-                            localStorage.setItem('CustomerBranchLat', userLocation.latitude);
-                            localStorage.setItem('CustomerBranchLng', userLocation.longitude);
-                          }
-                          if (!isSameBranch) {
-                            setSelectedCategory(ALL_CATEGORY);
-                            setSelectedSubcategory(null);
-                            setSearchTerm('');
-                            fetchCategories(branch.id, 0, false);
-                            fetchTrendingItems(branch.id);
-                            fetchMenuItems(branch.id, 'all', null, 0, false, '', false);
-                          }
-                        }}
-                      >
-                        {isSelected ? 'Selected' : 'Select Branch'}
-                      </button>
-                    </article>
-                  );
-                })}
-              </div>
-            )}
-          </section>
         )}
 
-        {/* Experience Highlights */}
-        {isMenuPage && (
-          <section className="experience-highlights-section">
-            <div className="section-header text-center">
-              <span className="section-subheading">DINING EXPERIENCE</span>
-              <h2 className="section-title">Why Customers Choose Us</h2>
-            </div>
-            <div className="experience-highlights-grid">
-              <div className="experience-highlight-card">
-                <div className="experience-highlight-icon">
-                  <i className="bi bi-bag-check"></i>
+        {/* Heritage & Category Grid Section */}
+        {isLandingPage && (
+          <>
+            {/* Our Heritage Section */}
+            <section className="heritage-section" id="heritage-section">
+              <div className="heritage-container">
+                <div className="heritage-left animate-fade-in-up">
+                  <span className="heritage-tag">OUR STORY</span>
+                  <h2 className="heritage-heading">A PREMIUM STEAKHOUSE</h2>
+                  <p className="heritage-text">
+                    Our Steakhouse brings you the classic New York style steak experience under strict Kosher supervision. For over a decade, we have been serving the finest quality food and providing excellent service to our community.
+                  </p>
+                  <button className="btn-heritage-more" onClick={() => navigate('/about')}>
+                    READ OUR STORY
+                  </button>
                 </div>
-                <h3>Thoughtful Service</h3>
-                <p>Friendly staff, smooth ordering, and a calm dining flow from start to finish.</p>
-              </div>
-              <div className="experience-highlight-card">
-                <div className="experience-highlight-icon">
-                  <i className="bi bi-flower1"></i>
+                <div className="heritage-right animate-fade-in-up">
+                  <div className="heritage-img-frame">
+                    <img src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1000&q=80" alt="Restaurant Interior" />
+                  </div>
                 </div>
-                <h3>Fresh Everyday</h3>
-                <p>Ingredients are selected fresh so every order keeps the same quality and consistency.</p>
               </div>
-              <div className="experience-highlight-card">
-                <div className="experience-highlight-icon">
-                  <i className="bi bi-stars"></i>
+            </section>
+
+            {/* Our Services Section */}
+            <section className="services-section animate-fade-in-up">
+              <div className="section-header text-center">
+                <span className="section-subheading">WHAT WE OFFER</span>
+                <h2 className="section-title">Our Services</h2>
+              </div>
+              <div className="services-grid-container">
+                <div className="service-card-lux">
+                  <div className="service-icon-wrapper">
+                    <i className="bi bi-cup-hot-fill"></i>
+                  </div>
+                  <h3>Luxury Dine-In</h3>
+                  <p>Enjoy our premium hospitality and swanky atmosphere with friends and family.</p>
                 </div>
-                <h3>Special Taste</h3>
-                <p>Classic flavors and chef specials prepared to be delicious and memorable for you.</p>
+                <div className="service-card-lux">
+                  <div className="service-icon-wrapper">
+                    <i className="bi bi-truck"></i>
+                  </div>
+                  <h3>Fast Delivery</h3>
+                  <p>Order online and get your hot, fresh meals delivered straight to your doorstep.</p>
+                </div>
+                <div className="service-card-lux">
+                  <div className="service-icon-wrapper">
+                    <i className="bi bi-calendar2-check-fill"></i>
+                  </div>
+                  <h3>Easy Table Booking</h3>
+                  <p>Book your table in advance through our app to enjoy hassle-free dining.</p>
+                </div>
+                <div className="service-card-lux">
+                  <div className="service-icon-wrapper">
+                    <i className="bi bi-gift-fill"></i>
+                  </div>
+                  <h3>Private Catering</h3>
+                  <p>From birthday parties to corporate events, we cater delicious food for all occasions.</p>
+                </div>
               </div>
-            </div>
-          </section>
+            </section>
+
+            {/* Portrait Category Grid */}
+            <section className="categories-grid-section">
+              <div className="section-header text-center">
+                <span className="section-subheading">OUR MENUS</span>
+                <h2 className="section-title">Explore Our Menus</h2>
+              </div>
+              <div className="categories-grid-container">
+                {categories.length > 0 ? (
+                  categories.slice(0, 4).map((cat) => {
+                    const bgImg = getCategoryBgImage(cat.name);
+                    return (
+                      <div key={cat.id} className="category-portrait-card" onClick={() => handlePortraitCategoryClick(cat)}>
+                        <div className="portrait-card-bg" style={{ backgroundImage: `url(${bgImg})` }}></div>
+                        <div className="portrait-card-content">
+                          <h3>{cat.name.toUpperCase()}</h3>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  // Fallbacks if categories are not loaded yet or empty
+                  ['Starters', 'Main Course', 'Beverages', 'Desserts'].map((fallbackName, idx) => {
+                    const fallbackBgs = [
+                      'https://images.unsplash.com/photo-1543353071-10c8ba85a904?auto=format&fit=crop&w=600&q=80',
+                      'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80',
+                      'https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=600&q=80',
+                      'https://images.unsplash.com/photo-1551024506-0bccd828d307?auto=format&fit=crop&w=600&q=80'
+                    ];
+                    return (
+                      <div key={idx} className="category-portrait-card" onClick={() => {
+                        const matched = categories.find(c => c.name.toLowerCase().includes(fallbackName.toLowerCase()));
+                        if (matched) {
+                          handlePortraitCategoryClick(matched);
+                        } else {
+                          navigate('/menu');
+                        }
+                      }}>
+                        <div className="portrait-card-bg" style={{ backgroundImage: `url(${fallbackBgs[idx]})` }}></div>
+                        <div className="portrait-card-content">
+                          <h3>{fallbackName.toUpperCase()}</h3>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </section>
+          </>
         )}
 
-        {/* Special Offers Section */}
         {isMenuPage && (
           <>
-            <section className="luxury-offers-section" id="offers">
-          <div className="section-header text-center">
-            <span className="section-subheading">EXCLUSIVE OFFERS</span>
-            <h2 className="section-title">Special Discounts For You</h2>
-          </div>
-          <div className="offers-grid">
-            <div className="offer-card gold-gradient">
-              <div className="offer-badge">50% OFF</div>
-              <div className="offer-content">
-                <h3>Welcome Feast</h3>
-                <p>Enjoy a 50% discount on your first order. Use coupon code below at checkout.</p>
-                <div className="coupon-code">FIRST50</div>
-              </div>
-            </div>
-            <div className="offer-card dark-gold-gradient">
-              <div className="offer-badge">FREE DELIVERY</div>
-              <div className="offer-content">
-                <h3>Weekend Special</h3>
-                <p>Get free delivery for all orders above $40 on Friday, Saturday, and Sunday.</p>
-                <div className="coupon-code">WEEKEND40</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* Categories */}
-        <section className="categories-section" id="menu-section">
-          <div className="categories-container">
-            <button
-              className="category-scroll-btn left"
-              onClick={() => scrollCategories('left')}
-              disabled={categoriesLoading || categories.length === 0}
-            >
-              <i className="bi bi-chevron-left"></i>
-            </button>
+        <section className="categories-section motion-reveal" id="menu-section" data-motion-observe="categories">
+          {/* Desktop Search & Filter in Menu Section */}
+          <div className="menu-section-search-filter desktop-only">
+            <div className="menu-search-wrapper">
+              <i className="bi bi-search"></i>
+              <input
+                type="text"
+                placeholder="Search for dishes, cuisines..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              {searchTerm && (
+                <button className="clear-search-btn" onClick={() => setSearchTerm('')}>
+                  <i className="bi bi-x-lg"></i>
+                </button>
+              )}
+            </div>
+            <div className="menu-veg-toggle">
+              <span className={`veg-label ${vegOnly ? 'active' : ''}`}>
+                <span className="veg-dot"></span>
+                Veg Mode
+              </span>
+              <label className="veg-toggle-switch">
+                <input
+                  type="checkbox"
+                  checked={vegOnly}
+                  onChange={() => {
+                    const newValue = !vegOnly;
+                    setVegOnly(newValue);
+                    localStorage.setItem('vegOnly', newValue.toString());
+                  }}
+                />
+                <span className="veg-toggle-slider">
+                  <span className="toggle-text">{vegOnly ? 'ON' : 'OFF'}</span>
+                </span>
+              </label>
+            </div>
+          </div>
 
+          <div className="categories-container">
             <div className="categories-scroll" ref={categoryScrollRef}>
               {categoriesLoading ? (
                 // Loading skeleton
@@ -3132,6 +3368,7 @@ const CustomerLanding = () => {
                   {/* Recommended Category Card */}
                   <div
                     className={`category-card ${selectedCategory?.id === 'recommended' ? 'active' : ''}`}
+                    data-motion-observe="category-card"
                     onClick={() => handleCategoryClick(RECOMMENDED_CATEGORY)}
                   >
                     <div className="category-icon-emoji">⭐</div>
@@ -3141,6 +3378,7 @@ const CustomerLanding = () => {
                   {isCustomerLoggedIn && (
                     <div
                       className={`category-card ${selectedCategory?.id === 'frequently' ? 'active' : ''}`}
+                      data-motion-observe="category-card"
                       onClick={() => handleCategoryClick(FREQUENTLY_CATEGORY)}
                     >
                       <div className="category-icon-emoji">🔁</div>
@@ -3153,6 +3391,7 @@ const CustomerLanding = () => {
                       <div
                         key={category.id}
                         className={`category-card ${selectedCategory?.id === category.id ? 'active' : ''}`}
+                        data-motion-observe="category-card"
                         onClick={() => handleCategoryClick(category)}
                       >
                         <img
@@ -3193,20 +3432,12 @@ const CustomerLanding = () => {
                 </div>
               )}
             </div>
-
-            <button
-              className="category-scroll-btn right"
-              onClick={() => scrollCategories('right')}
-              disabled={categoriesLoading || categories.length === 0}
-            >
-              <i className="bi bi-chevron-right"></i>
-            </button>
           </div>
         </section>
 
         {/* Subcategories - Show only for regular categories that have subcategories */}
         {selectedCategory && selectedCategory.id !== 'all' && selectedCategory.id !== 'recommended' && selectedCategory.id !== 'frequently' && (subcategoriesLoading || subcategories.length > 0) && (
-          <section className="subcategories-section">
+          <section className="subcategories-section motion-reveal" data-motion-observe="subcategories">
             <div className="subcategories-header">
               <span className="subcategories-title">
                 <i className="bi bi-arrow-return-right" style={{ marginRight: '8px', color: primaryColor }}></i>
@@ -3223,10 +3454,11 @@ const CustomerLanding = () => {
               </button>
             </div>
             <div className="subcategories-list">
-              <span
-                className={`subcategory-chip ${selectedSubcategory?.id === 'all_sub' ? 'active' : ''}`}
-                onClick={() => setSelectedSubcategory(ALL_SUBCATEGORY)}
-              >
+                <span
+                  className={`subcategory-chip ${selectedSubcategory?.id === 'all_sub' ? 'active' : ''}`}
+                  data-motion-observe="sub-chip"
+                  onClick={() => setSelectedSubcategory(ALL_SUBCATEGORY)}
+                >
                 All {selectedCategory.name}
               </span>
               {subcategoriesLoading ? (
@@ -3239,6 +3471,7 @@ const CustomerLanding = () => {
                   <span
                     key={sub.id}
                     className={`subcategory-chip ${selectedSubcategory?.id === sub.id ? 'active' : ''}`}
+                    data-motion-observe="sub-chip"
                     onClick={() => handleSubcategoryClick(sub)}
                   >
                     {sub.name}
@@ -3251,10 +3484,10 @@ const CustomerLanding = () => {
 
         {/* Filtered Items - Hide when subcategories exist but none selected */}
         {selectedCategory && !(selectedCategory.id !== 'all' && selectedCategory.id !== 'recommended' && selectedCategory.id !== 'frequently' && !subcategoriesLoading && subcategories.length > 0 && !selectedSubcategory) && (
-          <section className="filtered-items-section">
+          <section className="filtered-items-section motion-reveal" data-motion-observe="filtered-items">
             <div className="section-header">
               <h2 className="section-title">
-                {selectedCategory.id === 'all' ? 'All Items' : selectedCategory.id === 'recommended' ? 'Recommended Items' : selectedCategory.id === 'frequently' ? 'Order Again Items' : (selectedSubcategory?.id === 'all_sub' ? selectedCategory.name : (selectedSubcategory?.name || selectedCategory.name))}
+                {selectedCategory.id === 'all' ? 'All Items' : selectedCategory.id === 'recommended' ? 'Recommended Items' : selectedCategory.id === 'frequently' ? 'Order Again' : (selectedSubcategory?.id === 'all_sub' ? selectedCategory.name : (selectedSubcategory?.name || selectedCategory.name))}
               </h2>
             </div>
 
@@ -3276,7 +3509,7 @@ const CustomerLanding = () => {
               <>
                 <div className="filtered-items-grid">
                   {filteredItems.map((item) => (
-                    <div key={item.id} className={`filtered-item-card ${!item.isAvailable ? 'unavailable' : ''}`} onClick={() => item.isAvailable && openAddonModal(item)}>
+                    <div key={item.id} className={`filtered-item-card motion-card ${!item.isAvailable ? 'unavailable' : ''}`} data-motion-observe="filtered-item" onClick={() => item.isAvailable && openAddonModal(item)}>
                       <div className="filtered-item-image">
                         <img src={item.image} alt={item.name} className="filtered-item-img" onError={handleImageError} />
                         {getItemQuantity(item.id) > 0 ? (
@@ -3396,9 +3629,40 @@ const CustomerLanding = () => {
           </>
         )}
 
+        {/* Unrivaled Atmosphere Section */}
+        {isLandingPage && (
+          <section className="atmosphere-section" id="atmosphere-section">
+            <div className="atmosphere-container">
+              <div className="atmosphere-left">
+                <div className="overlapping-images animate-fade-in-up">
+                  <img className="atmos-img img-1" src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80" alt="Restaurant Interior" />
+                  <img className="atmos-img img-2" src="https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=600&q=80" alt="Cocktails" />
+                  <img className="atmos-img img-3" src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80" alt="Fine Dining" />
+                </div>
+              </div>
+              <div className="atmosphere-right animate-fade-in-up">
+                <span className="atmos-tag">DINING EXPERIENCE</span>
+                <h2 className="atmos-heading">UNRIVALED ATMOSPHERE</h2>
+                <p className="atmos-text">
+                  Enjoy an elegant and vibrant atmosphere, soft music, eclectic wines, and handcrafted cocktails. We are committed to delivering an unforgettable Kosher dining experience.
+                </p>
+                <div className="atmos-badge-container">
+                  <div className="atmos-badge">
+                    <span className="badge-letter">L</span>
+                    <span className="badge-sub">B</span>
+                  </div>
+                </div>
+                <button className="btn-atmos-more" onClick={() => navigate('/gallery')}>
+                  DISCOVER MORE
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Trending / Chef Recommendation Section */}
         {isSignaturePage && (
-          <section className="trending-section" id="recommendations">
+          <section className="trending-section motion-reveal" id="recommendations" data-motion-observe="trending">
           <div className="section-header text-center">
             <span className="section-subheading">CHEF RECOMMENDATION</span>
             <h2 className="section-title">Signature Dishes</h2>
@@ -3413,13 +3677,13 @@ const CustomerLanding = () => {
               </div>
             ) : trendingItems.length === 0 ? (
               <div className="no-trending-items" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: '#666' }}>
-                No trending items available
+                No signature dishes available
               </div>
             ) : (
               trendingItems
                 .filter(item => !vegOnly || item.isVeg)
                 .map(item => (
-                  <div key={item.id} className="food-card">
+                  <div key={item.id} className="food-card motion-card" data-motion-observe="food-card">
                     <div className="food-image">
                       <img src={item.image} alt={item.name} onError={handleImageError} />
                       <span className="food-tag">
@@ -3453,66 +3717,66 @@ const CustomerLanding = () => {
         {/* Why Choose Us Section */}
         {isWhyUsPage && (
           <>
-          <section className="why-choose-us" id="features">
+          <section className="why-choose-us motion-reveal" id="features" data-motion-observe="why-us">
           <div className="section-header text-center">
             <span className="section-subheading">OUR VALUES</span>
             <h2 className="section-title">Why Choose Our Restaurant</h2>
           </div>
           <div className="features-grid">
-            <div className="feature-card">
+            <div className="feature-card motion-card" data-motion-observe="feature-card">
               <div className="feature-icon">
                 <i className="bi bi-egg-fried"></i>
               </div>
               <h3>Quality Ingredients</h3>
-              <p>We source only organic, farm-fresh vegetables and premium cuts of meat to prepare delicious, healthy dishes.</p>
+              <p>We use fresh vegetables and high-quality meat to prepare delicious and healthy dishes.</p>
             </div>
-            <div className="feature-card">
+            <div className="feature-card motion-card" data-motion-observe="feature-card">
               <div className="feature-icon">
                 <i className="bi bi-award"></i>
               </div>
               <h3>Expert Chefs</h3>
               <p>Our kitchen is run by professional chefs with many years of cooking experience.</p>
             </div>
-            <div className="feature-card">
+            <div className="feature-card motion-card" data-motion-observe="feature-card">
               <div className="feature-icon">
                 <i className="bi bi-lightning-charge"></i>
               </div>
               <h3>Great Service</h3>
-              <p>Your satisfaction is our goal. Enjoy friendly service and quick food delivery.</p>
+              <p>Your satisfaction is our goal. Enjoy friendly service and fast food delivery.</p>
             </div>
-            <div className="feature-card">
+            <div className="feature-card motion-card" data-motion-observe="feature-card">
               <div className="feature-icon">
                 <i className="bi bi-shield-check"></i>
               </div>
-              <h3>Hygiene Standard</h3>
-              <p>We enforce 5-star clean standards. Daily sanitation, sterile equipment, and safe preparation policies.</p>
+              <h3>Hygiene Standards</h3>
+              <p>We maintain strict clean standards and daily sanitization for safe food preparation.</p>
             </div>
           </div>
         </section>
 
         {/* Statistics Section */}
-        <section className="luxury-stats-section">
+        <section className="luxury-stats-section motion-reveal" data-motion-observe="stats">
           <div className="stats-grid">
-            <div className="stat-card">
+            <div className="stat-card motion-card" data-motion-observe="stat-card">
               <div className="stat-number">15K+</div>
               <div className="stat-label">Happy Customers</div>
             </div>
-            <div className="stat-card">
+            <div className="stat-card motion-card" data-motion-observe="stat-card">
               <div className="stat-number">120+</div>
               <div className="stat-label">Signature Dishes</div>
             </div>
-            <div className="stat-card">
+            <div className="stat-card motion-card" data-motion-observe="stat-card">
               <div className="stat-number">15+</div>
-              <div className="stat-label">Years of Ambiance</div>
+              <div className="stat-label">Years of Trust</div>
             </div>
-            <div className="stat-card">
+            <div className="stat-card motion-card" data-motion-observe="stat-card">
               <div className="stat-number">4.9★</div>
               <div className="stat-label">Average Rating</div>
             </div>
           </div>
         </section>
 
-        <section className="chef-spotlight-section">
+        <section className="chef-spotlight-section motion-reveal" data-motion-observe="chef">
           <div className="chef-spotlight-card">
             <div className="chef-spotlight-image">
               <img
@@ -3545,39 +3809,39 @@ const CustomerLanding = () => {
           </div>
         </section>
 
-        <section className="trust-strip-section">
+        <section className="trust-strip-section motion-reveal" data-motion-observe="trust">
           <div className="trust-strip-grid">
-            <div className="trust-strip-item">
+            <div className="trust-strip-item motion-card" data-motion-observe="trust-card">
               <div className="trust-strip-value">100%</div>
               <div className="trust-strip-label">Fresh Prep</div>
             </div>
-            <div className="trust-strip-item">
+            <div className="trust-strip-item motion-card" data-motion-observe="trust-card">
               <div className="trust-strip-value">24/7</div>
               <div className="trust-strip-label">Kitchen Support</div>
             </div>
-            <div className="trust-strip-item">
+            <div className="trust-strip-item motion-card" data-motion-observe="trust-card">
               <div className="trust-strip-value">A+</div>
               <div className="trust-strip-label">Hygiene Standard</div>
             </div>
-            <div className="trust-strip-item">
+            <div className="trust-strip-item motion-card" data-motion-observe="trust-card">
               <div className="trust-strip-value">Fast</div>
               <div className="trust-strip-label">Service Flow</div>
             </div>
           </div>
         </section>
 
-        <section className="why-us-cta-section">
+        <section className="why-us-cta-section motion-reveal" data-motion-observe="cta">
           <div className="why-us-cta-card">
             <div>
-              <span className="section-subheading">READY TO VISIT</span>
-              <h3>Experience the same flow, now with a stronger story.</h3>
+              <span className="section-subheading">READY TO VISIT?</span>
+              <h3>Enjoy the best taste and a wonderful experience.</h3>
               <p>
-                Explore the menu, reserve a table, and enjoy a premium dining experience without any flow change.
+                Explore our menu, reserve a table, and enjoy a premium dining experience.
               </p>
             </div>
             <div className="why-us-cta-actions">
               <button className="btn-reserve" onClick={() => navigate('/contact')}>
-                <i className="bi bi-calendar-check"></i> Book Table
+                <i className="bi bi-calendar-check"></i> Book A Table
               </button>
               <button className="btn-explore-menu" onClick={() => navigate('/menu')}>
                 View Menu <i className="bi bi-arrow-right"></i>
@@ -3590,10 +3854,10 @@ const CustomerLanding = () => {
 
         {/* Restaurant Gallery Section */}
         {isGalleryPage && (
-          <section className="restaurant-gallery" id="gallery">
+          <section className="restaurant-gallery animate-fade-in-up motion-reveal" id="gallery" data-motion-observe="gallery">
             <div className="section-header text-center">
               <span className="section-subheading">
-                {galleryLoading ? 'LOADING PHOTOS' : 'VISUAL JOURNEY'}
+                {galleryLoading ? 'LOADING PHOTOS' : 'OUR GALLERY'}
               </span>
               <h2 className="section-title">Our Dining Area</h2>
             </div>
@@ -3605,7 +3869,12 @@ const CustomerLanding = () => {
                 const caption = item.description || item.subtitle || '';
 
                 return (
-                  <div className={`gallery-item ${gallerySize}`} key={item.id || `gallery-${index}`}>
+                  <div
+                    className={`gallery-item ${gallerySize} motion-card`}
+                    data-motion-observe="gallery-card"
+                    key={item.id || `gallery-${index}`}
+                    style={{ animationDelay: `${index * 90}ms` }}
+                  >
                     <img src={imageUrl} alt={label} />
                     <div className="gallery-overlay">
                       <span>{caption ? `${label} • ${caption}` : label}</span>
@@ -3634,9 +3903,9 @@ const CustomerLanding = () => {
                 <i className="bi bi-star-fill"></i>
               </div>
               <p className="testimonial-text">
-                {activeTestimonial === 0 && "“Absolutely delicious! The atmosphere is cozy, the service is fast, and the food is cooked to perfection. Best place to eat in years.”"}
-                {activeTestimonial === 1 && "“The steaks here are amazing, and the presentation of each dish looks great. Truly a wonderful meal.”"}
-                {activeTestimonial === 2 && "“Very clean, friendly staff, and an amazing collection of sweet desserts. Will definitely come back with family!”"}
+                {activeTestimonial === 0 && "“Absolutely delicious! The atmosphere is cozy, the service is fast, and the food is cooked to perfection. The best restaurant!”"}
+                {activeTestimonial === 1 && "“The steaks here are amazing, and the presentation of each dish is beautiful. Truly a wonderful meal.”"}
+                {activeTestimonial === 2 && "“Very clean, friendly staff, and an amazing selection of sweet desserts. Will definitely come back with my family!”"}
               </p>
               <div className="testimonial-user">
                 <img 
@@ -3674,7 +3943,7 @@ const CustomerLanding = () => {
           <section className="reservation-section" id="reservation-section">
           <div className="section-header text-center">
             <span className="section-subheading">TABLE BOOKING</span>
-            <h2 className="section-title">Reserve A Table</h2>
+            <h2 className="section-title">Book A Table</h2>
           </div>
           <div className="reservation-container">
             <form onSubmit={handleReservationSubmit} className="reservation-form">
@@ -3693,7 +3962,7 @@ const CustomerLanding = () => {
                   <label>Email Address</label>
                   <input 
                     type="email" 
-                    placeholder="Enter email address" 
+                    placeholder="Enter your email" 
                     value={reservation.email}
                     onChange={(e) => setReservation({...reservation, email: e.target.value})}
                   />
@@ -3704,7 +3973,7 @@ const CustomerLanding = () => {
                   <label>Mobile Number *</label>
                   <input 
                     type="tel" 
-                    placeholder="Enter 10 digit number" 
+                    placeholder="Enter 10-digit number" 
                     value={reservation.phone}
                     onChange={(e) => setReservation({...reservation, phone: e.target.value})}
                     required 
@@ -3717,12 +3986,12 @@ const CustomerLanding = () => {
                     onChange={(e) => setReservation({...reservation, guests: parseInt(e.target.value)})}
                     required
                   >
-                    <option value="1">1 Person</option>
-                    <option value="2">2 Persons</option>
-                    <option value="3">3 Persons</option>
-                    <option value="4">4 Persons</option>
-                    <option value="5">5 Persons</option>
-                    <option value="6">6+ Persons</option>
+                    <option value="1">1 Guest</option>
+                    <option value="2">2 Guests</option>
+                    <option value="3">3 Guests</option>
+                    <option value="4">4 Guests</option>
+                    <option value="5">5 Guests</option>
+                    <option value="6">6+ Guests</option>
                   </select>
                 </div>
               </div>
@@ -3750,14 +4019,14 @@ const CustomerLanding = () => {
                 <label>Special Notes (Optional)</label>
                 <textarea 
                   rows="3" 
-                  placeholder="E.g., birthday celebration, window table request, food allergies..."
+                  placeholder="E.g., birthday celebration, window table request, allergies..."
                   value={reservation.notes}
                   onChange={(e) => setReservation({...reservation, notes: e.target.value})}
                 ></textarea>
               </div>
               <div className="text-center mt-4">
                 <button type="submit" className="btn-book-submit">
-                  Confirm Reservation <i className="bi bi-calendar-plus"></i>
+                  Confirm Booking <i className="bi bi-calendar-plus"></i>
                 </button>
               </div>
             </form>
@@ -3765,147 +4034,120 @@ const CustomerLanding = () => {
         </section>
         )}
 
-        {/* Location & Contact Section */}
+        {/* Dining Showcase Section (Replacing Map & Contact Section) */}
         {isContactPage && (
-          <section className="location-contact-section" id="contact">
-          <div className="section-header text-center">
-            <span className="section-subheading">FIND US</span>
-            <h2 className="section-title">Location & Hours</h2>
-          </div>
-          <div className="location-grid">
-            <div className="contact-details-card">
-              <h3>Contact Info</h3>
-              <div className="contact-item">
-                <i className="bi bi-geo-alt"></i>
-                <div>
-                  <h4>Our Address</h4>
-                  <p>{contactAddress || '101, Luxury Boulevard, Regent District, NY'}</p>
+          <section className="dining-showcase-section">
+            <div className="section-header text-center">
+              <span className="section-subheading">THE ATMOSPHERE</span>
+              <h2 className="section-title">Luxury Dining Experience</h2>
+            </div>
+            <div className="dining-images-grid">
+              <div className="dining-img-card animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+                <img src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80" alt="Fine Plated Steak" />
+                <div className="dining-img-overlay">
+                  <h4>PREMIUM CUTS</h4>
+                  <p>Dry-aged cuts cooked to absolute perfection.</p>
                 </div>
               </div>
-              <div className="contact-item">
-                <i className="bi bi-telephone"></i>
-                <div>
-                  <h4>Phone Number</h4>
-                  <p>{contactPhone || '+1 (555) 123-4567'}</p>
+              <div className="dining-img-card animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80" alt="Candlelit Dinner Tables" />
+                <div className="dining-img-overlay">
+                  <h4>ELEGANT ATMOSPHERE</h4>
+                  <p>Beautiful candlelit seating and high-end decor.</p>
                 </div>
               </div>
-              <div className="contact-item">
-                <i className="bi bi-envelope"></i>
-                <div>
-                  <h4>Email Address</h4>
-                  <p>{contactEmail || 'reservations@royaldining.com'}</p>
+              <div className="dining-img-card animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                <img src="https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=800&q=80" alt="Luxury Wine Selection" />
+                <div className="dining-img-overlay">
+                  <h4>FINE DRINKS</h4>
+                  <p>A handpicked collection of premium and fine drinks.</p>
                 </div>
               </div>
-              <div className="contact-item">
-                <i className="bi bi-clock"></i>
-                <div>
-                  <h4>Opening Hours</h4>
-                  <p>Mon - Fri: 11:00 AM - 11:00 PM</p>
-                  <p>Sat - Sun: 10:00 AM - 12:00 AM</p>
+              <div className="dining-img-card animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+                <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800&q=80" alt="Plated Gourmet Recipe" />
+                <div className="dining-img-overlay">
+                  <h4>CHEF'S SPECIALS</h4>
+                  <p>Artfully plated recipes designed by our master chefs.</p>
+                </div>
+              </div>
+              <div className="dining-img-card animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+                <img src="https://images.unsplash.com/photo-1543007630-9710e4a00a20?auto=format&fit=crop&w=800&q=80" alt="Luxury Event Setting" />
+                <div className="dining-img-overlay">
+                  <h4>PRIVATE DINING</h4>
+                  <p>Perfect luxury settings for your private celebrations.</p>
                 </div>
               </div>
             </div>
-            <div className="map-container-lux">
-              <iframe 
-                title="Restaurant Location"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.6175390977823!2d-73.98685838459392!3d40.74844047932822!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c259a9b3117469%3A0xd134e199a405a163!2sEmpire%20State%20Building!5e0!3m2!1sen!2sin!4v1655029367123!5m2!1sen!2sin" 
-                width="100%" 
-                height="100%" 
-                style={{ border: 0, borderRadius: '20px' }} 
-                allowFullScreen="" 
-                loading="lazy" 
-                referrerPolicy="no-referrer-when-downgrade"
-              ></iframe>
-            </div>
-          </div>
-        </section>
+          </section>
         )}
 
-        {/* Footer */}
-        <footer className="main-footer" style={{ marginBottom: 0 }}>
-          {/* Footer Links */}
-          <div className="footer-content">
-            <div className="footer-grid">
-              {/* Brand Section */}
-              <div className="footer-brand">
-                {theme.logoUrl ? (
-                  <img src={theme.logoUrl} alt={restaurantName} className="footer-logo-img" />
-                ) : (
-                  <div className="footer-logo">
-                    <span className="footer-logo-icon">🍽️</span>
-                    <span>{restaurantName}</span>
-                  </div>
-                )}
-                <p className="footer-subtitle">{theme.tagline || ''}</p>
-                <p className="footer-tagline">Delicious food delivered to your doorstep. Experience the finest quality with authentic recipes.</p>
-                {(socialMediaDetails?.facebook || socialMediaDetails?.instagram || socialMediaDetails?.twitter || socialMediaDetails?.youtube) && (
-                  <div className="footer-social">
-                    {socialMediaDetails?.facebook && <a href={socialMediaDetails.facebook} target="_blank" rel="noopener noreferrer" className="social-link" style={{ color: '#1877F2', backgroundColor: '#fff' }}><i className="bi bi-facebook"></i></a>}
-                    {socialMediaDetails?.instagram && <a href={socialMediaDetails.instagram} target="_blank" rel="noopener noreferrer" className="social-link" style={{ color: '#E4405F', backgroundColor: '#fff' }}><i className="bi bi-instagram"></i></a>}
-                    {socialMediaDetails?.twitter && <a href={socialMediaDetails.twitter} target="_blank" rel="noopener noreferrer" className="social-link" style={{ color: '#000000', backgroundColor: '#fff' }}><i className="bi bi-twitter-x"></i></a>}
-                    {socialMediaDetails?.youtube && <a href={socialMediaDetails.youtube} target="_blank" rel="noopener noreferrer" className="social-link" style={{ color: '#FF0000', backgroundColor: '#fff' }}><i className="bi bi-youtube"></i></a>}
-                  </div>
-                )}
-                <div className="newsletter-box mt-4">
-                  <h5>Join Our Newsletter</h5>
-                  <p style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '10px' }}>Subscribe to get updates on luxury events and signature menus.</p>
-                  <form onSubmit={(e) => { e.preventDefault(); toast.success("Thank you for subscribing!"); e.target.reset(); }} className="newsletter-form">
-                    <input type="email" placeholder="Your Email Address" required style={{
-                      padding: '10px 14px',
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: '8px 0 0 8px',
-                      color: '#fff',
-                      fontSize: '0.8rem',
-                      outline: 'none',
-                      width: '180px'
-                    }} />
-                    <button type="submit" style={{
-                      padding: '10px 16px',
-                      background: 'var(--accent)',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: '0 8px 8px 0',
-                      cursor: 'pointer'
-                    }}><i className="bi bi-send"></i></button>
-                  </form>
-                </div>
-              </div>
 
-              {/* Quick Links */}
-              <div className="footer-links-section footer-quick-links">
-                <h4 className="footer-heading">Quick Links</h4>
-                <ul className="footer-links">
-                  <li><span onClick={() => navigate('/about')}><i className="bi bi-chevron-right"></i> About Us</span></li>
-                  <li><span onClick={() => navigate('/contact')}><i className="bi bi-chevron-right"></i> Contact Us</span></li>
-                  <li><span onClick={() => navigate(isCustomerLoggedIn ? '/profile' : '/login')}><i className="bi bi-chevron-right"></i> {isCustomerLoggedIn ? 'My Profile' : 'Login / Sign Up'}</span></li>
-                </ul>
-              </div>
 
-              {/* Legal */}
-              <div className="footer-links-section footer-legal">
-                <h4 className="footer-heading">Legal</h4>
-                <ul className="footer-links">
-                  <li><span onClick={() => navigate('/terms')}><i className="bi bi-chevron-right"></i> Terms & Conditions</span></li>
-                  <li><span onClick={() => navigate('/privacy')}><i className="bi bi-chevron-right"></i> Privacy Policy</span></li>
-                  <li><span onClick={() => navigate('/refund')}><i className="bi bi-chevron-right"></i> Refund Policy</span></li>
-                </ul>
-              </div>
+        {/* Bottom Reservation Bar */}
+        <div className="bottom-reservation-bar" id="reservation-section">
+          <div className="res-bar-left animate-fade-in-up">
+            <h3>MAKE A RESERVATION</h3>
+          </div>
+          <div className="res-bar-center animate-fade-in-up">
+            <button className="btn-res-now" onClick={() => navigate('/contact')}>
+              RESERVE NOW
+            </button>
+          </div>
+          <div className="res-bar-right animate-fade-in-up">
+            <span>{contactPhone}</span>
+            <span className="divider">|</span>
+            <span>{contactEmail}</span>
+          </div>
+        </div>
 
-              {/* Contact Info */}
-              <div className="footer-links-section footer-contact-section">
-                <h4 className="footer-heading">Contact Info</h4>
-                <ul className="footer-contact">
-                  {contactAddress && <li><i className="bi bi-geo-alt"></i> {contactAddress}</li>}
-                  {contactPhone && <li><i className="bi bi-telephone"></i> {contactPhone}</li>}
-                  {contactEmail && <li><i className="bi bi-envelope"></i> {contactEmail}</li>}
-                </ul>
+        {/* Detailed Info Footer */}
+        <footer className="restaurant-details-footer">
+          <div className="footer-details-grid">
+            {/* Col 1: Address & Reservation */}
+            <div className="footer-details-col animate-fade-in-up">
+              <div className="footer-details-section">
+                <h4>ADDRESS</h4>
+                <p>{contactAddress}</p>
+                <a href={`https://maps.google.com/?q=${encodeURIComponent(contactAddress)}`} target="_blank" rel="noopener noreferrer" className="btn-directions">
+                  DIRECTIONS
+                </a>
+              </div>
+              <div className="footer-details-section mt-4">
+                <h4>RESERVATION</h4>
+                <p>Call: {contactPhone}<br />Email: {contactEmail}</p>
               </div>
             </div>
 
-            {/* Copyright */}
-            <div className="footer-bottom">
-              <p>&copy; {new Date().getFullYear()} {restaurantName}. All rights reserved.</p>
+            {/* Col 2: Hours */}
+            <div className="footer-details-col animate-fade-in-up">
+              <div className="footer-details-section">
+                <h4>HOURS</h4>
+                <p>
+                  {renderHoursList()}
+                </p>
+              </div>
+            </div>
+
+            {/* Col 3: Dining Options */}
+            <div className="footer-details-col animate-fade-in-up">
+              <div className="footer-details-section">
+                <h4>DINING OPTIONS</h4>
+                <ul className="footer-bullet-list">
+                  {renderDiningSections()}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </footer>
+
+        {/* Bottom Footer */}
+        <footer className="restaurant-bottom-footer">
+          <div className="bottom-footer-content">
+            <p>&copy; {new Date().getFullYear()} {restaurantName}. All rights reserved.</p>
+            <div className="bottom-footer-socials">
+              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer"><i className="bi bi-facebook"></i></a>
+              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer"><i className="bi bi-instagram"></i></a>
+              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer"><i className="bi bi-twitter-x"></i></a>
             </div>
           </div>
         </footer>
