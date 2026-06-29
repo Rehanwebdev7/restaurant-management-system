@@ -16,6 +16,10 @@ public interface DeviceTokenRepository extends JpaRepository<DeviceTokenEntity, 
 
     Optional<DeviceTokenEntity> findFirstByUserstId_Id(Long userId);
 
+    Optional<DeviceTokenEntity> findFirstByCustomersId_Id(Long customerId);
+
+    List<DeviceTokenEntity> findByCustomersId_Id(Long customerId);
+
     @Query("SELECT d FROM DeviceTokenEntity d WHERE d.userstId.branchId.id = :branchId AND LOWER(d.userstId.role) = LOWER(:role)")
     List<DeviceTokenEntity> findByBranchAndRole(@Param("branchId") Long branchId, @Param("role") String role);
 }

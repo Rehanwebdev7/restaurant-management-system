@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -29,6 +32,48 @@ public class RestOutstandingController {
 
     @Autowired
     private TokenUtil tokenUtil;
+
+    // ***** Api - Get All Outstanding Records for current restaurant *****
+    @GetMapping("/all")
+    public ResponseEntity<Object> getAllOutstanding(@RequestHeader("access_token") String token) {
+        try {
+            Authorization.authorizeRestaurant(token);
+            tokenUtil.decryptAndStoreToken(token);
+            Integer restaurantId = tokenUtil.getCurrentUserId();
+            Long restaurantIdLong = restaurantId.longValue();
+
+            // Return outstanding rows whose customer/user is parented under this restaurant.
+            List<OutstandingEntity> all = outstandingRepository.findAll();
+            List<OutstandingEntity> filtered = new ArrayList<>();
+            for (OutstandingEntity o : all) {
+                UsersEntity u = o.getUserId();
+                if (u == null) continue;
+                UsersEntity parent = u.getParentId();
+                if (parent != null && parent.getId() != null && parent.getId().equals(restaurantIdLong)) {
+                    filtered.add(o);
+                } else if (u.getId() != null && u.getId().equals(restaurantIdLong)) {
+                    filtered.add(o);
+                }
+            }
+
+            Map<String, Object> payload = new LinkedHashMap<>();
+            payload.put("totalRecords", (long) filtered.size());
+            payload.put("records", filtered);
+
+            return ApiResponse.responseBuilder(payload, "SUCCESS", HttpStatus.OK,
+                    "Outstanding records fetched successfully");
+        } catch (SecurityException e) {
+            return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.UNAUTHORIZED, e.getMessage());
+        } catch (RuntimeException e) {
+            return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Unable to fetch outstanding records");
+        } finally {
+            tokenUtil.clearTokenData();
+        }
+    }
 
     @PostMapping("/deduct")
     public ResponseEntity<Object> deductOutstanding(

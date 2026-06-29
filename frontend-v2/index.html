@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- Customer-site brand gold; tinting the status bar / address bar.
+         Older media-scoped values stay as a fallback for admin shells. -->
+    <meta name="theme-color" content="#C9A96E" />
+    <meta name="theme-color" content="#C9A96E" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0A0A0A" media="(prefers-color-scheme: dark)" />
+    <!-- iOS PWA shell: full-bleed status bar + safe-area aware. -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Spice Garden" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="description" content="Restaurant Management System — Admin & Customer" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- UI-F-46: Inter font self-host pending; CDN fallback for dev -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- UI-F-22 perf — eagerly resolve customer hero image host + payment hosts. -->
+    <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
+    <link rel="dns-prefetch" href="https://stripe.com" />
+    <link rel="dns-prefetch" href="https://paypal.com" />
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <!-- Preload the first above-the-fold hero so the LCP image starts downloading
+         before the JS bundle is parsed. Uses the same w=1600 variant the rotator
+         renders for the first frame. -->
+    <link rel="preload" as="image" href="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80" fetchpriority="high" />
+    <!-- Self-hosted display face used in HeroSection — preload to avoid FOIT. -->
+    <link rel="preload" href="/fonts/Cormorant-Garamond-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <title>RMS · Restaurant Management System</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -156,10 +156,11 @@ public class AdmDashboardService {
 					Map<String, Object> m = new LinkedHashMap<>();
 					m.put("name", r.getName() != null ? r.getName() : "");
 					m.put("email", r.getEmail() != null ? r.getEmail() : r.getMobile());
-					long days = ChronoUnit.DAYS.between(
-							r.getCreatedAt().toLocalDate(),
-							LocalDate.now()
-					);
+					// Guard against legacy/seed rows where createdAt may be null.
+					long days = 0L;
+					if (r.getCreatedAt() != null) {
+						days = ChronoUnit.DAYS.between(r.getCreatedAt().toLocalDate(), LocalDate.now());
+					}
 					m.put("applied_days_ago", days);
 					return m;
 				})

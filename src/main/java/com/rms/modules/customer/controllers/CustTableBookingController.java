@@ -1,6 +1,9 @@
 package com.rms.modules.customer.controllers;
 
+import com.rms.common.entities.CustomersEntity;
 import com.rms.common.entities.TableBookingEntity;
+import com.rms.common.repositories.CustomersRepository;
+import com.rms.common.repositories.TableBookingRepository;
 import com.rms.common.serviceImplement.TableBookingServiceIMP;
 import com.rms.common.response.ApiResponse;
 import com.rms.modules.customer.services.CustTableBookingService;
@@ -31,6 +34,12 @@ public class CustTableBookingController {
 
     @Autowired
     private CustTableBookingService custTableBookingService;
+
+    @Autowired
+    private TableBookingRepository tableBookingRepository;
+
+    @Autowired
+    private CustomersRepository customersRepository;
 
     //***** Api- Pre-flight Availability Check *****
     @GetMapping("/availability")
@@ -81,7 +90,7 @@ public class CustTableBookingController {
         }
     }
 
-    //***** Api- Add Single Record ***** 
+    //***** Api- Add Single Record *****
     @PostMapping("/add")
     public ResponseEntity<Object> addTableBooking(@RequestHeader("access_token") String token,@RequestBody TableBookingEntity table_bookingEntity) {
         try {
@@ -93,6 +102,75 @@ public class CustTableBookingController {
             return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.NOT_FOUND, e.getMessage());
         } catch (Exception e) {
             return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error");
+        }
+    }
+
+    /**
+     * Public reservation endpoint — no auth required so the Contact page can
+     * accept walk-up bookings from un-signed-in visitors. Body shape mirrors
+     * the legacy ContactPage submission:
+     *   { name, email, phone, date, time, guests, notes }
+     *
+     * The legacy backend persists a stub TableBookingEntity with status
+     * REQUESTED and the restaurant gets notified via the same channel as
+     * authenticated bookings. We accept the request without strict
+     * validation here so a flaky network never blocks the customer — the
+     * restaurant team triages REQUESTED bookings before confirming a table.
+     */
+    @PostMapping("/public/add")
+    public ResponseEntity<Object> addPublicReservation(@RequestBody Map<String, Object> payload) {
+        try {
+            String name = payload.get("name") != null ? String.valueOf(payload.get("name")).trim() : "";
+            String phone = payload.get("phone") != null ? String.valueOf(payload.get("phone")).trim() : "";
+            if (name.isEmpty() || phone.isEmpty()) {
+                return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.BAD_REQUEST,
+                        "name and phone are required");
+            }
+            String dateStr = payload.get("date") != null ? String.valueOf(payload.get("date")) : null;
+            String timeStr = payload.get("time") != null ? String.valueOf(payload.get("time")) : null;
+            String notes = payload.get("notes") != null ? String.valueOf(payload.get("notes")) : "";
+            String email = payload.get("email") != null ? String.valueOf(payload.get("email")) : "";
+            Integer guests = payload.get("guests") != null ? Integer.parseInt(String.valueOf(payload.get("guests"))) : 2;
+
+            // Upsert a CustomersEntity by mobile — same shape used by
+            // LoginController.buildCustomerSessionData so the same guest
+            // identity is reused for OTP login + reservation history.
+            CustomersEntity customer = customersRepository.findByMobileNumber(phone).orElseGet(() -> {
+                CustomersEntity c = new CustomersEntity();
+                c.setMobileNumber(phone);
+                c.setName(name);
+                if (!email.isEmpty()) c.setEmail(email);
+                c.setIsActive(true);
+                c.setIsDeleted(0);
+                return customersRepository.save(c);
+            });
+            if ((customer.getName() == null || customer.getName().isBlank()) && !name.isEmpty()) {
+                customer.setName(name);
+                customersRepository.save(customer);
+            }
+
+            TableBookingEntity tb = new TableBookingEntity();
+            tb.setStatus("REQUESTED");
+            tb.setCustomerId(customer);
+            if (dateStr != null && !dateStr.isBlank()) {
+                tb.setBookingDate(LocalDate.parse(dateStr));
+            }
+            if (timeStr != null && !timeStr.isBlank()) {
+                tb.setBookingTime(LocalTime.parse(timeStr.length() == 5 ? timeStr + ":00" : timeStr));
+            }
+            tableBookingRepository.save(tb);
+
+            Map<String, Object> data = new java.util.HashMap<>();
+            data.put("reservationId", tb.getId());
+            data.put("customerId", customer.getId());
+            data.put("guests", guests);
+            data.put("notes", notes);
+            data.put("status", "REQUESTED");
+            return ApiResponse.responseBuilder(data, "SUCCESS", HttpStatus.CREATED,
+                    "Reservation requested — we'll call you to confirm.");
+        } catch (Exception e) {
+            return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Unable to create reservation: " + e.getMessage());
         }
     }
 

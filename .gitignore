@@ -27,6 +27,7 @@ build/
 backend.log
 frontend.log
 build.log
+logs/
 
 # Backup files
 *.bak

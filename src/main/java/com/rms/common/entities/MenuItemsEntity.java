@@ -110,6 +110,15 @@ public class MenuItemsEntity {
 	@Column(name = "delivery_minutes")
 	private Integer deliveryMinutes;
 
+	/**
+	 * Owner-controlled flag — when true, the dish appears in the homepage
+	 * "Popular Dishes" section. Customer site filters by this so owners can
+	 * curate the landing page without dumping the entire menu onto it.
+	 * The /menu page ignores this flag and shows everything that's
+	 * active + available. (Legacy column name is `is_recommended` — we
+	 * deliberately reuse it instead of adding a parallel `show_on_home`
+	 * column to keep the schema lean and avoid a migration.)
+	 */
 	@Column(name = "is_recommended")
 	private Boolean isRecommended;
 

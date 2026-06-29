@@ -133,6 +133,23 @@ public class CashOutstandingController {
 		}
 	}
 
+	// ***** Api - Get All Outstanding (no pagination) *****
+	@GetMapping("/all")
+	public ResponseEntity<Object> getAllOutstanding(@RequestHeader("access_token") String token) {
+		try {
+			List<OutstandingEntity> result = outstandingServiceIMP.getAllRecordOutstanding(token);
+			return ApiResponse.responseBuilder(result, "SUCCESS", HttpStatus.OK, "Record Fetched Successfully");
+		} catch (SecurityException e) {
+			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.UNAUTHORIZED, e.getMessage());
+		} catch (RuntimeException e) {
+			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.NOT_FOUND, e.getMessage());
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.INTERNAL_SERVER_ERROR,
+					"Internal server error");
+		}
+	}
+
 	// ***** Api- Add Single Record *****
 	@PostMapping("/add")
 	public ResponseEntity<Object> addOutstanding(@RequestHeader("access_token") String token,

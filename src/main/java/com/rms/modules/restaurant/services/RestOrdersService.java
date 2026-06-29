@@ -1,5 +1,6 @@
 package com.rms.modules.restaurant.services;
 
+import com.rms.common.dto.BranchOrderSummaryDTO;
 import com.rms.common.entities.DiningTablesEntity;
 import com.rms.common.entities.OrderItemsEntity;
 import com.rms.common.entities.OrdersEntity;
@@ -44,6 +45,8 @@ import java.math.BigDecimal;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.ArrayList;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
@@ -346,77 +349,40 @@ public class RestOrdersService implements OrdersServiceIMP {
 		tokenUtil.decryptAndStoreToken(token);
 		Integer currentRestaurantId = tokenUtil.getCurrentUserId();
 
-		Specification<OrdersEntity> spec = (root, query, cb) -> {
+		// Native projection sidesteps Postgres' 1664-column per-target-list limit
+		// (SQLState 54011). OrdersEntity has 12+ EAGER ManyToOne associations and
+		// each UsersEntity self-joins its parent/branch — a JpaSpecification +
+		// findAll(spec) blows the join graph before the row is even hydrated.
+		LocalDateTime fromDateTime = fromDate != null ? fromDate.atStartOfDay() : null;
+		LocalDateTime toDateTime = toDate != null ? toDate.atTime(LocalTime.MAX) : null;
+		String normSearch = (searchValue != null && !searchValue.isBlank()) ? searchValue : null;
+		String searchPattern = normSearch != null ? "%" + normSearch.toLowerCase() + "%" : null;
+		String normStatus = (status != null && !status.isBlank()) ? status : null;
 
-			List<Predicate> predicates = new ArrayList<>();
+		Pageable pageable = PageRequest.of(Math.max(pageNumber != null ? pageNumber : 0, 0),
+				pageSize != null ? pageSize : 10);
 
-			// ================= RESTAURANT FILTER (MANDATORY) =================
-			predicates.add(cb.equal(root.get("restaurantId").get("id"), currentRestaurantId.longValue()));
+		// NB: the orders table has no is_active column, so the isActive parameter
+		// is accepted on the signature for backward compat with the controller but
+		// not forwarded to the SQL filter.
+		Page<Object[]> page = ordersRepository.findOrdersByRestaurantSummaries(
+				currentRestaurantId.longValue(),
+				fromDateTime, toDateTime,
+				normStatus,
+				normSearch, searchPattern,
+				pageable);
 
-			// ================= DATE FILTER =================
-			if (fromDate != null && toDate != null) {
-				predicates
-						.add(cb.between(root.get("createdAt"), fromDate.atStartOfDay(), toDate.atTime(LocalTime.MAX)));
-			}
-
-			// Active filter (outside search block)
-			if (isActive != null) {
-				predicates.add(cb.equal(root.get("isActive"), isActive));
-			}
-
-			// ================= STATUS FILTER =================
-			if (status != null && !status.trim().isEmpty()) {
-				predicates.add(cb.equal(cb.lower(root.get("status")), status.toLowerCase()));
-			}
-
-			// ================= SEARCH FILTER =================
-			if (searchValue != null && !searchValue.trim().isEmpty()) {
-
-				String pattern = "%" + searchValue.toLowerCase() + "%";
-				List<Predicate> searchPredicates = new ArrayList<>();
-
-				// 🔹 ORDER FIELDS
-				searchPredicates.add(cb.like(cb.lower(root.get("orderNumber")), pattern));
-				searchPredicates.add(cb.like(cb.lower(root.get("orderType")), pattern));
-				searchPredicates.add(cb.like(cb.lower(root.get("tableNumber")), pattern));
-				searchPredicates.add(cb.like(cb.lower(root.get("paymentStatus")), pattern));
-				searchPredicates.add(cb.like(cb.lower(root.get("paymentMethod")), pattern));
-
-				// 🔹 CUSTOMER INFO
-				searchPredicates.add(cb.like(cb.lower(root.get("customerName")), pattern));
-				searchPredicates.add(cb.like(cb.lower(root.get("customerPhone")), pattern));
-				searchPredicates.add(cb.like(cb.lower(root.get("customerEmail")), pattern));
-
-				// 🔹 AMOUNT SEARCH
-				try {
-					BigDecimal amount = new BigDecimal(searchValue);
-					searchPredicates.add(cb.equal(root.get("totalAmount"), amount));
-				} catch (Exception ignored) {
-				}
-
-//                // 🔹 BRANCH SEARCH (ONLY OWN BRANCHES)
-//                Join<OrdersEntity, UsersEntity> branchJoin =
-//                        root.join("branchId", JoinType.LEFT);
-//
-//                searchPredicates.add(
-//                        cb.like(cb.lower(branchJoin.get("branchName")), pattern)
-//                );
-
-				predicates.add(cb.or(searchPredicates.toArray(new Predicate[0])));
-			}
-
-			return cb.and(predicates.toArray(new Predicate[0]));
-		};
-
-		Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"));
-		Page<OrdersEntity> page = ordersRepository.findAll(spec, pageable);
+		List<BranchOrderSummaryDTO> records = page.getContent().stream()
+				.map(BranchOrderSummaryDTO::fromRow)
+				.filter(Objects::nonNull)
+				.collect(Collectors.toCollection(ArrayList::new));
 
 		Map<String, Object> response = new LinkedHashMap<>();
 		response.put("totalRecords", page.getTotalElements());
 		response.put("pageSize", page.getSize());
 		response.put("currentPage", page.getNumber() + 1);
 		response.put("totalPages", page.getTotalPages());
-		response.put("records", page.getContent());
+		response.put("records", records);
 
 		return response;
 	}
@@ -476,12 +442,25 @@ public class RestOrdersService implements OrdersServiceIMP {
 		Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"));
 		Page<OrdersEntity> page = ordersRepository.findAll(spec, pageable);
 
+		// Same DTO projection as getOrdersWithFilters above — see the comment there
+		// for why raw OrdersEntity tree causes Postgres' 1664-column error.
+		List<BranchOrderSummaryDTO> records = page.getContent().stream()
+				.map(order -> {
+					BranchOrderSummaryDTO dto = BranchOrderSummaryDTO.fromOrderEntity(order);
+					if (dto != null) {
+						dto.setOrderItemsCount(order.getOrderItems() != null ? (long) order.getOrderItems().size() : 0L);
+					}
+					return dto;
+				})
+				.filter(Objects::nonNull)
+				.collect(Collectors.toCollection(ArrayList::new));
+
 		Map<String, Object> response = new LinkedHashMap<>();
 		response.put("totalRecords", page.getTotalElements());
 		response.put("pageSize", page.getSize());
 		response.put("currentPage", page.getNumber() + 1);
 		response.put("totalPages", page.getTotalPages());
-		response.put("records", page.getContent());
+		response.put("records", records);
 
 		return response;
 	}

@@ -1,7 +1,12 @@
 package com.rms.modules.delivery.controllers;
 
 import com.rms.common.entities.OrdersEntity;
+import com.rms.common.entities.UsersEntity;
+import com.rms.common.repositories.OrdersRepository;
+import com.rms.common.repositories.UsersRepository;
 import com.rms.common.serviceImplement.OrdersServiceIMP;
+import com.rms.common.util.TokenUtil;
+import com.rms.configuration.Authorization;
 import com.rms.modules.delivery.services.DelOrdersService;
 import com.rms.common.response.ApiResponse;
 
@@ -11,10 +16,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import java.io.IOException;
@@ -31,6 +41,124 @@ public class DelOrdersController {
 
 	@Autowired
 	private DelOrdersService delOrdersService;
+
+	@Autowired
+	private OrdersRepository ordersRepository;
+
+	@Autowired
+	private UsersRepository usersRepository;
+
+	@Autowired
+	private TokenUtil tokenUtil;
+
+	// ===== Helper: resolve current delivery user from token =====
+	private UsersEntity currentDeliveryUser(String token) throws Exception {
+		Authorization.authorizeDelivery(token);
+		tokenUtil.decryptAndStoreToken(token);
+		Long id = tokenUtil.getCurrentUserId().longValue();
+		return usersRepository.findById(id)
+				.orElseThrow(() -> new RuntimeException("Delivery user not found"));
+	}
+
+	// ***** Api - Active orders assigned to the current delivery user *****
+	@GetMapping("/active")
+	public ResponseEntity<Object> getActiveOrders(@RequestHeader("access_token") String token) {
+		try {
+			UsersEntity delivery = currentDeliveryUser(token);
+			List<OrdersEntity> all = ordersRepository.findByDeliveryIdAndCreatedAtBetween(delivery,
+					LocalDate.now().minusDays(60).atStartOfDay(), LocalDate.now().atTime(LocalTime.MAX));
+			List<OrdersEntity> active = all.stream().filter(o -> {
+				String status = o.getStatus() != null ? o.getStatus().toUpperCase() : "";
+				String del = o.getDeliveryStatus() != null ? o.getDeliveryStatus().toUpperCase() : "";
+				return !("DELIVERED".equals(status) || "DELIVERED".equals(del)
+						|| "COMPLETED".equals(status)
+						|| "CANCELLED".equals(status) || "CANCELLED".equals(del));
+			}).collect(Collectors.toCollection(ArrayList::new));
+			return ApiResponse.responseBuilder(active, "SUCCESS", HttpStatus.OK,
+					"Active orders fetched successfully");
+		} catch (SecurityException e) {
+			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.UNAUTHORIZED, e.getMessage());
+		} catch (RuntimeException e) {
+			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.BAD_REQUEST, e.getMessage());
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.INTERNAL_SERVER_ERROR,
+					"Internal server error");
+		} finally {
+			tokenUtil.clearTokenData();
+		}
+	}
+
+	// ***** Api - History (delivered/cancelled) orders for the current delivery user *****
+	@GetMapping("/history")
+	public ResponseEntity<Object> getHistoryOrders(@RequestHeader("access_token") String token,
+			@RequestParam(value = "fromDate", required = false) String fromDateStr,
+			@RequestParam(value = "toDate", required = false) String toDateStr,
+			@RequestParam(value = "page", required = false) Integer page,
+			@RequestParam(value = "pageSize", defaultValue = "25") Integer pageSize) {
+		try {
+			UsersEntity delivery = currentDeliveryUser(token);
+
+			LocalDate fromDate = null;
+			LocalDate toDate = null;
+			if (fromDateStr != null && !fromDateStr.isBlank() && toDateStr != null && !toDateStr.isBlank()) {
+				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+				fromDate = LocalDate.parse(fromDateStr, formatter);
+				toDate = LocalDate.parse(toDateStr, formatter);
+			}
+			LocalDate effectiveTo = toDate != null ? toDate : LocalDate.now();
+			LocalDate effectiveFrom = fromDate != null ? fromDate : effectiveTo.minusDays(30);
+
+			List<OrdersEntity> all = ordersRepository.findByDeliveryIdAndCreatedAtBetween(delivery,
+					effectiveFrom.atStartOfDay(), effectiveTo.atTime(LocalTime.MAX));
+			List<OrdersEntity> history = all.stream().filter(o -> {
+				String status = o.getStatus() != null ? o.getStatus().toUpperCase() : "";
+				String del = o.getDeliveryStatus() != null ? o.getDeliveryStatus().toUpperCase() : "";
+				return "DELIVERED".equals(status) || "DELIVERED".equals(del)
+						|| "COMPLETED".equals(status)
+						|| "CANCELLED".equals(status) || "CANCELLED".equals(del);
+			}).collect(Collectors.toCollection(ArrayList::new));
+
+			// Light pagination over the in-memory list (delivery user volumes are small).
+			int safePageSize = pageSize != null && pageSize > 0 ? pageSize : 25;
+			int pageIndex = 0;
+			if (page != null) {
+				pageIndex = Math.max(0, page - 1);
+			}
+			int from = Math.min(pageIndex * safePageSize, history.size());
+			int to = Math.min(from + safePageSize, history.size());
+			List<OrdersEntity> sliced = history.subList(from, to);
+
+			Map<String, Object> result = new LinkedHashMap<>();
+			result.put("totalRecords", (long) history.size());
+			result.put("pageSize", safePageSize);
+			result.put("currentPage", pageIndex + 1);
+			result.put("totalPages", safePageSize == 0 ? 0 : (int) Math.ceil(history.size() / (double) safePageSize));
+			result.put("records", sliced);
+
+			return ApiResponse.responseBuilder(result, "SUCCESS", HttpStatus.OK,
+					"Order history fetched successfully");
+		} catch (DateTimeParseException e) {
+			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.BAD_REQUEST,
+					"Invalid date format. Please use yyyy-MM-dd");
+		} catch (SecurityException e) {
+			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.UNAUTHORIZED, e.getMessage());
+		} catch (RuntimeException e) {
+			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.BAD_REQUEST, e.getMessage());
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.INTERNAL_SERVER_ERROR,
+					"Internal server error");
+		} finally {
+			tokenUtil.clearTokenData();
+		}
+	}
+
+	// ***** Api - All orders currently assigned to the delivery user (alias of /active for the UI) *****
+	@GetMapping("/assigned")
+	public ResponseEntity<Object> getAssignedOrders(@RequestHeader("access_token") String token) {
+		return getActiveOrders(token);
+	}
 
 	@GetMapping("/xl_export")
 	public ResponseEntity<byte[]> downloadOrdersExcel(@RequestHeader("access_token") String token,

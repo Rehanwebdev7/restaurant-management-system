@@ -1,8 +1,16 @@
 package com.rms.modules.customer.controllers;
 
+import com.rms.common.entities.CustomersEntity;
 import com.rms.common.entities.DeliveryZonesEntity;
+import com.rms.common.entities.MenuItemsEntity;
+import com.rms.common.entities.OrderItemsEntity;
 import com.rms.common.entities.OrdersEntity;
+import com.rms.common.entities.UsersEntity;
+import com.rms.common.repositories.CustomersRepository;
+import com.rms.common.repositories.MenuItemsRepository;
+import com.rms.common.repositories.OrderItemsRepository;
 import com.rms.common.repositories.OrdersRepository;
+import com.rms.common.repositories.UsersRepository;
 import com.rms.common.serviceImplement.OrdersServiceIMP;
 import com.rms.modules.customer.services.CustOrdersService;
 import com.rms.common.response.ApiResponse;
@@ -13,12 +21,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import java.io.IOException;
@@ -43,6 +55,18 @@ public class CustOrdersController {
 
 	@Autowired
 	private ObjectMapper objectMapper;
+
+	@Autowired
+	private MenuItemsRepository menuItemsRepository;
+
+	@Autowired
+	private OrderItemsRepository orderItemsRepository;
+
+	@Autowired
+	private CustomersRepository customersRepository;
+
+	@Autowired
+	private UsersRepository usersRepository;
 
 	@GetMapping("/track")
 	public ResponseEntity<Object> getDeliveryRoute(@RequestHeader("access_token") String token,
@@ -300,8 +324,8 @@ public class CustOrdersController {
 		}
 	}
 
-	// ***** Api- Add Single Record *****
-	@PostMapping("/add")
+	// ***** Api- Add Single Record (legacy entity form, kept under /add-entity) *****
+	@PostMapping("/add-entity")
 	public ResponseEntity<Object> addOrders(@RequestHeader("access_token") String token,
 			@RequestBody OrdersEntity ordersEntity) {
 		try {
@@ -317,12 +341,181 @@ public class CustOrdersController {
 		}
 	}
 
+	// ***** Api- Simplified customer-facing order create *****
+	// Frontend payload:
+	// { branchId, orderType, items: [{menuItemId, quantity}], customerName,
+	//   customerPhone, paymentMethod, deliveryAddress, specialInstructions }
+	@PostMapping({ "/add", "/public/add" })
+	@Transactional
+	public ResponseEntity<Object> addCustomerOrder(
+			@RequestHeader(value = "access_token", required = false) String token,
+			@RequestBody Map<String, Object> payload) {
+		try {
+			// ---- Validation ----
+			if (payload == null) {
+				throw new IllegalArgumentException("Request body is required");
+			}
+			Long branchId = toLong(payload.get("branchId"));
+			if (branchId == null) {
+				throw new IllegalArgumentException("branchId is required");
+			}
+			String orderType = strOrDefault(payload.get("orderType"), "TAKEAWAY");
+			String customerName = strOrDefault(payload.get("customerName"), "Guest");
+			String customerPhone = strOrDefault(payload.get("customerPhone"), null);
+			String paymentMethod = strOrDefault(payload.get("paymentMethod"), "CASH");
+			String specialInstructions = strOrDefault(payload.get("specialInstructions"), null);
+
+			Object itemsObj = payload.get("items");
+			if (!(itemsObj instanceof List<?>) || ((List<?>) itemsObj).isEmpty()) {
+				throw new IllegalArgumentException("items must be a non-empty array");
+			}
+			List<?> rawItems = (List<?>) itemsObj;
+
+			// ---- Branch lookup ----
+			UsersEntity branchUser = usersRepository.findById(branchId).orElse(null);
+			if (branchUser == null) {
+				throw new IllegalArgumentException("Invalid branchId: " + branchId);
+			}
+
+			// ---- Order shell ----
+			OrdersEntity order = new OrdersEntity();
+			order.setBranchId(branchUser);
+			if (branchUser.getParentId() != null) {
+				order.setRestaurantId(branchUser.getParentId());
+			}
+			order.setOrderType(orderType);
+			order.setStatus("PENDING");
+			order.setPaymentStatus("PENDING");
+			order.setPaymentMethod(paymentMethod);
+			order.setCustomerName(customerName);
+			order.setCustomerPhone(customerPhone);
+			order.setSpecialInstructions(specialInstructions);
+			order.setOrderNumber("CUST-" + System.currentTimeMillis());
+
+			// Hook to existing CustomersEntity when phone matches.
+			if (customerPhone != null && !customerPhone.isBlank()) {
+				Optional<CustomersEntity> existing = customersRepository.findByMobileNumber(customerPhone);
+				existing.ifPresent(order::setCustomerId);
+			}
+
+			LocalDateTime now = LocalDateTime.now();
+			order.setCreatedAt(now);
+			order.setUpdatedAt(now);
+
+			// Persist shell so we have an id for child items.
+			OrdersEntity savedOrder = ordersRepository.save(order);
+
+			// ---- Items ----
+			BigDecimal subtotal = BigDecimal.ZERO;
+			BigDecimal taxTotal = BigDecimal.ZERO;
+			List<OrderItemsEntity> persistedItems = new ArrayList<>();
+
+			for (Object raw : rawItems) {
+				if (!(raw instanceof Map<?, ?>)) {
+					continue;
+				}
+				@SuppressWarnings("unchecked")
+				Map<String, Object> item = (Map<String, Object>) raw;
+				Long menuItemId = toLong(item.get("menuItemId"));
+				Integer qty = toInt(item.get("quantity"));
+				if (menuItemId == null || qty == null || qty <= 0) {
+					throw new IllegalArgumentException("Each item requires menuItemId and quantity > 0");
+				}
+
+				MenuItemsEntity menuItem = menuItemsRepository.findById(menuItemId).orElse(null);
+				if (menuItem == null) {
+					throw new IllegalArgumentException("Invalid menuItemId: " + menuItemId);
+				}
+
+				BigDecimal unitPrice = menuItem.getPrice() != null ? menuItem.getPrice() : BigDecimal.ZERO;
+				BigDecimal lineTotal = unitPrice.multiply(BigDecimal.valueOf(qty));
+
+				BigDecimal gstRate = menuItem.getGstPercentage() != null ? menuItem.getGstPercentage() : BigDecimal.ZERO;
+				BigDecimal gstAmount = lineTotal.multiply(gstRate).divide(BigDecimal.valueOf(100), 2,
+						java.math.RoundingMode.HALF_UP);
+
+				OrderItemsEntity oi = new OrderItemsEntity();
+				oi.setOrderId(savedOrder);
+				oi.setMenuItemId(menuItem);
+				oi.setMenuItemName(menuItem.getName());
+				oi.setPrice(unitPrice);
+				oi.setQuantity(qty);
+				oi.setItemTotal(lineTotal);
+				oi.setAddonsTotal(BigDecimal.ZERO);
+				oi.setGstRate(gstRate);
+				oi.setGstType(menuItem.getGstType());
+				oi.setTaxableAmount(lineTotal);
+				oi.setGstAmount(gstAmount);
+				oi.setStatus("PENDING");
+				oi.setCreatedAt(now);
+				oi.setUpdatedAt(now);
+				persistedItems.add(orderItemsRepository.save(oi));
+
+				subtotal = subtotal.add(lineTotal);
+				taxTotal = taxTotal.add(gstAmount);
+			}
+
+			savedOrder.setSubtotal(subtotal);
+			savedOrder.setTaxAmount(taxTotal);
+			savedOrder.setTotalAmount(subtotal.add(taxTotal));
+			savedOrder = ordersRepository.save(savedOrder);
+
+			Map<String, Object> data = new LinkedHashMap<>();
+			data.put("orderId", savedOrder.getId());
+			data.put("orderNumber", savedOrder.getOrderNumber());
+			data.put("status", savedOrder.getStatus());
+			data.put("subtotal", savedOrder.getSubtotal());
+			data.put("taxAmount", savedOrder.getTaxAmount());
+			data.put("totalAmount", savedOrder.getTotalAmount());
+			data.put("itemCount", persistedItems.size());
+
+			return ApiResponse.responseBuilder(data, "SUCCESS", HttpStatus.CREATED, "Order placed successfully");
+		} catch (IllegalArgumentException e) {
+			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.BAD_REQUEST, e.getMessage());
+		} catch (RuntimeException e) {
+			e.printStackTrace();
+			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.BAD_REQUEST, e.getMessage());
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.INTERNAL_SERVER_ERROR,
+					"Unable to place order");
+		}
+	}
+
+	private static Long toLong(Object v) {
+		if (v == null) return null;
+		if (v instanceof Number) return ((Number) v).longValue();
+		try { return Long.parseLong(String.valueOf(v).trim()); } catch (NumberFormatException ex) { return null; }
+	}
+
+	private static Integer toInt(Object v) {
+		if (v == null) return null;
+		if (v instanceof Number) return ((Number) v).intValue();
+		try { return Integer.parseInt(String.valueOf(v).trim()); } catch (NumberFormatException ex) { return null; }
+	}
+
+	private static String strOrDefault(Object v, String def) {
+		if (v == null) return def;
+		String s = String.valueOf(v).trim();
+		return s.isEmpty() ? def : s;
+	}
+
 	// ***** Api- Get By Id *****
+	// Uses native scalar projections (added in Session 11 for the cashier
+	// detail fix) to avoid Postgres' 1664-column per-target-list limit.
+	// Loading OrdersEntity directly would trigger Hibernate's 12-EAGER join
+	// graph and bubble up as a confusing 404 / 500.
 	@GetMapping("/{id:\\d+}")
 	public ResponseEntity<Object> getById(@RequestHeader("access_token") String token, @PathVariable Long id) {
 		try {
-			OrdersEntity result = ordersServiceIMP.getOneOrders(id, token);
-			return ApiResponse.responseBuilder(result, "SUCCESS", HttpStatus.OK, "Orders retrieved successfully");
+			List<Object[]> detailRows = ordersRepository.findOrderDetailScalarById(id);
+			if (detailRows == null || detailRows.isEmpty()) {
+				return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.NOT_FOUND, "Order not found");
+			}
+			Map<String, Object> detail = mapCustOrderDetailRow(detailRows.get(0));
+			List<Object[]> itemRows = ordersRepository.findOrderItemsScalarByOrderId(id);
+			detail.put("orderItems", itemRows.stream().map(this::mapCustOrderItemRow).collect(java.util.stream.Collectors.toList()));
+			return ApiResponse.responseBuilder(detail, "SUCCESS", HttpStatus.OK, "Order retrieved successfully");
 		} catch (SecurityException e) {
 			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.UNAUTHORIZED, e.getMessage());
 		} catch (RuntimeException e) {
@@ -331,6 +524,90 @@ public class CustOrdersController {
 			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.INTERNAL_SERVER_ERROR,
 					"Internal server error");
 		}
+	}
+
+	private Map<String, Object> mapCustOrderDetailRow(Object[] r) {
+		Map<String, Object> m = new java.util.LinkedHashMap<>();
+		int i = 0;
+		m.put("id", custAsLong(r[i++]));
+		m.put("orderNumber", custAsString(r[i++]));
+		m.put("orderType", custAsString(r[i++]));
+		m.put("status", custAsString(r[i++]));
+		m.put("paymentStatus", custAsString(r[i++]));
+		m.put("paymentMethod", custAsString(r[i++]));
+		m.put("paymentRemarks", custAsString(r[i++]));
+		m.put("subtotal", custAsBigDecimal(r[i++]));
+		m.put("taxAmount", custAsBigDecimal(r[i++]));
+		m.put("serChargeAmount", custAsBigDecimal(r[i++]));
+		m.put("discountAmount", custAsBigDecimal(r[i++]));
+		m.put("deliveryFee", custAsBigDecimal(r[i++]));
+		m.put("totalAmount", custAsBigDecimal(r[i++]));
+		m.put("walletAmountUsed", custAsBigDecimal(r[i++]));
+		m.put("specialInstructions", custAsString(r[i++]));
+		m.put("estimatedTime", custAsInteger(r[i++]));
+		m.put("createdAt", custAsDateTime(r[i++]));
+		m.put("updatedAt", custAsDateTime(r[i++]));
+		m.put("completedAt", custAsDateTime(r[i++]));
+		m.put("kitchenAcceptAt", custAsDateTime(r[i++]));
+		m.put("kitchenReadyAt", custAsDateTime(r[i++]));
+		m.put("deliveryAcceptAt", custAsDateTime(r[i++]));
+		m.put("customerName", custAsString(r[i++]));
+		m.put("customerPhone", custAsString(r[i++]));
+		m.put("customerEmail", custAsString(r[i++]));
+		m.put("tableNumber", custAsString(r[i++]));
+		m.put("couponCode", custAsString(r[i++]));
+		m.put("deliveryStatus", custAsString(r[i++]));
+		m.put("bankRefNum", custAsString(r[i++]));
+		m.put("apiRefNum", custAsString(r[i++]));
+		m.put("customerId", custAsLong(r[i++]));
+		m.put("branchId", custAsLong(r[i++]));
+		m.put("cashierId", custAsLong(r[i++]));
+		m.put("captainId", custAsLong(r[i++]));
+		m.put("sectionId", custAsLong(r[i++]));
+		m.put("tableBookingId", custAsLong(r[i++]));
+		m.put("restaurantId", custAsLong(r[i++]));
+		return m;
+	}
+	private Map<String, Object> mapCustOrderItemRow(Object[] r) {
+		Map<String, Object> m = new java.util.LinkedHashMap<>();
+		int i = 0;
+		m.put("id", custAsLong(r[i++]));
+		m.put("menuItemName", custAsString(r[i++]));
+		m.put("quantity", custAsInteger(r[i++]));
+		m.put("price", custAsBigDecimal(r[i++]));
+		m.put("addonsTotal", custAsBigDecimal(r[i++]));
+		m.put("itemTotal", custAsBigDecimal(r[i++]));
+		m.put("status", custAsString(r[i++]));
+		m.put("gstRate", custAsBigDecimal(r[i++]));
+		m.put("gstType", custAsString(r[i++]));
+		m.put("taxableAmount", custAsBigDecimal(r[i++]));
+		m.put("gstAmount", custAsBigDecimal(r[i++]));
+		m.put("specialInstructions", custAsString(r[i++]));
+		m.put("createdAt", custAsDateTime(r[i++]));
+		return m;
+	}
+	private static String custAsString(Object v) { return v != null ? v.toString() : null; }
+	private static Long custAsLong(Object v) {
+		if (v == null) return null;
+		if (v instanceof Number n) return n.longValue();
+		return Long.parseLong(v.toString());
+	}
+	private static Integer custAsInteger(Object v) {
+		if (v == null) return null;
+		if (v instanceof Number n) return n.intValue();
+		return Integer.parseInt(v.toString());
+	}
+	private static java.math.BigDecimal custAsBigDecimal(Object v) {
+		if (v == null) return null;
+		if (v instanceof java.math.BigDecimal b) return b;
+		if (v instanceof Number n) return java.math.BigDecimal.valueOf(n.doubleValue());
+		return new java.math.BigDecimal(v.toString());
+	}
+	private static LocalDateTime custAsDateTime(Object v) {
+		if (v == null) return null;
+		if (v instanceof LocalDateTime ldt) return ldt;
+		if (v instanceof java.sql.Timestamp ts) return ts.toLocalDateTime();
+		return LocalDateTime.parse(v.toString());
 	}
 
 	// ***** Api- Update Record *****

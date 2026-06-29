@@ -922,4 +922,91 @@ public interface OrdersRepository extends JpaRepository<OrdersEntity, Long> {
 			@Param("searchPattern") String searchPattern,
 			Pageable pageable);
 
+	// Native projection for restaurant-owner /history. JPQL findAll(spec) on
+	// OrdersEntity blows up Postgres' 1664-column per-target-list limit because
+	// the entity has 12+ EAGER ManyToOne associations (each UsersEntity has
+	// self-referential parent/branch FKs that recursively join). Native SELECT
+	// of only the scalar columns + a count subquery sidesteps the join graph.
+	@Query(value = """
+		SELECT o.id, o.order_number, o.order_type, o.status, o.payment_status, o.payment_method,
+		       o.customer_name, o.customer_phone, o.customer_email, o.table_number, o.coupon_code,
+		       o.subtotal, o.tax_amount, o.discount_amount, o.delivery_fee, o.total_amount,
+		       o.created_at, o.updated_at, o.completed_at, o.estimated_time, o.special_instructions,
+		       o.delivery_status,
+		       COALESCE((SELECT COUNT(1) FROM order_items oi WHERE oi.order_id = o.id), 0) AS order_items_count
+		FROM orders o
+		WHERE o.restaurant_id = :restaurantId
+		  AND (CAST(:fromDate AS timestamp) IS NULL OR o.created_at >= CAST(:fromDate AS timestamp))
+		  AND (CAST(:toDate AS timestamp) IS NULL OR o.created_at <= CAST(:toDate AS timestamp))
+		  AND (:status IS NULL OR LOWER(o.status) = LOWER(:status))
+		  AND (:searchValue IS NULL OR (
+		       LOWER(o.order_number) LIKE LOWER(:searchPattern)
+		    OR LOWER(o.order_type) LIKE LOWER(:searchPattern)
+		    OR LOWER(CAST(o.table_number AS text)) LIKE LOWER(:searchPattern)
+		    OR LOWER(o.payment_status) LIKE LOWER(:searchPattern)
+		    OR LOWER(o.payment_method) LIKE LOWER(:searchPattern)
+		    OR LOWER(o.customer_name) LIKE LOWER(:searchPattern)
+		    OR LOWER(o.customer_phone) LIKE LOWER(:searchPattern)
+		    OR LOWER(o.customer_email) LIKE LOWER(:searchPattern)
+		  ))
+		ORDER BY o.id DESC
+		""",
+		countQuery = """
+		SELECT COUNT(1)
+		FROM orders o
+		WHERE o.restaurant_id = :restaurantId
+		  AND (CAST(:fromDate AS timestamp) IS NULL OR o.created_at >= CAST(:fromDate AS timestamp))
+		  AND (CAST(:toDate AS timestamp) IS NULL OR o.created_at <= CAST(:toDate AS timestamp))
+		  AND (:status IS NULL OR LOWER(o.status) = LOWER(:status))
+		  AND (:searchValue IS NULL OR (
+		       LOWER(o.order_number) LIKE LOWER(:searchPattern)
+		    OR LOWER(o.order_type) LIKE LOWER(:searchPattern)
+		    OR LOWER(CAST(o.table_number AS text)) LIKE LOWER(:searchPattern)
+		    OR LOWER(o.payment_status) LIKE LOWER(:searchPattern)
+		    OR LOWER(o.payment_method) LIKE LOWER(:searchPattern)
+		    OR LOWER(o.customer_name) LIKE LOWER(:searchPattern)
+		    OR LOWER(o.customer_phone) LIKE LOWER(:searchPattern)
+		    OR LOWER(o.customer_email) LIKE LOWER(:searchPattern)
+		  ))
+		""",
+		nativeQuery = true)
+	Page<Object[]> findOrdersByRestaurantSummaries(
+			@Param("restaurantId") Long restaurantId,
+			@Param("fromDate") LocalDateTime fromDate,
+			@Param("toDate") LocalDateTime toDate,
+			@Param("status") String status,
+			@Param("searchValue") String searchValue,
+			@Param("searchPattern") String searchPattern,
+			Pageable pageable);
+
+	// Detail projection for any order id. Same rationale as the list query:
+	// loading OrdersEntity via JpaRepository.findById triggers the 12-EAGER
+	// join graph and blows the 1664-column limit. The order_items lookup is
+	// a separate native query.
+	@Query(value = """
+		SELECT o.id, o.order_number, o.order_type, o.status, o.payment_status, o.payment_method,
+		       o.payment_remarks, o.subtotal, o.tax_amount, o.ser_charge_amount, o.discount_amount,
+		       o.delivery_fee, o.total_amount, o.wallet_amount_used, o.special_instructions,
+		       o.estimated_time, o.created_at, o.updated_at, o.completed_at,
+		       o.kitchen_accept_at, o.kitchen_ready_at, o.delivery_accept_at,
+		       o.customer_name, o.customer_phone, o.customer_email,
+		       o.table_number, o.coupon_code, o.delivery_status,
+		       o.bank_ref_num, o.api_ref_num,
+		       o.customer_id, o.branch_id, o.cashier_id, o.captain_id, o.section_id,
+		       o.table_booking_id, o.restaurant_id
+		FROM orders o
+		WHERE o.id = :id
+		""", nativeQuery = true)
+	List<Object[]> findOrderDetailScalarById(@Param("id") Long id);
+
+	@Query(value = """
+		SELECT oi.id, oi.menu_item_name, oi.quantity, oi.price, oi.addons_total, oi.item_total,
+		       oi.status, oi.gst_rate, oi.gst_type, oi.taxable_amount, oi.gst_amount,
+		       oi.special_instructions, oi.created_at
+		FROM order_items oi
+		WHERE oi.order_id = :orderId
+		ORDER BY oi.id ASC
+		""", nativeQuery = true)
+	List<Object[]> findOrderItemsScalarByOrderId(@Param("orderId") Long orderId);
+
 }

@@ -66,6 +66,54 @@ public class RestOrdersController {
 	}
     
     
+    // ***** Api - Order History (paginated, frontend-compatible) *****
+    @GetMapping("/history")
+    public ResponseEntity<Object> getOrderHistory(@RequestHeader("access_token") String token,
+            @RequestParam(value = "fromDate", required = false) String fromDateStr,
+            @RequestParam(value = "toDate", required = false) String toDateStr,
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "searchValue", required = false) String searchValue,
+            @RequestParam(value = "isActive", required = false) Boolean isActive,
+            @RequestParam(value = "page", required = false) Integer page,
+            @RequestParam(value = "pageSize", defaultValue = "25") Integer pageSize,
+            @RequestParam(value = "pageNumber", required = false) Integer pageNumberParam) {
+
+        try {
+            LocalDate fromDate = null;
+            LocalDate toDate = null;
+
+            if (fromDateStr != null && !fromDateStr.isBlank() && toDateStr != null && !toDateStr.isBlank()) {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                fromDate = LocalDate.parse(fromDateStr, formatter);
+                toDate = LocalDate.parse(toDateStr, formatter);
+            }
+
+            // Accept either 1-based "page" or 0-based "pageNumber"; default to first page
+            int pageNumber = 0;
+            if (pageNumberParam != null) {
+                pageNumber = Math.max(0, pageNumberParam);
+            } else if (page != null) {
+                pageNumber = Math.max(0, page - 1);
+            }
+
+            Map<String, Object> result = restOrdersService.getOrdersWithFilters(fromDate, toDate, isActive, status,
+                    searchValue, pageNumber, pageSize, token);
+
+            return ApiResponse.responseBuilder(result, "SUCCESS", HttpStatus.OK,
+                    "Order history retrieved successfully");
+
+        } catch (DateTimeParseException e) {
+            return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.BAD_REQUEST,
+                    "Invalid date format. Please use yyyy-MM-dd");
+        } catch (SecurityException e) {
+            return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.UNAUTHORIZED, e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Unable to fetch order history. Please try again later");
+        }
+    }
+
     @GetMapping("/filter")
 	public ResponseEntity<Object> getMenuCategoriesWithFilters(@RequestHeader("access_token") String token,
 

@@ -34,11 +34,16 @@ public class SuperadminDashboardController {
 
 	@GetMapping("/summary")
 	public ResponseEntity<Object> getOrdersByCompletedatRange(@RequestHeader("access_token") String token,
-			@RequestParam LocalDate fromDate, @RequestParam LocalDate toDate) {
+			@RequestParam(value = "fromDate", required = false) LocalDate fromDate,
+			@RequestParam(value = "toDate", required = false) LocalDate toDate) {
 		try {
 			System.out.println("📡 Dashboard API Hit");
 
-			Map<String, Object> result = admDashboardService.getDashboardData(fromDate, toDate, token);
+			// Default to a 30-day window ending today when the caller omits dates.
+			LocalDate effectiveTo = toDate != null ? toDate : LocalDate.now();
+			LocalDate effectiveFrom = fromDate != null ? fromDate : effectiveTo.minusDays(30);
+
+			Map<String, Object> result = admDashboardService.getDashboardData(effectiveFrom, effectiveTo, token);
 
 			return ApiResponse.responseBuilder(result, "SUCCESS", HttpStatus.OK, "Orders fetched successfully");
 

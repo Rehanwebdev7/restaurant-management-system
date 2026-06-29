@@ -1,0 +1,855 @@
+/*
+ * Customer-facing site theme — matches LEGACY HomePage.css aesthetic:
+ *  - Dark luxury "steakhouse" palette
+ *  - Gold accent #C9A96E
+ *  - Cormorant Garamond serif for headings
+ *  - Inter for body
+ *  - Glassmorphic sticky header
+ *  - Subtle dotted background texture
+ *
+ * Applied only inside `.customer-shell` so admin panels keep their own theme.
+ */
+
+/* UI-F-46: Self-hosted fonts.
+ *  Latin subsets only (the customer site is English / Hindi-Latinised). The
+ *  woff2 files in /public/fonts each contain the full latin weight axis, so
+ *  every @font-face rule points to the same file and the browser picks the
+ *  variant by `font-weight`. Total payload is ~70 kB vs. ~140 kB+ multi-RTT
+ *  from fonts.googleapis.com + fonts.gstatic.com, and removes a render-block.
+ */
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/Cormorant-Garamond-latin.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/Cormorant-Garamond-latin.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/Cormorant-Garamond-latin.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/Cormorant-Garamond-latin.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/Outfit-latin.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/Outfit-latin.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/Outfit-latin.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/Outfit-latin.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('/fonts/Outfit-latin.woff2') format('woff2');
+}
+
+.customer-shell {
+  --c-bg: #0A0A0A;
+  --c-bg-elev: #1A1A1A;
+  --c-bg-elev-2: #222222;
+  --c-accent: #C9A96E;
+  --c-accent-hover: #B8943E;
+  --c-accent-rgb: 201, 169, 110;
+  --c-text: #FFFFFF;
+  --c-text-soft: #CBD5E1;
+  --c-text-muted: #A3A3A3;
+  --c-border: rgba(201, 169, 110, 0.25);
+  --c-border-strong: #C9A96E;
+  --c-header-bg: rgba(10, 10, 10, 0.78);
+  --c-hero-overlay-from: rgba(10,10,10,0.55);
+  --c-hero-overlay-mid:  rgba(10,10,10,0.85);
+  --c-hero-overlay-to:   rgba(10,10,10,1);
+  --c-button-primary-fg: #0A0A0A;
+
+  background-color: var(--c-bg);
+  color: var(--c-text);
+  min-height: 100vh;
+  position: relative;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  overflow-x: clip;
+}
+
+/* Light mode — preserves gold accent, swaps background to warm ivory.
+ * Activate by adding `customer-shell--light` to `.customer-shell`. */
+.customer-shell.customer-shell--light {
+  --c-bg: #FFFFFF;
+  --c-bg-elev: #F8F5EF;
+  --c-bg-elev-2: #EFE8DA;
+  --c-text: #1A1A1A;
+  --c-text-soft: #444444;
+  --c-text-muted: #777777;
+  --c-border: rgba(201, 169, 110, 0.45);
+  --c-border-strong: #B8924E;
+  --c-header-bg: rgba(255, 255, 255, 0.92);
+  --c-hero-overlay-from: rgba(0, 0, 0, 0.10);
+  --c-hero-overlay-mid:  rgba(0, 0, 0, 0.30);
+  --c-hero-overlay-to:   rgba(0, 0, 0, 0.55);
+  --c-button-primary-fg: #FFFFFF;
+  /* Darker gold in light mode so headings + accents pass WCAG AA on cream
+   * surfaces. The original #C9A96E was washed out against ivory. */
+  --c-accent: #9A7A3A;
+  --c-accent-rgb: 154, 122, 58;
+}
+
+.customer-shell.customer-shell--light .c-header {
+  background: var(--c-header-bg);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(12px);
+}
+
+.customer-shell.customer-shell--light .marquee-bar {
+  color: #1A1A1A;
+  font-weight: 600;
+}
+
+.customer-shell.customer-shell--light .c-button-primary {
+  color: var(--c-button-primary-fg);
+}
+
+/* Hero text in light mode needs explicit black-edge shadow so the gold
+ * serif headline reads against bright food photography. Without this the
+ * heading vanishes into the image highlights. */
+.customer-shell.customer-shell--light .hero-bg .display,
+.customer-shell.customer-shell--light .hero-bg .subtitle {
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55), 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.customer-shell.customer-shell--light .hero-bg p {
+  color: #FFFFFF;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+}
+
+/* Outline CTAs sat invisible on hero — give them a translucent dark fill
+ * so the gold border has something to anchor against. */
+.customer-shell.customer-shell--light .hero-bg .c-button-outline {
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(4px);
+  color: #FFFFFF;
+  border-color: var(--c-accent);
+}
+
+.customer-shell.customer-shell--light .hero-bg .c-button-outline:hover {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+/* Surface cards should pop softly against ivory — a thin border + soft
+ * shadow is the senior-dev pattern for light-mode card depth. */
+.customer-shell.customer-shell--light .c-card {
+  background: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 8px 20px rgba(0, 0, 0, 0.03);
+}
+
+.customer-shell.customer-shell--light .c-card:hover {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06), 0 16px 32px rgba(0, 0, 0, 0.05);
+}
+
+.customer-shell.customer-shell--light .c-input {
+  background: #FFFFFF;
+  border-color: rgba(0, 0, 0, 0.12);
+  color: var(--c-text);
+}
+
+.customer-shell.customer-shell--light .c-input:focus {
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 3px rgba(var(--c-accent-rgb), 0.15);
+}
+
+/* Mobile menu drawer surfaces / nav active pill need light-mode treatment too */
+.customer-shell.customer-shell--light .nav-active-pill {
+  color: var(--c-button-primary-fg);
+}
+
+.customer-shell::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  width: 200%;
+  height: 200%;
+  background-image: radial-gradient(circle, rgba(var(--c-accent-rgb), 0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+  animation: texturePan 25s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes texturePan {
+  from { transform: translate(0, 0); }
+  to   { transform: translate(-32px, -32px); }
+}
+
+.customer-shell h1,
+.customer-shell h2,
+.customer-shell h3,
+.customer-shell h4,
+.customer-shell .display {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  letter-spacing: 0.04em;
+  color: var(--c-text);
+}
+
+.customer-shell .display {
+  font-weight: 600;
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  line-height: 1.05;
+}
+
+/* Compact logo variant — used in header only. Override the giant clamp(). */
+.customer-shell .display.logo-compact {
+  font-size: 1.15rem;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+@media (min-width: 640px) {
+  .customer-shell .display.logo-compact { font-size: 1.35rem; }
+}
+
+.customer-shell .display span {
+  color: var(--c-accent);
+  font-style: italic;
+}
+
+.customer-shell .subtitle {
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--c-accent);
+}
+
+.customer-shell .gold-text {
+  color: var(--c-accent);
+}
+
+.customer-shell .gold-border {
+  border-color: var(--c-accent) !important;
+}
+
+/* Header */
+.customer-shell .c-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--c-header-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid var(--c-border);
+  height: 72px;
+}
+
+.customer-shell .c-card {
+  background: var(--c-bg-elev);
+  border: 1px solid var(--c-border);
+  border-radius: 8px;
+}
+
+.customer-shell .c-card:hover {
+  border-color: var(--c-border-strong);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+.customer-shell .c-button-primary {
+  background: var(--c-accent);
+  color: var(--c-button-primary-fg);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  padding: 0.85rem 1.5rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.customer-shell .c-button-primary:hover {
+  background: var(--c-accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(var(--c-accent-rgb), 0.25);
+}
+
+.customer-shell .c-button-outline {
+  background: transparent;
+  border: 1px solid var(--c-accent);
+  color: var(--c-accent);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  padding: 0.85rem 1.5rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.customer-shell .c-button-outline:hover {
+  background: var(--c-accent);
+  color: var(--c-button-primary-fg);
+}
+
+.customer-shell .c-input {
+  background: var(--c-bg-elev);
+  border: 1px solid var(--c-border);
+  color: var(--c-text);
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  width: 100%;
+}
+
+.customer-shell .c-input:focus {
+  outline: none;
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 3px rgba(var(--c-accent-rgb), 0.2);
+}
+
+.customer-shell .c-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--c-accent), transparent);
+  width: 80px;
+  margin: 1rem auto;
+}
+
+.customer-shell .hero-bg {
+  position: relative;
+  min-height: 88vh;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 6rem 1.5rem 4rem;
+}
+
+.customer-shell .hero-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, var(--c-hero-overlay-from) 0%, var(--c-hero-overlay-mid) 80%, var(--c-hero-overlay-to) 100%);
+}
+
+.customer-shell .hero-bg > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Mobile-app feel — shrink the hero so the rest of the page is visible
+ * without scrolling past a full viewport. Display headline + subtitle
+ * tighten to fit comfortably on a 375 px viewport. CTAs stack full-width
+ * for fat-finger tap targets. */
+@media (max-width: 639px) {
+  .customer-shell .hero-bg {
+    min-height: 60vh;
+    padding: 4.5rem 1rem 2.5rem;
+  }
+  .customer-shell .hero-bg .display {
+    font-size: clamp(1.8rem, 7vw, 2.5rem);
+    line-height: 1.1;
+  }
+  .customer-shell .hero-bg .subtitle {
+    letter-spacing: 0.22em;
+    font-size: 0.68rem;
+  }
+  .customer-shell .hero-bg p {
+    font-size: 0.875rem;
+  }
+  .customer-shell .hero-bg .c-button-primary,
+  .customer-shell .hero-bg .c-button-outline {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Hide-scrollbar utility (Tailwind plugin absent — emit raw CSS).
+ * Used by the horizontal category strip on mobile. */
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* Mobile horizontal-snap pill strip — Zomato/Swiggy category bar feel. */
+.customer-shell .pill-strip {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0.25rem 0.25rem 0.75rem;
+  scroll-snap-type: x mandatory;
+  scroll-padding-left: 1rem;
+  -webkit-overflow-scrolling: touch;
+}
+.customer-shell .pill-strip > * {
+  flex-shrink: 0;
+  white-space: nowrap;
+  scroll-snap-align: start;
+}
+
+.customer-shell .marquee-bar {
+  background: linear-gradient(90deg, var(--c-accent) 0%, var(--c-accent-hover) 100%);
+  color: #0A0A0A;
+  padding: 8px 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.customer-shell .marquee-track {
+  display: inline-block;
+  animation: marqueeScroll 30s linear infinite;
+}
+
+@keyframes marqueeScroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.customer-shell .c-tag {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: rgba(var(--c-accent-rgb), 0.15);
+  border: 1px solid var(--c-accent);
+  color: var(--c-accent);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-radius: 4px;
+}
+
+.customer-shell .veg-icon::before {
+  content: '';
+  display: inline-block;
+  width: 0.65rem;
+  height: 0.65rem;
+  background: #4caf50;
+  border-radius: 1px;
+  border: 1px solid #4caf50;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+}
+
+.customer-shell .nonveg-icon::before {
+  content: '';
+  display: inline-block;
+  width: 0.65rem;
+  height: 0.65rem;
+  background: #d32f2f;
+  border-radius: 50%;
+  border: 1px solid #d32f2f;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+}
+
+/* ============================================================
+ * Premium homepage primitives
+ * ============================================================ */
+
+/* Hero subtitle: extra-wide tracking for "FRESH & DELICIOUS MEALS" feel */
+.customer-shell .subtitle-luxe {
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--c-accent);
+}
+
+/* Premium hero — full-bleed photographic with bottom-to-top gradient */
+.customer-shell .hero-premium {
+  position: relative;
+  min-height: 92vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 6rem 1.5rem 4rem;
+}
+
+.customer-shell .hero-premium__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  animation: kenBurns 22s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes kenBurns {
+  from { transform: scale(1) translate(0, 0); }
+  to   { transform: scale(1.1) translate(-1%, -2%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .customer-shell .hero-premium__image { animation: none; }
+}
+
+.customer-shell .hero-premium__overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(10,10,10,0.20) 0%, rgba(10,10,10,0.55) 55%, rgba(10,10,10,0.92) 100%);
+  z-index: 1;
+}
+
+.customer-shell .hero-premium__content {
+  position: relative;
+  z-index: 2;
+  max-width: 56rem;
+}
+
+/* Scroll indicator chevron */
+.customer-shell .scroll-indicator {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  color: var(--c-accent);
+  animation: scrollBounce 2.2s ease-in-out infinite;
+}
+
+@keyframes scrollBounce {
+  0%, 100% { transform: translate(-50%, 0); opacity: 0.8; }
+  50%      { transform: translate(-50%, 10px); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .customer-shell .scroll-indicator { animation: none; }
+}
+
+/* ============================================================
+ * Premium dish card (4:5 aspect, gold-tinted overlay on hover)
+ * ============================================================ */
+.customer-shell .dish-card-premium {
+  position: relative;
+  border: 1px solid var(--c-border);
+  border-radius: 8px;
+  background: var(--c-bg-elev);
+  overflow: hidden;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.customer-shell .dish-card-premium:hover {
+  border-color: var(--c-border-strong);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(var(--c-accent-rgb), 0.25);
+  transform: translateY(-2px);
+}
+
+.customer-shell .dish-card-premium__media {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+}
+
+.customer-shell .dish-card-premium__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.customer-shell .dish-card-premium:hover .dish-card-premium__img {
+  transform: scale(1.05);
+}
+
+.customer-shell .dish-card-premium__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.25) 45%, transparent 70%);
+  pointer-events: none;
+}
+
+.customer-shell .dish-card-premium__overlay--hover {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(var(--c-accent-rgb), 0.18) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 400ms ease;
+  pointer-events: none;
+}
+
+.customer-shell .dish-card-premium:hover .dish-card-premium__overlay--hover {
+  opacity: 1;
+}
+
+.customer-shell .dish-card-premium__quick-btn {
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #fff;
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+}
+
+.customer-shell .dish-card-premium__quick-btn:hover {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+  color: var(--c-button-primary-fg);
+}
+
+/* ============================================================
+ * Premium category showcase
+ * ============================================================ */
+.customer-shell .category-card-premium {
+  position: relative;
+  aspect-ratio: 1 / 1.2;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--c-border);
+  transition: border-color 0.3s ease, transform 0.4s ease;
+}
+
+.customer-shell .category-card-premium:hover {
+  border-color: var(--c-border-strong);
+  transform: translateY(-3px);
+}
+
+.customer-shell .category-card-premium__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.customer-shell .category-card-premium:hover .category-card-premium__img {
+  transform: scale(1.08);
+}
+
+.customer-shell .category-card-premium__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0.4) 50%, rgba(10,10,10,0.15) 100%);
+}
+
+/* ============================================================
+ * Sticky mobile FAB — "Order Now"
+ * ============================================================ */
+.customer-shell .order-fab {
+  position: fixed;
+  right: 1rem;
+  bottom: 5.5rem;
+  z-index: 45;
+  width: 56px;
+  height: 56px;
+  border-radius: 9999px;
+  background: var(--c-accent);
+  color: var(--c-button-primary-fg);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 10px 30px rgba(var(--c-accent-rgb), 0.45);
+  animation: fabBounce 2.6s ease-in-out infinite;
+}
+
+.customer-shell .order-fab::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 9999px;
+  border: 2px solid rgba(var(--c-accent-rgb), 0.5);
+  animation: fabPulse 1.8s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes fabBounce {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+
+@keyframes fabPulse {
+  0%   { transform: scale(1);   opacity: 0.65; }
+  100% { transform: scale(1.35); opacity: 0;    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .customer-shell .order-fab { animation: none; }
+  .customer-shell .order-fab::after { animation: none; opacity: 0; }
+}
+
+@media (min-width: 1024px) {
+  .customer-shell .order-fab { display: none; }
+}
+
+/* ============================================================
+ * Masonry gallery columns
+ * ============================================================ */
+.customer-shell .masonry {
+  column-count: 2;
+  column-gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .customer-shell .masonry { column-count: 3; }
+}
+
+@media (min-width: 1024px) {
+  .customer-shell .masonry { column-count: 4; }
+}
+
+.customer-shell .masonry > * {
+  break-inside: avoid;
+  margin-bottom: 0.75rem;
+  display: block;
+}
+
+/* Newsletter input refinement */
+.customer-shell .newsletter-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--c-border);
+  color: var(--c-text);
+  padding: 0.55rem 0.25rem;
+  width: 100%;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+}
+
+.customer-shell .newsletter-input:focus {
+  outline: none;
+  border-bottom-color: var(--c-accent);
+}
+
+/* Instagram feed tile */
+.customer-shell .insta-tile {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.customer-shell .insta-tile__img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.customer-shell .insta-tile:hover .insta-tile__img {
+  transform: scale(1.08);
+}
+
+.customer-shell .insta-tile__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(10,10,10,0.55);
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  color: var(--c-accent);
+}
+
+.customer-shell .insta-tile:hover .insta-tile__overlay { opacity: 1; }
+
+/* ============================================================
+ * Skeleton shimmer (used by <Skeleton />)
+ * ============================================================ */
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%); }
+}
+
+/* ============================================================
+ * Premium micro-interactions
+ * ============================================================ */
+/* Plus icon rotates +45deg on hover of the parent ADD button */
+.customer-shell .c-button-outline .add-plus,
+.customer-shell .c-button-primary .add-plus {
+  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.customer-shell .c-button-outline:hover .add-plus,
+.customer-shell .c-button-primary:hover .add-plus {
+  transform: rotate(45deg);
+}
+
+/* Category card extras: border thickens + brightens + label lifts */
+.customer-shell .category-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--c-border);
+  transition: border-color 0.3s ease, border-width 0.3s ease, filter 0.3s ease, box-shadow 0.3s ease;
+}
+.customer-shell .category-card:hover {
+  border-color: var(--c-accent);
+  box-shadow: inset 0 0 0 1px var(--c-accent), 0 12px 28px rgba(0, 0, 0, 0.55);
+  filter: brightness(1.06);
+}
+.customer-shell .category-card__label {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.customer-shell .category-card:hover .category-card__label {
+  transform: translateY(-4px);
+}
+
+/* Cursor blob (hero only, desktop) */
+.customer-shell .hero-cursor-blob {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  mix-blend-mode: soft-light;
+  opacity: 0.15;
+  background: radial-gradient(
+    circle 200px at var(--blob-x, 50%) var(--blob-y, 50%),
+    var(--c-accent) 0%,
+    transparent 60%
+  );
+}
+@media (hover: none), (prefers-reduced-motion: reduce) {
+  .customer-shell .hero-cursor-blob { display: none; }
+}
+
+/* Dish modal: pin add-to-cart actions to bottom on mobile */
+@media (max-width: 640px) {
+  .customer-shell .dish-modal-sticky-cta {
+    position: sticky;
+    bottom: 0;
+    background: var(--c-bg-elev);
+    margin-left: -1.5rem;
+    margin-right: -1.5rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    border-top: 1px solid var(--c-border);
+    z-index: 2;
+  }
+}

@@ -1810,9 +1810,18 @@ public class CashOrdersService implements OrdersServiceIMP {
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public OrdersEntity getOneOrders(Long id, String token) throws Exception {
 		Authorization.authorizeCashier(token);
-		return ordersrepository.findById(id).orElseThrow(() -> new RuntimeException("Orders not found"));
+		OrdersEntity order = ordersrepository.findById(id)
+				.orElseThrow(() -> new RuntimeException("Orders not found"));
+		// Initialise the orderItems collection while the session is open so that JSON
+		// serialisation (which happens after the transaction is closed) never hits the
+		// "no JDBC ResultSetMetaData" error caused by a closed proxy.
+		if (order.getOrderItems() != null) {
+			order.getOrderItems().size();
+		}
+		return order;
 	}
 
 	@Override

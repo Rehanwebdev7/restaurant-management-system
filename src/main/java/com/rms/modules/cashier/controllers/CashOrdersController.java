@@ -1,9 +1,16 @@
 package com.rms.modules.cashier.controllers;
 
 import com.rms.common.entities.OrdersEntity;
+import com.rms.common.repositories.OrdersRepository;
 import com.rms.common.serviceImplement.OrdersServiceIMP;
+import com.rms.common.util.TokenUtil;
+import com.rms.configuration.Authorization;
 import com.rms.modules.cashier.services.CashOrdersService;
 import com.rms.common.response.ApiResponse;
+
+import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -13,6 +20,8 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.data.domain.PageRequest;
@@ -31,6 +40,12 @@ public class CashOrdersController {
 
 	@Autowired
 	private CashOrdersService cashOrdersService;
+
+	@Autowired
+	private OrdersRepository ordersRepository;
+
+	@Autowired
+	private TokenUtil tokenUtil;
 
 	@GetMapping("/xl_export")
 	public ResponseEntity<byte[]> downloadOrdersExcel(@RequestHeader("access_token") String token,
@@ -206,8 +221,24 @@ public class CashOrdersController {
 	@GetMapping("/{id:\\d+}")
 	public ResponseEntity<Object> getById(@RequestHeader("access_token") String token, @PathVariable Long id) {
 		try {
-			OrdersEntity result = ordersServiceIMP.getOneOrders(id, token);
-			return ApiResponse.responseBuilder(result, "SUCCESS", HttpStatus.OK, "Orders retrieved successfully");
+			// Cashier-role authorization (same gate as the service path).
+			Authorization.authorizeCashier(token);
+			tokenUtil.decryptAndStoreToken(token);
+
+			// Use the native-projection repo methods. Loading OrdersEntity via the
+			// service triggers a JOIN graph (12+ EAGER ManyToOne associations on
+			// OrdersEntity plus self-referential UsersEntity.parent/branch FKs)
+			// that exceeds Postgres' 1664-column per-target-list limit (SQLState
+			// 54011), surfacing on the wire as HTTP 404 because the JDBC error
+			// bubbles up as a generic RuntimeException.
+			List<Object[]> detailRows = ordersRepository.findOrderDetailScalarById(id);
+			if (detailRows == null || detailRows.isEmpty()) {
+				return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.NOT_FOUND, "Orders not found");
+			}
+			Map<String, Object> detail = mapOrderDetailRow(detailRows.get(0));
+			List<Object[]> itemRows = ordersRepository.findOrderItemsScalarByOrderId(id);
+			detail.put("orderItems", itemRows.stream().map(this::mapOrderItemRow).collect(java.util.stream.Collectors.toList()));
+			return ApiResponse.responseBuilder(detail, "SUCCESS", HttpStatus.OK, "Orders retrieved successfully");
 		} catch (SecurityException e) {
 			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.UNAUTHORIZED, e.getMessage());
 		} catch (RuntimeException e) {
@@ -216,6 +247,92 @@ public class CashOrdersController {
 			return ApiResponse.responseBuilder(null, "FAILURE", HttpStatus.INTERNAL_SERVER_ERROR,
 					"Internal server error");
 		}
+	}
+
+	private Map<String, Object> mapOrderDetailRow(Object[] r) {
+		Map<String, Object> m = new LinkedHashMap<>();
+		int i = 0;
+		m.put("id", asLong(r[i++]));
+		m.put("orderNumber", asString(r[i++]));
+		m.put("orderType", asString(r[i++]));
+		m.put("status", asString(r[i++]));
+		m.put("paymentStatus", asString(r[i++]));
+		m.put("paymentMethod", asString(r[i++]));
+		m.put("paymentRemarks", asString(r[i++]));
+		m.put("subtotal", asBigDecimal(r[i++]));
+		m.put("taxAmount", asBigDecimal(r[i++]));
+		m.put("serChargeAmount", asBigDecimal(r[i++]));
+		m.put("discountAmount", asBigDecimal(r[i++]));
+		m.put("deliveryFee", asBigDecimal(r[i++]));
+		m.put("totalAmount", asBigDecimal(r[i++]));
+		m.put("walletAmountUsed", asBigDecimal(r[i++]));
+		m.put("specialInstructions", asString(r[i++]));
+		m.put("estimatedTime", asInteger(r[i++]));
+		m.put("createdAt", asDateTime(r[i++]));
+		m.put("updatedAt", asDateTime(r[i++]));
+		m.put("completedAt", asDateTime(r[i++]));
+		m.put("kitchenAcceptAt", asDateTime(r[i++]));
+		m.put("kitchenReadyAt", asDateTime(r[i++]));
+		m.put("deliveryAcceptAt", asDateTime(r[i++]));
+		m.put("customerName", asString(r[i++]));
+		m.put("customerPhone", asString(r[i++]));
+		m.put("customerEmail", asString(r[i++]));
+		m.put("tableNumber", asString(r[i++]));
+		m.put("couponCode", asString(r[i++]));
+		m.put("deliveryStatus", asString(r[i++]));
+		m.put("bankRefNum", asString(r[i++]));
+		m.put("apiRefNum", asString(r[i++]));
+		m.put("customerId", asLong(r[i++]));
+		m.put("branchId", asLong(r[i++]));
+		m.put("cashierId", asLong(r[i++]));
+		m.put("captainId", asLong(r[i++]));
+		m.put("sectionId", asLong(r[i++]));
+		m.put("tableBookingId", asLong(r[i++]));
+		m.put("restaurantId", asLong(r[i++]));
+		return m;
+	}
+
+	private Map<String, Object> mapOrderItemRow(Object[] r) {
+		Map<String, Object> m = new LinkedHashMap<>();
+		int i = 0;
+		m.put("id", asLong(r[i++]));
+		m.put("menuItemName", asString(r[i++]));
+		m.put("quantity", asInteger(r[i++]));
+		m.put("price", asBigDecimal(r[i++]));
+		m.put("addonsTotal", asBigDecimal(r[i++]));
+		m.put("itemTotal", asBigDecimal(r[i++]));
+		m.put("status", asString(r[i++]));
+		m.put("gstRate", asBigDecimal(r[i++]));
+		m.put("gstType", asString(r[i++]));
+		m.put("taxableAmount", asBigDecimal(r[i++]));
+		m.put("gstAmount", asBigDecimal(r[i++]));
+		m.put("specialInstructions", asString(r[i++]));
+		m.put("createdAt", asDateTime(r[i++]));
+		return m;
+	}
+
+	private static String asString(Object v) { return v != null ? v.toString() : null; }
+	private static Long asLong(Object v) {
+		if (v == null) return null;
+		if (v instanceof Number n) return n.longValue();
+		return Long.parseLong(v.toString());
+	}
+	private static Integer asInteger(Object v) {
+		if (v == null) return null;
+		if (v instanceof Number n) return n.intValue();
+		return Integer.parseInt(v.toString());
+	}
+	private static BigDecimal asBigDecimal(Object v) {
+		if (v == null) return null;
+		if (v instanceof BigDecimal b) return b;
+		if (v instanceof Number n) return BigDecimal.valueOf(n.doubleValue());
+		return new BigDecimal(v.toString());
+	}
+	private static LocalDateTime asDateTime(Object v) {
+		if (v == null) return null;
+		if (v instanceof LocalDateTime ldt) return ldt;
+		if (v instanceof Timestamp ts) return ts.toLocalDateTime();
+		return LocalDateTime.parse(v.toString());
 	}
 
 	// ***** Api- Update Record *****
