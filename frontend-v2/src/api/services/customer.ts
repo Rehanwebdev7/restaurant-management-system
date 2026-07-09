@@ -30,12 +30,24 @@ interface BackendMenuItem {
   description?: string | null
   price: number | string
   mrp?: number | string | null
+  halfPrice?: number | string | null
+  halfMrp?: number | string | null
+  qtrPrice?: number | string | null
+  qtrMrp?: number | string | null
   isActive?: boolean | null
   isAvailable?: boolean | null
   dietaryType?: boolean | null  // true = veg, false = non-veg
   menuCategoryId?: BackendMenuCategoryRef | null
   branchId?: BackendBranchRef | null
   imageUrl?: string | null
+  // Rich per-item fields already returned by
+  // /api/customer/menu_items/public/advanceFilter but ignored by v2 pre-2026-07-10.
+  rating?: number | string | null           // computed getter: avg or system rating
+  ratingCount?: number | null               // 0 when never rated
+  isRecommended?: boolean | null            // owner-curated "Chef's Pick / show on home"
+  preparationMinutes?: number | null        // real prep time
+  spiceLevel?: string | null                // free-form: "MILD"|"MEDIUM"|"HOT"|...
+  createdAt?: string | null                 // ISO — powers the "New" ribbon
 }
 
 interface PagedResponse<T> {
@@ -54,21 +66,30 @@ export interface CustomerMenuItem {
   description: string
   price: number
   mrp: number | null
+  halfPrice: number | null
+  halfMrp: number | null
+  qtrPrice: number | null
+  qtrMrp: number | null
   isVeg: boolean
   isAvailable: boolean
   imageUrl: string | null
   categoryId: number | null
   categoryName: string | null
   branchId: number | null
-  signature: boolean
-  rating: number
+  signature: boolean                        // driven by backend `isRecommended`
+  rating: number                            // 0 when never rated
+  reviewCount: number                       // 0 when never rated — gate UI on this
+  preparationMinutes: number | null
+  spiceLevel: string | null
+  createdAt: string | null                  // ISO — for "New" ribbon (<14 days)
 }
 
 export interface CustomerMenuCategory {
   id: number
   name: string
-  imageUrl?: string | null
-  displayOrder?: number | null
+  description?: string | null
+  imageUrl?: string | null                  // resolved from iconUrl → driveIconUrl fallback
+  priority?: number | null                  // backend field name (was displayOrder)
 }
 
 export interface CustomerBranch {
@@ -76,15 +97,17 @@ export interface CustomerBranch {
   branchName: string
   addressLine1?: string | null
   city?: string | null
-  pincode?: string | null
   phone?: string | null
-  lat?: number | null
-  lng?: number | null
+  email?: string | null
+  restaurantId?: number | null
+  latitude?: number | null                  // backend field name (was lat)
+  longitude?: number | null                 // backend field name (was lng)
 }
 
 export interface CustomerSlider {
   id: number
   title?: string | null
+  description?: string | null
   imageUrl: string
   linkUrl?: string | null
 }
@@ -148,14 +171,22 @@ function toCustomerMenuItem(b: BackendMenuItem): CustomerMenuItem {
     description: b.description ?? '',
     price: Number(b.price),
     mrp: b.mrp != null ? Number(b.mrp) : null,
+    halfPrice: b.halfPrice != null ? Number(b.halfPrice) : null,
+    halfMrp: b.halfMrp != null ? Number(b.halfMrp) : null,
+    qtrPrice: b.qtrPrice != null ? Number(b.qtrPrice) : null,
+    qtrMrp: b.qtrMrp != null ? Number(b.qtrMrp) : null,
     isVeg: b.dietaryType === true,
     isAvailable: b.isAvailable !== false && b.isActive !== false,
     imageUrl: b.imageUrl ?? null,
     categoryId: b.menuCategoryId?.id ?? null,
     categoryName: b.menuCategoryId?.name ?? null,
     branchId: b.branchId?.id ?? null,
-    signature: false,
-    rating: 4.5,
+    signature: b.isRecommended === true,
+    rating: b.rating != null ? Number(b.rating) : 0,
+    reviewCount: b.ratingCount ?? 0,
+    preparationMinutes: b.preparationMinutes ?? null,
+    spiceLevel: b.spiceLevel && b.spiceLevel.trim().length > 0 ? b.spiceLevel : null,
+    createdAt: b.createdAt ?? null,
   }
 }
 
@@ -179,8 +210,10 @@ export async function fetchCustomerMenuItems(branchId: number, pageSize = 200): 
 interface BackendMenuCategory {
   id: number
   name: string
+  description?: string | null
+  iconUrl?: string | null
   driveIconUrl?: string | null
-  displayOrder?: number | null
+  priority?: number | null                   // backend field name (was displayOrder in v2 types)
 }
 
 export async function fetchCustomerCategories(branchId: number, pageSize = 100): Promise<CustomerMenuCategory[]> {
@@ -193,8 +226,13 @@ export async function fetchCustomerCategories(branchId: number, pageSize = 100):
     return paged.records.map((c) => ({
       id: c.id,
       name: c.name,
-      imageUrl: c.driveIconUrl ?? null,
-      displayOrder: c.displayOrder ?? null,
+      description: c.description ?? null,
+      // Prefer drive-hosted CDN URL when present, fall back to iconUrl so
+      // tenants who upload directly (no drive integration) still get an icon.
+      imageUrl: c.driveIconUrl && c.driveIconUrl.trim().length > 0
+        ? c.driveIconUrl
+        : (c.iconUrl ?? null),
+      priority: c.priority ?? null,
     }))
   } catch {
     return []

@@ -68,7 +68,7 @@ export default function LocationsPage() {
     const live = branchesQuery.data ?? []
     if (live.length > 0) {
       return live.map((b) => {
-        const addressParts = [b.addressLine1, b.city, b.pincode].filter(Boolean)
+        const addressParts = [b.addressLine1, b.city].filter(Boolean)
         const address = addressParts.join(', ') || 'Address coming soon'
         return {
           id: b.id,

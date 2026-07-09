@@ -7,13 +7,14 @@
 
 import { useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Plus, Minus, Star, Heart } from 'lucide-react'
+import { Plus, Minus, Star, Heart, Flame, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useCart, type Dish } from '@/features/customer/catalog'
 import { useWishlist } from '@/features/customer/customer-store'
 import { useHaptic } from '@/hooks/use-haptic'
 import { toast } from '@/lib/toast'
 import DishDetailModal from '@/features/customer/DishDetailModal'
+import { spiceCount, isNewDish } from '@/features/customer/dish-utils'
 
 interface Props {
   dish: Dish
@@ -66,10 +67,21 @@ export default function DishCardRound({ dish }: Props) {
         </div>
 
         <div className="dish-card-round-body">
-          {dish.signature ? (
-            <span className="dish-card-round-signature" aria-label="Signature dish">
-              Chef's Pick
-            </span>
+          {/* Badge row — Chef's Pick + "New" render inline when applicable.
+           * Both are backend-driven (isRecommended flag + createdAt window). */}
+          {(dish.signature || isNewDish(dish.createdAt)) ? (
+            <div className="dish-card-round-badges">
+              {dish.signature ? (
+                <span className="dish-card-round-signature" aria-label="Signature dish">
+                  Chef's Pick
+                </span>
+              ) : null}
+              {isNewDish(dish.createdAt) ? (
+                <span className="dish-card-round-new" aria-label="New dish">
+                  NEW
+                </span>
+              ) : null}
+            </div>
           ) : null}
 
           <h4 className="dish-card-round-name">
@@ -83,14 +95,64 @@ export default function DishCardRound({ dish }: Props) {
             <span>{dish.name}</span>
           </h4>
 
-          <span className="dish-card-round-rating" aria-label={`Rated ${dish.rating} stars`}>
-            <Star aria-hidden />
-            {dish.rating.toFixed(1)}
-          </span>
+          {/* Meta row — rating (gated on real reviewCount, no fake stars),
+           * spice meter (backend spiceLevel), prep time (preparationMinutes).
+           * Each pill renders only when its backend field is present. */}
+          {(dish.reviewCount > 0 || spiceCount(dish.spiceLevel) > 0 || dish.preparationMinutes) ? (
+            <div className="dish-card-round-meta">
+              {dish.reviewCount > 0 ? (
+                <span
+                  className="dish-card-round-rating"
+                  aria-label={`Rated ${dish.rating.toFixed(1)} out of 5 from ${dish.reviewCount} reviews`}
+                >
+                  <Star aria-hidden />
+                  {dish.rating.toFixed(1)}
+                  <span className="dish-card-round-review-count">({dish.reviewCount})</span>
+                </span>
+              ) : null}
+              {spiceCount(dish.spiceLevel) > 0 ? (
+                <span
+                  className="dish-card-round-spice"
+                  aria-label={`Spice level ${dish.spiceLevel}`}
+                  title={dish.spiceLevel ?? ''}
+                >
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <Flame
+                      key={i}
+                      aria-hidden
+                      className={cn(
+                        'dish-card-round-spice-chili',
+                        i < spiceCount(dish.spiceLevel) && 'dish-card-round-spice-chili--on',
+                      )}
+                    />
+                  ))}
+                </span>
+              ) : null}
+              {dish.preparationMinutes ? (
+                <span
+                  className="dish-card-round-prep"
+                  aria-label={`${dish.preparationMinutes} minutes prep time`}
+                >
+                  <Clock aria-hidden />
+                  {dish.preparationMinutes} min
+                </span>
+              ) : null}
+            </div>
+          ) : null}
 
           {dish.description ? (
             <p className="dish-card-round-desc" title={dish.description}>
               {dish.description}
+            </p>
+          ) : null}
+
+          {/* Portion price hint — only when backend provides half/quarter
+           * prices. Full price stays as the main call-out below. */}
+          {(dish.halfPrice || dish.qtrPrice) ? (
+            <p className="dish-card-round-portions" aria-label="Portion options">
+              {dish.halfPrice ? <span>Half ₹{dish.halfPrice}</span> : null}
+              {dish.halfPrice && dish.qtrPrice ? <span aria-hidden> · </span> : null}
+              {dish.qtrPrice ? <span>Qtr ₹{dish.qtrPrice}</span> : null}
             </p>
           ) : null}
 

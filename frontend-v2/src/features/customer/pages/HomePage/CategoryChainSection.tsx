@@ -4,13 +4,17 @@ import { Soup } from 'lucide-react'
 import { CATEGORIES } from '@/features/customer/catalog'
 import { cn } from '@/lib/utils'
 
-interface OrbitItem {
+export interface OrbitItem {
   id: string | null
   label: string
   img?: string
+  /** Backend-supplied description — shown as tooltip on hover. */
+  description?: string | null
+  /** Client-computed count of items in this category. */
+  itemCount?: number
 }
 
-const ORBIT_ITEMS: OrbitItem[] = [
+const DEFAULT_ORBIT_ITEMS: OrbitItem[] = [
   { id: null, label: 'ALL' },
   ...CATEGORIES.map((c) => ({ id: c.id, label: c.name, img: c.img })),
 ]
@@ -25,6 +29,12 @@ interface Props {
    * 'valley' (MenuPage) — center nodes at BOTTOM of valley, edges rise UP.
    */
   variant?: OrbitVariant
+  /**
+   * Backend-driven category list (with item counts + descriptions). When
+   * absent or empty, falls back to hardcoded CATEGORIES so demo mode still
+   * renders. Always prepend an "ALL" node in the caller when using this.
+   */
+  items?: OrbitItem[]
 }
 
 interface OrbitNodeWrapperProps {
@@ -75,10 +85,18 @@ function OrbitNodeWrapper({ index, trackX, dimensions, reduce, variant, children
   )
 }
 
-export default function CategoryChainSection({ selected, onSelect, variant = 'dome' }: Props) {
+export default function CategoryChainSection({ selected, onSelect, variant = 'dome', items }: Props) {
   const reduce = useReducedMotion()
   const stripRef = useRef<HTMLDivElement | null>(null)
   const isDragging = useRef(false)
+
+  // Prefer caller-supplied backend-driven items; fall back to hardcoded
+  // list when demo mode / offline / not yet resolved. This keeps SaaS
+  // tenants seeing THEIR real categories while dev demos still render.
+  const ORBIT_ITEMS = useMemo<OrbitItem[]>(
+    () => (items && items.length > 1 ? items : DEFAULT_ORBIT_ITEMS),
+    [items],
+  )
 
   const [dimensions, setDimensions] = useState(() => {
     if (typeof window === 'undefined') return { vw: 1024, nodeWidth: 76, gap: 40, paddingLeft: 60 }
@@ -174,7 +192,12 @@ export default function CategoryChainSection({ selected, onSelect, variant = 'do
                 type="button"
                 onClick={() => onSelect(item.id)}
                 aria-pressed={isActive}
-                aria-label={`Filter by ${item.label}`}
+                aria-label={
+                  item.itemCount != null
+                    ? `Filter by ${item.label} (${item.itemCount} dishes)`
+                    : `Filter by ${item.label}`
+                }
+                title={item.description ?? undefined}
                 className={cn(
                   'orbit-node',
                   isAll && 'orbit-node--all',
@@ -191,6 +214,14 @@ export default function CategoryChainSection({ selected, onSelect, variant = 'do
                     decoding="async"
                   />
                 )}
+                {/* Item-count pill — only shown when caller supplied a real
+                 * count (backend-driven). Zero-count is still rendered as a
+                 * factual signal ("no dishes right now"). */}
+                {item.itemCount != null ? (
+                  <span className="orbit-node-count" aria-hidden="true">
+                    {item.itemCount}
+                  </span>
+                ) : null}
               </button>
               <span className="orbit-label">{item.label}</span>
             </OrbitNodeWrapper>

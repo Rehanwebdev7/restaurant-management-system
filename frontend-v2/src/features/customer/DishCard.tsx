@@ -19,7 +19,7 @@
 
 import { useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Plus, Minus, Sparkles, Star, Heart } from 'lucide-react'
+import { Plus, Minus, Sparkles, Star, Heart, Flame, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useCart, type Dish } from '@/features/customer/catalog'
 import { useWishlist } from '@/features/customer/customer-store'
@@ -27,6 +27,7 @@ import { useMediaQuery } from '@/hooks/use-media-query'
 import { useHaptic } from '@/hooks/use-haptic'
 import { toast } from '@/lib/toast'
 import DishDetailModal from '@/features/customer/DishDetailModal'
+import { spiceCount, isNewDish } from '@/features/customer/dish-utils'
 
 interface Props {
   dish: Dish
@@ -105,16 +106,27 @@ export default function DishCard({ dish }: Props) {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/80 via-transparent to-transparent" />
 
-          {/* Signature badge — small gold pill, top-left */}
-          {dish.signature ? (
-            <span
-              className="absolute top-2.5 left-2.5 inline-flex items-center gap-1 rounded-full bg-[--c-accent] text-black px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-widest shadow-lg"
-              aria-label="Signature dish"
-            >
-              <Sparkles className="size-3 text-black fill-current" aria-hidden />
-              <span>Chef's Choice</span>
-            </span>
-          ) : null}
+          {/* Badge column — Chef's Pick + NEW stack vertically on top-left.
+           * Both backend-driven (isRecommended + createdAt < 14 days). */}
+          <div className="absolute top-2.5 left-2.5 flex flex-col items-start gap-1 z-10">
+            {dish.signature ? (
+              <span
+                className="inline-flex items-center gap-1 rounded-full bg-[--c-accent] text-black px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-widest shadow-lg"
+                aria-label="Signature dish"
+              >
+                <Sparkles className="size-3 text-black fill-current" aria-hidden />
+                <span>Chef's Choice</span>
+              </span>
+            ) : null}
+            {isNewDish(dish.createdAt) ? (
+              <span
+                className="inline-flex items-center rounded-full bg-emerald-500 text-white px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-widest shadow-md"
+                aria-label="New dish"
+              >
+                NEW
+              </span>
+            ) : null}
+          </div>
 
           {/* Wishlist heart — small circle, top-right */}
           <button
@@ -135,7 +147,8 @@ export default function DishCard({ dish }: Props) {
 
         {/* Body — same layout, sizes scale with breakpoint */}
         <div className="p-3.5 lg:p-4.5 flex flex-col gap-1.5 lg:gap-2 flex-1">
-          {/* Name + rating row */}
+          {/* Name + rating row — rating pill shown only when reviewCount > 0
+           * to avoid falsely inflating fresh, unrated items with a system default. */}
           <div className="flex items-start justify-between gap-2.5">
             <h4 className="font-semibold leading-tight truncate flex items-center gap-2 text-sm lg:text-base min-w-0 font-sans tracking-wide">
               <span
@@ -149,19 +162,67 @@ export default function DishCard({ dish }: Props) {
               />
               <span className="truncate group-hover:text-[--c-accent] transition-colors">{dish.name}</span>
             </h4>
-            <div
-              className="flex items-center gap-1 bg-[--c-accent]/10 border border-[--c-accent]/20 px-2 py-0.5 rounded-md text-[9px] font-bold text-[--c-accent] shrink-0"
-              aria-label={`Rated ${dish.rating} stars`}
-            >
-              <Star className="size-3 fill-current text-[--c-accent]" aria-hidden />
-              <span>{dish.rating}</span>
-            </div>
+            {dish.reviewCount > 0 ? (
+              <div
+                className="flex items-center gap-1 bg-[--c-accent]/10 border border-[--c-accent]/20 px-2 py-0.5 rounded-md text-[9px] font-bold text-[--c-accent] shrink-0"
+                aria-label={`Rated ${dish.rating.toFixed(1)} of 5 from ${dish.reviewCount} reviews`}
+              >
+                <Star className="size-3 fill-current text-[--c-accent]" aria-hidden />
+                <span>{dish.rating.toFixed(1)}</span>
+                <span className="opacity-70 font-medium">({dish.reviewCount})</span>
+              </div>
+            ) : null}
           </div>
+
+          {/* Meta row — spice meter + prep time. Both backend-driven,
+           * each pill renders only when its field is present. */}
+          {(spiceCount(dish.spiceLevel) > 0 || dish.preparationMinutes) ? (
+            <div className="flex items-center gap-3 text-[10px] text-[--c-text-soft]">
+              {spiceCount(dish.spiceLevel) > 0 ? (
+                <span
+                  className="inline-flex items-center"
+                  aria-label={`Spice level ${dish.spiceLevel}`}
+                  title={dish.spiceLevel ?? ''}
+                >
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <Flame
+                      key={i}
+                      aria-hidden
+                      className={cn(
+                        'size-3',
+                        i < spiceCount(dish.spiceLevel)
+                          ? 'text-orange-500 fill-orange-500'
+                          : 'text-orange-500/25',
+                      )}
+                    />
+                  ))}
+                </span>
+              ) : null}
+              {dish.preparationMinutes ? (
+                <span
+                  className="inline-flex items-center gap-1 font-semibold"
+                  aria-label={`${dish.preparationMinutes} minutes prep time`}
+                >
+                  <Clock className="size-3" aria-hidden />
+                  <span>{dish.preparationMinutes} min</span>
+                </span>
+              ) : null}
+            </div>
+          ) : null}
 
           {/* 1-line description always visible */}
           <p className="text-xs text-[--c-text-soft] line-clamp-2 min-h-[32px] leading-relaxed">
             {dish.description}
           </p>
+
+          {/* Portion hint — only when backend provides half / quarter prices */}
+          {(dish.halfPrice || dish.qtrPrice) ? (
+            <p className="text-[10px] font-semibold text-[--c-text-soft] flex gap-1.5">
+              {dish.halfPrice ? <span>Half ₹{dish.halfPrice}</span> : null}
+              {dish.halfPrice && dish.qtrPrice ? <span aria-hidden>·</span> : null}
+              {dish.qtrPrice ? <span>Qtr ₹{dish.qtrPrice}</span> : null}
+            </p>
+          ) : null}
 
           {/* Price + Button row */}
           <div className="flex items-center justify-between gap-2 mt-auto pt-2.5 border-t border-white/5">

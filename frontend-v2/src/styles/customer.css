@@ -942,6 +942,93 @@
   }
 }
 
+/* Premium hero — floating gradient orbs (behind content, above bg image).
+ * Three orbs with staggered drift keyframes give the hero an ambient
+ * "living" feel like Sweetgreen / Linear / Stripe. Sits under the content
+ * layer (z-index 1) so text always reads clean. Disabled on
+ * prefers-reduced-motion. */
+.customer-shell .hero-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(72px);
+  opacity: 0.45;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  z-index: 1;
+  will-change: transform;
+}
+
+.customer-shell .hero-orb--a {
+  width: 480px;
+  height: 480px;
+  left: -80px;
+  top: 8%;
+  background: radial-gradient(circle, var(--c-accent) 0%, transparent 65%);
+  animation: hero-orb-drift-a 22s ease-in-out infinite;
+}
+
+.customer-shell .hero-orb--b {
+  width: 400px;
+  height: 400px;
+  right: -60px;
+  top: 30%;
+  background: radial-gradient(circle, var(--c-teal, #22c1c3) 0%, transparent 65%);
+  opacity: 0.32;
+  animation: hero-orb-drift-b 28s ease-in-out infinite;
+}
+
+.customer-shell .hero-orb--c {
+  width: 520px;
+  height: 520px;
+  left: 35%;
+  bottom: -120px;
+  background: radial-gradient(circle, var(--c-accent-hover, var(--c-accent)) 0%, transparent 65%);
+  opacity: 0.28;
+  animation: hero-orb-drift-c 34s ease-in-out infinite;
+}
+
+.customer-shell.customer-shell--light .hero-orb {
+  opacity: 0.30;
+  mix-blend-mode: multiply;
+  filter: blur(64px);
+}
+
+@keyframes hero-orb-drift-a {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(60px, 40px, 0) scale(1.08); }
+}
+
+@keyframes hero-orb-drift-b {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-50px, 60px, 0) scale(1.06); }
+}
+
+@keyframes hero-orb-drift-c {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(30px, -50px, 0) scale(1.10); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .customer-shell .hero-orb {
+    animation: none;
+  }
+}
+
+/* Primary CTA magnetic transform — smooth spring back on leave */
+.customer-shell .hero-bg .c-button-primary,
+.customer-shell .hero-bg .c-button-outline {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s, color 0.2s, box-shadow 0.2s;
+  will-change: transform;
+}
+
+@media (hover: none),
+(prefers-reduced-motion: reduce) {
+  .customer-shell .hero-bg .c-button-primary,
+  .customer-shell .hero-bg .c-button-outline {
+    transform: none !important;
+  }
+}
+
 /* Dish modal: pin add-to-cart actions to bottom on mobile */
 @media (max-width: 640px) {
   .customer-shell .dish-modal-sticky-cta {
@@ -1163,6 +1250,36 @@
   color: var(--c-teal);
   width: clamp(20px, 2.5vw, 28px);
   height: clamp(20px, 2.5vw, 28px);
+}
+
+/* Item-count badge — small pill overlapping the bottom-right of the circle.
+ * Backend-driven; hidden by parent when not present. Wraps the count with
+ * a solid brand accent so it reads even on busy dish thumbnails. */
+.customer-shell .orbit-node-count {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--c-teal);
+  color: #FFFFFF;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+  border: 2px solid #FFFFFF;
+  pointer-events: none;
+  line-height: 1;
+}
+
+.customer-shell .orbit-node--active .orbit-node-count {
+  background: var(--c-accent, #C9A96E);
+  color: #0A0A0A;
 }
 .customer-shell .orbit-label {
   display: block;
@@ -1418,6 +1535,14 @@
 .customer-shell .dish-card-round-heart--liked svg {
   fill: currentColor;
 }
+.customer-shell .dish-card-round-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
 .customer-shell .dish-card-round-signature {
   display: inline-flex;
   align-items: center;
@@ -1430,10 +1555,80 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   box-shadow: 0 4px 10px rgba(31, 139, 133, 0.35);
-  position: absolute;
-  top: 14px;
-  left: 14px;
-  z-index: 3;
+}
+
+.customer-shell .dish-card-round-new {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--c-accent, #C9A96E), var(--c-accent-hover, #C9A96E));
+  color: #0A0A0A;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  box-shadow: 0 4px 10px rgba(201, 169, 110, 0.35);
+}
+
+/* Meta row — rating pill + spice meter + prep-time pill.
+ * Flex-wraps on narrow cards so nothing gets truncated. */
+.customer-shell .dish-card-round-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.customer-shell .dish-card-round-review-count {
+  margin-left: 3px;
+  font-size: 10px;
+  opacity: 0.7;
+  font-weight: 500;
+}
+
+.customer-shell .dish-card-round-spice {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.customer-shell .dish-card-round-spice-chili {
+  width: 12px;
+  height: 12px;
+  color: rgba(220, 90, 60, 0.25);
+  transition: color 0.2s;
+}
+
+.customer-shell .dish-card-round-spice-chili--on {
+  color: #DC5A3C;
+  fill: currentColor;
+}
+
+.customer-shell .dish-card-round-prep {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--c-cream-text-soft, #6B5B45);
+}
+
+.customer-shell .dish-card-round-prep svg {
+  width: 11px;
+  height: 11px;
+}
+
+/* Portion prices — light, small, above main price line */
+.customer-shell .dish-card-round-portions {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--c-cream-text-soft, #6B5B45);
+  margin-top: 4px;
+  display: flex;
+  gap: 4px;
+  align-items: center;
 }
 .customer-shell .cream-veg-dot {
   color: #2E7D32;
@@ -1760,10 +1955,11 @@
     font-size: 0.7rem;
     line-height: 1.25;
   }
-  .customer-shell .dish-card-round-signature {
-    top: -12px;
-    left: 50%;
-    transform: translateX(-50%);
+  .customer-shell .dish-card-round-badges {
+    justify-content: center;
+  }
+  .customer-shell .dish-card-round-signature,
+  .customer-shell .dish-card-round-new {
     box-shadow: 0 4px 8px rgba(31, 139, 133, 0.25);
   }
   .customer-shell .dish-card-round-actions {

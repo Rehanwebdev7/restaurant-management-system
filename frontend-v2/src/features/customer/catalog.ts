@@ -12,12 +12,21 @@ export interface Dish {
   id: number
   name: string
   price: number
-  category: string
-  rating: number
+  category: string                          // slug (starters/mains/etc) — legacy fallback grouping
+  categoryId: number | null                 // real backend category id — SaaS-safe filtering
+  categoryName: string | null               // real backend category name
+  rating: number                            // 0 when never rated — gate UI on reviewCount
+  reviewCount: number
   description: string
   veg: boolean
   img: string
   signature?: boolean
+  // Rich per-item fields surfaced from backend (2026-07-10)
+  preparationMinutes?: number | null
+  spiceLevel?: string | null                // free-form: "MILD"|"MEDIUM"|"HOT"|...
+  createdAt?: string | null                 // ISO — powers "New" ribbon (< 14 days)
+  halfPrice?: number | null
+  qtrPrice?: number | null
 }
 
 /* ---------- Branch selection (persisted to localStorage) ---------- */
@@ -134,11 +143,24 @@ export function backendItemToDish(item: CustomerMenuItem): Dish {
     name: item.name,
     price: item.price,
     category: categorySlug(item.categoryName),
-    rating: item.rating || 4.5,
+    categoryId: item.categoryId,
+    categoryName: item.categoryName,
+    // Real rating & count from backend. UI must render stars only when
+    // `reviewCount > 0` — otherwise `rating` is likely a system default and
+    // showing it would falsely inflate every fresh tenant's items.
+    rating: item.rating,
+    reviewCount: item.reviewCount,
     description: getGourmetDescription(item.name, item.description),
     veg: item.isVeg,
     img: item.imageUrl ?? CATEGORY_FALLBACK_IMG,
-    signature: item.signature || item.rating >= 4.7,
+    // Signature = owner-curated "Chef's Pick" flag (`isRecommended`).
+    // No more rating-based synthesis — that lied for un-rated items.
+    signature: item.signature,
+    preparationMinutes: item.preparationMinutes,
+    spiceLevel: item.spiceLevel,
+    createdAt: item.createdAt,
+    halfPrice: item.halfPrice,
+    qtrPrice: item.qtrPrice,
   }
 }
 
@@ -191,14 +213,14 @@ export const CATEGORIES = [
 ] as const
 
 export const DISHES: Dish[] = [
-  { id: 1, name: 'Paneer Tikka',     price: 280, category: 'starters', rating: 4.6, veg: true,  description: 'Marinated cottage cheese in spiced yogurt, char-grilled.', img: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80', signature: true },
-  { id: 2, name: 'Tandoori Chicken', price: 380, category: 'starters', rating: 4.8, veg: false, description: 'Whole chicken marinated in clay-oven blend, blistered to perfection.', img: 'https://images.unsplash.com/photo-1567620832903-9fc6debc209f?auto=format&fit=crop&w=600&q=80', signature: true },
-  { id: 3, name: 'Butter Chicken',   price: 420, category: 'mains',    rating: 4.9, veg: false, description: 'Tender tandoor-roasted chicken in our chef-secret tomato cream gravy.', img: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?auto=format&fit=crop&w=600&q=80', signature: true },
-  { id: 4, name: 'Paneer Butter Masala', price: 320, category: 'mains', rating: 4.7, veg: true,  description: 'Silky tomato-cashew gravy with hand-pressed cottage cheese.', img: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=600&q=80' },
-  { id: 5, name: 'Hyderabadi Biryani', price: 360, category: 'mains', rating: 4.8, veg: false, description: 'Long-grain basmati layered with aromatic spices and slow-cooked chicken.', img: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80' },
-  { id: 6, name: 'Garlic Naan',      price: 80,  category: 'breads',   rating: 4.7, veg: true,  description: 'Buttery clay-oven flatbread brushed with garlic and coriander.', img: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=600&q=80' },
-  { id: 7, name: 'Mango Lassi',      price: 110, category: 'drinks',   rating: 4.5, veg: true,  description: 'Alphonso mango whirled with creamy yogurt and rose water.', img: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80' },
-  { id: 8, name: 'Gulab Jamun',      price: 140, category: 'desserts', rating: 4.9, veg: true,  description: 'Cardamom-scented milk dumplings soaked in saffron syrup.', img: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?auto=format&fit=crop&w=600&q=80' },
+  { id: 1, name: 'Paneer Tikka',     price: 280, category: 'starters', categoryId: null, categoryName: 'Starters', rating: 4.6, reviewCount: 0, veg: true,  description: 'Marinated cottage cheese in spiced yogurt, char-grilled.', img: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80', signature: true },
+  { id: 2, name: 'Tandoori Chicken', price: 380, category: 'starters', categoryId: null, categoryName: 'Starters', rating: 4.8, reviewCount: 0, veg: false, description: 'Whole chicken marinated in clay-oven blend, blistered to perfection.', img: 'https://images.unsplash.com/photo-1567620832903-9fc6debc209f?auto=format&fit=crop&w=600&q=80', signature: true },
+  { id: 3, name: 'Butter Chicken',   price: 420, category: 'mains',    categoryId: null, categoryName: 'Mains',    rating: 4.9, reviewCount: 0, veg: false, description: 'Tender tandoor-roasted chicken in our chef-secret tomato cream gravy.', img: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?auto=format&fit=crop&w=600&q=80', signature: true },
+  { id: 4, name: 'Paneer Butter Masala', price: 320, category: 'mains', categoryId: null, categoryName: 'Mains', rating: 4.7, reviewCount: 0, veg: true,  description: 'Silky tomato-cashew gravy with hand-pressed cottage cheese.', img: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=600&q=80' },
+  { id: 5, name: 'Hyderabadi Biryani', price: 360, category: 'mains', categoryId: null, categoryName: 'Mains', rating: 4.8, reviewCount: 0, veg: false, description: 'Long-grain basmati layered with aromatic spices and slow-cooked chicken.', img: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80' },
+  { id: 6, name: 'Garlic Naan',      price: 80,  category: 'breads',   categoryId: null, categoryName: 'Breads',   rating: 4.7, reviewCount: 0, veg: true,  description: 'Buttery clay-oven flatbread brushed with garlic and coriander.', img: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=600&q=80' },
+  { id: 7, name: 'Mango Lassi',      price: 110, category: 'drinks',   categoryId: null, categoryName: 'Drinks',   rating: 4.5, reviewCount: 0, veg: true,  description: 'Alphonso mango whirled with creamy yogurt and rose water.', img: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80' },
+  { id: 8, name: 'Gulab Jamun',      price: 140, category: 'desserts', categoryId: null, categoryName: 'Desserts', rating: 4.9, reviewCount: 0, veg: true,  description: 'Cardamom-scented milk dumplings soaked in saffron syrup.', img: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?auto=format&fit=crop&w=600&q=80' },
 ]
 
 // UI-F-22 perf — hero JPEGs at w=1600 weighed ~280 KB each. Mobile viewports

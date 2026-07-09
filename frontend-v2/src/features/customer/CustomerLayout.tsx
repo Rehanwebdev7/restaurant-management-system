@@ -7,6 +7,7 @@ import {
   Phone, Mail, ChevronRight, Edit3, ClipboardList, MapPinned, LogOut,
 } from 'lucide-react'
 import { tokens } from '@/lib/auth/tokens'
+import { useMagnetic } from '@/hooks/use-magnetic'
 
 // Brand icons (Facebook/Instagram/Twitter removed in newer lucide-react).
 const Facebook = ({ className }: { className?: string }) => (
@@ -994,6 +995,19 @@ const heroWordVariants: Variants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] } },
 }
 
+// Accent word — behaves as a container so each letter can stagger in.
+// Combined with heroLetterVariants below, gives the accent title an
+// editorial letter-by-letter reveal that reads as premium.
+const heroAccentWordVariants: Variants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.045 } },
+}
+
+const heroLetterVariants: Variants = {
+  hidden: { opacity: 0, y: 22 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1] } },
+}
+
 const heroDescriptionVariants: Variants = {
   hidden: { opacity: 0, y: 14 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 1.1 } },
@@ -1008,16 +1022,43 @@ function HeroAnimatedWords({ text, accent = false }: { text: string; accent?: bo
   const words = text.split(' ')
   return (
     <>
-      {words.map((word, i) => (
-        <motion.span
-          key={`${word}-${i}`}
-          variants={heroWordVariants}
-          className="inline-block"
-          style={{ marginRight: '0.25em' }}
-        >
-          {accent ? <span>{word}</span> : word}
-        </motion.span>
-      ))}
+      {words.map((word, i) => {
+        if (accent) {
+          // Letter-by-letter reveal — each word is a stagger container over
+          // its own letters. Reads as more premium than the whole-word flip
+          // and only used on the accent title (short strings), so perf-safe.
+          return (
+            <motion.span
+              key={`${word}-${i}`}
+              variants={heroAccentWordVariants}
+              className="inline-block"
+              style={{ marginRight: '0.25em' }}
+            >
+              <span className="inline-block">
+                {[...word].map((letter, j) => (
+                  <motion.span
+                    key={`${letter}-${j}`}
+                    variants={heroLetterVariants}
+                    className="inline-block"
+                  >
+                    {letter}
+                  </motion.span>
+                ))}
+              </span>
+            </motion.span>
+          )
+        }
+        return (
+          <motion.span
+            key={`${word}-${i}`}
+            variants={heroWordVariants}
+            className="inline-block"
+            style={{ marginRight: '0.25em' }}
+          >
+            {word}
+          </motion.span>
+        )
+      })}
     </>
   )
 }
@@ -1171,13 +1212,28 @@ export function HeroSection({
   // on the section element keeps mouse-move off the React render path.
   const sectionRef = useRef<HTMLElement | null>(null)
   const reduce = useReducedMotion()
+
+  // Magnetic CTAs — buttons drift toward the cursor within ~120px, giving
+  // the hero a Linear/Stripe-tier interactive hook. Composed with the blob
+  // handler in a single onMouseMove so we keep one pointer listener.
+  const magneticPrimary = useMagnetic<HTMLButtonElement>(140, 0.28)
+  const magneticSecondary = useMagnetic<HTMLButtonElement>(140, 0.2)
+
   const onMouseMove = (e: React.MouseEvent<HTMLElement>) => {
-    if (reduce) return
-    const rect = e.currentTarget.getBoundingClientRect()
-    const px = ((e.clientX - rect.left) / rect.width) * 100
-    const py = ((e.clientY - rect.top) / rect.height) * 100
-    e.currentTarget.style.setProperty('--blob-x', `${px}%`)
-    e.currentTarget.style.setProperty('--blob-y', `${py}%`)
+    if (!reduce) {
+      const rect = e.currentTarget.getBoundingClientRect()
+      const px = ((e.clientX - rect.left) / rect.width) * 100
+      const py = ((e.clientY - rect.top) / rect.height) * 100
+      e.currentTarget.style.setProperty('--blob-x', `${px}%`)
+      e.currentTarget.style.setProperty('--blob-y', `${py}%`)
+    }
+    magneticPrimary.onParentMouseMove(e)
+    magneticSecondary.onParentMouseMove(e)
+  }
+
+  const onMouseLeave = () => {
+    magneticPrimary.onParentMouseLeave()
+    magneticSecondary.onParentMouseLeave()
   }
 
   // Parallax on the hero background — image drifts down a touch as the user
@@ -1195,12 +1251,20 @@ export function HeroSection({
     <motion.section
       ref={sectionRef}
       onMouseMove={onMouseMove}
+      onMouseLeave={onMouseLeave}
       className="hero-bg relative overflow-hidden"
       style={{ backgroundImage: `url(${current})` }}
       initial="hidden"
       animate="visible"
       variants={heroContainerVariants}
     >
+      {/* Ambient gradient orbs — three blurred blobs that drift with slow
+       * eased keyframes, giving the hero a Sweetgreen / Linear / Stripe
+       * living-canvas feel. Sits under content (z-1), above bg image.
+       * CSS handles the drift + light/dark blend modes + reduced-motion. */}
+      <div className="hero-orb hero-orb--a" aria-hidden="true" />
+      <div className="hero-orb hero-orb--b" aria-hidden="true" />
+      <div className="hero-orb hero-orb--c" aria-hidden="true" />
       {showRotator ? (
         <>
           <AnimatePresence mode="popLayout">
@@ -1281,8 +1345,24 @@ export function HeroSection({
             className="mt-8 flex items-center justify-center gap-3 flex-wrap"
             variants={heroCtaVariants}
           >
-            {primaryCta ? <button className="c-button-primary" onClick={primaryOnClick}>{primaryCta}</button> : null}
-            {secondaryCta ? <button className="c-button-outline" onClick={secondaryOnClick}>{secondaryCta}</button> : null}
+            {primaryCta ? (
+              <button
+                ref={magneticPrimary.ref}
+                className="c-button-primary"
+                onClick={primaryOnClick}
+              >
+                {primaryCta}
+              </button>
+            ) : null}
+            {secondaryCta ? (
+              <button
+                ref={magneticSecondary.ref}
+                className="c-button-outline"
+                onClick={secondaryOnClick}
+              >
+                {secondaryCta}
+              </button>
+            ) : null}
           </motion.div>
         ) : null}
         {/* No decorative divider inside the hero text — the bottom-right

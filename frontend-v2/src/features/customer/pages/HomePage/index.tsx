@@ -33,11 +33,51 @@ export function HomePage() {
 
   const [selectedCat, setSelectedCat] = useState<string | null>(null)
 
-  // Memoized dishes filtered by local category state
+  // Build orbit items from REAL backend categories when the tenant has them
+  // (SaaS-safe — no hardcoded "Starters/Mains/Breads" leaking across
+  // restaurants). Falls through to the default hardcoded list inside
+  // CategoryChainSection when the categories query is still empty (demo/offline).
+  // Each item carries:
+  //  • id = String(categoryId) so the local `selectedCat` state stays a
+  //    plain string that matches both real and legacy code paths
+  //  • img = first-dish thumbnail in that category (client-side pick) with
+  //    the tenant's category icon as fallback
+  //  • itemCount = count of dishes belonging to the category
+  //  • description = category.description straight from backend
+  const orbitItems = useMemo(() => {
+    if (!catalog.categories || catalog.categories.length === 0) return undefined
+    const sorted = [...catalog.categories].sort(
+      (a, b) => (a.priority ?? 0) - (b.priority ?? 0),
+    )
+    return [
+      { id: null as string | null, label: 'ALL', itemCount: catalog.dishes.length },
+      ...sorted.map((c) => {
+        const inCategory = catalog.dishes.filter((d) => d.categoryId === c.id)
+        const firstImage = inCategory.find((d) => d.img && !d.img.includes('unsplash'))?.img
+          ?? inCategory[0]?.img
+        return {
+          id: String(c.id),
+          label: c.name,
+          img: firstImage ?? c.imageUrl ?? undefined,
+          description: c.description ?? undefined,
+          itemCount: inCategory.length,
+        }
+      }),
+    ]
+  }, [catalog.categories, catalog.dishes])
+
+  // Filter featured dishes by selected category. When backend categories drive
+  // the orbit, `selectedCat` is a stringified backend category id — match on
+  // `dish.categoryId`. When the legacy slug-based orbit is active (demo mode),
+  // fall back to matching `dish.category` slug. Both paths safely handle "ALL".
   const featuredDishes = useMemo(() => {
     const list = catalog.dishes
     if (!selectedCat) return list.slice(0, 8)
-    return list.filter(d => d.category === selectedCat).slice(0, 8)
+    const asId = Number(selectedCat)
+    if (Number.isFinite(asId) && asId > 0) {
+      return list.filter((d) => d.categoryId === asId).slice(0, 8)
+    }
+    return list.filter((d) => d.category === selectedCat).slice(0, 8)
   }, [catalog.dishes, selectedCat])
 
   const heroImages = useMemo(
@@ -89,10 +129,13 @@ export function HomePage() {
           <path d="M0,200 L0,120 C 480,-40 960,-40 1440,120 L1440,200 Z" />
         </svg>
 
-        <CategoryChainSection
-          selected={selectedCat}
-          onSelect={(id) => setSelectedCat(id)}
-        />
+        <ScrollReveal>
+          <CategoryChainSection
+            selected={selectedCat}
+            onSelect={(id) => setSelectedCat(id)}
+            items={orbitItems}
+          />
+        </ScrollReveal>
 
         <div className="dish-grid-header">
           <motion.p
@@ -172,7 +215,7 @@ export function HomePage() {
       </section>
 
       {/* Auto-scrolling gallery strip — horizontal linked to vertical page scroll */}
-      <GallerySlider />
+      <ScrollReveal><GallerySlider /></ScrollReveal>
 
       {/* Why Dine with Us Segment */}
       <ScrollReveal as="section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-[--c-border]">
