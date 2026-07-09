@@ -72,9 +72,17 @@ function readSelectedBranchId(): number {
   }
 }
 
-interface Props { children: ReactNode }
+interface Props {
+  children: ReactNode
+  /**
+   * When true, the sticky header renders with a transparent background so the
+   * hero image shows through beneath it. Used on the redesigned home page.
+   * Icons + nav text get a strong text-shadow so they stay readable.
+   */
+  transparent?: boolean
+}
 
-export default function CustomerLayout({ children }: Props) {
+export default function CustomerLayout({ children, transparent = false }: Props) {
   const navigate = useNavigate()
   const [showMobile, setShowMobile] = useState(false)
   const [showBranch, setShowBranch] = useState(false)
@@ -175,6 +183,24 @@ export default function CustomerLayout({ children }: Props) {
   // body-overflow lock back to empty. This guards against the case where a
   // modal in a now-unmounted view forgot to clean up (HMR, abrupt close,
   // browser back button mid-animation, etc.).
+  // Listen for global custom login trigger event (useful from cart or checkout pages)
+  useEffect(() => {
+    const handleTriggerLogin = () => {
+      setLoginStep('mobile')
+      setLoginMobile('')
+      setLoginOtp('')
+      setShowLogin(true)
+    }
+    window.addEventListener('trigger-customer-login', handleTriggerLogin)
+    return () => window.removeEventListener('trigger-customer-login', handleTriggerLogin)
+  }, [])
+
+  // Reset page position when navigating.
+  useEffect(() => {
+    window.scrollTo({ top: 0 })
+    setShowMobile(false)
+  }, [navigate])
+
   const navLocation = useLocation()
   useEffect(() => {
     document.body.style.overflow = ''
@@ -223,6 +249,10 @@ export default function CustomerLayout({ children }: Props) {
         toast.success('Welcome back!')
         setShowLogin(false)
         setAuthTick((t) => t + 1)
+        if ((window as any).shouldRedirectToCheckoutAfterLogin) {
+          (window as any).shouldRedirectToCheckoutAfterLogin = false
+          navigate('/checkout')
+        }
         return
       }
       if (/no static resource|not found|404/i.test(result.message) && loginDemoMode && loginOtp === '1234') {
@@ -232,6 +262,10 @@ export default function CustomerLayout({ children }: Props) {
         toast.success('Signed in (demo mode)')
         setShowLogin(false)
         setAuthTick((t) => t + 1)
+        if ((window as any).shouldRedirectToCheckoutAfterLogin) {
+          (window as any).shouldRedirectToCheckoutAfterLogin = false
+          navigate('/checkout')
+        }
         return
       }
       toast.error(result.message)
@@ -349,7 +383,7 @@ export default function CustomerLayout({ children }: Props) {
       </div>
 
       {/* Header — compact, single row, brand from DB */}
-      <header className="c-header relative">
+      <header className={cn('c-header relative', transparent && 'c-header--transparent')}>
         <div className="max-w-7xl mx-auto h-full px-3 sm:px-4 lg:px-6 flex items-center justify-between gap-2 sm:gap-3">
           {/* Left: Logo (compact, never wraps) */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-shrink-0">
@@ -399,7 +433,7 @@ export default function CustomerLayout({ children }: Props) {
             {[
               { to: '/', label: 'HOME' },
               { to: '/menu', label: 'MENU' },
-              { to: '/signature', label: 'SIGNATURE' },
+              // { to: '/signature', label: 'SIGNATURE' },
               { to: '/gallery', label: 'GALLERY' },
               { to: '/locations', label: 'LOCATIONS' },
               { to: '/contact', label: 'CONTACT' },
@@ -431,25 +465,25 @@ export default function CustomerLayout({ children }: Props) {
                 <ChevronDown className="size-3 opacity-60 shrink-0" />
               </button>
               {showBranch ? (
-                  <div className="absolute top-full right-0 mt-2 w-72 c-card p-2 z-50 shadow-2xl">
-                    <p className="subtitle text-[10px] px-2 py-1.5">Select Branch</p>
-                    {branches.map((b) => (
-                      <button
-                        key={b.id}
-                        onClick={() => pickBranch(b)}
-                        className={`w-full text-left p-2.5 rounded hover:bg-[--c-bg-elev-2] transition-colors ${branch?.id === b.id ? 'border border-[--c-accent]' : ''}`}
-                      >
-                        <p className="text-sm font-semibold">{b.name}</p>
-                        <p className="text-[11px] text-[--c-text-muted]">{b.address}</p>
-                      </button>
-                    ))}
+                <div className="absolute top-full right-0 mt-2 w-72 c-card p-2 z-50 shadow-2xl">
+                  <p className="subtitle text-[10px] px-2 py-1.5">Select Branch</p>
+                  {branches.map((b) => (
                     <button
-                      onClick={() => { setShowBranch(false); navigate('/locations') }}
-                      className="w-full text-left px-2.5 py-2 mt-1 border-t border-[--c-border] text-[11px] gold-text hover:underline inline-flex items-center gap-1"
+                      key={b.id}
+                      onClick={() => pickBranch(b)}
+                      className={`w-full text-left p-2.5 rounded hover:bg-[--c-bg-elev-2] transition-colors ${branch?.id === b.id ? 'border border-[--c-accent]' : ''}`}
                     >
-                      See all branches <ChevronRight className="size-3" />
+                      <p className="text-sm font-semibold">{b.name}</p>
+                      <p className="text-[11px] text-[--c-text-muted]">{b.address}</p>
                     </button>
-                  </div>
+                  ))}
+                  <button
+                    onClick={() => { setShowBranch(false); navigate('/locations') }}
+                    className="w-full text-left px-2.5 py-2 mt-1 border-t border-[--c-border] text-[11px] gold-text hover:underline inline-flex items-center gap-1"
+                  >
+                    See all branches <ChevronRight className="size-3" />
+                  </button>
+                </div>
               ) : null}
             </div>
 
@@ -618,7 +652,7 @@ export default function CustomerLayout({ children }: Props) {
               {[
                 { to: '/', label: 'Home' },
                 { to: '/menu', label: 'Menu' },
-                { to: '/signature', label: 'Signature' },
+                // { to: '/signature', label: 'Signature' },
                 { to: '/why-us', label: 'Why Us' },
                 { to: '/gallery', label: 'Gallery' },
                 { to: '/locations', label: 'Locations' },
@@ -671,7 +705,7 @@ export default function CustomerLayout({ children }: Props) {
             transition={{ duration: 0.18 }}
           >
             <motion.div
-              className="absolute inset-0 bg-black/75 backdrop-blur-md"
+              className="absolute inset-0 bg-black/80 backdrop-blur-md"
               onClick={() => setShowLogin(false)}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -680,7 +714,7 @@ export default function CustomerLayout({ children }: Props) {
             />
             <motion.div
               ref={loginPopoverRef}
-              className="relative c-card w-full max-w-sm p-8 shadow-2xl"
+              className="relative c-card w-full max-w-sm p-8 shadow-2xl rounded-2xl border border-white/10 flex flex-col"
               initial={{ opacity: 0, y: 20, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.98 }}
@@ -695,11 +729,33 @@ export default function CustomerLayout({ children }: Props) {
               >
                 <X className="size-4 text-[--c-text-soft]" />
               </button>
-              <p className="subtitle text-[10px]">SIGN IN TO CONTINUE</p>
-              <h3 className="display text-3xl mt-1 mb-1">
+
+              {/* Redesigned Brand Header in Popover matching condition of main header */}
+              <div className="mb-6 flex flex-col items-center text-center">
+                {brand.logoUrl && logoState === 'loaded' ? (
+                  <img
+                    src={brand.logoUrl}
+                    alt={brand.restaurantName}
+                    className="h-11 w-auto object-contain mb-2.5"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center mb-2.5">
+                    <span className="display logo-compact text-2xl whitespace-nowrap gold-text leading-none">
+                      {brand.restaurantName}
+                    </span>
+                    <span className="subtitle text-[9px] mt-1 text-[--c-text-soft] tracking-[0.2em] uppercase leading-none">
+                      {brand.tagline}
+                    </span>
+                  </div>
+                )}
+                <div className="h-px w-16 bg-[--c-border] mt-2 mb-1" />
+              </div>
+
+              <p className="subtitle text-[10px] text-center">SIGN IN TO CONTINUE</p>
+              <h3 className="display text-3xl text-center mt-1 mb-1">
                 Welcome <span>Back</span>
               </h3>
-              <p className="text-sm text-[--c-text-soft] mb-6">
+              <p className="text-sm text-[--c-text-soft] text-center mb-6">
                 {loginStep === 'mobile' ? 'Enter your mobile to receive an OTP.' : `Verify the OTP sent to ${loginMobile}.`}
               </p>
               {loginStep === 'mobile' ? (
@@ -872,9 +928,9 @@ export default function CustomerLayout({ children }: Props) {
             <p className="subtitle text-[10px] mt-1">{brand.tagline}</p>
             <p className="text-sm text-[--c-text-soft] mt-4">Hand-crafted dishes, warm hospitality, and an unforgettable dining experience.</p>
             <div className="flex items-center gap-3 mt-4">
-              <a href="#" className="hover:gold-text"><Facebook className="size-4" /></a>
-              <a href="#" className="hover:gold-text"><Instagram className="size-4" /></a>
-              <a href="#" className="hover:gold-text"><Twitter className="size-4" /></a>
+              <a href="#" className="hover:gold-text" aria-label="Facebook"><Facebook className="size-4" aria-hidden="true" /></a>
+              <a href="#" className="hover:gold-text" aria-label="Instagram"><Instagram className="size-4" aria-hidden="true" /></a>
+              <a href="#" className="hover:gold-text" aria-label="Twitter"><Twitter className="size-4" aria-hidden="true" /></a>
             </div>
           </div>
           <div>
@@ -1067,7 +1123,7 @@ function WishlistContents({ wishlist, cart, onClose, navigate }: WishlistContent
 
 export function HeroSection({
   bg, subtitle, titleA, titleAccent, description, primaryCta, primaryOnClick, secondaryCta, secondaryOnClick,
-  showRotator = false, heroImages,
+  showRotator = false, heroImages, withCurve = false,
 }: {
   bg: string
   subtitle: string
@@ -1085,15 +1141,21 @@ export function HeroSection({
    * the default Unsplash trio so the hero still feels alive without backend.
    */
   heroImages?: string[]
+  /**
+   * When true, the hero renders a wavy concave-up SVG curve at its bottom
+   * edge (fills with beige `--c-cream`) so it visually flows into the
+   * unified light-beige category section below.
+   */
+  withCurve?: boolean
 }) {
   const ROTATE_IMAGES =
     heroImages && heroImages.length > 0
       ? heroImages
       : [
-          bg,
-          'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1600&q=80',
-          'https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=1600&q=80',
-        ]
+        bg,
+        'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1600&q=80',
+        'https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=1600&q=80',
+      ]
   const [idx, setIdx] = useState(0)
   const current = showRotator ? ROTATE_IMAGES[idx % ROTATE_IMAGES.length]! : bg
   // Auto-rotate hero every 5s when rotator is enabled. Pauses if the user
@@ -1226,6 +1288,20 @@ export function HeroSection({
         {/* No decorative divider inside the hero text — the bottom-right
          * slider dots now anchor the section visually (request 2026-06-27). */}
       </motion.div>
+      {/* Bottom wavy curve — used when the following section is the beige
+       * category track. Path drawn on a 1440×100 canvas with `preserveAspectRatio="none"`
+       * so it stretches to any viewport width. */}
+      {withCurve ? (
+        <svg
+          className="hero-curve"
+          viewBox="0 0 1440 100"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          {/* Single smooth broad-dome (oval-top) arc — no wavy triple-hump. */}
+          <path d="M0,100 C480,15 960,15 1440,100 Z" />
+        </svg>
+      ) : null}
     </motion.section>
   )
 }

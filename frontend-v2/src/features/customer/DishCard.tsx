@@ -85,7 +85,7 @@ export default function DishCard({ dish }: Props) {
   return (
     <>
       <motion.article
-        className="c-card overflow-hidden group relative flex flex-col cursor-pointer"
+        className="backdrop-blur-lg bg-neutral-900/35 border border-white/10 rounded-2xl overflow-hidden group relative flex flex-col cursor-pointer transition-all duration-500 hover:border-[--c-accent]/50 hover:shadow-[0_8px_30px_rgb(0,0,0,0.5)] hover:shadow-[var(--c-shadow-primary-sm)]"
         aria-label={dish.name}
         whileHover={hover}
         whileTap={tap}
@@ -101,17 +101,18 @@ export default function DishCard({ dish }: Props) {
             alt={dish.name}
             loading="lazy"
             decoding="async"
-            className="w-full h-full object-cover transition-transform duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]"
+            className="w-full h-full object-cover transition-transform duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.08] group-hover:brightness-[1.05]"
           />
+          <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/80 via-transparent to-transparent" />
 
           {/* Signature badge — small gold pill, top-left */}
           {dish.signature ? (
             <span
-              className="absolute top-1.5 left-1.5 lg:top-2 lg:left-2 inline-flex items-center gap-1 rounded-full bg-[--c-accent] text-[--c-button-primary-fg] px-1.5 py-0.5 lg:px-2 lg:py-1 text-[9px] lg:text-[10px] font-semibold uppercase tracking-wider shadow-md"
+              className="absolute top-2.5 left-2.5 inline-flex items-center gap-1 rounded-full bg-[--c-accent] text-black px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-widest shadow-lg"
               aria-label="Signature dish"
             >
-              <Sparkles className="size-2.5 lg:size-3" aria-hidden />
-              <span className="hidden sm:inline">Signature</span>
+              <Sparkles className="size-3 text-black fill-current" aria-hidden />
+              <span>Chef's Choice</span>
             </span>
           ) : null}
 
@@ -121,11 +122,11 @@ export default function DishCard({ dish }: Props) {
             onClick={toggleWishlist}
             aria-label={liked ? `Remove ${dish.name} from wishlist` : `Add ${dish.name} to wishlist`}
             aria-pressed={liked}
-            className="absolute top-1.5 right-1.5 lg:top-2 lg:right-2 size-7 lg:size-8 rounded-full backdrop-blur-md bg-black/45 border border-white/20 flex items-center justify-center hover:bg-black/65 transition-colors"
+            className="absolute top-2.5 right-2.5 size-8.5 rounded-full backdrop-blur-md bg-black/45 border border-white/20 flex items-center justify-center hover:bg-black/65 hover:scale-105 active:scale-95 transition-all"
           >
             <Heart
               className={cn(
-                'size-3.5 lg:size-4 text-white transition-colors',
+                'size-4 text-white transition-all',
                 liked && 'fill-[--c-accent] text-[--c-accent]',
               )}
             />
@@ -133,72 +134,70 @@ export default function DishCard({ dish }: Props) {
         </div>
 
         {/* Body — same layout, sizes scale with breakpoint */}
-        <div className="p-2.5 lg:p-3.5 flex flex-col gap-1 lg:gap-1.5 flex-1">
+        <div className="p-3.5 lg:p-4.5 flex flex-col gap-1.5 lg:gap-2 flex-1">
           {/* Name + rating row */}
-          <div className="flex items-start justify-between gap-2">
-            <p className="font-semibold leading-tight truncate flex items-center gap-1.5 text-sm lg:text-base min-w-0">
+          <div className="flex items-start justify-between gap-2.5">
+            <h4 className="font-semibold leading-tight truncate flex items-center gap-2 text-sm lg:text-base min-w-0 font-sans tracking-wide">
               <span
                 className={cn(
-                  'inline-block size-2 shrink-0',
+                  'inline-block size-2 shrink-0 rounded-full ring-2 ring-offset-2 ring-offset-neutral-900',
                   dish.veg
-                    ? 'bg-[#4caf50] border border-[#4caf50] rounded-[1px]'
-                    : 'bg-[#d32f2f] border border-[#d32f2f] rounded-full',
+                    ? 'bg-[#4caf50] ring-[#4caf50]'
+                    : 'bg-[#d32f2f] ring-[#d32f2f]',
                 )}
                 aria-hidden
               />
-              <span className="truncate">{dish.name}</span>
-            </p>
-            <span className="inline-flex items-center gap-0.5 text-[10px] lg:text-xs font-semibold gold-text shrink-0 leading-none pt-0.5">
-              <Star className="size-3 fill-current" /> {dish.rating}
-            </span>
+              <span className="truncate group-hover:text-[--c-accent] transition-colors">{dish.name}</span>
+            </h4>
+            <div
+              className="flex items-center gap-1 bg-[--c-accent]/10 border border-[--c-accent]/20 px-2 py-0.5 rounded-md text-[9px] font-bold text-[--c-accent] shrink-0"
+              aria-label={`Rated ${dish.rating} stars`}
+            >
+              <Star className="size-3 fill-current text-[--c-accent]" aria-hidden />
+              <span>{dish.rating}</span>
+            </div>
           </div>
 
-          {/* Description — always visible, 1-line truncate */}
-          <p className="text-[10px] lg:text-xs text-[--c-text-muted] truncate">
+          {/* 1-line description always visible */}
+          <p className="text-xs text-[--c-text-soft] line-clamp-2 min-h-[32px] leading-relaxed">
             {dish.description}
           </p>
 
-          {/* Price + Add/Stepper row — uniform style */}
-          <div className="flex items-center justify-between gap-2 mt-auto pt-1.5 lg:pt-2">
-            <p className="font-[Cormorant_Garamond,Georgia,serif] font-bold gold-text text-lg lg:text-xl leading-none tabular-nums">
+          {/* Price + Button row */}
+          <div className="flex items-center justify-between gap-2 mt-auto pt-2.5 border-t border-white/5">
+            <p className="display text-lg lg:text-xl leading-none font-bold gold-text shrink-0">
               ₹{dish.price}
             </p>
 
             {line ? (
-              <div
-                className="inline-flex items-center border border-[--c-accent] rounded-full overflow-hidden h-7 lg:h-8"
-                role="group"
-                aria-label="Quantity"
-                onClick={(e) => e.stopPropagation()}
-              >
+              <div className="flex items-center border border-[--c-accent]/40 bg-[--c-accent]/5 rounded-full overflow-hidden shrink-0 p-0.5">
                 <button
                   type="button"
                   onClick={dec}
-                  aria-label={`Decrease ${dish.name}`}
-                  className="px-2 h-full inline-flex items-center justify-center hover:bg-[--c-bg-elev-2] transition-colors text-[--c-accent]"
+                  aria-label="Decrease quantity"
+                  className="p-1 hover:bg-[--c-accent]/15 rounded-full transition-colors text-[--c-accent]"
                 >
-                  <Minus className="size-3" />
+                  <Minus className="size-3.5" />
                 </button>
-                <span className="text-[10px] lg:text-xs font-mono tabular-nums min-w-[20px] text-center text-[--c-accent] font-semibold">
+                <span className="w-6 text-center font-mono font-bold tabular-nums text-xs text-white">
                   {line.qty}
                 </span>
                 <button
                   type="button"
                   onClick={inc}
-                  aria-label={`Increase ${dish.name}`}
-                  className="px-2 h-full inline-flex items-center justify-center hover:bg-[--c-bg-elev-2] transition-colors text-[--c-accent]"
+                  aria-label="Increase quantity"
+                  className="p-1 hover:bg-[--c-accent]/15 rounded-full transition-colors text-[--c-accent]"
                 >
-                  <Plus className="size-3 add-plus" />
+                  <Plus className="size-3.5" />
                 </button>
               </div>
             ) : (
               <button
                 type="button"
                 onClick={addToCart}
-                aria-label={`Add ${dish.name} to cart`}
-                className="c-button-outline !py-1 !px-2.5 lg:!px-3 inline-flex items-center gap-1 !text-[10px] lg:!text-xs h-7 lg:h-8"
+                className="bg-[--c-accent] text-black border-none hover:bg-white font-extrabold text-[10px] tracking-widest px-4 py-2 rounded-full transition-all duration-300 shadow-md shadow-[--c-accent]/10 hover:shadow-[--c-accent]/25 scale-100 hover:scale-105 active:scale-95 uppercase shrink-0"
               >
-                <Plus className="size-3 add-plus" /> ADD
+                Add
               </button>
             )}
           </div>

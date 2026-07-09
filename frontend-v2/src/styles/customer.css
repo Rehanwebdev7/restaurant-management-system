@@ -24,6 +24,7 @@
   font-display: swap;
   src: url('/fonts/Cormorant-Garamond-latin.woff2') format('woff2');
 }
+
 @font-face {
   font-family: 'Cormorant Garamond';
   font-style: normal;
@@ -31,6 +32,7 @@
   font-display: swap;
   src: url('/fonts/Cormorant-Garamond-latin.woff2') format('woff2');
 }
+
 @font-face {
   font-family: 'Cormorant Garamond';
   font-style: normal;
@@ -38,6 +40,7 @@
   font-display: swap;
   src: url('/fonts/Cormorant-Garamond-latin.woff2') format('woff2');
 }
+
 @font-face {
   font-family: 'Cormorant Garamond';
   font-style: normal;
@@ -45,6 +48,7 @@
   font-display: swap;
   src: url('/fonts/Cormorant-Garamond-latin.woff2') format('woff2');
 }
+
 @font-face {
   font-family: 'Outfit';
   font-style: normal;
@@ -52,6 +56,7 @@
   font-display: swap;
   src: url('/fonts/Outfit-latin.woff2') format('woff2');
 }
+
 @font-face {
   font-family: 'Outfit';
   font-style: normal;
@@ -59,6 +64,7 @@
   font-display: swap;
   src: url('/fonts/Outfit-latin.woff2') format('woff2');
 }
+
 @font-face {
   font-family: 'Outfit';
   font-style: normal;
@@ -66,6 +72,7 @@
   font-display: swap;
   src: url('/fonts/Outfit-latin.woff2') format('woff2');
 }
+
 @font-face {
   font-family: 'Outfit';
   font-style: normal;
@@ -73,6 +80,7 @@
   font-display: swap;
   src: url('/fonts/Outfit-latin.woff2') format('woff2');
 }
+
 @font-face {
   font-family: 'Outfit';
   font-style: normal;
@@ -85,29 +93,30 @@
   --c-bg: #0A0A0A;
   --c-bg-elev: #1A1A1A;
   --c-bg-elev-2: #222222;
-  --c-accent: #C9A96E;
-  --c-accent-hover: #B8943E;
-  --c-accent-rgb: 201, 169, 110;
+  --c-accent: var(--c-primary);
+  --c-accent-hover: var(--c-primary-hover);
+  --c-accent-rgb: var(--c-primary-rgb);
   --c-text: #FFFFFF;
   --c-text-soft: #CBD5E1;
   --c-text-muted: #A3A3A3;
-  --c-border: rgba(201, 169, 110, 0.25);
-  --c-border-strong: #C9A96E;
+  --c-border: rgba(var(--c-primary-rgb), 0.25);
+  --c-border-strong: var(--c-primary);
   --c-header-bg: rgba(10, 10, 10, 0.78);
-  --c-hero-overlay-from: rgba(10,10,10,0.55);
-  --c-hero-overlay-mid:  rgba(10,10,10,0.85);
-  --c-hero-overlay-to:   rgba(10,10,10,1);
+  --c-hero-overlay-from: rgba(10, 10, 10, 0.55);
+  --c-hero-overlay-mid: rgba(10, 10, 10, 0.85);
+  --c-hero-overlay-to: rgba(10, 10, 10, 1);
   --c-button-primary-fg: #0A0A0A;
 
   background-color: var(--c-bg);
   color: var(--c-text);
   min-height: 100vh;
   position: relative;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--c-font-sans), 'Outfit', sans-serif;
+  border-radius: var(--c-radius, 16px);
   overflow-x: clip;
 }
 
-/* Light mode — preserves gold accent, swaps background to warm ivory.
+/* Light mode — preserves dynamic accent, swaps background to warm ivory.
  * Activate by adding `customer-shell--light` to `.customer-shell`. */
 .customer-shell.customer-shell--light {
   --c-bg: #FFFFFF;
@@ -116,17 +125,15 @@
   --c-text: #1A1A1A;
   --c-text-soft: #444444;
   --c-text-muted: #777777;
-  --c-border: rgba(201, 169, 110, 0.45);
-  --c-border-strong: #B8924E;
+  --c-border: rgba(var(--c-primary-rgb), 0.45);
+  --c-border-strong: var(--c-primary);
   --c-header-bg: rgba(255, 255, 255, 0.92);
   --c-hero-overlay-from: rgba(0, 0, 0, 0.10);
-  --c-hero-overlay-mid:  rgba(0, 0, 0, 0.30);
-  --c-hero-overlay-to:   rgba(0, 0, 0, 0.55);
+  --c-hero-overlay-mid: rgba(0, 0, 0, 0.30);
+  --c-hero-overlay-to: rgba(0, 0, 0, 0.55);
   --c-button-primary-fg: #FFFFFF;
-  /* Darker gold in light mode so headings + accents pass WCAG AA on cream
-   * surfaces. The original #C9A96E was washed out against ivory. */
-  --c-accent: #9A7A3A;
-  --c-accent-rgb: 154, 122, 58;
+  --c-accent: var(--c-primary);
+  --c-accent-rgb: var(--c-primary-rgb);
 }
 
 .customer-shell.customer-shell--light .c-header {
@@ -212,8 +219,13 @@
 }
 
 @keyframes texturePan {
-  from { transform: translate(0, 0); }
-  to   { transform: translate(-32px, -32px); }
+  from {
+    transform: translate(0, 0);
+  }
+
+  to {
+    transform: translate(-32px, -32px);
+  }
 }
 
 .customer-shell h1,
@@ -238,8 +250,11 @@
   line-height: 1;
   letter-spacing: 0.02em;
 }
+
 @media (min-width: 640px) {
-  .customer-shell .display.logo-compact { font-size: 1.35rem; }
+  .customer-shell .display.logo-compact {
+    font-size: 1.35rem;
+  }
 }
 
 .customer-shell .display span {
@@ -268,80 +283,93 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  background: var(--c-header-bg);
+  background: rgba(10, 10, 10, 0.72);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-bottom: 1px solid var(--c-border);
+  border-bottom: 1px solid rgba(var(--c-primary-rgb), 0.15);
   height: 72px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.35);
 }
 
 .customer-shell .c-card {
-  background: var(--c-bg-elev);
-  border: 1px solid var(--c-border);
-  border-radius: 8px;
+  background: rgba(26, 26, 26, 0.42);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(var(--c-primary-rgb), 0.15);
+  border-radius: var(--c-radius, 16px);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.35);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .customer-shell .c-card:hover {
-  border-color: var(--c-border-strong);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  border-color: rgba(var(--c-primary-rgb), 0.55);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(var(--c-primary-rgb), 0.2), 0 20px 40px rgba(0, 0, 0, 0.45);
 }
 
 .customer-shell .c-button-primary {
-  background: var(--c-accent);
+  background: linear-gradient(135deg, var(--c-accent) 0%, var(--c-accent-hover) 100%);
   color: var(--c-button-primary-fg);
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  font-size: 0.78rem;
-  padding: 0.85rem 1.5rem;
-  border-radius: 4px;
-  transition: all 0.2s ease;
+  font-size: 0.72rem;
+  padding: 0.85rem 2.2rem;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 15px rgba(var(--c-primary-rgb), 0.22);
 }
 
 .customer-shell .c-button-primary:hover {
-  background: var(--c-accent-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 12px 24px rgba(var(--c-accent-rgb), 0.25);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(var(--c-primary-rgb), 0.35), 0 4px 10px rgba(var(--c-primary-rgb), 0.22);
 }
 
 .customer-shell .c-button-outline {
-  background: transparent;
-  border: 1px solid var(--c-accent);
+  background: rgba(var(--c-primary-rgb), 0.05);
+  backdrop-filter: blur(4px);
+  border: 1.5px solid var(--c-accent);
   color: var(--c-accent);
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  font-size: 0.78rem;
-  padding: 0.85rem 1.5rem;
-  border-radius: 4px;
-  transition: all 0.2s ease;
+  font-size: 0.72rem;
+  padding: 0.85rem 2.2rem;
+  border-radius: 9999px;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .customer-shell .c-button-outline:hover {
   background: var(--c-accent);
   color: var(--c-button-primary-fg);
+  box-shadow: 0 8px 20px rgba(var(--c-primary-rgb), 0.25);
+  transform: translateY(-2px);
 }
 
 .customer-shell .c-input {
-  background: var(--c-bg-elev);
-  border: 1px solid var(--c-border);
+  background: rgba(26, 26, 26, 0.28);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(var(--c-primary-rgb), 0.22);
   color: var(--c-text);
-  padding: 0.75rem 1rem;
-  border-radius: 4px;
+  padding: 0.8rem 1.2rem;
+  border-radius: 12px;
   width: 100%;
+  transition: all 0.3s ease;
 }
 
 .customer-shell .c-input:focus {
   outline: none;
   border-color: var(--c-accent);
-  box-shadow: 0 0 0 3px rgba(var(--c-accent-rgb), 0.2);
+  background: rgba(26, 26, 26, 0.48);
+  box-shadow: 0 0 0 4px rgba(var(--c-primary-rgb), 0.25);
 }
 
 .customer-shell .c-divider {
-  height: 1px;
+  height: 2px;
   background: linear-gradient(90deg, transparent, var(--c-accent), transparent);
-  width: 80px;
-  margin: 1rem auto;
+  width: 90px;
+  margin: 1.2rem auto;
 }
 
 .customer-shell .hero-bg {
@@ -354,7 +382,8 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 6rem 1.5rem 4rem;
+  /* Top padding for sticky header, bottom padding calculated to clear the curve and category strip */
+  padding: 6.5rem 1.5rem calc(clamp(100px, 11vw, 155px) + 3.5rem);
 }
 
 .customer-shell .hero-bg::after {
@@ -364,7 +393,7 @@
   background: linear-gradient(180deg, var(--c-hero-overlay-from) 0%, var(--c-hero-overlay-mid) 80%, var(--c-hero-overlay-to) 100%);
 }
 
-.customer-shell .hero-bg > * {
+.customer-shell .hero-bg>* {
   position: relative;
   z-index: 1;
 }
@@ -376,19 +405,24 @@
 @media (max-width: 639px) {
   .customer-shell .hero-bg {
     min-height: 60vh;
-    padding: 4.5rem 1rem 2.5rem;
+    /* Bottom padding calculated to clear the curve and categories on mobile */
+    padding: 4.5rem 1rem calc(88px + 2rem);
   }
+
   .customer-shell .hero-bg .display {
     font-size: clamp(1.8rem, 7vw, 2.5rem);
     line-height: 1.1;
   }
+
   .customer-shell .hero-bg .subtitle {
     letter-spacing: 0.22em;
     font-size: 0.68rem;
   }
+
   .customer-shell .hero-bg p {
     font-size: 0.875rem;
   }
+
   .customer-shell .hero-bg .c-button-primary,
   .customer-shell .hero-bg .c-button-outline {
     width: 100%;
@@ -400,8 +434,14 @@
 
 /* Hide-scrollbar utility (Tailwind plugin absent — emit raw CSS).
  * Used by the horizontal category strip on mobile. */
-.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
 
 /* Mobile horizontal-snap pill strip — Zomato/Swiggy category bar feel. */
 .customer-shell .pill-strip {
@@ -413,7 +453,8 @@
   scroll-padding-left: 1rem;
   -webkit-overflow-scrolling: touch;
 }
-.customer-shell .pill-strip > * {
+
+.customer-shell .pill-strip>* {
   flex-shrink: 0;
   white-space: nowrap;
   scroll-snap-align: start;
@@ -436,8 +477,13 @@
 }
 
 @keyframes marqueeScroll {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
 }
 
 .customer-shell .c-tag {
@@ -514,19 +560,26 @@
 }
 
 @keyframes kenBurns {
-  from { transform: scale(1) translate(0, 0); }
-  to   { transform: scale(1.1) translate(-1%, -2%); }
+  from {
+    transform: scale(1) translate(0, 0);
+  }
+
+  to {
+    transform: scale(1.1) translate(-1%, -2%);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .customer-shell .hero-premium__image { animation: none; }
+  .customer-shell .hero-premium__image {
+    animation: none;
+  }
 }
 
 .customer-shell .hero-premium__overlay {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(10,10,10,0.20) 0%, rgba(10,10,10,0.55) 55%, rgba(10,10,10,0.92) 100%);
+    linear-gradient(180deg, rgba(10, 10, 10, 0.20) 0%, rgba(10, 10, 10, 0.55) 55%, rgba(10, 10, 10, 0.92) 100%);
   z-index: 1;
 }
 
@@ -548,12 +601,23 @@
 }
 
 @keyframes scrollBounce {
-  0%, 100% { transform: translate(-50%, 0); opacity: 0.8; }
-  50%      { transform: translate(-50%, 10px); opacity: 1; }
+
+  0%,
+  100% {
+    transform: translate(-50%, 0);
+    opacity: 0.8;
+  }
+
+  50% {
+    transform: translate(-50%, 10px);
+    opacity: 1;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .customer-shell .scroll-indicator { animation: none; }
+  .customer-shell .scroll-indicator {
+    animation: none;
+  }
 }
 
 /* ============================================================
@@ -594,7 +658,7 @@
 .customer-shell .dish-card-premium__overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.25) 45%, transparent 70%);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.25) 45%, transparent 70%);
   pointer-events: none;
 }
 
@@ -658,7 +722,7 @@
 .customer-shell .category-card-premium__overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0.4) 50%, rgba(10,10,10,0.15) 100%);
+  background: linear-gradient(to top, rgba(10, 10, 10, 0.95) 0%, rgba(10, 10, 10, 0.4) 50%, rgba(10, 10, 10, 0.15) 100%);
 }
 
 /* ============================================================
@@ -691,22 +755,44 @@
 }
 
 @keyframes fabBounce {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-4px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
 }
 
 @keyframes fabPulse {
-  0%   { transform: scale(1);   opacity: 0.65; }
-  100% { transform: scale(1.35); opacity: 0;    }
+  0% {
+    transform: scale(1);
+    opacity: 0.65;
+  }
+
+  100% {
+    transform: scale(1.35);
+    opacity: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .customer-shell .order-fab { animation: none; }
-  .customer-shell .order-fab::after { animation: none; opacity: 0; }
+  .customer-shell .order-fab {
+    animation: none;
+  }
+
+  .customer-shell .order-fab::after {
+    animation: none;
+    opacity: 0;
+  }
 }
 
 @media (min-width: 1024px) {
-  .customer-shell .order-fab { display: none; }
+  .customer-shell .order-fab {
+    display: none;
+  }
 }
 
 /* ============================================================
@@ -718,14 +804,18 @@
 }
 
 @media (min-width: 640px) {
-  .customer-shell .masonry { column-count: 3; }
+  .customer-shell .masonry {
+    column-count: 3;
+  }
 }
 
 @media (min-width: 1024px) {
-  .customer-shell .masonry { column-count: 4; }
+  .customer-shell .masonry {
+    column-count: 4;
+  }
 }
 
-.customer-shell .masonry > * {
+.customer-shell .masonry>* {
   break-inside: avoid;
   margin-bottom: 0.75rem;
   display: block;
@@ -758,7 +848,8 @@
 }
 
 .customer-shell .insta-tile__img {
-  width: 100%; height: 100%;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
   transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -770,7 +861,7 @@
 .customer-shell .insta-tile__overlay {
   position: absolute;
   inset: 0;
-  background: rgba(10,10,10,0.55);
+  background: rgba(10, 10, 10, 0.55);
   display: grid;
   place-items: center;
   opacity: 0;
@@ -778,14 +869,21 @@
   color: var(--c-accent);
 }
 
-.customer-shell .insta-tile:hover .insta-tile__overlay { opacity: 1; }
+.customer-shell .insta-tile:hover .insta-tile__overlay {
+  opacity: 1;
+}
 
 /* ============================================================
  * Skeleton shimmer (used by <Skeleton />)
  * ============================================================ */
 @keyframes shimmer {
-  from { transform: translateX(-100%); }
-  to   { transform: translateX(100%); }
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(100%);
+  }
 }
 
 /* ============================================================
@@ -796,6 +894,7 @@
 .customer-shell .c-button-primary .add-plus {
   transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
 }
+
 .customer-shell .c-button-outline:hover .add-plus,
 .customer-shell .c-button-primary:hover .add-plus {
   transform: rotate(45deg);
@@ -808,14 +907,17 @@
   border: 1px solid var(--c-border);
   transition: border-color 0.3s ease, border-width 0.3s ease, filter 0.3s ease, box-shadow 0.3s ease;
 }
+
 .customer-shell .category-card:hover {
   border-color: var(--c-accent);
   box-shadow: inset 0 0 0 1px var(--c-accent), 0 12px 28px rgba(0, 0, 0, 0.55);
   filter: brightness(1.06);
 }
+
 .customer-shell .category-card__label {
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
 .customer-shell .category-card:hover .category-card__label {
   transform: translateY(-4px);
 }
@@ -828,14 +930,16 @@
   z-index: 2;
   mix-blend-mode: soft-light;
   opacity: 0.15;
-  background: radial-gradient(
-    circle 200px at var(--blob-x, 50%) var(--blob-y, 50%),
-    var(--c-accent) 0%,
-    transparent 60%
-  );
+  background: radial-gradient(circle 200px at var(--blob-x, 50%) var(--blob-y, 50%),
+      var(--c-accent) 0%,
+      transparent 60%);
 }
-@media (hover: none), (prefers-reduced-motion: reduce) {
-  .customer-shell .hero-cursor-blob { display: none; }
+
+@media (hover: none),
+(prefers-reduced-motion: reduce) {
+  .customer-shell .hero-cursor-blob {
+    display: none;
+  }
 }
 
 /* Dish modal: pin add-to-cart actions to bottom on mobile */
@@ -852,4 +956,1368 @@
     border-top: 1px solid var(--c-border);
     z-index: 2;
   }
+}
+
+/* ============================================================
+ * HOME REDESIGN v2 — 2026-07-06 — Semi-transparent header +
+ * hero curve + FLOATING category circles ON the curve + circular
+ * product cards + compact testimonials (Antigravity brief v2)
+ * ============================================================ */
+.customer-shell {
+  --c-teal: #2FB8B0;
+  --c-teal-deep: #1F8B85;
+  --c-teal-soft: rgba(47, 184, 176, 0.14);
+  --c-teal-glow: rgba(47, 184, 176, 0.35);
+  --c-cream: #EEE1C0;
+  --c-cream-alt: #E4D4AC;
+  --c-cream-deep: #D9C592;
+  --c-cream-text: #2A2A2A;
+  --c-cream-text-soft: #5F5D57;
+  --c-warm-peach: #F5D9C7;
+  --c-header-h: 72px;
+}
+
+/* Semi-transparent header — dark backdrop with blur so hero image shows
+ * through but header stays visually anchored (user feedback: fully
+ * transparent me theme lost ho gaya). */
+.customer-shell .c-header--transparent {
+  background: linear-gradient(to bottom, rgba(10, 10, 10, 0.55), rgba(10, 10, 10, 0.30)) !important;
+  backdrop-filter: blur(14px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(150%) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.25) !important;
+}
+.customer-shell .c-header--transparent .display,
+.customer-shell .c-header--transparent .subtitle,
+.customer-shell .c-header--transparent nav a,
+.customer-shell .c-header--transparent .gold-text {
+  color: #FFFFFF !important;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.55);
+}
+.customer-shell .c-header--transparent nav a:hover {
+  color: var(--c-teal) !important;
+}
+
+/* Hero bottom curve SVG — no longer used. Cream section's own oval-top
+ * border-radius provides the transition (v3 fix 2026-07-06). Kept as no-op
+ * for backwards compatibility if some page still passes withCurve. */
+.customer-shell .hero-curve {
+  display: none;
+}
+
+/* Cream transition section — smooth SVG DOME top via <svg.cream-dome>
+ * absolutely positioned above the section box. Cubic bezier gives a
+ * mathematically perfect continuous curve with zero corner artifacts.
+ * Orbit-strip is ALSO absolute-positioned relative to this section so it
+ * lands PRECISELY on the dome curve — no margin-collapse or flow math
+ * dependence. padding-top reserves flow space for content BELOW the orbit
+ * (dish-grid-header and beyond). Per 2026-07-06 v7 feedback
+ * ("catory on border of circle rahena chiaye"). */
+.customer-shell .cream-section {
+  position: relative;
+  background: var(--c-cream);
+  color: var(--c-cream-text);
+  padding-top: clamp(50px, 5vw, 80px);
+  padding-bottom: clamp(2.5rem, 5vw, 4rem);
+  margin-top: 0;
+  z-index: 3;
+}
+/* SVG dome — sits at TOP of cream section, bleeds upward into the hero.
+ * viewBox 0 0 1440 200 / path uses cubic bezier peaking at y≈0 in the middle
+ * and smoothly settling to y=120 at the sides — no visible kink where the
+ * arc meets the flat sides. `preserveAspectRatio="none"` stretches to fit
+ * every viewport width. */
+.customer-shell .cream-dome {
+  position: absolute;
+  left: 0;
+  right: 0;
+  /* 2px overlap into cream body so no visible hairline at the seam. */
+  bottom: calc(100% - 2px);
+  width: 100%;
+  height: clamp(100px, 11vw, 155px);
+  display: block;
+  pointer-events: none;
+  z-index: 4;
+}
+/* Subtle shadow ONLY at the top curve of the dome (above the dome, into
+ * the hero) — via a SEPARATE pseudo-element on cream-section so the
+ * shadow never bleeds down onto the flat cream body (which was showing
+ * as a horizontal line). */
+.customer-shell .cream-section::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: clamp(100px, 11vw, 155px);
+  background: transparent;
+  box-shadow: 0 -14px 30px -8px rgba(0, 0, 0, 0.14);
+  clip-path: ellipse(52% 100% at 50% 100%);
+  pointer-events: none;
+  z-index: 3;
+}
+.customer-shell .cream-dome path {
+  fill: var(--c-cream);
+}
+/* Soft warm inner glow at top edge for depth — clipped by dome region. */
+.customer-shell .cream-section::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  left: 0;
+  right: 0;
+  height: 200px;
+  background: radial-gradient(ellipse 55% 140px at 50% 0%, rgba(217, 197, 146, 0.45), transparent 70%);
+  pointer-events: none;
+  z-index: 5;
+}
+.customer-shell .cream-section .subtitle {
+  color: var(--c-teal);
+}
+.customer-shell .cream-section .c-divider {
+  background: linear-gradient(90deg, transparent, var(--c-teal), transparent);
+}
+.customer-shell .cream-section .display {
+  color: var(--c-cream-text);
+}
+.customer-shell .cream-section .display span {
+  color: var(--c-teal);
+  font-style: italic;
+  font-family: var(--c-font-serif, 'Cormorant Garamond'), serif;
+  font-weight: 500;
+}
+.customer-shell .cream-section .cream-instr {
+  color: var(--c-cream-text-soft);
+  font-size: 0.85rem;
+  margin-top: 0.75rem;
+  max-width: 28rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Category orbit — a horizontal row of floating circles positioned at the
+ * cream section's oval-top so they visually sit ON the curve, with the top
+ * half floating slightly above into the hero image. No chain connectors. */
+.customer-shell .orbit-strip {
+  /* Absolute over the SVG dome — precise placement immune to flow issues
+   * and margin-collapse. Top offset positions strip so center tiles sit
+   * on the dome PEAK; edge tiles drop DOWN to the dome BASE via the arc
+   * rAF loop. Tuned so tiles do NOT overlap the hero's CTA buttons.
+   * Right edge fades only (tiles enter from right); left edge stays fully
+   * opaque so the final resting tile isn't cut off. */
+  position: absolute;
+  top: clamp(-105px, -8vw, -70px);
+  left: 0;
+  right: 0;
+  z-index: 10;
+  padding: 0 4vw;
+  padding-bottom: 140px; /* Prevent mask-image from clipping translated nodes at the bottom */
+  overflow-x: clip;
+  overflow-y: visible;
+  mask-image: linear-gradient(to right, black 0%, black 88%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, black 0%, black 88%, transparent 100%);
+}
+.customer-shell .orbit-track {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: clamp(1.5rem, 3.5vw, 3rem);
+  padding: 0 6vw;
+  will-change: transform;
+  white-space: nowrap;
+}
+.customer-shell .orbit-node {
+  flex-shrink: 0;
+  width: clamp(60px, 7.5vw, 76px);
+  height: clamp(60px, 7.5vw, 76px);
+  border-radius: 999px;
+  background: #FFFFFF;
+  border: 2px solid #FFFFFF;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18), 0 3px 6px rgba(0, 0, 0, 0.1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  transition: transform 260ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 260ms, border-color 260ms;
+  padding: 0;
+  overflow: hidden;
+}
+.customer-shell .orbit-node:hover {
+  transform: translateY(-6px) scale(1.04);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.28), 0 6px 12px rgba(0, 0, 0, 0.14);
+}
+.customer-shell .orbit-node--active {
+  border-color: var(--c-teal);
+  box-shadow: 0 0 0 4px var(--c-teal-soft), 0 18px 36px var(--c-teal-glow);
+}
+.customer-shell .orbit-node img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 999px;
+}
+.customer-shell .orbit-node--all {
+  background: linear-gradient(135deg, #FFFFFF 0%, #F5EFDA 100%);
+}
+.customer-shell .orbit-node--all svg {
+  color: var(--c-teal);
+  width: clamp(20px, 2.5vw, 28px);
+  height: clamp(20px, 2.5vw, 28px);
+}
+.customer-shell .orbit-label {
+  display: block;
+  text-align: center;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--c-cream-text);
+  margin-top: 8px;
+  line-height: 1;
+}
+.customer-shell .orbit-node-wrap {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  will-change: transform;
+  /* --arc-y is set per-frame by CategoryChainSection's rAF loop to place
+   * each node on the dome curve. Fallback 0 keeps layout stable on load. */
+  transform: translateY(var(--arc-y, 0px));
+}
+.customer-shell .orbit-dots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 1.25rem;
+}
+.customer-shell .orbit-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.20);
+  transition: all 250ms ease;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+.customer-shell .orbit-dot--active {
+  background: var(--c-teal);
+  width: 26px;
+}
+
+/* Cream-embedded "Popular Dishes" — sits inside the cream section for a
+ * seamless transition. Card design (v3): image floats TOP-RIGHT with peach
+ * halo (per user feedback), content stacks LEFT-aligned. */
+.customer-shell .cream-section .dish-grid-header {
+  text-align: center;
+  padding: 0.25rem 1rem 1rem;
+}
+.customer-shell .cream-section .dish-grid-header .subtitle {
+  margin-bottom: 0.35rem;
+}
+.customer-shell .cream-section .dish-grid-header h2 {
+  margin-top: 0.35rem;
+}
+
+/* Product card v4 — peach card bg, circular image floats at TOP-RIGHT
+ * corner (BIG), text content stacks LEFT-aligned from top. Card overall
+ * dimensions preserved from v3 (~260px min-height, 26px radius). */
+.customer-shell .dish-card-round {
+  position: relative;
+  background: linear-gradient(180deg, #FFE9D6 0%, #FCDCC1 100%);
+  border-radius: 26px;
+  padding: 1.15rem 1.15rem 1.15rem;
+  min-height: 260px;
+  box-shadow: 0 10px 26px rgba(89, 60, 22, 0.10), 0 2px 6px rgba(89, 60, 22, 0.05);
+  transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 320ms;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  overflow: visible;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  margin-top: 26px;
+}
+.customer-shell .dish-card-round:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 22px 44px rgba(89, 60, 22, 0.18), 0 8px 16px rgba(89, 60, 22, 0.08);
+}
+
+/* Circular image — absolute TOP-RIGHT, BIG (overflows top + right edge)
+ * per user feedback: "product ka image card ke top right corner me big
+ * size me set karo". */
+.customer-shell .dish-card-round-image {
+  position: absolute;
+  top: -26px;
+  right: -14px;
+  left: auto;
+  transform: none;
+  width: clamp(108px, 13vw, 138px);
+  height: clamp(108px, 13vw, 138px);
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: 0 0 0 4px var(--c-teal), 0 0 0 8px rgba(255, 255, 255, 0.95), 0 16px 32px rgba(0, 0, 0, 0.22);
+  z-index: 2;
+  background: #FFFFFF;
+}
+.customer-shell .dish-card-round-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.customer-shell .dish-card-round:hover .dish-card-round-image img {
+  transform: scale(1.10);
+}
+
+/* Body — left-aligned text stack, offset from TOP so it clears the
+ * signature badge; max-width leaves the right column free for the
+ * top-right image. */
+.customer-shell .dish-card-round-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: flex-start;
+  text-align: left;
+  padding-right: calc(clamp(108px, 13vw, 138px) - 8px);
+  padding-top: 46px;
+  max-width: 100%;
+  position: relative;
+  z-index: 1;
+}
+.customer-shell .dish-card-round-name {
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: var(--c-cream-text);
+  line-height: 1.2;
+  letter-spacing: 0.005em;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 0;
+}
+.customer-shell .dish-card-round-veg-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  border: 1.5px solid currentColor;
+  flex-shrink: 0;
+}
+.customer-shell .dish-card-round-veg-dot::after {
+  content: '';
+  display: block;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: currentColor;
+  margin: 1.5px auto;
+}
+.customer-shell .dish-card-round-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--c-teal);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.customer-shell .dish-card-round-rating svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+.customer-shell .dish-card-round-price {
+  font-family: var(--c-font-serif, 'Cormorant Garamond'), serif;
+  font-size: clamp(1.55rem, 2.3vw, 1.85rem);
+  font-weight: 700;
+  color: var(--c-teal-deep);
+  line-height: 1;
+  margin-top: 0.15rem;
+}
+.customer-shell .dish-card-round-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}
+.customer-shell .dish-card-round-buy {
+  padding: 0.55rem 1.25rem;
+  border-radius: 999px;
+  background: var(--c-teal);
+  color: #FFFFFF;
+  font-weight: 800;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border: none;
+  cursor: pointer;
+  transition: background 240ms, transform 240ms, box-shadow 240ms;
+  box-shadow: 0 6px 14px var(--c-teal-glow);
+}
+.customer-shell .dish-card-round-buy:hover {
+  background: var(--c-teal-deep);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px var(--c-teal-glow);
+}
+.customer-shell .dish-card-round-qty {
+  display: inline-flex;
+  align-items: center;
+  background: var(--c-teal);
+  border-radius: 999px;
+  padding: 4px;
+  color: #FFFFFF;
+  box-shadow: 0 6px 14px var(--c-teal-glow);
+}
+.customer-shell .dish-card-round-qty button {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: transparent;
+  color: #FFFFFF;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 180ms;
+}
+.customer-shell .dish-card-round-qty button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+.customer-shell .dish-card-round-qty-value {
+  min-width: 24px;
+  text-align: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+.customer-shell .dish-card-round-heart {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: #F5EFDF;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 200ms, background 200ms, color 200ms;
+  color: rgba(0, 0, 0, 0.45);
+  flex-shrink: 0;
+}
+.customer-shell .dish-card-round-heart:hover {
+  transform: scale(1.1);
+  background: #FFFFFF;
+}
+.customer-shell .dish-card-round-heart--liked {
+  color: #E85D75;
+  background: #FFF0F2;
+}
+.customer-shell .dish-card-round-heart--liked svg {
+  fill: currentColor;
+}
+.customer-shell .dish-card-round-signature {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--c-teal-deep);
+  color: #FFFFFF;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  box-shadow: 0 4px 10px rgba(31, 139, 133, 0.35);
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 3;
+}
+.customer-shell .cream-veg-dot {
+  color: #2E7D32;
+}
+.customer-shell .cream-nonveg-dot {
+  color: #C62828;
+}
+
+/* Matched skeleton for DishCardRound v4 — image top-right on peach card. */
+.customer-shell .dish-card-round-skel {
+  position: relative;
+  background: linear-gradient(180deg, #FFE9D6 0%, #FCDCC1 100%);
+  border-radius: 26px;
+  padding: 1.15rem 1.15rem 1.15rem;
+  min-height: 260px;
+  box-shadow: 0 10px 26px rgba(89, 60, 22, 0.10);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  margin-top: 26px;
+}
+.customer-shell .dish-card-round-skel::before {
+  content: '';
+  position: absolute;
+  top: -26px;
+  right: -14px;
+  width: 120px;
+  height: 120px;
+  border-radius: 999px;
+  background: #F5EFDF;
+  box-shadow: 0 0 0 4px var(--c-teal-soft), 0 0 0 8px rgba(255, 255, 255, 0.9);
+}
+.customer-shell .dish-card-round-skel-line {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.35) 25%, rgba(255, 255, 255, 0.85) 50%, rgba(255, 255, 255, 0.35) 75%);
+  background-size: 200% 100%;
+  animation: crShimmer 1.4s linear infinite;
+  margin-bottom: 10px;
+}
+.customer-shell .dish-card-round-skel-line:first-child { margin-top: 46px; }
+.customer-shell .dish-card-round-skel-line--name { width: 55%; height: 14px; }
+.customer-shell .dish-card-round-skel-line--rating { width: 30%; }
+.customer-shell .dish-card-round-desc {
+  font-size: 0.74rem;
+  color: var(--c-cream-text-soft);
+  line-height: 1.35;
+  margin-top: 0.2rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+.customer-shell .dish-card-round-skel-line--desc { width: 85%; height: 10px; margin-top: 6px; }
+@keyframes crShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ============================================================
+ * Gallery strip — auto-scrolling horizontal photo band linked to
+ * page vertical scroll. Dark section with warm accents, sits
+ * between products and testimonials. Zig-zag flame divider at top
+ * separates it from the cream products section above. */
+.customer-shell .gallery-strip {
+  position: relative;
+  padding: clamp(5rem, 8vw, 7rem) 0 clamp(3rem, 6vw, 5rem);
+  overflow-x: clip;
+  overflow-y: visible;
+  background: linear-gradient(180deg, var(--c-bg) 0%, #0F0E0D 100%);
+}
+.customer-shell .flame-divider {
+  position: absolute;
+  top: clamp(-46px, -4vw, -32px);
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: clamp(68px, 8vw, 100px);
+  overflow: visible;
+  pointer-events: none;
+  z-index: 3;
+}
+.customer-shell .flame-svg {
+  position: absolute;
+  top: 0;
+  left: -5%;
+  width: 110%;
+  height: 100%;
+  display: block;
+  will-change: transform;
+}
+.customer-shell .flame-svg--back path {
+  fill: var(--c-bg);
+  opacity: 0.55;
+}
+.customer-shell .flame-svg--front path {
+  fill: var(--c-bg);
+}
+/* Fade the flame TIPS softly toward transparent so they dissolve into
+ * the cream section above, and fully saturate at the bottom where they
+ * anchor into the dark gallery — proper flame-with-fade look. */
+.customer-shell .flame-svg--back {
+  animation: flameDriftBack 7s ease-in-out infinite alternate;
+  mask-image: linear-gradient(to bottom, transparent 0%, black 45%, black 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 45%, black 100%);
+}
+.customer-shell .flame-svg--front {
+  animation: flameDriftFront 5s ease-in-out infinite alternate;
+  mask-image: linear-gradient(to bottom, transparent 5%, black 55%, black 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 5%, black 55%, black 100%);
+}
+@keyframes flameDriftBack {
+  0%   { transform: translateX(-2%) scaleY(1); }
+  50%  { transform: translateX(2%) scaleY(1.03); }
+  100% { transform: translateX(-1%) scaleY(0.98); }
+}
+@keyframes flameDriftFront {
+  0%   { transform: translateX(1%) scaleY(1); }
+  50%  { transform: translateX(-2%) scaleY(1.05); }
+  100% { transform: translateX(2%) scaleY(0.97); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .customer-shell .flame-svg--back,
+  .customer-shell .flame-svg--front { animation: none; }
+}
+.customer-shell .gallery-strip-header {
+  text-align: center;
+  padding: 0 1rem clamp(2rem, 4vw, 3rem);
+  max-width: 44rem;
+  margin: 0 auto;
+}
+.customer-shell .gallery-strip-header .subtitle {
+  color: var(--c-teal);
+}
+.customer-shell .gallery-strip-header .c-divider {
+  background: linear-gradient(90deg, transparent, var(--c-teal), transparent);
+}
+.customer-shell .gallery-strip-header .display span {
+  color: var(--c-teal);
+  font-style: italic;
+}
+.customer-shell .gallery-viewport {
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+}
+.customer-shell .gallery-track {
+  display: inline-flex;
+  align-items: center;
+  gap: clamp(1rem, 2vw, 1.5rem);
+  padding: 0 4vw;
+  will-change: transform;
+  white-space: nowrap;
+}
+.customer-shell .gallery-card {
+  flex-shrink: 0;
+  width: clamp(200px, 22vw, 320px);
+  height: clamp(240px, 26vw, 380px);
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+  transition: transform 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.customer-shell .gallery-card:nth-child(odd) {
+  transform: translateY(-16px) rotate(-1deg);
+}
+.customer-shell .gallery-card:nth-child(even) {
+  transform: translateY(12px) rotate(1.5deg);
+}
+.customer-shell .gallery-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 900ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.customer-shell .gallery-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 50%, rgba(0, 0, 0, 0.55) 100%);
+}
+.customer-shell .gallery-caption {
+  position: absolute;
+  bottom: 12px;
+  left: 14px;
+  right: 14px;
+  color: #FFFFFF;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
+  z-index: 2;
+}
+.customer-shell .gallery-cta {
+  text-align: center;
+  margin-top: clamp(2rem, 3vw, 2.5rem);
+}
+
+@media (max-width: 640px) {
+  .customer-shell .gallery-card:nth-child(odd),
+  .customer-shell .gallery-card:nth-child(even) {
+    transform: translateY(0) rotate(0);
+  }
+}
+
+/* Compact testimonial cards — user feedback: "Loved by Our Guests" was too big.
+ * 3-across on desktop, tight text, subtle glass card. */
+.customer-shell .testimonial-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  max-width: 72rem;
+  margin: 0 auto;
+}
+@media (min-width: 768px) {
+  .customer-shell .testimonial-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+  }
+}
+.customer-shell .testimonial-compact {
+  background: var(--c-bg-elev);
+  border: 1px solid var(--c-border);
+  border-radius: 18px;
+  padding: 1.5rem 1.25rem;
+  text-align: left;
+  position: relative;
+  transition: transform 260ms, border-color 260ms, box-shadow 260ms;
+}
+.customer-shell .testimonial-compact:hover {
+  transform: translateY(-4px);
+  border-color: var(--c-teal);
+  box-shadow: 0 10px 24px rgba(47, 184, 176, 0.18);
+}
+.customer-shell .testimonial-compact .t-quote-mark {
+  position: absolute;
+  top: 8px;
+  right: 14px;
+  font-family: var(--c-font-serif, 'Cormorant Garamond'), serif;
+  font-size: 3.5rem;
+  line-height: 1;
+  color: var(--c-teal);
+  opacity: 0.35;
+}
+.customer-shell .testimonial-compact .t-stars {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 0.75rem;
+  color: var(--c-teal);
+}
+.customer-shell .testimonial-compact .t-quote {
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--c-text-soft);
+  margin-bottom: 1rem;
+}
+.customer-shell .testimonial-compact .t-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--c-teal);
+}
+.customer-shell .testimonial-compact .t-role {
+  font-size: 0.72rem;
+  color: var(--c-text-muted);
+  margin-top: 2px;
+}
+
+@media (max-width: 640px) {
+  .customer-shell .orbit-strip {
+    top: -90px;
+    padding: 0 3vw 120px; /* Keep horizontal padding and add bottom padding to avoid clipping on mobile */
+  }
+  .customer-shell .cream-section {
+    padding-top: 60px;
+  }
+  .customer-shell .cream-dome {
+    height: 88px;
+  }
+
+  /* Mobile responsive overrides for product cards */
+  .customer-shell .dish-card-round,
+  .customer-shell .dish-card-round-skel {
+    padding-top: 1rem;
+    margin-top: 36px;
+    min-height: 275px; /* compact height to eliminate excessive whitespace on mobile */
+  }
+  .customer-shell .dish-card-round-image {
+    top: -30px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: 96px;
+    height: 96px;
+    box-shadow: 0 0 0 3px var(--c-teal), 0 0 0 6px rgba(255, 255, 255, 0.95), 0 12px 24px rgba(0, 0, 0, 0.18);
+  }
+  .customer-shell .dish-card-round-skel::before {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    top: -30px;
+    width: 96px;
+    height: 96px;
+    box-shadow: 0 0 0 3px var(--c-teal-soft), 0 0 0 6px rgba(255, 255, 255, 0.95);
+  }
+  .customer-shell .dish-card-round-body,
+  .customer-shell .dish-card-round-skel .dish-card-round-body {
+    padding-right: 0;
+    padding-top: 64px; /* Space to clear the centered image */
+    align-items: center;
+    text-align: center;
+    width: 100%;
+  }
+  .customer-shell .dish-card-round-name {
+    justify-content: center;
+    text-align: center;
+    font-size: 0.92rem;
+  }
+  .customer-shell .dish-card-round-desc {
+    text-align: center;
+    font-size: 0.7rem;
+    line-height: 1.25;
+  }
+  .customer-shell .dish-card-round-signature {
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    box-shadow: 0 4px 8px rgba(31, 139, 133, 0.25);
+  }
+  .customer-shell .dish-card-round-actions {
+    justify-content: center;
+    width: 100%;
+    gap: 0.35rem;
+  }
+  .customer-shell .dish-card-round-buy {
+    flex: 1;
+    text-align: center;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.68rem;
+  }
+  .customer-shell .dish-card-round-skel-line {
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* Custom layout for selector buttons (Date/Time) to prevent label collision */
+.customer-shell .c-input-selector {
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: flex-start !important;
+  width: 100%;
+  height: 48px !important;
+  padding: 0 1rem 6px 3.5rem !important; /* 3.5rem = pl-14 left padding, 6px bottom padding */
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #FFFFFF !important;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: border-color 240ms, box-shadow 240ms;
+  text-align: left;
+}
+.customer-shell .c-input-selector:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #FFFFFF !important;
+}
+.customer-shell .c-input-selector:focus,
+.customer-shell .c-input-selector:focus-visible {
+  border-color: var(--c-primary) !important;
+  box-shadow: 0 0 0 3px var(--c-primary-light) !important;
+  outline: none !important;
+}
+
+/* Disable spinner arrows for input type number inside customer-shell */
+.customer-shell input[type=number]::-webkit-inner-spin-button,
+.customer-shell input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.customer-shell input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* Customer Filter Bar general styling */
+.customer-shell .customer-filter-bar {
+  background: color-mix(in srgb, var(--c-bg) 88%, transparent);
+  border-bottom: 1px solid var(--c-border);
+  transition: background 300ms, border-color 300ms;
+}
+.customer-shell .diet-toggle-group {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.customer-shell .diet-option-btn {
+  color: var(--c-text-soft);
+}
+.customer-shell .diet-option-btn:hover {
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.05);
+}
+.customer-shell .diet-option-btn--active {
+  background: var(--c-primary) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 10px var(--c-primary-light);
+}
+.customer-shell .diet-option-btn--active svg {
+  color: #FFFFFF !important;
+}
+.customer-shell .reset-btn {
+  color: var(--c-text-muted);
+}
+.customer-shell .reset-btn:hover {
+  color: var(--c-primary);
+}
+.customer-shell .filter-results-count {
+  color: var(--c-text-muted);
+  letter-spacing: 0.04em;
+}
+
+/* Cream-themed Filter Bar styling inside cream-section */
+.customer-shell .cream-section .customer-filter-bar {
+  background: color-mix(in srgb, #FFE9D6 90%, transparent);
+  border-bottom: 1px solid rgba(89, 60, 22, 0.08);
+}
+.customer-shell .cream-section .diet-toggle-group {
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+.customer-shell .cream-section .diet-option-btn {
+  color: rgba(89, 60, 22, 0.7);
+}
+.customer-shell .cream-section .diet-option-btn:hover {
+  color: var(--c-cream-text);
+  background: rgba(0, 0, 0, 0.03);
+}
+.customer-shell .cream-section .diet-option-btn--active {
+  background: var(--c-primary) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 12px var(--c-primary-light);
+}
+.customer-shell .cream-section .diet-option-btn--active svg {
+  color: #FFFFFF !important;
+}
+.customer-shell .cream-section .reset-btn {
+  color: rgba(89, 60, 22, 0.7);
+}
+.customer-shell .cream-section .reset-btn:hover {
+  color: var(--c-primary);
+}
+.customer-shell .cream-section .filter-results-count {
+  color: rgba(89, 60, 22, 0.7);
+}
+
+/* Cream-themed input field override */
+.customer-shell .cream-section .c-input {
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: var(--c-cream-text);
+}
+.customer-shell .cream-section .c-input::placeholder {
+  color: rgba(89, 60, 22, 0.45);
+}
+.customer-shell .cream-section .c-input:focus {
+  border-color: var(--c-primary);
+  background: #FFFFFF;
+  box-shadow: 0 0 0 3px var(--c-primary-light);
+}
+
+/* Compact dark header dashboard for Menu Page */
+.customer-shell .menu-sticky-filterbar .customer-filter-bar {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.customer-shell .menu-sticky-filterbar .diet-toggle-group {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+.customer-shell .menu-sticky-filterbar .diet-option-btn {
+  color: var(--c-text-soft) !important;
+}
+.customer-shell .menu-sticky-filterbar .diet-option-btn:hover {
+  color: #FFFFFF !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+.customer-shell .menu-sticky-filterbar .diet-option-btn--active {
+  background: var(--c-primary) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 10px var(--c-primary-light) !important;
+}
+.customer-shell .menu-sticky-filterbar .diet-option-btn--active svg {
+  color: #FFFFFF !important;
+}
+.customer-shell .menu-sticky-filterbar .c-input {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: #FFFFFF !important;
+}
+.customer-shell .menu-sticky-filterbar .c-input::placeholder {
+  color: var(--c-text-muted) !important;
+}
+.customer-shell .menu-sticky-filterbar .c-input:focus {
+  border-color: var(--c-primary) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 0 0 3px var(--c-primary-light) !important;
+}
+.customer-shell .menu-sticky-filterbar .reset-btn {
+  color: var(--c-text-muted) !important;
+}
+.customer-shell .menu-sticky-filterbar .reset-btn:hover {
+  color: var(--c-primary) !important;
+}
+.customer-shell .menu-sticky-filterbar .filter-results-count {
+  color: var(--c-text-muted) !important;
+}
+
+/* ============================================================================
+ * MENU PAGE v9 (2026-07-06) — mirror of HomePage's dome+scrolling with
+ * curve flipped vertically (valley/bowl instead of dome).
+ * ============================================================================ */
+
+/* Section 1 — non-sticky heading. Dark background. Scrolls away with page. */
+.customer-shell .menu-page-heading {
+  background: var(--c-bg);
+  padding: clamp(36px, 4vw, 56px) 0 clamp(16px, 2vw, 24px);
+  position: relative;
+  z-index: 1;
+}
+
+/* Section 2 — STICKY cluster wrapping filter + valley + orbit. Whole block
+ * stays anchored to viewport top once heading above scrolls off.
+ *
+ * KEY: solid cream background covers the entire cluster (below the dark
+ * filter bar). Products scrolling UP under this cluster disappear cleanly
+ * instead of bleeding through the transparent parts of the valley SVG or
+ * the area under the orbit circles. padding-bottom reserves space so
+ * orbit circles + labels stay INSIDE the cluster's opaque box. */
+.customer-shell .menu-sticky-cluster {
+  position: sticky;
+  top: 72px; /* Sticks right below the website header (72px) */
+  z-index: 30;
+  isolation: isolate;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Shutter container — IN-FLOW grid track that animates from 1fr → 0fr on
+ * collapse. Cluster's own offsetHeight stays truthful (filter + shutter) so
+ * the JS touch-detection threshold in MenuPage/index.tsx works. Products
+ * below the cluster in flow slide up smoothly as the shutter shrinks. */
+.customer-shell .menu-shutter-container {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition:
+    grid-template-rows 0.42s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.35s ease;
+  background: var(--c-cream);
+  box-shadow: 0 10px 14px -6px rgba(0, 0, 0, 0.12);
+  position: relative;
+}
+
+@media (min-width: 1024px) {
+  /* Collapse fires from JS-driven .shutter-collapsed. Hover on the trigger
+   * re-adds .shutter-hovered which cancels the collapse (grid back to 1fr). */
+  .customer-shell .menu-sticky-cluster.shutter-collapsed:not(.shutter-hovered) .menu-shutter-container {
+    grid-template-rows: 0fr;
+    box-shadow: 0 6px 8px -6px rgba(0, 0, 0, 0.18);
+  }
+}
+
+/* Shutter content holding valley band + bottom curve. */
+.customer-shell .menu-shutter-content {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Dark filter bar (top half of the cluster). Tight vertical padding to hug
+ * the filter form closely — no wasted space between filter and curve. */
+.customer-shell .menu-sticky-filterbar {
+  background: #080706; /* match main theme background solid black */
+  padding: 8px 0 0;
+  position: relative;
+  z-index: 20; /* Raised z-index to cover categories as they slide up */
+}
+.customer-shell .menu-sticky-filterbar .customer-filter-bar {
+  border-bottom: none !important;
+}
+
+/* Valley band — hosts the SVG valley + the category orbit. Sleeker, reduced height. */
+.customer-shell .menu-valley-band {
+  position: relative;
+  width: 100%;
+  height: clamp(70px, 6.5vw, 85px);
+  overflow: visible;
+  z-index: 10;
+}
+
+/* SVG valley — cubic bezier dips DOWN in middle, rises UP at sides. Fill =
+ * dark theme color (#080706). Renders the "eyebrow" of dark that sits above
+ * the curve; transparent portion below reveals cluster's cream bg. */
+.customer-shell .menu-valley-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  z-index: 10;
+}
+.customer-shell .menu-valley-svg path {
+  fill: #080706; /* solid black matching header dashboard background */
+}
+
+/* Category orbit inside the valley band. Positioned so its baseline sits
+ * near the DEEPEST point of the valley. Arc math handles offsets.
+ * padding-bottom prevents mask-image from clipping translated nodes. */
+.customer-shell .menu-valley-band .orbit-strip[data-variant="valley"] {
+  position: absolute;
+  top: 0 !important;
+  bottom: auto;
+  left: 0;
+  right: 0;
+  padding: 0 4vw 90px !important;
+  z-index: 25; /* Above SVG (z:10) AND filter bar to guarantee no cutting */
+  overflow-x: clip;
+  overflow-y: visible;
+  mask-image: linear-gradient(to right, black 0%, black 92%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, black 0%, black 92%, transparent 100%);
+}
+.customer-shell .menu-valley-band .orbit-dots {
+  display: none !important; /* Hide dots to avoid overlapping curve and text */
+}
+
+/* Section 3 — products body. Cream background continuous with sticky cluster.
+ * Shutter is now in-flow so no padding-top compensation is needed — just a
+ * tight visual gap between the bottom cream curve and the first card row. */
+.customer-shell .menu-products-section {
+  background: var(--c-cream);
+  color: var(--c-cream-text);
+  position: relative;
+  z-index: 2;
+  padding-top: clamp(12px, 1.2vw, 20px);
+  padding-bottom: 250px !important;
+  min-height: clamp(550px, 60vh, 700px);
+}
+
+/* Bottom curve SVG — now in-flow at the bottom of .menu-shutter-content so
+ * the whole curved banner (top valley + orbit + bottom curve) collapses as a
+ * single unit. Sleeker, reduced height. */
+.customer-shell .menu-sticky-bottom-svg {
+  display: block;
+  width: 100%;
+  height: clamp(70px, 6.5vw, 85px);
+  pointer-events: none;
+  margin-top: -1px; /* Kills any hairline gap between orbit band and bottom curve */
+}
+.customer-shell .menu-sticky-bottom-svg path {
+  fill: var(--c-cream);
+}
+
+/* Downward pill trigger button (desktop only) */
+.customer-shell .menu-shutter-trigger-wrap {
+  position: absolute;
+  top: 100%; /* Position relative to the bottom of the collapsed sticky cluster (bottom of filterbar) */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 35;
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+/* Invisible 12px band ABOVE the button — catches mouse travel from the
+ * cluster into the pill so the hover state doesn't blip off when the cursor
+ * transits the gap between filter-bottom and pill-top. */
+.customer-shell .menu-shutter-trigger-wrap::before {
+  content: "";
+  position: absolute;
+  left: -8px;
+  right: -8px;
+  top: -12px;
+  height: 12px;
+}
+.customer-shell .menu-shutter-trigger-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--c-accent);
+  color: var(--c-button-primary-fg);
+  padding: 6px 20px;
+  border-radius: 0 0 16px 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-top: none;
+  font-family: inherit;
+  transition: background-color 0.25s, color 0.25s, transform 0.25s;
+}
+.customer-shell .menu-shutter-trigger-btn:hover {
+  background-color: var(--c-primary);
+  color: white;
+  transform: translateY(2px);
+}
+
+@media (max-width: 640px) {
+  .customer-shell .menu-valley-band {
+    height: 65px;
+  }
+  .customer-shell .menu-valley-band .orbit-strip[data-variant="valley"] {
+    top: 0 !important;
+    padding: 0 3vw 70px !important;
+  }
+  .customer-shell .menu-sticky-bottom-svg {
+    height: 65px;
+  }
+  .customer-shell .menu-products-section {
+    padding-top: calc(2 * 65px + 16px + 12px);
+    padding-bottom: 180px !important;
+    min-height: clamp(400px, 50vh, 500px);
+  }
+}
+
+/* Premium End of Menu Card */
+.customer-shell .menu-end-card {
+  max-width: 550px;
+  margin: 40px auto 0;
+  padding: 40px 32px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.45); /* semi-transparent cream card */
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(201, 169, 110, 0.25); /* soft gold border */
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.customer-shell .menu-end-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 30px 50px -20px rgba(201, 169, 110, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.customer-shell .menu-end-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, var(--c-accent), transparent);
+}
+
+.customer-shell .menu-end-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 999px;
+  background: rgba(201, 169, 110, 0.12);
+  color: var(--c-accent);
+  margin-bottom: 20px;
+}
+
+.customer-shell .menu-end-title {
+  font-family: var(--font-display, inherit);
+  font-size: clamp(20px, 2vw, 24px);
+  font-weight: 700;
+  color: var(--c-cream-text);
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+
+.customer-shell .menu-end-text {
+  font-size: 13px;
+  color: var(--c-cream-text-soft);
+  max-width: 400px;
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+
+.customer-shell .menu-end-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin: 16px 0 24px;
+}
+.customer-shell .menu-end-divider-line {
+  flex: 1;
+  height: 1px;
+  background: rgba(201, 169, 110, 0.2);
+}
+.customer-shell .menu-end-divider-star {
+  color: var(--c-accent);
+  font-size: 12px;
+}
+
+.customer-shell .menu-end-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  width: 100%;
+}
+
+.customer-shell .menu-end-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--c-accent);
+  color: var(--c-button-primary-fg, white);
+  padding: 10px 24px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background-color 0.25s, transform 0.25s, box-shadow 0.25s;
+  box-shadow: 0 4px 12px rgba(201, 169, 110, 0.2);
+  cursor: pointer;
+  border: none;
+}
+.customer-shell .menu-end-btn-primary:hover {
+  background: var(--c-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(201, 169, 110, 0.35);
+}
+.customer-shell .menu-end-btn-primary svg {
+  transition: transform 0.2s ease;
+}
+.customer-shell .menu-end-btn-primary:hover svg {
+  transform: translateX(4px);
+}
+
+.customer-shell .menu-end-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--c-cream-text);
+  border: 1px solid rgba(201, 169, 110, 0.4);
+  padding: 10px 24px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: border-color 0.25s, background-color 0.25s, transform 0.25s;
+  cursor: pointer;
+}
+.customer-shell .menu-end-btn-secondary:hover {
+  border-color: var(--c-accent);
+  background: rgba(201, 169, 110, 0.05);
+  transform: translateY(-2px);
+}
+
+.customer-shell .menu-end-backtop {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 24px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--c-accent);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: color 0.2s, transform 0.2s;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+}
+.customer-shell .menu-end-backtop:hover {
+  color: var(--c-primary);
+  transform: translateY(-2px);
 }

@@ -3,14 +3,10 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { fetchCustomerBranding } from '@/api/services/customer'
 
 /**
- * UI-F-51 / UI-F-53: Restaurant brand provider.
+ * Dynamic Restaurant brand provider.
  *
- * One-time fetch of `/api/customer/branding` on mount (cached for the
- * session). Falls back to defaults if backend returns 500 / unauthorized.
- *
- * Exposes: restaurantName, tagline, logoUrl, primaryHex + a setBrand
- * imperative setter so the platform restaurant-settings UI can preview
- * changes without a full reload.
+ * One-time fetch of `/api/customer/branding` on mount.
+ * Sets CSS custom properties dynamically on the root element.
  */
 
 interface BrandContextValue {
@@ -18,6 +14,9 @@ interface BrandContextValue {
   tagline: string
   logoUrl: string | null
   primaryHex: string
+  radius: string
+  fontSans: string
+  fontSerif: string
   loading: boolean
   setBrand: (patch: Partial<Omit<BrandContextValue, 'loading' | 'setBrand'>>) => void
 }
@@ -28,10 +27,13 @@ const DEFAULTS = {
   restaurantName: 'Spice Garden',
   tagline: 'STEAKHOUSE',
   logoUrl: null as string | null,
-  primaryHex: '#F97316',
+  primaryHex: '#C9A96E', // Gold default
+  radius: '16px',
+  fontSans: 'Outfit',
+  fontSerif: 'Cormorant Garamond',
 }
 
-const STORAGE_KEY = 'rms_brand_v1'
+const STORAGE_KEY = 'rms_brand_v2'
 
 function readCached(): typeof DEFAULTS {
   if (typeof window === 'undefined') return DEFAULTS
@@ -52,14 +54,49 @@ function writeCached(value: typeof DEFAULTS): void {
   }
 }
 
-function applyBrandToRoot(hex: string): void {
+function applyThemeToRoot(state: typeof DEFAULTS): void {
+  const hex = state.primaryHex
   const color = colord(hex)
   if (!color.isValid()) return
   const { h, s, l } = color.toHsl()
+  const rgb = color.toRgb()
+
+  // Standard primary variables (for Shadcn framework integration)
   document.documentElement.style.setProperty('--primary', `${h} ${s}% ${l}%`)
   document.documentElement.style.setProperty('--ring', `${h} ${s}% ${l}%`)
   const fg = color.isDark() ? '0 0% 100%' : '222 47% 11%'
   document.documentElement.style.setProperty('--primary-foreground', fg)
+
+  // Customer Redesign theme tokens mapping
+  document.documentElement.style.setProperty('--c-primary', hex)
+  document.documentElement.style.setProperty('--c-primary-hover', color.darken(0.08).toHex())
+  document.documentElement.style.setProperty('--c-primary-light', color.alpha(0.12).toRgbString())
+  document.documentElement.style.setProperty('--c-primary-rgb', `${rgb.r}, ${rgb.g}, ${rgb.b}`)
+
+  // Radius token
+  document.documentElement.style.setProperty('--c-radius', state.radius)
+
+  // Typography tokens
+  document.documentElement.style.setProperty('--c-font-sans', state.fontSans)
+  document.documentElement.style.setProperty('--c-font-serif', state.fontSerif)
+
+  // Dynamic shadows
+  document.documentElement.style.setProperty('--c-shadow-primary', `0 10px 30px -10px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.25)`)
+  document.documentElement.style.setProperty('--c-shadow-primary-sm', `0 4px 12px -2px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.15)`)
+}
+
+interface ExtendedBranding {
+  restaurantName?: string
+  name?: string
+  tagline?: string
+  subtitle?: string
+  logoUrl?: string
+  logo?: string
+  primaryColor?: string
+  primaryHex?: string
+  radius?: string
+  fontSans?: string
+  fontSerif?: string
 }
 
 export function BrandProvider({ children }: { children: ReactNode }) {
@@ -67,14 +104,14 @@ export function BrandProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    applyBrandToRoot(state.primaryHex)
-  }, [state.primaryHex])
+    applyThemeToRoot(state)
+  }, [state])
 
   // One-time fetch — never blocks render (UI already cached).
   useEffect(() => {
     let cancelled = false
     void (async () => {
-      const payload = await fetchCustomerBranding()
+      const payload = await fetchCustomerBranding() as ExtendedBranding | null
       if (cancelled || !payload) {
         setLoading(false)
         return
@@ -84,6 +121,9 @@ export function BrandProvider({ children }: { children: ReactNode }) {
         tagline: payload.tagline ?? payload.subtitle ?? state.tagline,
         logoUrl: payload.logoUrl ?? payload.logo ?? state.logoUrl,
         primaryHex: payload.primaryColor ?? payload.primaryHex ?? state.primaryHex,
+        radius: payload.radius ?? state.radius,
+        fontSans: payload.fontSans ?? state.fontSans,
+        fontSerif: payload.fontSerif ?? state.fontSerif,
       }
       setState(next)
       writeCached(next)
@@ -110,6 +150,7 @@ export function BrandProvider({ children }: { children: ReactNode }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useBrand(): BrandContextValue {
   const ctx = useContext(BrandContext)
   if (!ctx) throw new Error('useBrand must be used within <BrandProvider>')

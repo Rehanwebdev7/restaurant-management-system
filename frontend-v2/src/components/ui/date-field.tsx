@@ -36,7 +36,7 @@ export function DateField({ value, onChange, placeholder = 'Pick a date', classN
           {value ? format(value, 'PPP') : placeholder}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent className="w-auto p-0 border-0 bg-transparent shadow-none z-50" align="start">
         <Calendar mode="single" selected={value} onSelect={onChange} autoFocus />
       </PopoverContent>
     </Popover>
@@ -81,7 +81,7 @@ export function DateRangeField({
           {label}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent className="w-auto p-0 border-0 bg-transparent shadow-none z-50" align="start">
         <Calendar
           mode="range"
           defaultMonth={value?.from}

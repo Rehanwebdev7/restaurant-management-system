@@ -79,8 +79,10 @@ export default function CustomerLogin() {
         }
         // Init FCM after customer session is in place (no-op if Firebase env missing).
         void import('@/lib/fcm').then((m) => m.initFcm())
+        const searchParams = new URLSearchParams(window.location.search)
+        const redirectPath = searchParams.get('redirect') ?? '/'
         toast.success('Welcome back!')
-        navigate('/')
+        navigate(redirectPath)
         return
       }
       if (/no static resource|not found|404/i.test(result.message)) {
@@ -92,7 +94,9 @@ export default function CustomerLogin() {
           localStorage.setItem('UserName', `Guest ${mobile.slice(-4)}`)
           localStorage.setItem('UserMobile', mobile)
           toast.success('Signed in (demo mode)')
-          navigate('/')
+          const searchParams = new URLSearchParams(window.location.search)
+          const redirectPath = searchParams.get('redirect') ?? '/'
+          navigate(redirectPath)
           return
         }
         toast.error('Backend unreachable — check your connection and try again')

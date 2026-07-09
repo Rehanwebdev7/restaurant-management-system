@@ -10,8 +10,8 @@ const Login = lazy(() => import('@/features/auth/Login'))
 const Signup = lazy(() => import('@/features/auth/Signup'))
 const ForgotPassword = lazy(() => import('@/features/auth/ForgotPassword'))
 const CustomerLogin = lazy(() => import('@/features/customer/CustomerLogin'))
-const CustomerAddresses = lazy(() => import('@/features/customer/Addresses'))
-const CustomerOrderTracking = lazy(() => import('@/features/customer/OrderTracking'))
+const CustomerAddresses = lazy(() => import('@/features/customer/pages').then((m) => ({ default: m.ProfilePage })))
+const CustomerOrderTracking = lazy(() => import('@/features/customer/pages').then((m) => ({ default: m.OrderTrackingPage })))
 const CustomerPaymentResponse = lazy(() => import('@/features/customer/PaymentResponse'))
 const CustomerLocations = lazy(() => import('@/features/customer/LocationsPage'))
 
@@ -279,18 +279,6 @@ export function AppRouter() {
 }
 
 /* ---- Lazy module bundles ---- */
-const BranchPagesMod = lazy(async () => {
-  const m = await import('@/features/branch/pages')
-  return {
-    default: () => null,
-    Orders: m.BranchOrders,
-    Menu: m.BranchMenu,
-    Users: m.BranchUsers,
-    Outstanding: m.BranchOutstanding,
-    Settings: m.BranchSettings,
-    WalletTopup: m.BranchWalletTopup,
-  } as any
-})
 
 // We can't use lazy this way for named exports; use direct lazy per export instead.
 const BranchOrders = lazy(() => import('@/features/branch/pages').then((m) => ({ default: m.BranchOrders })))
@@ -488,5 +476,3 @@ const CustomerTerms = lazy(() => import('@/features/customer/pages').then((m) =>
 const CustomerPrivacy = lazy(() => import('@/features/customer/pages').then((m) => ({ default: m.PrivacyPage })))
 const CustomerRefund = lazy(() => import('@/features/customer/pages').then((m) => ({ default: m.RefundPage })))
 
-// Mark unused exports so eslint doesn't trip on the placeholder bundle
-void BranchPagesMod

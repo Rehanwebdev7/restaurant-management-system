@@ -12,10 +12,11 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion, type Transition } from 'framer-motion'
 import { ShoppingBag, X, Plus, Minus, ChevronRight, Trash2 } from 'lucide-react'
-import { DISHES, useCart, type Dish } from '@/features/customer/catalog'
+import { DISHES, useCart, useCustomerCatalog, type Dish } from '@/features/customer/catalog'
 import { useHaptic } from '@/hooks/use-haptic'
 import { toast } from '@/lib/toast'
 import { useBodyScrollLock } from '@/lib/useBodyScrollLock'
+import { tokens } from '@/lib/auth/tokens'
 
 /**
  * Spring physics tuned for a tactile drawer feel: settles in ~280 ms with a
@@ -32,6 +33,7 @@ interface Props {
 export default function CartDrawer({ open, onClose }: Props) {
   const navigate = useNavigate()
   const { items, setQty } = useCart()
+  const catalog = useCustomerCatalog()
   const reduceMotion = useReducedMotion()
   const slideTransition = reduceMotion ? reducedTransition : drawerSpring
 
@@ -49,7 +51,7 @@ export default function CartDrawer({ open, onClose }: Props) {
 
   const lines = items
     .map((l) => {
-      const d = DISHES.find((x) => x.id === l.id)
+      const d = catalog.dishes.find((x) => x.id === l.id) ?? DISHES.find((x) => x.id === l.id)
       if (!d) return null
       return { ...d, qty: l.qty, subtotal: d.price * l.qty }
     })
@@ -97,7 +99,12 @@ export default function CartDrawer({ open, onClose }: Props) {
               onClose={onClose}
               onCheckout={() => {
                 onClose()
-                navigate('/checkout')
+                if (tokens.getCustomer()) {
+                  navigate('/checkout')
+                } else {
+                  ;(window as any).shouldRedirectToCheckoutAfterLogin = true
+                  window.dispatchEvent(new CustomEvent('trigger-customer-login'))
+                }
               }}
               onViewFull={() => {
                 onClose()
@@ -130,7 +137,12 @@ export default function CartDrawer({ open, onClose }: Props) {
               onClose={onClose}
               onCheckout={() => {
                 onClose()
-                navigate('/checkout')
+                if (tokens.getCustomer()) {
+                  navigate('/checkout')
+                } else {
+                  ;(window as any).shouldRedirectToCheckoutAfterLogin = true
+                  window.dispatchEvent(new CustomEvent('trigger-customer-login'))
+                }
               }}
               onViewFull={() => {
                 onClose()

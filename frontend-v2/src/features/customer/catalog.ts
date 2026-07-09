@@ -107,17 +107,38 @@ function categorySlug(name: string | null | undefined): string {
   return 'mains'
 }
 
+const DETAILED_DESCRIPTIONS: { key: string; text: string }[] = [
+  { key: 'butter chicken', text: 'Tender tandoor-roasted chicken slow-simmered in a rich, buttery tomato-cream gravy with fragrant fenugreek.' },
+  { key: 'paneer butter', text: 'Fresh cottage cheese cubes folded in a silky, spice-infused tomato butter curry with ground cashew paste.' },
+  { key: 'paneer tikka', text: 'Skewered cottage cheese blocks marinated in mustard oil, yogurt, and hand-ground spices, char-grilled in a clay tandoor.' },
+  { key: 'tandoori chicken', text: 'Classic whole spring chicken double-marinated in Kashmiri chillies and yogurt, charred over active hardwood coals.' },
+  { key: 'biryani', text: 'Fragrant long-grain basmati rice layered with garden herbs, saffron strands, and slow-cooked meat or vegetables.' },
+  { key: 'naan', text: 'Traditional hand-stretched leavened flatbread baked fresh against the clay walls of our tandoor oven.' },
+  { key: 'roti', text: 'Whole wheat flatbread baked fresh in our traditional tandoor oven.' },
+  { key: 'lassi', text: 'Creamy whipped yogurt drink sweetened with fresh mango pulp, cardamom dust, and saffron strands.' },
+  { key: 'jamun', text: 'Decadent warm milk dumplings fried golden and immersed in a cardamom-infused sweet sugar syrup.' }
+]
+
+function getGourmetDescription(name: string, backendDesc?: string | null): string {
+  if (backendDesc && backendDesc.trim().length > 0 && backendDesc !== 'Hand-crafted by our chefs.') {
+    return backendDesc
+  }
+  const cleanName = name.toLowerCase()
+  const match = DETAILED_DESCRIPTIONS.find((d) => cleanName.includes(d.key))
+  return match ? match.text : 'A chef-special recipe crafted with fresh ingredients, signature spices, and authentic slow-cooking techniques.'
+}
+
 export function backendItemToDish(item: CustomerMenuItem): Dish {
   return {
     id: item.id,
     name: item.name,
     price: item.price,
     category: categorySlug(item.categoryName),
-    rating: item.rating,
-    description: item.description || 'Hand-crafted by our chefs.',
+    rating: item.rating || 4.5,
+    description: getGourmetDescription(item.name, item.description),
     veg: item.isVeg,
     img: item.imageUrl ?? CATEGORY_FALLBACK_IMG,
-    signature: item.signature,
+    signature: item.signature || item.rating >= 4.7,
   }
 }
 
@@ -207,34 +228,16 @@ export const GALLERY = [
 
 /* ---------------- cart store (localStorage) ---------------- */
 
-const CART_KEY = 'customer_cart_v2'
-
-export interface CartLine { id: number; qty: number }
+import { useCartStore, type CartLine } from './store/useCartStore'
+export type { CartLine }
 
 export function readCart(): CartLine[] {
-  if (typeof window === 'undefined') return []
-  try {
-    const raw = localStorage.getItem(CART_KEY)
-    if (!raw) return []
-    const parsed: unknown = JSON.parse(raw)
-    if (!Array.isArray(parsed)) return []
-    return parsed.filter(
-      (x): x is CartLine =>
-        typeof x === 'object' && x !== null &&
-        typeof (x as { id?: unknown }).id === 'number' &&
-        typeof (x as { qty?: unknown }).qty === 'number',
-    )
-  } catch {
-    return []
-  }
+  return useCartStore.getState().items
 }
 
 export function writeCart(c: CartLine[]): void {
-  localStorage.setItem(CART_KEY, JSON.stringify(c))
-  cartListeners.forEach((fn) => fn(c))
+  useCartStore.setState({ items: c })
 }
-
-const cartListeners = new Set<(items: CartLine[]) => void>()
 
 export interface UseCart {
   items: CartLine[]
@@ -243,41 +246,9 @@ export interface UseCart {
 }
 
 export function useCart(): UseCart {
-  const [items, setItems] = useState<CartLine[]>(readCart)
-
-  useEffect(() => {
-    const listener = (next: CartLine[]) => setItems(next)
-    cartListeners.add(listener)
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === CART_KEY) setItems(readCart())
-    }
-    window.addEventListener('storage', onStorage)
-    return () => {
-      cartListeners.delete(listener)
-      window.removeEventListener('storage', onStorage)
-    }
-  }, [])
-
-  const setQty = (id: number, delta: number): void => {
-    setItems((prev) => {
-      const idx = prev.findIndex((l) => l.id === id)
-      let next: CartLine[]
-      if (idx === -1) {
-        if (delta <= 0) return prev
-        next = [...prev, { id, qty: delta }]
-      } else {
-        const cur = prev[idx]?.qty ?? 0
-        const updated = cur + delta
-        next = [...prev]
-        if (updated <= 0) next.splice(idx, 1)
-        else next[idx] = { id, qty: updated }
-      }
-      writeCart(next)
-      return next
-    })
-  }
-
-  const add = (id: number, qty: number = 1): void => setQty(id, qty)
+  const items = useCartStore((state) => state.items)
+  const setQty = useCartStore((state) => state.setQty)
+  const add = useCartStore((state) => state.add)
 
   return { items, setQty, add }
 }

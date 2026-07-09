@@ -21,7 +21,7 @@
 
 import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Leaf, Drumstick, X, Utensils } from 'lucide-react'
+import { Leaf, Drumstick, X, Utensils, RotateCcw } from 'lucide-react'
 import { CATEGORIES, DISHES, type Dish } from '@/features/customer/catalog'
 import { cn } from '@/lib/utils'
 
@@ -128,12 +128,10 @@ export function CustomerFilterBar({
 
   return (
     <div
-      className="relative z-20 backdrop-blur"
+      className="customer-filter-bar relative z-20 backdrop-blur"
       style={{
-        position: 'sticky',
-        top: stickyTop,
-        background: 'color-mix(in srgb, var(--c-bg) 88%, transparent)',
-        borderBottom: '1px solid var(--c-border)',
+        position: stickyTop > 0 ? 'sticky' : 'relative',
+        top: stickyTop > 0 ? stickyTop : undefined,
       }}
     >
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-3 space-y-2.5">
@@ -141,8 +139,8 @@ export function CustomerFilterBar({
          * the host page renders its own image-tile category selector. */}
         {!hideCategoryPills ? (
           <div
-            className="flex items-center gap-1.5 overflow-x-auto pb-1 -mx-1 px-1"
-            style={{ scrollSnapType: 'x mandatory', scrollbarWidth: 'none' }}
+            className="flex items-center gap-2 overflow-x-auto pb-1.5 -mx-1 px-1 scrollbar-hide"
+            style={{ scrollSnapType: 'x mandatory' }}
           >
             {CAT_OPTIONS.map((opt) => {
               const isActive = cat === opt.id
@@ -151,14 +149,13 @@ export function CustomerFilterBar({
                   key={opt.id ?? 'all'}
                   onClick={() => setCat(opt.id)}
                   className={cn(
-                    'shrink-0 px-3.5 py-1.5 rounded-full text-[11px] font-semibold uppercase tracking-[0.12em]',
-                    'border transition-all duration-200',
+                    'shrink-0 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-[0.15em] border transition-all duration-300 cursor-pointer',
+                    isActive
+                      ? 'bg-[var(--c-primary)] text-white border-[var(--c-primary)] shadow-md shadow-black/15 scale-102'
+                      : 'bg-neutral-900/30 border-white/10 hover:border-[var(--c-primary)]/40 text-[--c-text-soft] hover:text-white'
                   )}
                   style={{
                     scrollSnapAlign: 'start',
-                    background: isActive ? 'var(--c-accent)' : 'transparent',
-                    color: isActive ? 'var(--c-button-primary-fg)' : 'var(--c-text)',
-                    borderColor: isActive ? 'var(--c-accent)' : 'var(--c-border)',
                   }}
                 >
                   {opt.label}
@@ -169,15 +166,14 @@ export function CustomerFilterBar({
         ) : null}
 
         {/* Row 2 — diet toggle + search */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           {/* Diet group */}
           <div
-            className="inline-flex rounded-md overflow-hidden shrink-0"
-            style={{ border: '1px solid var(--c-border)' }}
+            className="diet-toggle-group inline-flex rounded-full overflow-hidden shrink-0 p-0.5 backdrop-blur-sm"
             role="group"
             aria-label="Dietary filter"
           >
-            {DIET_OPTIONS.map((opt, i) => {
+            {DIET_OPTIONS.map((opt) => {
               const isActive = diet === opt.id
               const Icon = opt.id === 'veg' ? Leaf : opt.id === 'nonveg' ? Drumstick : Utensils
               return (
@@ -185,22 +181,15 @@ export function CustomerFilterBar({
                   key={opt.id}
                   onClick={() => setDiet(opt.id)}
                   className={cn(
-                    'inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors',
+                    'diet-option-btn inline-flex items-center gap-1.5 px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] transition-all rounded-full cursor-pointer',
+                    isActive && 'diet-option-btn--active'
                   )}
                   aria-pressed={isActive}
-                  style={{
-                    background: isActive ? 'var(--c-accent)' : 'transparent',
-                    color: isActive
-                      ? 'var(--c-button-primary-fg)'
-                      : opt.id === 'veg'
-                        ? '#4caf50'
-                        : opt.id === 'nonveg'
-                          ? '#d32f2f'
-                          : 'var(--c-text)',
-                    borderLeft: i === 0 ? 'none' : '1px solid var(--c-border)',
-                  }}
                 >
-                  <Icon className="size-3" />
+                  <Icon className={cn(
+                    'size-3.5 transition-colors',
+                    isActive ? 'text-white' : opt.id === 'veg' ? 'text-green-500' : opt.id === 'nonveg' ? 'text-red-500' : 'text-neutral-400'
+                  )} />
                   {opt.label}
                 </button>
               )
@@ -209,44 +198,60 @@ export function CustomerFilterBar({
 
           {/* Search */}
           {!hideSearch ? (
-            <div className="relative flex-1">
-              <input
-                className="c-input pl-3 pr-9 text-sm w-full"
-                placeholder={searchPlaceholder}
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                aria-label="Search dishes"
-              />
-              {q ? (
-                <button
-                  onClick={() => setQ('')}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-[--c-bg-elev-2]"
-                  aria-label="Clear search"
+            <div className="relative flex-1 flex flex-col sm:flex-row sm:items-center gap-3">
+              <div className="relative flex-1">
+                <input
+                  className="c-input pl-3 pr-9 text-sm w-full"
+                  placeholder={searchPlaceholder}
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  aria-label="Search dishes"
+                />
+                {q ? (
+                  <button
+                    onClick={() => setQ('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-[--c-bg-elev-2] cursor-pointer"
+                    aria-label="Clear search"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                ) : null}
+              </div>
+
+              {/* Inline count display next to search bar */}
+              {!hideCount ? (
+                <p
+                  className="filter-results-count text-[11px] shrink-0 font-semibold whitespace-nowrap"
+                  aria-live="polite"
                 >
-                  <X className="size-3.5" />
-                </button>
+                  <span className="gold-text">{showingCount}</span>/{total} dishes
+                </p>
               ) : null}
             </div>
           ) : null}
 
-          {hasActive ? (
-            <button
-              onClick={reset}
-              className="shrink-0 text-[10px] uppercase tracking-[0.18em] text-[--c-text-muted] hover:gold-text transition-colors"
-            >
-              Reset
-            </button>
-          ) : null}
+          <button
+            onClick={reset}
+            className={cn(
+              "reset-btn shrink-0 transition-all cursor-pointer p-1.5 rounded-full hover:bg-white/10",
+              hasActive
+                ? "text-white opacity-100 hover:text-[var(--c-primary)]"
+                : "text-white/40 opacity-40 hover:opacity-100 hover:text-white"
+            )}
+            title="Reset filters"
+            aria-label="Reset filters"
+          >
+            <RotateCcw className="w-4 h-4 text-white" size={16} />
+          </button>
         </div>
 
-        {/* Row 3 — result count */}
-        {!hideCount ? (
+        {/* Row 3 — result count (rendered here only if search is hidden) */}
+        {!hideCount && hideSearch ? (
           <p
-            className="text-[11px]"
-            style={{ color: 'var(--c-text-muted)', letterSpacing: '0.04em' }}
+            className="filter-results-count text-[11px]"
             aria-live="polite"
           >
-            Showing <span className="gold-text font-semibold">{showingCount}</span> of {total} dishes
+            <span className="gold-text font-semibold">{showingCount}</span>/{total} dishes
           </p>
         ) : null}
       </div>

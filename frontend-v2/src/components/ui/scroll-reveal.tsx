@@ -76,7 +76,7 @@ export function ScrollReveal({
   delay = 0,
   y = 30,
   duration = 0.7,
-  once = true,
+  once = false,
   kind = 'fade-up',
   className,
   style,

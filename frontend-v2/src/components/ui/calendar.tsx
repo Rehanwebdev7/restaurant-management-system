@@ -10,55 +10,44 @@ export function Calendar({ className, classNames, showOutsideDays = true, ...pro
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
-      className={cn('p-3', className)}
-      // react-day-picker v8 → v9 renamed several class slots (caption →
-      // month_caption, IconLeft → PreviousMonthButton, etc). Until we
-      // migrate the design tokens to the new names the class names + custom
-      // components are typed loosely so the build doesn't fail. Visual
-      // output is unaffected — unknown slot keys are dropped at runtime.
+      className={cn('p-3 bg-black/95 backdrop-blur-md border border-white/15 rounded-xl shadow-2xl', className)}
       classNames={{
         months: 'flex flex-col sm:flex-row gap-4',
-        month: 'space-y-3',
-        caption: 'flex justify-center pt-1 relative items-center',
-        caption_label: 'text-sm font-semibold',
+        month: 'space-y-4',
+        month_caption: 'flex justify-center pt-1 relative items-center mb-2',
+        caption_label: 'text-sm font-semibold text-white',
         nav: 'space-x-1 flex items-center',
-        nav_button: cn(
+        button_previous: cn(
           buttonVariants({ variant: 'outline' }),
-          'size-7 bg-transparent p-0 opacity-50 hover:opacity-100'
+          'size-7 bg-transparent p-0 opacity-60 hover:opacity-100 absolute left-1 text-white border-white/10 hover:bg-white/10 hover:text-white'
         ),
-        nav_button_previous: 'absolute left-1',
-        nav_button_next: 'absolute right-1',
-        table: 'w-full border-collapse space-y-1',
-        head_row: 'flex',
-        head_cell: 'text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]',
-        row: 'flex w-full mt-2',
-        cell: cn(
-          'relative p-0 text-center text-sm',
-          'focus-within:relative focus-within:z-20',
-          '[&:has([aria-selected])]:bg-primary/10',
-          '[&:has([aria-selected].day-range-end)]:rounded-r-md',
-          '[&:has([aria-selected].day-outside)]:bg-primary/5',
-          '[&:has([aria-selected].day-range-middle)]:rounded-none'
+        button_next: cn(
+          buttonVariants({ variant: 'outline' }),
+          'size-7 bg-transparent p-0 opacity-60 hover:opacity-100 absolute right-1 text-white border-white/10 hover:bg-white/10 hover:text-white'
         ),
-        day: cn(
-          buttonVariants({ variant: 'ghost' }),
-          'size-9 p-0 font-normal aria-selected:opacity-100'
+        month_grid: 'w-full border-collapse space-y-1',
+        weekdays: 'flex justify-between mb-1',
+        weekday: 'text-[--c-text-muted] rounded-md w-9 font-normal text-[0.8rem] text-center',
+        week: 'flex w-full mt-1.5 justify-between',
+        day: 'relative p-0 text-center text-sm focus-within:relative focus-within:z-20',
+        day_button: cn(
+          'size-9 p-0 font-normal rounded-lg transition-colors flex items-center justify-center text-white/80 hover:bg-white/10 hover:text-white cursor-pointer'
         ),
-        day_range_start: 'day-range-start',
-        day_range_end: 'day-range-end',
-        day_selected:
-          'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground',
-        day_today: 'bg-accent text-accent-foreground',
-        day_outside:
-          'day-outside text-muted-foreground opacity-50 aria-selected:bg-primary/5 aria-selected:text-muted-foreground',
-        day_disabled: 'text-muted-foreground opacity-50',
-        day_range_middle: 'aria-selected:bg-primary/10 aria-selected:text-foreground rounded-none',
-        day_hidden: 'invisible',
+        selected: 'bg-[--c-teal] text-white hover:bg-[--c-teal-deep] hover:text-white focus:bg-[--c-teal] focus:text-white font-bold',
+        today: 'bg-white/15 text-white font-bold border border-white/20',
+        outside: 'text-white/30 opacity-40',
+        disabled: 'text-white/20 opacity-30 pointer-events-none',
+        hidden: 'invisible',
         ...classNames,
       } as React.ComponentProps<typeof DayPicker>['classNames']}
       components={{
-        IconLeft: () => <ChevronLeft className="size-4" />,
-        IconRight: () => <ChevronRight className="size-4" />,
+        Chevron: ({ orientation }) => {
+          if (orientation === 'left') {
+            return <ChevronLeft className="size-4 text-white" />
+          }
+          return <ChevronRight className="size-4 text-white" />
+        },
+        ...props.components
       } as React.ComponentProps<typeof DayPicker>['components']}
       {...props}
     />
