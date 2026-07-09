@@ -19,9 +19,24 @@ import {
   useSelectedBranchId,
 } from '@/features/customer/catalog'
 import { useCustomerSliders } from '@/api/queries/customer'
+import { submitPublicReservation } from '@/api/services/customer'
 import DishCardRound, { DishCardRoundGridSkeleton } from '@/features/customer/DishCardRound'
 import CategoryChainSection from '@/features/customer/pages/HomePage/CategoryChainSection'
 import GallerySlider from '@/features/customer/pages/HomePage/GallerySlider'
+import ChefStorySection from '@/features/customer/pages/HomePage/ChefStorySection'
+import AwardsTimeline from '@/features/customer/pages/HomePage/AwardsTimeline'
+import PressMarquee from '@/features/customer/pages/HomePage/PressMarquee'
+import StoryTimeline from '@/features/customer/pages/HomePage/StoryTimeline'
+import FAQAccordion from '@/features/customer/pages/HomePage/FAQAccordion'
+import NewsletterSection from '@/features/customer/pages/HomePage/NewsletterSection'
+import SignatureExperience from '@/features/customer/pages/HomePage/SignatureExperience'
+import HowItWorks from '@/features/customer/pages/HomePage/HowItWorks'
+import BrandStoryShowcase from '@/features/customer/pages/HomePage/BrandStoryShowcase'
+import LifestyleBanner from '@/features/customer/pages/HomePage/LifestyleBanner'
+import BranchLocator from '@/features/customer/pages/HomePage/BranchLocator'
+import { TESTIMONIALS_SEED } from '@/features/customer/content/seed/testimonials'
+import { SeedBadge } from '@/features/customer/content/SeedBadge'
+import { useSeedMode } from '@/features/customer/content/useSeedMode'
 import '@/styles/customer.css'
 
 export function HomePage() {
@@ -157,6 +172,26 @@ export function HomePage() {
           >
             Popular <span>Dishes</span>
           </motion.h2>
+          {/* Editorial intro — makes the grid feel curated instead of a raw list.
+           * Item count is client-computed from the actual catalog so tenants
+           * with 4 dishes read as 4 dishes, not a hardcoded number. */}
+          <motion.p
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: false, margin: '-60px' }}
+            transition={{ duration: 0.6, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+            className="mt-4 max-w-2xl mx-auto text-center text-[13px] sm:text-sm text-[var(--c-cream-text-soft,#6B5B45)] leading-relaxed"
+          >
+            {catalog.dishes.length > 0 ? (
+              <>
+                {catalog.dishes.length} dishes hand-picked by our Chef — {catalog.dishes.filter((d) => d.signature).length > 0
+                  ? `${catalog.dishes.filter((d) => d.signature).length} Chef's Picks selected daily`
+                  : 'refreshed with every season'}. Each plate reflects hospitality, craft, and the ingredients we source with intention.
+              </>
+            ) : (
+              <>Our Chef's curated selections — an editorial approach to the plates we love most, refreshed with each season.</>
+            )}
+          </motion.p>
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-4">
@@ -217,6 +252,26 @@ export function HomePage() {
       {/* Auto-scrolling gallery strip — horizontal linked to vertical page scroll */}
       <ScrollReveal><GallerySlider /></ScrollReveal>
 
+      {/* Brand story showcase — editorial restaurant identity anchor.
+       * Replaces the earlier FeaturedSpotlight (broken dish images) with
+       * a warm brand-story block using real backend `aboutUs` + derivable
+       * highlights. MenuCategoriesGrid removed per user feedback ("home
+       * page br menu ki jarurat nahi"). */}
+      <BrandStoryShowcase />
+
+      {/* Three ways to enjoy — Dine / Delivery / Reserve */}
+      <SignatureExperience />
+
+      {/* Cinematic Ken Burns lifestyle separator */}
+      <LifestyleBanner
+        eyebrow="THE ART OF HOSPITALITY"
+        quote="Great food is memory in the making — cooked with intention, served with warmth, and shared without hurry."
+        attribution="Our Kitchen Philosophy"
+      />
+
+      {/* How It Works — 3-step editorial */}
+      <HowItWorks />
+
       {/* Why Dine with Us Segment */}
       <ScrollReveal as="section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-[--c-border]">
         <div className="text-center mb-12">
@@ -241,9 +296,18 @@ export function HomePage() {
         </div>
       </ScrollReveal>
 
+      {/* Editorial content stack — new sections lower on the page, each
+       * self-gates on `useSeedMode()` so real tenants see only their own data. */}
+      <ScrollReveal><ChefStorySection /></ScrollReveal>
+      <ScrollReveal><AwardsTimeline /></ScrollReveal>
+      <PressMarquee />
+      <ScrollReveal><StoryTimeline /></ScrollReveal>
       <ScrollReveal><TestimonialsSection /></ScrollReveal>
       <StatsSection />
+      <ScrollReveal><FAQAccordion /></ScrollReveal>
       <ScrollReveal><ReservationCallToActionSection /></ScrollReveal>
+      <BranchLocator />
+      <ScrollReveal><NewsletterSection /></ScrollReveal>
       <ScrollReveal><InstagramFeedSection /></ScrollReveal>
 
       {/* Animated Floating Cart Action Bubble */}
@@ -274,6 +338,11 @@ export function HomePage() {
 }
 
 function StatsSection() {
+  // Hardcoded 200+/10000+/20+ numbers are placeholder — would be a lie for
+  // every real tenant. Gate behind seedMode; real tenants hide it entirely
+  // until a backend stats endpoint ships.
+  const showSeed = useSeedMode()
+  if (!showSeed) return null
   const STATS = [
     { value: 200, suffix: '+', label: 'Authentic Dishes' },
     { value: 10000, suffix: '+', label: 'Happy Customers' },
@@ -281,6 +350,9 @@ function StatsSection() {
   ]
   return (
     <ScrollReveal as="section" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="flex justify-center mb-4">
+        <SeedBadge />
+      </div>
       <div className="grid grid-cols-3 gap-4 sm:gap-6 text-center">
         {STATS.map((s, i) => (
           <ScrollReveal key={s.label} delay={i * 0.1} className="c-card p-5 sm:p-8 rounded-2xl bg-[--c-bg-elev]">
@@ -295,24 +367,23 @@ function StatsSection() {
   )
 }
 
-const TESTIMONIALS = [
-  { quote: 'The butter chicken here is otherworldly. Every visit feels like a celebration.', name: 'Ananya Verma', role: 'Food Critic, Mumbai Mirror', rating: 5 },
-  { quote: 'Hands down the best Tandoori chicken in the city. The hospitality is unmatched.', name: 'Rahul Mehta', role: 'Regular Patron', rating: 5 },
-  { quote: 'Authentic flavours, premium ambience, and warm service. A perfect date-night spot.', name: 'Priya Sharma', role: 'Lifestyle Blogger', rating: 5 },
-]
-
 function TestimonialsSection() {
-  // Compact 3-across layout (v2 feedback: previous huge italic-serif quote
-  // took too much room). Cards live in `.testimonial-compact` styles.
+  // Seed content — 3 large avatar+quote cards. Hidden for real tenants
+  // until the testimonials endpoint ships (see BACKEND_TODO.md).
+  const showSeed = useSeedMode()
+  if (!showSeed) return null
   return (
     <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
       <ScrollReveal className="text-center mb-8">
-        <p className="subtitle">WHAT GUESTS SAY</p>
+        <div className="flex items-center justify-center gap-3">
+          <p className="subtitle">WHAT GUESTS SAY</p>
+          <SeedBadge />
+        </div>
         <div className="c-divider" />
         <h2 className="display text-2xl sm:text-3xl">Loved by <span>Our Guests</span></h2>
       </ScrollReveal>
       <div className="testimonial-grid">
-        {TESTIMONIALS.map((t, i) => (
+        {TESTIMONIALS_SEED.map((t, i) => (
           <motion.article
             key={t.name}
             initial={{ opacity: 0, y: 24 }}
@@ -328,8 +399,19 @@ function TestimonialsSection() {
               ))}
             </div>
             <p className="t-quote">"{t.quote}"</p>
-            <p className="t-name">{t.name}</p>
-            <p className="t-role">{t.role}</p>
+            <div className="flex items-center gap-3 mt-4">
+              <img
+                src={t.avatarUrl}
+                alt={t.name}
+                loading="lazy"
+                decoding="async"
+                className="size-10 rounded-full object-cover ring-2 ring-[--c-accent]/40"
+              />
+              <div className="text-left">
+                <p className="t-name">{t.name}</p>
+                <p className="t-role">{t.role}</p>
+              </div>
+            </div>
           </motion.article>
         ))}
       </div>
@@ -353,6 +435,7 @@ const formatTimeLabel = (timeStr: string) => {
 
 function ReservationCallToActionSection() {
   const [form, setForm] = useState({ name: '', phone: '', date: '', time: '', guests: 2 })
+  const [submitting, setSubmitting] = useState(false)
   const sectionRef = useRef<HTMLElement | null>(null)
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -371,12 +454,31 @@ function ReservationCallToActionSection() {
     setForm({ ...form, date: `${yyyy}-${mm}-${dd}` })
   }
 
-  const submit = () => {
+  const submit = async () => {
     if (!form.name || !/^[6-9]\d{9}$/.test(form.phone) || !form.date || !form.time) {
       toast.warning('Please enter your name, valid 10-digit mobile, date and time')
       return
     }
-    toast.success(`Table requested for ${form.guests} guests on ${form.date} at ${formatTimeLabel(form.time)} — we will call to confirm.`)
+    setSubmitting(true)
+    // Wire real backend POST /api/customer/table_booking/public/add.
+    // Note (verified in backend audit): `guests` and `notes` are silently
+    // dropped by the current TableBookingEntity — user-approved trade-off
+    // until backend columns are added. Restaurant team receives name+phone+date+time.
+    const result = await submitPublicReservation({
+      name: form.name.trim(),
+      phone: form.phone,
+      date: form.date,
+      time: form.time,
+      guests: form.guests,
+    })
+    setSubmitting(false)
+    if (!result.ok) {
+      toast.error(result.message || 'Reservation failed — please try again or call us directly.')
+      return
+    }
+    toast.success(
+      `Table request received — booking #${result.data.reservationId}. We'll call to confirm shortly.`,
+    )
     setForm({ name: '', phone: '', date: '', time: '', guests: 2 })
   }
   return (
@@ -467,8 +569,13 @@ function ReservationCallToActionSection() {
             </Popover>
           </div>
           <input className="c-input sm:col-span-2 bg-white/5 border-white/10" type="number" min={1} max={20} placeholder="Number of guests" value={form.guests} onChange={(e) => setForm({ ...form, guests: Number(e.target.value) })} onWheel={(e) => e.currentTarget.blur()} />
-          <button className="c-button-primary sm:col-span-2 inline-flex items-center justify-center gap-2 py-3.5 rounded-xl cursor-pointer" onClick={submit}>
-            <Calendar className="size-4" /> RESERVE TABLE NOW
+          <button
+            className="c-button-primary sm:col-span-2 inline-flex items-center justify-center gap-2 py-3.5 rounded-xl cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+            onClick={submit}
+            disabled={submitting}
+          >
+            <Calendar className="size-4" />
+            {submitting ? 'RESERVING…' : 'RESERVE TABLE NOW'}
           </button>
         </div>
       </div>

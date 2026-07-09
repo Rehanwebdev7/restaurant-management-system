@@ -695,7 +695,7 @@ export function CheckoutPage() {
                       <div className="truncate pr-4 flex-1">
                         <span className="text-[--c-text] font-semibold">{item.qty}x</span> {d.name}
                       </div>
-                      <span className="font-mono text-[--c-text-soft] shrink-0">₹{(d.price * item.qty).toLocaleString('en-IN')}</span>
+                      <span className="font-mono text-[--c-text-soft] shrink-0">${(d.price * item.qty).toLocaleString('en-US')}</span>
                     </div>
                   )
                 })}
@@ -704,21 +704,21 @@ export function CheckoutPage() {
               <div className="border-t border-[--c-border] pt-3.5 space-y-2.5 text-xs font-semibold text-[--c-text-soft]">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
-                  <span className="font-mono">₹{items.reduce((acc, l) => {
+                  <span className="font-mono">${items.reduce((acc, l) => {
                     const d = catalog.dishes.find((x) => x.id === l.id) ?? DISHES.find((x) => x.id === l.id)
                     return d ? acc + d.price * l.qty : acc
-                  }, 0).toLocaleString('en-IN')}</span>
+                  }, 0).toLocaleString('en-US')}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Tax & GST (5%)</span>
-                  <span className="font-mono">₹{Math.round(items.reduce((acc, l) => {
+                  <span className="font-mono">${Math.round(items.reduce((acc, l) => {
                     const d = catalog.dishes.find((x) => x.id === l.id) ?? DISHES.find((x) => x.id === l.id)
                     return d ? acc + d.price * l.qty : acc
-                  }, 0) * 0.05).toLocaleString('en-IN')}</span>
+                  }, 0) * 0.05).toLocaleString('en-US')}</span>
                 </div>
                 <div className="border-t border-[--c-border] pt-3 flex justify-between text-sm font-bold text-[--c-text]">
                   <span>Total Amount</span>
-                  <span className="font-mono gold-text text-base">₹{total.toLocaleString('en-IN')}</span>
+                  <span className="font-mono gold-text text-base">${total.toLocaleString('en-US')}</span>
                 </div>
               </div>
 

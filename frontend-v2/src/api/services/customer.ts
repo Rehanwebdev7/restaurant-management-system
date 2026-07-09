@@ -125,6 +125,27 @@ export interface CustomerBranding {
   domainResolved?: boolean
   matchedDomain?: string | null
   requestHost?: string | null
+  // Widened fields (2026-07-10) — projected from BusinessSettingEntity
+  // via approved backend widen. All optional / nullable — UI must gate
+  // rendering on presence so empty tenants show nothing (no lies).
+  fssaiNumber?: string | null
+  gstNumber?: string | null
+  whatsappNumber?: string | null
+  phone?: string | null
+  email?: string | null
+  address?: string | null
+  googleMapEmbed?: string | null
+  googleRatingUrl?: string | null
+  /** JSON blob — parse client-side. Shape: { facebook, instagram, twitter, youtube, ... } */
+  socialMediaLinks?: string | null
+  aboutUs?: string | null
+  ourMission?: string | null
+  ourVision?: string | null
+  marqueeText?: string | null
+  marqueeIsLive?: boolean | null
+  marqueeBgColor?: string | null
+  marqueeTextColor?: string | null
+  marqueeSpeed?: number | null
   // permissive — backend may return any of these aliases
   name?: string
   subtitle?: string

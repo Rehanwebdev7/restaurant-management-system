@@ -28,6 +28,7 @@ import { useHaptic } from '@/hooks/use-haptic'
 import { toast } from '@/lib/toast'
 import DishDetailModal from '@/features/customer/DishDetailModal'
 import { spiceCount, isNewDish } from '@/features/customer/dish-utils'
+import { handleImageError } from '@/features/customer/image-fallback'
 
 interface Props {
   dish: Dish
@@ -102,6 +103,7 @@ export default function DishCard({ dish }: Props) {
             alt={dish.name}
             loading="lazy"
             decoding="async"
+            onError={handleImageError('dish')}
             className="w-full h-full object-cover transition-transform duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.08] group-hover:brightness-[1.05]"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/80 via-transparent to-transparent" />
@@ -218,16 +220,16 @@ export default function DishCard({ dish }: Props) {
           {/* Portion hint — only when backend provides half / quarter prices */}
           {(dish.halfPrice || dish.qtrPrice) ? (
             <p className="text-[10px] font-semibold text-[--c-text-soft] flex gap-1.5">
-              {dish.halfPrice ? <span>Half ₹{dish.halfPrice}</span> : null}
+              {dish.halfPrice ? <span>Half ${dish.halfPrice}</span> : null}
               {dish.halfPrice && dish.qtrPrice ? <span aria-hidden>·</span> : null}
-              {dish.qtrPrice ? <span>Qtr ₹{dish.qtrPrice}</span> : null}
+              {dish.qtrPrice ? <span>Qtr ${dish.qtrPrice}</span> : null}
             </p>
           ) : null}
 
           {/* Price + Button row */}
           <div className="flex items-center justify-between gap-2 mt-auto pt-2.5 border-t border-white/5">
             <p className="display text-lg lg:text-xl leading-none font-bold gold-text shrink-0">
-              ₹{dish.price}
+              ${dish.price}
             </p>
 
             {line ? (

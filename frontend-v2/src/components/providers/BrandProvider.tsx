@@ -9,6 +9,16 @@ import { fetchCustomerBranding } from '@/api/services/customer'
  * Sets CSS custom properties dynamically on the root element.
  */
 
+/** Parsed socialMediaLinks JSON. Backend returns as string blob. */
+export interface SocialLinks {
+  facebook?: string
+  instagram?: string
+  twitter?: string
+  youtube?: string
+  linkedin?: string
+  whatsapp?: string
+}
+
 interface BrandContextValue {
   restaurantName: string
   tagline: string
@@ -18,6 +28,31 @@ interface BrandContextValue {
   fontSans: string
   fontSerif: string
   loading: boolean
+  /** True when the backend resolved the request Host to a real tenant domain.
+   * False for localhost, unknown hosts, and the demo fallback branding.
+   * Used to gate "seed" placeholder sections (chef story, awards, press, FAQ,
+   * testimonials) — real tenants never see the demo content, demo domains do. */
+  domainResolved: boolean
+  // Widened per-tenant fields (2026-07-10) — surfaced by `CustBrandingController`
+  // via approved projection widen. UI must gate rendering on presence.
+  fssaiNumber: string | null
+  gstNumber: string | null
+  whatsappNumber: string | null
+  phone: string | null
+  email: string | null
+  address: string | null
+  googleMapEmbed: string | null
+  googleRatingUrl: string | null
+  /** Parsed from backend JSON string; empty object when missing/malformed. */
+  socialLinks: SocialLinks
+  aboutUs: string | null
+  ourMission: string | null
+  ourVision: string | null
+  marqueeText: string | null
+  marqueeIsLive: boolean
+  marqueeBgColor: string | null
+  marqueeTextColor: string | null
+  marqueeSpeed: number
   setBrand: (patch: Partial<Omit<BrandContextValue, 'loading' | 'setBrand'>>) => void
 }
 
@@ -97,11 +132,67 @@ interface ExtendedBranding {
   radius?: string
   fontSans?: string
   fontSerif?: string
+  domainResolved?: boolean
+  // widened fields
+  fssaiNumber?: string | null
+  gstNumber?: string | null
+  whatsappNumber?: string | null
+  phone?: string | null
+  email?: string | null
+  address?: string | null
+  googleMapEmbed?: string | null
+  googleRatingUrl?: string | null
+  socialMediaLinks?: string | null
+  aboutUs?: string | null
+  ourMission?: string | null
+  ourVision?: string | null
+  marqueeText?: string | null
+  marqueeIsLive?: boolean | null
+  marqueeBgColor?: string | null
+  marqueeTextColor?: string | null
+  marqueeSpeed?: number | null
+}
+
+const EMPTY_WIDENED = {
+  fssaiNumber: null as string | null,
+  gstNumber: null as string | null,
+  whatsappNumber: null as string | null,
+  phone: null as string | null,
+  email: null as string | null,
+  address: null as string | null,
+  googleMapEmbed: null as string | null,
+  googleRatingUrl: null as string | null,
+  socialLinks: {} as SocialLinks,
+  aboutUs: null as string | null,
+  ourMission: null as string | null,
+  ourVision: null as string | null,
+  marqueeText: null as string | null,
+  marqueeIsLive: false,
+  marqueeBgColor: null as string | null,
+  marqueeTextColor: null as string | null,
+  marqueeSpeed: 30,
+}
+
+function parseSocialLinks(raw: string | null | undefined): SocialLinks {
+  if (!raw) return {}
+  try {
+    const parsed = JSON.parse(raw)
+    if (parsed && typeof parsed === 'object') return parsed as SocialLinks
+  } catch { /* malformed JSON — silently ignore */ }
+  return {}
+}
+
+function nonBlank(v: string | null | undefined): string | null {
+  if (v == null) return null
+  const trimmed = String(v).trim()
+  return trimmed.length > 0 ? trimmed : null
 }
 
 export function BrandProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState(readCached)
   const [loading, setLoading] = useState(true)
+  const [domainResolved, setDomainResolved] = useState(false)
+  const [widened, setWidened] = useState(EMPTY_WIDENED)
 
   useEffect(() => {
     applyThemeToRoot(state)
@@ -127,6 +218,26 @@ export function BrandProvider({ children }: { children: ReactNode }) {
       }
       setState(next)
       writeCached(next)
+      setDomainResolved(payload.domainResolved === true)
+      setWidened({
+        fssaiNumber: nonBlank(payload.fssaiNumber),
+        gstNumber: nonBlank(payload.gstNumber),
+        whatsappNumber: nonBlank(payload.whatsappNumber),
+        phone: nonBlank(payload.phone),
+        email: nonBlank(payload.email),
+        address: nonBlank(payload.address),
+        googleMapEmbed: nonBlank(payload.googleMapEmbed),
+        googleRatingUrl: nonBlank(payload.googleRatingUrl),
+        socialLinks: parseSocialLinks(payload.socialMediaLinks),
+        aboutUs: nonBlank(payload.aboutUs),
+        ourMission: nonBlank(payload.ourMission),
+        ourVision: nonBlank(payload.ourVision),
+        marqueeText: nonBlank(payload.marqueeText),
+        marqueeIsLive: payload.marqueeIsLive === true,
+        marqueeBgColor: nonBlank(payload.marqueeBgColor),
+        marqueeTextColor: nonBlank(payload.marqueeTextColor),
+        marqueeSpeed: payload.marqueeSpeed && payload.marqueeSpeed > 0 ? payload.marqueeSpeed : 30,
+      })
       setLoading(false)
     })()
     return () => {
@@ -144,7 +255,7 @@ export function BrandProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <BrandContext.Provider value={{ ...state, loading, setBrand }}>
+    <BrandContext.Provider value={{ ...state, loading, domainResolved, ...widened, setBrand }}>
       {children}
     </BrandContext.Provider>
   )

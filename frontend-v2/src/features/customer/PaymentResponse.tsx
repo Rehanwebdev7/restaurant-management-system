@@ -116,7 +116,7 @@ export default function PaymentResponse() {
             {amount ? (
               <div className="flex items-center justify-between">
                 <dt className="text-[--c-text-muted]">Amount</dt>
-                <dd className="font-mono">₹{amount}</dd>
+                <dd className="font-mono">${amount}</dd>
               </div>
             ) : null}
           </dl>

@@ -116,6 +116,212 @@
   overflow-x: clip;
 }
 
+/* Page-wide ambient background — subtle warm gradient + noise texture.
+ * Rendered as a fixed pseudo layer BEHIND all content (z-index -1) so the
+ * whole customer surface reads as intentional, editorial, and premium
+ * instead of a flat color block. Absent decorative sheen makes the site
+ * feel cheap; this fixes that without adding visual noise. */
+.customer-shell::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(ellipse 90% 60% at 20% 0%, rgba(201, 169, 110, 0.10), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 90% 25%, rgba(31, 139, 133, 0.06), transparent 60%),
+    radial-gradient(ellipse 100% 60% at 50% 100%, rgba(201, 169, 110, 0.08), transparent 55%);
+  opacity: 0.9;
+}
+
+/* Light mode uses warmer, less saturated orbs so they read as parchment
+ * glow rather than screen-blend haze. */
+.customer-shell.customer-shell--light::before {
+  background-image:
+    radial-gradient(ellipse 90% 60% at 15% 0%, rgba(201, 169, 110, 0.14), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 90% 30%, rgba(139, 94, 60, 0.06), transparent 60%),
+    radial-gradient(ellipse 100% 60% at 50% 100%, rgba(238, 225, 192, 0.35), transparent 55%);
+  opacity: 1;
+}
+
+/* Every direct child of the shell must sit above the ambient layer. Header,
+ * hero, main, footer — all get z-1 by default to keep this cheap. */
+.customer-shell > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ============================================================
+ * Footer — polished, animated, editorial (compact v3)
+ * ============================================================ */
+.customer-shell .c-footer {
+  padding-bottom: 1rem;
+  background:
+    linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.28) 100%);
+  border-top: 1px solid var(--c-border);
+}
+
+.customer-shell.customer-shell--light .c-footer {
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.04) 100%);
+}
+
+/* Thin gold hairline — only visual boundary at top of footer now that
+ * the "Let's stay in touch" hero block is gone. */
+.customer-shell .c-footer-hairline {
+  height: 1px;
+  margin: 0 auto 1rem;
+  max-width: 6rem;
+  background: linear-gradient(90deg, transparent, var(--c-accent, #C9A96E), transparent);
+  opacity: 0.5;
+}
+
+/* Column subhead → small gold underline that grows on hover of parent col. */
+.customer-shell .c-footer-divider {
+  width: 1.5rem;
+  height: 2px;
+  background: var(--c-accent, #C9A96E);
+  margin: 6px 0 12px;
+  border-radius: 999px;
+  transition: width 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.customer-shell .c-footer > div:hover .c-footer-divider {
+  width: 3rem;
+}
+
+/* Footer nav link → subtle slide + color shift on hover. */
+.customer-shell .c-footer-link {
+  color: var(--c-text-soft);
+  transition: color 220ms, transform 220ms, letter-spacing 220ms;
+  display: inline-block;
+  position: relative;
+}
+
+.customer-shell .c-footer-link::before {
+  content: '';
+  display: inline-block;
+  width: 0;
+  height: 1px;
+  background: var(--c-accent, #C9A96E);
+  transition: width 260ms cubic-bezier(0.16, 1, 0.3, 1);
+  vertical-align: middle;
+  margin-right: 0;
+}
+
+.customer-shell .c-footer-link:hover {
+  color: var(--c-accent, #C9A96E);
+  transform: translateX(3px);
+}
+
+.customer-shell .c-footer-link:hover::before {
+  width: 12px;
+  margin-right: 6px;
+}
+
+/* Icon pill for phone/email/address rows */
+.customer-shell .c-footer-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: rgba(201, 169, 110, 0.12);
+  color: var(--c-accent, #C9A96E);
+  transition: background 220ms, transform 220ms;
+}
+
+.customer-shell .c-footer-icon--whatsapp {
+  background: rgba(37, 211, 102, 0.12);
+  color: #25D366;
+}
+
+.customer-shell li:hover > .c-footer-icon {
+  transform: translateY(-2px);
+  background: rgba(201, 169, 110, 0.22);
+}
+
+.customer-shell li:hover > .c-footer-icon--whatsapp {
+  background: rgba(37, 211, 102, 0.22);
+}
+
+/* Social icon buttons — gold hover fill + spring lift */
+.customer-shell .c-footer-social {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--c-border);
+  color: var(--c-text-soft);
+  transition: background 240ms, color 240ms, border-color 240ms, transform 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.customer-shell.customer-shell--light .c-footer-social {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.customer-shell .c-footer-social:hover {
+  background: var(--c-accent, #C9A96E);
+  border-color: var(--c-accent, #C9A96E);
+  color: var(--c-button-primary-fg, #0A0A0A);
+  transform: translateY(-3px) rotate(-4deg);
+}
+
+/* ============================================================
+ * MenuPage — Chef Picks carousel
+ * ============================================================ */
+.customer-shell .c-picks-scroller {
+  scroll-behavior: smooth;
+}
+
+.customer-shell .c-picks-scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.customer-shell .c-picks-card {
+  width: 240px;
+  transition: transform 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (min-width: 640px) {
+  .customer-shell .c-picks-card {
+    width: 280px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .customer-shell .c-picks-card {
+    width: 320px;
+  }
+}
+
+.customer-shell .c-picks-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--c-border);
+  color: var(--c-text);
+  transition: background 220ms, color 220ms, border-color 220ms, transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.customer-shell.customer-shell--light .c-picks-arrow {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.customer-shell .c-picks-arrow:hover {
+  background: var(--c-accent, #C9A96E);
+  border-color: var(--c-accent, #C9A96E);
+  color: var(--c-button-primary-fg, #0A0A0A);
+  transform: translateY(-2px);
+}
+
 /* Light mode — preserves dynamic accent, swaps background to warm ivory.
  * Activate by adding `customer-shell--light` to `.customer-shell`. */
 .customer-shell.customer-shell--light {
@@ -128,12 +334,33 @@
   --c-border: rgba(var(--c-primary-rgb), 0.45);
   --c-border-strong: var(--c-primary);
   --c-header-bg: rgba(255, 255, 255, 0.92);
-  --c-hero-overlay-from: rgba(0, 0, 0, 0.10);
-  --c-hero-overlay-mid: rgba(0, 0, 0, 0.30);
-  --c-hero-overlay-to: rgba(0, 0, 0, 0.55);
+  /* Warm brown-toned hero vignette — food image glows through, top mostly
+   * clear, bottom fades toward the cream body so the hero feels connected
+   * to the page instead of a hard boundary. Editorial (Sweetgreen / Cava)
+   * feel over Ruth's-Chris-dark. */
+  --c-hero-overlay-from: rgba(30, 20, 10, 0.15);
+  --c-hero-overlay-mid: rgba(60, 40, 20, 0.35);
+  --c-hero-overlay-to: rgba(238, 225, 192, 0.85);
   --c-button-primary-fg: #FFFFFF;
   --c-accent: var(--c-primary);
   --c-accent-rgb: var(--c-primary-rgb);
+}
+
+/* Hero text in light mode — keep cream/white for legibility against the
+ * dark food photo, but add a subtle text-shadow so the letterforms stay
+ * crisp against a lighter overlay. Buttons + description text also get
+ * an explicit override so --c-text/--c-text-soft body values don't render
+ * dark-on-dark over the image. */
+.customer-shell.customer-shell--light .hero-bg .display,
+.customer-shell.customer-shell--light .hero-bg .subtitle,
+.customer-shell.customer-shell--light .hero-bg .display span {
+  color: #FFFFFF !important;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.55), 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+.customer-shell.customer-shell--light .hero-bg p {
+  color: rgba(255, 255, 255, 0.92) !important;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
 }
 
 .customer-shell.customer-shell--light .c-header {

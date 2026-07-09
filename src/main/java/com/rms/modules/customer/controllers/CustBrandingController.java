@@ -77,6 +77,29 @@ public class CustBrandingController {
 				data.put("primaryColor", firstNonBlank(setting.getPrimaryColor(), "#C9A96E"));
 				data.put("domainResolved", true);
 				data.put("matchedDomain", setting.getDomainUrl());
+
+				// Projection widen (2026-07-10) — surface tenant-configurable content
+				// fields the customer frontend needs for footer, About/Contact pages,
+				// WhatsApp CTA, per-tenant marquee, and Google Reviews link. All fields
+				// already exist on BusinessSettingEntity — additive change only,
+				// existing consumers unaffected.
+				data.put("fssaiNumber", setting.getFssaiNumber());
+				data.put("gstNumber", setting.getGstNumber());
+				data.put("whatsappNumber", setting.getWhatsappNumber());
+				data.put("phone", setting.getPhone());
+				data.put("email", setting.getEmail());
+				data.put("address", setting.getAddress());
+				data.put("googleMapEmbed", setting.getGoogleMapEmbed());
+				data.put("googleRatingUrl", setting.getGoogleRatingUrl());
+				data.put("socialMediaLinks", setting.getSocialMediaLinks());
+				data.put("aboutUs", setting.getAboutUs());
+				data.put("ourMission", setting.getOurMission());
+				data.put("ourVision", setting.getOurVision());
+				data.put("marqueeText", setting.getMarqueeText());
+				data.put("marqueeIsLive", setting.getMarqueeIsLive());
+				data.put("marqueeBgColor", setting.getMarqueeBgColor());
+				data.put("marqueeTextColor", setting.getMarqueeTextColor());
+				data.put("marqueeSpeed", setting.getMarqueeSpeed());
 			} else {
 				data.put("restaurantId", null);
 				data.put("restaurantName", "Spice Garden");
@@ -85,6 +108,26 @@ public class CustBrandingController {
 				data.put("primaryColor", "#C9A96E");
 				data.put("domainResolved", false);
 				data.put("matchedDomain", null);
+
+				// Null-out the widened content fields on fallback so shape stays
+				// consistent for the frontend (never `undefined` on real 200 responses).
+				data.put("fssaiNumber", null);
+				data.put("gstNumber", null);
+				data.put("whatsappNumber", null);
+				data.put("phone", null);
+				data.put("email", null);
+				data.put("address", null);
+				data.put("googleMapEmbed", null);
+				data.put("googleRatingUrl", null);
+				data.put("socialMediaLinks", null);
+				data.put("aboutUs", null);
+				data.put("ourMission", null);
+				data.put("ourVision", null);
+				data.put("marqueeText", null);
+				data.put("marqueeIsLive", null);
+				data.put("marqueeBgColor", null);
+				data.put("marqueeTextColor", null);
+				data.put("marqueeSpeed", null);
 			}
 			data.put("requestHost", host);
 

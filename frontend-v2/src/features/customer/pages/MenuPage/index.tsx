@@ -10,6 +10,7 @@ import { useCustomerCatalog } from '@/features/customer/catalog'
 import CustomerFilterBar, { useCustomerFilters } from '@/features/customer/CustomerFilterBar'
 import DishCardRound, { DishCardRoundGridSkeleton } from '@/features/customer/DishCardRound'
 import CategoryChainSection from '@/features/customer/pages/HomePage/CategoryChainSection'
+import MenuHero from '@/features/customer/pages/MenuPage/MenuHero'
 import { cn } from '@/lib/utils'
 import '@/styles/customer.css'
 
@@ -167,27 +168,15 @@ export function MenuPage() {
         description="Browse the full Spice Garden menu — starters, mains, breads, drinks and desserts. Order online or reserve a table at any of our three Mumbai branches."
       />
 
-      {/* ─── Section 1 — Non-sticky heading. Scrolls away with the page. ─── */}
-      <div className="menu-page-heading">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.p
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-[var(--c-primary)] mb-3"
-          >
-            OUR FULL MENU
-          </motion.p>
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.65, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
-            className="display text-4xl sm:text-5xl lg:text-6xl font-bold text-white"
-          >
-            Browse Our <span className="gold-text">Delicious</span> Dishes
-          </motion.h1>
-        </div>
-      </div>
+      {/* ─── Section 1 — Cinematic hero banner with parallax + kinetic title.
+       * Replaces the old flat text heading with an editorial full-bleed
+       * image. Scrolls away with the page. ─── */}
+      <MenuHero />
+
+      {/* MenuHighlights + ChefPicksCarousel both removed per user feedback —
+       * user preferred the menu to flow straight from hero into the filter +
+       * grid without editorial intermezzos. Components kept on disk for
+       * potential later use. */}
 
       {/* ─── Wrapper to constrain sticky boundary and prevent footer overlap ─── */}
       <div className="menu-main-content-flow relative">

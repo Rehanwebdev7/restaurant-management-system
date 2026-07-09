@@ -209,7 +209,7 @@ function CartContents({
                     {l.name}
                   </p>
                   <p className="text-[11px] text-[--c-text-muted]">
-                    ₹{l.price} × {l.qty}
+                    ${l.price} × {l.qty}
                   </p>
                 </div>
                 <div className="flex items-center gap-1 border border-[--c-accent] rounded">
@@ -238,16 +238,16 @@ function CartContents({
         <div className="p-5 border-t border-[--c-border] space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="text-[--c-text-soft]">Subtotal</span>
-            <span className="tabular-nums">₹{subtotal.toLocaleString('en-IN')}</span>
+            <span className="tabular-nums">${subtotal.toLocaleString('en-US')}</span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-[--c-text-soft]">GST 5%</span>
-            <span className="tabular-nums">₹{gst.toLocaleString('en-IN')}</span>
+            <span className="tabular-nums">${gst.toLocaleString('en-US')}</span>
           </div>
           <div className="flex items-center justify-between pt-2 border-t border-[--c-border]">
             <span className="font-semibold">Total</span>
             <span className="display text-2xl gold-text">
-              ₹{total.toLocaleString('en-IN')}
+              ${total.toLocaleString('en-US')}
             </span>
           </div>
           <button

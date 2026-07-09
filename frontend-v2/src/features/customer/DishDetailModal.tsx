@@ -124,7 +124,7 @@ export default function DishDetailModal({ dish, open, onClose }: Props) {
                 <h2 className="display text-3xl sm:text-4xl mt-1">
                   <span className={dish.veg ? 'veg-icon' : 'nonveg-icon'} />{dish.name}
                 </h2>
-                <p className="display text-3xl gold-text mt-2">₹{dish.price}</p>
+                <p className="display text-3xl gold-text mt-2">${dish.price}</p>
               </div>
 
               <p className="text-sm text-[--c-text-soft] leading-relaxed">{dish.description}</p>
@@ -175,7 +175,7 @@ export default function DishDetailModal({ dish, open, onClose }: Props) {
                       <Plus className="size-3" />
                     </button>
                   </div>
-                  <p className="ml-auto display text-2xl gold-text">₹{(dish.price * qty).toLocaleString('en-IN')}</p>
+                  <p className="ml-auto display text-2xl gold-text">${(dish.price * qty).toLocaleString('en-US')}</p>
                 </div>
 
                 <div className="flex items-center gap-2">

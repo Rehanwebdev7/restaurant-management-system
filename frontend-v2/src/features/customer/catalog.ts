@@ -7,6 +7,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { CustomerMenuItem } from '@/api/services/customer'
 import { useCustomerMenuItems, useCustomerCategories, useCustomerBranches } from '@/api/queries/customer'
+import { useSeedMode } from '@/features/customer/content/useSeedMode'
 
 export interface Dish {
   id: number
@@ -173,6 +174,7 @@ export function backendItemToDish(item: CustomerMenuItem): Dish {
  */
 export function useCustomerCatalog() {
   const { branchId, setBranchId } = useSelectedBranchId()
+  const seedMode = useSeedMode()
   // Branches list (host-resolved by backend). We block the menu / category
   // fetch until the branch list is in AND the persisted branchId is in it —
   // otherwise a stale localStorage id from a previous tenant would fire a
@@ -189,9 +191,13 @@ export function useCustomerCatalog() {
 
   const live = menuQ.data ?? []
   const dishes = useMemo<Dish[]>(() => {
+    // Prefer real backend data. When backend returns zero items:
+    //  • seed mode (demo/localhost) → show placeholder `DISHES` so the demo
+    //    doesn't render an empty page
+    //  • real tenant → empty array (page renders a "Menu coming soon" state)
     if (live.length > 0) return live.map(backendItemToDish)
-    return DISHES
-  }, [live])
+    return seedMode ? DISHES : []
+  }, [live, seedMode])
 
   return {
     dishes,

@@ -15,6 +15,7 @@ import { useHaptic } from '@/hooks/use-haptic'
 import { toast } from '@/lib/toast'
 import DishDetailModal from '@/features/customer/DishDetailModal'
 import { spiceCount, isNewDish } from '@/features/customer/dish-utils'
+import { handleImageError } from '@/features/customer/image-fallback'
 
 interface Props {
   dish: Dish
@@ -63,7 +64,13 @@ export default function DishCardRound({ dish }: Props) {
       >
         {/* Circular image — absolute top-right, half-overflows the corner */}
         <div className="dish-card-round-image" aria-hidden>
-          <img src={dish.img} alt="" loading="lazy" decoding="async" />
+          <img
+            src={dish.img}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            onError={handleImageError('dish')}
+          />
         </div>
 
         <div className="dish-card-round-body">
@@ -150,13 +157,13 @@ export default function DishCardRound({ dish }: Props) {
            * prices. Full price stays as the main call-out below. */}
           {(dish.halfPrice || dish.qtrPrice) ? (
             <p className="dish-card-round-portions" aria-label="Portion options">
-              {dish.halfPrice ? <span>Half ₹{dish.halfPrice}</span> : null}
+              {dish.halfPrice ? <span>Half ${dish.halfPrice}</span> : null}
               {dish.halfPrice && dish.qtrPrice ? <span aria-hidden> · </span> : null}
-              {dish.qtrPrice ? <span>Qtr ₹{dish.qtrPrice}</span> : null}
+              {dish.qtrPrice ? <span>Qtr ${dish.qtrPrice}</span> : null}
             </p>
           ) : null}
 
-          <p className="dish-card-round-price">₹{dish.price}</p>
+          <p className="dish-card-round-price">${dish.price}</p>
         </div>
 
         <div className="dish-card-round-actions">

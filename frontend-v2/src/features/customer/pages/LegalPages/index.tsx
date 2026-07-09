@@ -67,7 +67,7 @@ export function CartPage() {
                       <span className={l.veg ? 'veg-icon' : 'nonveg-icon'} />
                       <span className="truncate">{l.name}</span>
                     </p>
-                    <p className="text-xs text-[--c-text-muted] mt-1 font-medium">₹{l.price} each</p>
+                    <p className="text-xs text-[--c-text-muted] mt-1 font-medium">${l.price} each</p>
                   </div>
                   <div className="flex items-center gap-1.5 border border-[--c-accent] rounded-lg bg-black/20 shrink-0">
                     <button className="px-2.5 py-1.5 cursor-pointer text-[--c-text-soft] hover:text-white" onClick={() => setQty(l.id, -1)} aria-label="Decrease quantity"><Minus className="size-3.5" /></button>
@@ -75,7 +75,7 @@ export function CartPage() {
                     <button className="px-2.5 py-1.5 cursor-pointer text-[--c-text-soft] hover:text-white" onClick={() => setQty(l.id, 1)} aria-label="Increase quantity"><Plus className="size-3.5" /></button>
                   </div>
                   <p className="font-mono tabular-nums w-20 sm:w-28 text-right gold-text font-bold shrink-0">
-                    ₹{l.subtotal.toLocaleString('en-IN')}
+                    ${l.subtotal.toLocaleString('en-US')}
                   </p>
                 </li>
               ))}
@@ -83,15 +83,15 @@ export function CartPage() {
             <div className="p-5 space-y-3.5 border-t border-[--c-border] bg-black/10">
               <div className="flex items-center justify-between text-sm font-semibold text-[--c-text-soft]">
                 <span>Subtotal</span>
-                <span className="font-mono">₹{subtotal.toLocaleString('en-IN')}</span>
+                <span className="font-mono">${subtotal.toLocaleString('en-US')}</span>
               </div>
               <div className="flex items-center justify-between text-sm font-semibold text-[--c-text-soft]">
                 <span>GST (5%)</span>
-                <span className="font-mono">₹{gst.toLocaleString('en-IN')}</span>
+                <span className="font-mono">${gst.toLocaleString('en-US')}</span>
               </div>
               <div className="flex items-center justify-between pt-3.5 border-t border-[--c-border] text-base font-bold text-[--c-text]">
                 <span>Total Amount</span>
-                <span className="display text-2xl gold-text font-mono font-bold">₹{total.toLocaleString('en-IN')}</span>
+                <span className="display text-2xl gold-text font-mono font-bold">${total.toLocaleString('en-US')}</span>
               </div>
               <button
                 className="c-button-primary w-full mt-4 py-4 rounded-xl cursor-pointer font-bold tracking-wider inline-flex items-center justify-center gap-2 hover:shadow-[var(--c-shadow-primary)] transition-shadow"
@@ -186,7 +186,7 @@ export function ContactPage() {
 
     const record: StoredReservation = {
       id: localId,
-      submittedAt: new Date().toLocaleString('en-IN'),
+      submittedAt: new Date().toLocaleString('en-US'),
       ...form,
       status: 'requested',
     }
@@ -538,7 +538,7 @@ export function MyOrdersPage() {
                   )}>
                     {o.status === 'synced' ? 'Confirmed' : 'Pending sync'}
                   </span>
-                  <p className="font-mono gold-text font-bold text-base shrink-0">₹{o.total?.toLocaleString('en-IN')}</p>
+                  <p className="font-mono gold-text font-bold text-base shrink-0">${o.total?.toLocaleString('en-US')}</p>
                 </div>
               </li>
             ))}

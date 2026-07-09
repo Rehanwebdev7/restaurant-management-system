@@ -227,7 +227,7 @@ export default function SearchModal({ open, onClose }: Props) {
                             {d.name}
                             {d.signature ? <Sparkles className="size-3 gold-text" /> : null}
                           </p>
-                          <p className="text-xs gold-text font-semibold">₹{d.price}</p>
+                          <p className="text-xs gold-text font-semibold">${d.price}</p>
                         </button>
                         <button
                           className="c-button-outline !py-1 !px-2 !text-[10px] inline-flex items-center gap-1"

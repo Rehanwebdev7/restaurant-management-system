@@ -122,12 +122,17 @@ export default {
           '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' },
         },
+        'marquee': {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(-50%)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 200ms ease-out',
         'accordion-up': 'accordion-up 200ms ease-out',
         'shake': 'shake 300ms ease-in-out',
         'shimmer': 'shimmer 1.5s linear infinite',
+        'marquee': 'marquee 40s linear infinite',
       },
     },
   },

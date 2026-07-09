@@ -260,10 +260,10 @@ export default function OrderTracking() {
               <li key={l.id} className="p-4 flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-semibold truncate">{l.name}</p>
-                  <p className="text-xs text-[--c-text-muted]">₹{l.price} × {l.qty}</p>
+                  <p className="text-xs text-[--c-text-muted]">${l.price} × {l.qty}</p>
                 </div>
                 <p className="font-mono tabular-nums gold-text font-semibold">
-                  ₹{(l.price * l.qty).toLocaleString('en-IN')}
+                  ${(l.price * l.qty).toLocaleString('en-US')}
                 </p>
               </li>
             ))}
@@ -271,15 +271,15 @@ export default function OrderTracking() {
           <div className="p-5 space-y-2 border-t border-[--c-border]">
             <div className="flex items-center justify-between text-sm">
               <span className="text-[--c-text-soft]">Subtotal</span>
-              <span className="tabular-nums">₹{order.subtotal.toLocaleString('en-IN')}</span>
+              <span className="tabular-nums">${order.subtotal.toLocaleString('en-US')}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-[--c-text-soft]">GST 5%</span>
-              <span className="tabular-nums">₹{order.gst.toLocaleString('en-IN')}</span>
+              <span className="tabular-nums">${order.gst.toLocaleString('en-US')}</span>
             </div>
             <div className="flex items-center justify-between pt-3 border-t border-[--c-border]">
               <span className="font-semibold">Total</span>
-              <span className="display text-2xl gold-text">₹{order.total.toLocaleString('en-IN')}</span>
+              <span className="display text-2xl gold-text">${order.total.toLocaleString('en-US')}</span>
             </div>
           </div>
         </div>
