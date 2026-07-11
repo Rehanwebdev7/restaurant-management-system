@@ -6,7 +6,7 @@ import { useBrand } from '@/components/providers/BrandProvider'
 import { useCustomerBranches } from '@/api/queries/customer'
 import { SeedBadge } from '@/features/customer/content/SeedBadge'
 import { useSeedMode } from '@/features/customer/content/useSeedMode'
-import { handleImageError } from '@/features/customer/image-fallback'
+import ImageRotator from '@/features/customer/pages/HomePage/ImageRotator'
 
 /**
  * BrandStoryShowcase — full-bleed editorial section that anchors the home
@@ -29,8 +29,14 @@ import { handleImageError } from '@/features/customer/image-fallback'
  * Single hover effect — light CTA arrow slide.
  */
 
-const SHOWCASE_IMAGE =
-  'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1400&q=80'
+// Rotating collection of restaurant interior photos. Auto-cycles via
+// <ImageRotator>. Later swap-per-tenant will come from a backend media
+// endpoint (see BACKEND_TODO.md).
+const SHOWCASE_IMAGES = [
+  'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1400&q=80',
+  'https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=1400&q=80',
+  'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1400&q=80',
+]
 
 const FALLBACK_ABOUT =
   'Welcome to a table set with intention. Every plate we send out is prepared by our kitchen team using ingredients we source with care — nothing rushed, nothing generic. Whether you dine with us or order in, expect the same warmth, the same craft, and the same signature attention to detail.'
@@ -95,7 +101,7 @@ export default function BrandStoryShowcase() {
   return (
     <section
       ref={sectionRef}
-      className="relative overflow-hidden py-16 sm:py-24 my-8"
+      className="c-section-tinted relative overflow-hidden py-16 sm:py-24 my-8"
     >
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-8 lg:gap-14 items-center">
@@ -107,19 +113,24 @@ export default function BrandStoryShowcase() {
             transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
             className="relative overflow-hidden rounded-3xl aspect-[4/5] lg:aspect-[5/6] shadow-2xl"
           >
-            <motion.img
-              src={SHOWCASE_IMAGE}
-              alt={brand.restaurantName ?? 'Restaurant interior'}
-              loading="lazy"
-              decoding="async"
-              onError={handleImageError('showcase')}
+            {/* Parallax + Ken-Burns applied to the outer motion.div; the
+             * rotator handles the cross-fade between slides. Combined effect:
+             * image drifts on scroll AND cycles every ~6s. */}
+            <motion.div
               style={{ y: imageY, scale: imageScale }}
-              className="absolute inset-0 w-full h-[115%] object-cover"
-            />
+              className="absolute inset-0 w-full h-[115%]"
+            >
+              <ImageRotator
+                images={SHOWCASE_IMAGES}
+                interval={6000}
+                kind="showcase"
+                alt={brand.restaurantName ?? 'Restaurant interior'}
+              />
+            </motion.div>
             {/* Warm cream corner accent — signature editorial cue */}
             <div
               aria-hidden="true"
-              className="absolute inset-0 bg-gradient-to-tr from-black/40 via-transparent to-transparent"
+              className="absolute inset-0 bg-gradient-to-tr from-black/40 via-transparent to-transparent pointer-events-none"
             />
             <div
               aria-hidden="true"
@@ -217,7 +228,7 @@ export default function BrandStoryShowcase() {
                   }}
                   whileHover={reduce ? undefined : { y: -4 }}
                   transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-                  className="group relative p-4 sm:p-5 rounded-2xl bg-[var(--c-bg-elev,rgba(255,253,247,0.06))] border border-[var(--c-border)] hover:border-[var(--c-accent,#C9A96E)] transition-colors overflow-hidden"
+                  className="c-brand-highlight group relative p-4 sm:p-5 rounded-2xl bg-[var(--c-bg-elev,rgba(255,253,247,0.06))] border border-[var(--c-border)] hover:border-[var(--c-accent,#C9A96E)] transition-colors overflow-hidden"
                   style={{
                     // Subtle inner sheen — reads as premium in both themes.
                     boxShadow:

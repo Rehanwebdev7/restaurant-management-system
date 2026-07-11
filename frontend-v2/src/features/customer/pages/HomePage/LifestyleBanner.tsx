@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
 import { handleImageError } from '@/features/customer/image-fallback'
+import ImageRotator from '@/features/customer/pages/HomePage/ImageRotator'
 
 /**
  * LifestyleBanner — full-bleed cinematic separator with slow Ken Burns
@@ -13,22 +14,33 @@ import { handleImageError } from '@/features/customer/image-fallback'
 
 interface Props {
   image?: string
+  images?: string[]
   eyebrow?: string
   quote?: string
   attribution?: string
   height?: 'md' | 'lg' | 'xl'
 }
 
-const DEFAULT_IMAGE =
-  'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1800&q=80'
+const DEFAULT_IMAGES = [
+  'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1800&q=80',
+  'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1800&q=80',
+  'https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=1800&q=80',
+]
 
 export default function LifestyleBanner({
-  image = DEFAULT_IMAGE,
+  image,
+  images,
   eyebrow = 'THE ART OF HOSPITALITY',
   quote = 'Great food is memory in the making — cooked with intention, served with warmth, and shared without hurry.',
   attribution = 'Our Kitchen Philosophy',
   height = 'lg',
 }: Props) {
+  // Precedence: explicit `images` array > single `image` prop > defaults set.
+  const activeImages = images && images.length > 0
+    ? images
+    : image
+      ? [image]
+      : DEFAULT_IMAGES
   const reduce = useReducedMotion()
   const sectionRef = useRef<HTMLElement | null>(null)
 
@@ -57,21 +69,37 @@ export default function LifestyleBanner({
       <motion.div
         aria-hidden="true"
         className="absolute inset-0"
-        style={{ y, scale }}
+        style={{
+          y,
+          scale,
+          filter: 'blur(4px) brightness(0.85)',
+          WebkitFilter: 'blur(4px) brightness(0.85)',
+        }}
       >
-        <img
-          src={image}
-          alt=""
-          loading="lazy"
-          decoding="async"
-          onError={handleImageError('ambience')}
-          className="w-full h-full object-cover"
-        />
+        {activeImages.length > 1 ? (
+          <ImageRotator
+            images={activeImages}
+            interval={7000}
+            kind="ambience"
+            alt=""
+            showDots={false}
+          />
+        ) : (
+          <img
+            src={activeImages[0]}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            onError={handleImageError('ambience')}
+            className="w-full h-full object-cover"
+          />
+        )}
       </motion.div>
-      {/* Editorial overlay — softer than a hero, still legible */}
+      {/* Editorial overlay — darker so the blurred image reads as textured
+       * atmosphere and the quote text pops. */}
       <div
         aria-hidden="true"
-        className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/30 to-black/60"
+        className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/45 to-black/70"
       />
 
       <div className="relative z-[1] h-full flex items-center justify-center px-6 sm:px-12 lg:px-24 text-center text-white">

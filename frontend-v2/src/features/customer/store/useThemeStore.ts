@@ -12,11 +12,12 @@ interface ThemeState {
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set) => ({
-      // First-visit default is LIGHT — SaaS restaurant sites read as brighter,
-      // more editorial (Sweetgreen / Cava vibe). Users who toggled to dark
-      // are honoured by the persist middleware — only fresh sessions with no
-      // saved preference land on light.
-      mode: 'light',
+      // DARK default (2026-07-10 v5, final). Every card was built dark-first
+      // (ChefSignatures, BrandStory highlight tiles, SignatureExperience, etc.)
+      // and the tenant category is fine-dining / steakhouse — labrochette /
+      // Ruth's Chris / Nobu are all dark. Light-mode overrides removed; if a
+      // fast-casual tenant ships later, revive the toggle then.
+      mode: 'dark',
       toggle: () =>
         set((state) => ({
           mode: state.mode === 'dark' ? 'light' : 'dark',
@@ -28,7 +29,7 @@ export const useThemeStore = create<ThemeState>()(
       // (defaulted to 'dark' before the bright-first UX shift) are invalidated.
       // Users see the new bright default on next visit; anyone who wants dark
       // can toggle again and their choice persists on the new v2 key.
-      name: 'customer_theme_mode_v2',
+      name: 'customer_theme_mode_v5',
     }
   )
 )

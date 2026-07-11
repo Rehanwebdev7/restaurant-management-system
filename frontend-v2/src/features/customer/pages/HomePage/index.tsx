@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
 import {
-  Star, ChevronRight, Award, ChefHat, Leaf,
+  Star, Award, ChefHat, Leaf,
   Calendar, Camera, ShoppingBag, Clock, ChevronDown
 } from 'lucide-react'
 import { DateField } from '@/components/ui/date-field'
@@ -20,9 +20,8 @@ import {
 } from '@/features/customer/catalog'
 import { useCustomerSliders } from '@/api/queries/customer'
 import { submitPublicReservation } from '@/api/services/customer'
-import DishCardRound, { DishCardRoundGridSkeleton } from '@/features/customer/DishCardRound'
-import CategoryChainSection from '@/features/customer/pages/HomePage/CategoryChainSection'
 import GallerySlider from '@/features/customer/pages/HomePage/GallerySlider'
+import ChefSignatures from '@/features/customer/pages/HomePage/ChefSignatures'
 import ChefStorySection from '@/features/customer/pages/HomePage/ChefStorySection'
 import AwardsTimeline from '@/features/customer/pages/HomePage/AwardsTimeline'
 import PressMarquee from '@/features/customer/pages/HomePage/PressMarquee'
@@ -45,55 +44,11 @@ export function HomePage() {
   const { branchId } = useSelectedBranchId()
   const slidersQ = useCustomerSliders(branchId)
   const mounted = useMounted(200)
-
-  const [selectedCat, setSelectedCat] = useState<string | null>(null)
-
-  // Build orbit items from REAL backend categories when the tenant has them
-  // (SaaS-safe — no hardcoded "Starters/Mains/Breads" leaking across
-  // restaurants). Falls through to the default hardcoded list inside
-  // CategoryChainSection when the categories query is still empty (demo/offline).
-  // Each item carries:
-  //  • id = String(categoryId) so the local `selectedCat` state stays a
-  //    plain string that matches both real and legacy code paths
-  //  • img = first-dish thumbnail in that category (client-side pick) with
-  //    the tenant's category icon as fallback
-  //  • itemCount = count of dishes belonging to the category
-  //  • description = category.description straight from backend
-  const orbitItems = useMemo(() => {
-    if (!catalog.categories || catalog.categories.length === 0) return undefined
-    const sorted = [...catalog.categories].sort(
-      (a, b) => (a.priority ?? 0) - (b.priority ?? 0),
-    )
-    return [
-      { id: null as string | null, label: 'ALL', itemCount: catalog.dishes.length },
-      ...sorted.map((c) => {
-        const inCategory = catalog.dishes.filter((d) => d.categoryId === c.id)
-        const firstImage = inCategory.find((d) => d.img && !d.img.includes('unsplash'))?.img
-          ?? inCategory[0]?.img
-        return {
-          id: String(c.id),
-          label: c.name,
-          img: firstImage ?? c.imageUrl ?? undefined,
-          description: c.description ?? undefined,
-          itemCount: inCategory.length,
-        }
-      }),
-    ]
-  }, [catalog.categories, catalog.dishes])
-
-  // Filter featured dishes by selected category. When backend categories drive
-  // the orbit, `selectedCat` is a stringified backend category id — match on
-  // `dish.categoryId`. When the legacy slug-based orbit is active (demo mode),
-  // fall back to matching `dish.category` slug. Both paths safely handle "ALL".
-  const featuredDishes = useMemo(() => {
-    const list = catalog.dishes
-    if (!selectedCat) return list.slice(0, 8)
-    const asId = Number(selectedCat)
-    if (Number.isFinite(asId) && asId > 0) {
-      return list.filter((d) => d.categoryId === asId).slice(0, 8)
-    }
-    return list.filter((d) => d.category === selectedCat).slice(0, 8)
-  }, [catalog.dishes, selectedCat])
+  // Silence "unused var" — some downstream sections still gate on `catalog`
+  // via useCustomerCatalog() calls internally; the ref here is only for
+  // consistency with prior code and future additions.
+  void catalog
+  void mounted
 
   const heroImages = useMemo(
     () => (slidersQ.data && slidersQ.data.length > 0 ? slidersQ.data.map((s) => s.imageUrl) : []),
@@ -110,7 +65,8 @@ export function HomePage() {
         description="Reserve a table or order online from Spice Garden — chef-crafted Indian cuisine, signature kebabs, butter chicken, and more. Three branches across Mumbai."
       />
 
-      {/* Premium Hero Rotator Reveal — with bottom wavy curve into beige section */}
+      {/* Premium Hero Rotator Reveal — image cycling only (video removed
+       * per user feedback). Backend sliders take precedence via heroImages. */}
       <HeroSection
         bg={HERO_IMAGES.home}
         subtitle="FRESH & DELICIOUS MEALS"
@@ -126,128 +82,11 @@ export function HomePage() {
         withCurve
       />
 
-      {/* Unified cream section — SVG dome bleeds up into the hero, then a
-       * flat body holds:
-       *  1. Floating category orbit (nodes ride the SVG dome via CSS var)
-       *  2. "CHEF'S SPECIALS" + "Explore by Category" heading
-       *  3. Popular Dishes grid with staggered right-to-left entrance */}
-      <section className="cream-section">
-        {/* Smooth dome — cubic bezier ensures zero corner artifacts.
-         * `preserveAspectRatio="none"` stretches to viewport width. */}
-        <svg
-          className="cream-dome"
-          viewBox="0 0 1440 200"
-          preserveAspectRatio="none"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-hidden="true"
-        >
-          <path d="M0,200 L0,120 C 480,-40 960,-40 1440,120 L1440,200 Z" />
-        </svg>
-
-        <ScrollReveal>
-          <CategoryChainSection
-            selected={selectedCat}
-            onSelect={(id) => setSelectedCat(id)}
-            items={orbitItems}
-          />
-        </ScrollReveal>
-
-        <div className="dish-grid-header">
-          <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, margin: '-60px' }}
-            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="subtitle"
-          >
-            CHEF'S SIGNATURE
-          </motion.p>
-          <div className="c-divider" />
-          <motion.h2
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, margin: '-60px' }}
-            transition={{ duration: 0.6, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
-            className="display text-3xl sm:text-4xl lg:text-5xl"
-          >
-            Popular <span>Dishes</span>
-          </motion.h2>
-          {/* Editorial intro — makes the grid feel curated instead of a raw list.
-           * Item count is client-computed from the actual catalog so tenants
-           * with 4 dishes read as 4 dishes, not a hardcoded number. */}
-          <motion.p
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, margin: '-60px' }}
-            transition={{ duration: 0.6, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="mt-4 max-w-2xl mx-auto text-center text-[13px] sm:text-sm text-[var(--c-cream-text-soft,#6B5B45)] leading-relaxed"
-          >
-            {catalog.dishes.length > 0 ? (
-              <>
-                {catalog.dishes.length} dishes hand-picked by our Chef — {catalog.dishes.filter((d) => d.signature).length > 0
-                  ? `${catalog.dishes.filter((d) => d.signature).length} Chef's Picks selected daily`
-                  : 'refreshed with every season'}. Each plate reflects hospitality, craft, and the ingredients we source with intention.
-              </>
-            ) : (
-              <>Our Chef's curated selections — an editorial approach to the plates we love most, refreshed with each season.</>
-            )}
-          </motion.p>
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-4">
-          {!mounted ? (
-            <DishCardRoundGridSkeleton count={8} />
-          ) : featuredDishes.length === 0 ? (
-            <p className="text-center text-[var(--c-cream-text-soft)] py-12">No dishes match this category. Try exploring the menu!</p>
-          ) : (
-            <>
-              <motion.ul
-                layout
-                className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6"
-              >
-                <AnimatePresence mode="popLayout">
-                  {featuredDishes.map((d, i) => {
-                    // Stagger cards in each row for a smooth, premium entrance animation as the user scrolls.
-                    const delay = (i % 4) * 0.08
-                    return (
-                      <motion.li
-                        layout
-                        initial={{ opacity: 0, y: 40, scale: 0.94 }}
-                        whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                        viewport={{ once: false, margin: '-40px' }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{
-                          duration: 0.6,
-                          delay,
-                          ease: [0.16, 1, 0.3, 1],
-                        }}
-                        key={d.id}
-                        className="list-none w-full"
-                      >
-                        <DishCardRound dish={d} />
-                      </motion.li>
-                    )
-                  })}
-                </AnimatePresence>
-              </motion.ul>
-
-              <div className="mt-10 flex flex-col items-center gap-3">
-                <button
-                  className="inline-flex items-center gap-2 px-8 py-3 rounded-full font-extrabold text-[11px] tracking-[0.18em] uppercase text-white cursor-pointer transition-all"
-                  style={{
-                    background: 'var(--c-teal)',
-                    boxShadow: '0 10px 24px var(--c-teal-glow)',
-                  }}
-                  onClick={() => navigate('/menu')}
-                >
-                  EXPLORE FULL MENU
-                  <ChevronRight className="size-4" />
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-      </section>
+      {/* Chef's Signatures — replaces the cream section + CategoryChain orbit
+       * + full Popular Dishes grid (2026-07-10, per user request).
+       * Real backend `isRecommended` items with editorial 4-card layout +
+       * "Explore The Full Menu" CTA. Full menu still lives on /menu. */}
+      <ChefSignatures />
 
       {/* Auto-scrolling gallery strip — horizontal linked to vertical page scroll */}
       <ScrollReveal><GallerySlider /></ScrollReveal>

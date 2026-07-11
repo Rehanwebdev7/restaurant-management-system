@@ -116,6 +116,10 @@
   overflow-x: clip;
 }
 
+/* Light-mode contrast overrides removed 2026-07-10 (v5) — see
+ * `customer-shell.customer-shell--light` base tokens at line ~377
+ * for the token skeleton if a future fast-casual tenant wants light. */
+
 /* Page-wide ambient background — subtle warm gradient + noise texture.
  * Rendered as a fixed pseudo layer BEHIND all content (z-index -1) so the
  * whole customer surface reads as intentional, editorial, and premium
@@ -149,6 +153,112 @@
 .customer-shell > * {
   position: relative;
   z-index: 1;
+}
+
+/* ============================================================
+ * SaaS 3-color rhythm — tinted alternate section (2026-07-11)
+ * Uses the tenant-picked --c-primary-rgb so the alt-section background
+ * adapts to each restaurant's brand color (blue tenant → blue tint,
+ * green → green tint, etc.). No hardcoded cream anywhere.
+ * ============================================================ */
+.customer-shell .c-section-tinted {
+  position: relative;
+  /* Higher opacity so the color break is actually visible on the near-black
+   * base (0.055 was invisible). Now reads as a clear tenant-tinted band. */
+  background:
+    linear-gradient(
+      180deg,
+      rgba(var(--c-primary-rgb), 0.14) 0%,
+      rgba(var(--c-primary-rgb), 0.22) 50%,
+      rgba(var(--c-primary-rgb), 0.14) 100%
+    );
+}
+
+/* Prominent primary hairline at top + bottom — signals a "chapter break"
+ * so the tinted band reads as intentional editorial, not accidental. */
+.customer-shell .c-section-tinted::before,
+.customer-shell .c-section-tinted::after {
+  content: '';
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(var(--c-primary-rgb), 0.85),
+    transparent
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+.customer-shell .c-section-tinted::before {
+  top: 0;
+}
+.customer-shell .c-section-tinted::after {
+  bottom: 0;
+}
+
+/* Tinted section subtitle/eyebrow — slightly brighter so it reads clean
+ * against the tinted band. */
+.customer-shell .c-section-tinted .subtitle {
+  color: var(--c-primary);
+  opacity: 1;
+}
+
+/* ============================================================
+ * Header — right-icon polish (2026-07-11)
+ * Spring hover ring + gold text + subtle shadow so the icon row
+ * feels premium instead of raw utility buttons.
+ * ============================================================ */
+.customer-shell .c-header-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--c-text);
+  border: 1px solid transparent;
+  transition:
+    background 240ms cubic-bezier(0.16, 1, 0.3, 1),
+    color 240ms,
+    border-color 240ms,
+    transform 240ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 240ms;
+  will-change: transform;
+}
+
+.customer-shell .c-header-icon:hover {
+  background: rgba(201, 169, 110, 0.10);
+  border-color: rgba(201, 169, 110, 0.35);
+  color: var(--c-accent, #C9A96E);
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 14px rgba(201, 169, 110, 0.14),
+    0 2px 4px rgba(0, 0, 0, 0.20);
+}
+
+.customer-shell .c-header-icon:active {
+  transform: translateY(-1px) scale(0.96);
+}
+
+/* Header nav link tuning — slightly bolder + tighter tracking so the
+ * top nav reads as editorial magazine kicker rather than utility bar. */
+.customer-shell .c-header nav a {
+  font-weight: 700;
+  letter-spacing: 0.22em !important;
+}
+
+/* Brand block letter-spacing refinement — displays stay elegant. */
+.customer-shell .c-header .display.logo-compact {
+  letter-spacing: 0.01em;
+}
+.customer-shell .c-header .subtitle {
+  letter-spacing: 0.34em;
 }
 
 /* ============================================================
@@ -325,15 +435,19 @@
 /* Light mode — preserves dynamic accent, swaps background to warm ivory.
  * Activate by adding `customer-shell--light` to `.customer-shell`. */
 .customer-shell.customer-shell--light {
-  --c-bg: #FFFFFF;
-  --c-bg-elev: #F8F5EF;
-  --c-bg-elev-2: #EFE8DA;
-  --c-text: #1A1A1A;
-  --c-text-soft: #444444;
-  --c-text-muted: #777777;
-  --c-border: rgba(var(--c-primary-rgb), 0.45);
-  --c-border-strong: var(--c-primary);
-  --c-header-bg: rgba(255, 255, 255, 0.92);
+  /* Warm editorial cream — Sweetgreen/Cava/Toast tier. Not white
+   * (clinical), not beige (dated) — a warm ivory with just enough
+   * pigment to feel intentional. */
+  --c-bg: #F8F1E0;
+  --c-bg-elev: #FFFAEE;
+  --c-bg-elev-2: #F1E7CD;
+  /* Espresso-brown text — reads warmer + more editorial than black */
+  --c-text: #2A1A0D;
+  --c-text-soft: #6B4E32;
+  --c-text-muted: #9C7F5C;
+  --c-border: rgba(74, 47, 24, 0.15);
+  --c-border-strong: rgba(74, 47, 24, 0.35);
+  --c-header-bg: rgba(248, 241, 224, 0.92);
   /* Warm brown-toned hero vignette — food image glows through, top mostly
    * clear, bottom fades toward the cream body so the hero feels connected
    * to the page instead of a hard boundary. Editorial (Sweetgreen / Cava)
@@ -618,6 +732,11 @@
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg, var(--c-hero-overlay-from) 0%, var(--c-hero-overlay-mid) 80%, var(--c-hero-overlay-to) 100%);
+  /* Soft backdrop blur behind the hero content so the title reads crisper
+   * against busy food photography. Kept subtle so the image still feels
+   * present, not fogged. */
+  backdrop-filter: blur(2.5px);
+  -webkit-backdrop-filter: blur(2.5px);
 }
 
 .customer-shell .hero-bg>* {
@@ -1241,6 +1360,217 @@
   }
 }
 
+/* ============================================================
+ * Hero steam — subtle "hot food just plated" effect (2026-07-11)
+ * Four wisps rise from the bottom-center of the hero with staggered
+ * delays and slight lateral drift. Kept low opacity + heavy blur so it
+ * reads as ambient atmosphere, not a smoke machine.
+ * ============================================================ */
+.customer-shell .hero-steam {
+  position: absolute;
+  bottom: 8%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(280px, 40vw);
+  height: 60%;
+  pointer-events: none;
+  z-index: 1;
+  overflow: visible;
+}
+
+.customer-shell .hero-steam__wisp {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 90px;
+  height: 90px;
+  border-radius: 999px;
+  background: radial-gradient(
+    circle at 50% 55%,
+    rgba(255, 255, 255, 0.35) 0%,
+    rgba(255, 255, 255, 0.10) 45%,
+    transparent 75%
+  );
+  filter: blur(18px);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: hero-steam-rise 7s cubic-bezier(0.4, 0, 0.35, 1) infinite;
+}
+
+.customer-shell .hero-steam__wisp--1 {
+  animation-delay: 0s;
+  transform-origin: center bottom;
+}
+.customer-shell .hero-steam__wisp--2 {
+  left: 38%;
+  width: 70px;
+  height: 70px;
+  animation-delay: 1.7s;
+  animation-duration: 8.2s;
+}
+.customer-shell .hero-steam__wisp--3 {
+  left: 62%;
+  width: 80px;
+  height: 80px;
+  animation-delay: 3.4s;
+  animation-duration: 6.6s;
+}
+.customer-shell .hero-steam__wisp--4 {
+  left: 46%;
+  width: 60px;
+  height: 60px;
+  animation-delay: 5.1s;
+  animation-duration: 7.4s;
+}
+
+@keyframes hero-steam-rise {
+  0% {
+    transform: translate(-50%, 20%) scale(0.5);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.55;
+  }
+  50% {
+    transform: translate(-42%, -60%) scale(1.15);
+    opacity: 0.45;
+  }
+  80% {
+    opacity: 0.15;
+  }
+  100% {
+    transform: translate(-58%, -140%) scale(1.6);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .customer-shell .hero-steam {
+    display: none;
+  }
+}
+
+/* ============================================================
+ * Dish card steam — small wisps rising from the top of a Mains
+ * dish card image. Smaller + faster than hero steam so it reads
+ * as delicate atmosphere per plate.
+ * ============================================================ */
+.customer-shell .c-dish-steam {
+  position: absolute;
+  top: 8%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(120px, 60%);
+  height: 46%;
+  pointer-events: none;
+  z-index: 2;
+  overflow: visible;
+}
+
+.customer-shell .c-dish-steam__wisp {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: radial-gradient(
+    circle at 50% 55%,
+    rgba(255, 255, 255, 0.28) 0%,
+    rgba(255, 255, 255, 0.09) 45%,
+    transparent 78%
+  );
+  filter: blur(9px);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: c-dish-steam-rise 5s cubic-bezier(0.4, 0, 0.35, 1) infinite;
+}
+
+.customer-shell .c-dish-steam__wisp--1 { animation-delay: 0s; }
+.customer-shell .c-dish-steam__wisp--2 {
+  left: 40%;
+  width: 26px;
+  height: 26px;
+  animation-delay: 1.3s;
+  animation-duration: 5.6s;
+}
+.customer-shell .c-dish-steam__wisp--3 {
+  left: 60%;
+  width: 30px;
+  height: 30px;
+  animation-delay: 2.6s;
+  animation-duration: 4.8s;
+}
+
+@keyframes c-dish-steam-rise {
+  0% {
+    transform: translate(-50%, 30%) scale(0.4);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.55;
+  }
+  55% {
+    transform: translate(-42%, -70%) scale(1.05);
+    opacity: 0.35;
+  }
+  85% {
+    opacity: 0.10;
+  }
+  100% {
+    transform: translate(-58%, -140%) scale(1.4);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .customer-shell .c-dish-steam {
+    display: none;
+  }
+}
+
+/* ============================================================
+ * Card shimmer sweep — thin gold band traces left→right across the
+ * card edge on hover. Reads as premium tactile hook (Apple/Stripe).
+ * ============================================================ */
+.customer-shell .c-signature-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 3;
+  background: linear-gradient(
+    115deg,
+    transparent 20%,
+    rgba(201, 169, 110, 0.42) 48%,
+    rgba(201, 169, 110, 0.14) 52%,
+    transparent 80%
+  );
+  opacity: 0;
+  transform: translateX(-100%);
+  transition: opacity 220ms;
+}
+
+.customer-shell .c-signature-card:hover::before {
+  animation: c-card-shimmer 1.3s cubic-bezier(0.16, 1, 0.3, 1);
+  opacity: 1;
+}
+
+@keyframes c-card-shimmer {
+  0% { transform: translateX(-100%); opacity: 0; }
+  30% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .customer-shell .c-signature-card:hover::before {
+    animation: none;
+    opacity: 0;
+  }
+}
+
 /* Primary CTA magnetic transform — smooth spring back on leave */
 .customer-shell .hero-bg .c-button-primary,
 .customer-shell .hero-bg .c-button-outline {
@@ -1441,12 +1771,14 @@
 }
 .customer-shell .orbit-node {
   flex-shrink: 0;
-  width: clamp(60px, 7.5vw, 76px);
-  height: clamp(60px, 7.5vw, 76px);
+  /* Enlarged 2026-07-10 — was 60-76px, now 84-104px (~35% bigger) so the
+   * chips feel like proper category tiles instead of tiny bubbles. */
+  width: clamp(84px, 9.5vw, 104px);
+  height: clamp(84px, 9.5vw, 104px);
   border-radius: 999px;
   background: #FFFFFF;
   border: 2px solid #FFFFFF;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18), 0 3px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35), 0 3px 6px rgba(0, 0, 0, 0.15);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1457,12 +1789,41 @@
   overflow: hidden;
 }
 .customer-shell .orbit-node:hover {
-  transform: translateY(-6px) scale(1.04);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.28), 0 6px 12px rgba(0, 0, 0, 0.14);
+  /* Bigger lift + slight rotate + gold glow → more tactile hover */
+  transform: translateY(-8px) scale(1.08) rotate(3deg);
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.42),
+    0 8px 16px rgba(0, 0, 0, 0.20),
+    0 0 0 6px rgba(201, 169, 110, 0.14);
 }
 .customer-shell .orbit-node--active {
   border-color: var(--c-teal);
-  box-shadow: 0 0 0 4px var(--c-teal-soft), 0 18px 36px var(--c-teal-glow);
+  box-shadow:
+    0 0 0 5px var(--c-teal-soft),
+    0 0 0 10px rgba(47, 184, 176, 0.10),
+    0 22px 44px var(--c-teal-glow);
+  animation: orbit-pulse 2.6s ease-in-out infinite;
+}
+
+@keyframes orbit-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 5px var(--c-teal-soft),
+      0 0 0 10px rgba(47, 184, 176, 0.10),
+      0 22px 44px var(--c-teal-glow);
+  }
+  50% {
+    box-shadow:
+      0 0 0 8px var(--c-teal-soft),
+      0 0 0 16px rgba(47, 184, 176, 0.06),
+      0 22px 44px var(--c-teal-glow);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .customer-shell .orbit-node--active {
+    animation: none;
+  }
 }
 .customer-shell .orbit-node img {
   width: 100%;
@@ -1511,12 +1872,14 @@
 .customer-shell .orbit-label {
   display: block;
   text-align: center;
-  font-size: 9px;
+  /* Enlarged + brighter 2026-07-10 — was 9px cream, now 11px with white/85
+   * so labels are actually readable under the dark menu background. */
+  font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.20em;
   text-transform: uppercase;
-  color: var(--c-cream-text);
-  margin-top: 8px;
+  color: rgba(255, 255, 255, 0.88);
+  margin-top: 12px;
   line-height: 1;
 }
 .customer-shell .orbit-node-wrap {
@@ -1569,19 +1932,25 @@
  * dimensions preserved from v3 (~260px min-height, 26px radius). */
 .customer-shell .dish-card-round {
   position: relative;
-  background: linear-gradient(180deg, #FFE9D6 0%, #FCDCC1 100%);
+  /* Dark card to match HomePage — cream tones swapped 2026-07-10 for
+   * brand consistency (menu was reading like a bakery on cream). */
+  background: linear-gradient(180deg, rgba(30, 26, 22, 0.85) 0%, rgba(20, 17, 14, 0.92) 100%);
   border-radius: 26px;
   padding: 1.15rem 1.15rem 1.15rem;
   min-height: 260px;
-  box-shadow: 0 10px 26px rgba(89, 60, 22, 0.10), 0 2px 6px rgba(89, 60, 22, 0.05);
-  transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 320ms;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35), 0 3px 8px rgba(0, 0, 0, 0.22);
+  transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 320ms, border-color 320ms;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   cursor: pointer;
   overflow: visible;
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(201, 169, 110, 0.14);
   margin-top: 26px;
+}
+.customer-shell .dish-card-round:hover {
+  border-color: rgba(201, 169, 110, 0.45);
+  box-shadow: 0 20px 46px rgba(0, 0, 0, 0.45), 0 6px 14px rgba(201, 169, 110, 0.12);
 }
 .customer-shell .dish-card-round:hover {
   transform: translateY(-8px);
@@ -1633,7 +2002,7 @@
 .customer-shell .dish-card-round-name {
   font-size: 0.98rem;
   font-weight: 800;
-  color: var(--c-cream-text);
+  color: var(--c-text);
   line-height: 1.2;
   letter-spacing: 0.005em;
   display: inline-flex;
@@ -1675,7 +2044,8 @@
   font-family: var(--c-font-serif, 'Cormorant Garamond'), serif;
   font-size: clamp(1.55rem, 2.3vw, 1.85rem);
   font-weight: 700;
-  color: var(--c-teal-deep);
+  /* Gold price on dark card — matches ChefSignatures on home. */
+  color: var(--c-accent, #C9A96E);
   line-height: 1;
   margin-top: 0.15rem;
 }
@@ -1900,7 +2270,7 @@
 .customer-shell .dish-card-round-skel-line--rating { width: 30%; }
 .customer-shell .dish-card-round-desc {
   font-size: 0.74rem;
-  color: var(--c-cream-text-soft);
+  color: var(--c-text-soft);
   line-height: 1.35;
   margin-top: 0.2rem;
   display: -webkit-box;
@@ -2420,8 +2790,10 @@
   transition:
     grid-template-rows 0.42s cubic-bezier(0.16, 1, 0.3, 1),
     box-shadow 0.35s ease;
-  background: var(--c-cream);
-  box-shadow: 0 10px 14px -6px rgba(0, 0, 0, 0.12);
+  /* Dark base to match HomePage — cream section removed 2026-07-10 so the
+   * menu reads as the same brand instead of switching mid-scroll. */
+  background: var(--c-bg);
+  box-shadow: 0 10px 14px -6px rgba(0, 0, 0, 0.35);
   position: relative;
 }
 
@@ -2502,8 +2874,8 @@
  * Shutter is now in-flow so no padding-top compensation is needed — just a
  * tight visual gap between the bottom cream curve and the first card row. */
 .customer-shell .menu-products-section {
-  background: var(--c-cream);
-  color: var(--c-cream-text);
+  background: var(--c-bg);
+  color: var(--c-text);
   position: relative;
   z-index: 2;
   padding-top: clamp(12px, 1.2vw, 20px);
@@ -2522,7 +2894,7 @@
   margin-top: -1px; /* Kills any hairline gap between orbit band and bottom curve */
 }
 .customer-shell .menu-sticky-bottom-svg path {
-  fill: var(--c-cream);
+  fill: var(--c-bg);
 }
 
 /* Downward pill trigger button (desktop only) */

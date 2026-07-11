@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { UtensilsCrossed, Bike, CalendarHeart, ArrowRight, Check } from 'lucide-react'
-import { handleImageError } from '@/features/customer/image-fallback'
+import ImageRotator from '@/features/customer/pages/HomePage/ImageRotator'
 import { cn } from '@/lib/utils'
 
 /**
@@ -21,7 +21,7 @@ interface Experience {
   description: string
   cta: string
   route: string
-  image: string
+  images: string[]
   Icon: typeof UtensilsCrossed
   features: string[]
 }
@@ -34,8 +34,11 @@ const EXPERIENCES: Experience[] = [
       'Warm interiors, considered lighting, and plates prepared à la minute — an evening built for lingering.',
     cta: 'Explore The Room',
     route: '/gallery',
-    image:
+    images: [
       'https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=1400&q=80',
+      'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1400&q=80',
+      'https://images.unsplash.com/photo-1544148103-0773bf10d330?auto=format&fit=crop&w=1400&q=80',
+    ],
     Icon: UtensilsCrossed,
     features: ['Candle-lit tables', 'Private booths for occasions', 'Chef specials refreshed daily'],
   },
@@ -46,8 +49,11 @@ const EXPERIENCES: Experience[] = [
       'The same kitchen craft, packed with care and dispatched fresh. Order in a few taps, track it in real time.',
     cta: 'Browse The Menu',
     route: '/menu',
-    image:
+    images: [
       'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1400&q=80',
+      'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1400&q=80',
+      'https://images.unsplash.com/photo-1567620832903-9fc6debc209f?auto=format&fit=crop&w=1400&q=80',
+    ],
     Icon: Bike,
     features: ['Kitchen-fresh, packed hot', 'Live order tracking', 'Sealed for hygiene'],
   },
@@ -58,8 +64,11 @@ const EXPERIENCES: Experience[] = [
       'Whether it is a quiet dinner for two or a table of ten, our team will hold the room for you.',
     cta: 'Book Now',
     route: '/contact',
-    image:
+    images: [
       'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1400&q=80',
+      'https://images.unsplash.com/photo-1592861956120-e524fc739696?auto=format&fit=crop&w=1400&q=80',
+      'https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=1400&q=80',
+    ],
     Icon: CalendarHeart,
     features: ['Priority seating', 'Custom occasions & set menus', 'Complimentary bread service'],
   },
@@ -134,26 +143,24 @@ export default function SignatureExperience() {
                   whileHover={reduce ? undefined : { scale: 1.02 }}
                   transition={{ type: 'spring', stiffness: 260, damping: 22 }}
                   className="relative w-full h-full rounded-[2rem] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.45)] border border-white/10"
+                  style={{ filter: 'brightness(1.02) contrast(1.02)' }}
                 >
-                  <img
-                    src={exp.image}
+                  <ImageRotator
+                    images={exp.images}
+                    interval={6000}
+                    kind="ambience"
                     alt={exp.title}
-                    loading="lazy"
-                    decoding="async"
-                    onError={handleImageError('ambience')}
-                    className="w-full h-full object-cover transition-transform duration-[900ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-105"
-                    style={{ filter: 'brightness(1.02) contrast(1.02)' }}
                   />
                   {/* Faint corner label — subtle, doesn't cover the photo */}
                   <div
                     aria-hidden="true"
-                    className="absolute inset-0 pointer-events-none"
+                    className="absolute inset-0 pointer-events-none z-[2]"
                     style={{
                       background:
                         'linear-gradient(180deg, transparent 55%, rgba(0,0,0,0.55) 100%)',
                     }}
                   />
-                  <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 inline-flex items-center gap-2 rounded-full px-3 py-1.5 bg-black/50 backdrop-blur-md border border-white/15 text-white text-[10px] font-extrabold uppercase tracking-[0.24em]">
+                  <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 inline-flex items-center gap-2 rounded-full px-3 py-1.5 bg-black/50 backdrop-blur-md border border-white/15 text-white text-[10px] font-extrabold uppercase tracking-[0.24em] z-[3]">
                     <exp.Icon className="size-3.5" aria-hidden="true" />
                     <span>{exp.eyebrow}</span>
                   </div>

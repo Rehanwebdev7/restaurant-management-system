@@ -1,14 +1,17 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   MapPin, Phone, Mail, Clock, Calendar, ChefHat, Leaf,
-  Loader2, Soup, Plus, Minus, ChevronRight, FileText,
-  ShieldCheck, RotateCcw, Users
+  Loader2, Soup, Plus, Minus, ChevronRight, ChevronLeft, FileText,
+  ShieldCheck, RotateCcw, Users, X, ZoomIn
 } from 'lucide-react'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import CustomerLayout, { HeroSection } from '@/features/customer/CustomerLayout'
 import { toast } from '@/lib/toast'
 import { DocumentTitle } from '@/lib/seo/document-title'
 import { ScrollReveal } from '@/components/ui/scroll-reveal'
+import { useMouseTilt } from '@/hooks/use-mouse-tilt'
+import { handleImageError } from '@/features/customer/image-fallback'
 import {
   HERO_IMAGES, GALLERY, useCart, useCustomerCatalog,
   DISHES
@@ -425,9 +428,36 @@ export function WhyUsPage() {
 }
 
 /* ====================================================================== */
-/* 5. GALLERY PAGE                                                        */
+/* 5. GALLERY PAGE — lightbox + 3D tilt + editorial gallery-wall           */
 /* ====================================================================== */
 export function GalleryPage() {
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null)
+  const reduce = useReducedMotion()
+
+  const closeLightbox = useCallback(() => setLightboxIdx(null), [])
+  const nextImage = useCallback(() => {
+    setLightboxIdx((i) => (i == null ? null : (i + 1) % GALLERY.length))
+  }, [])
+  const prevImage = useCallback(() => {
+    setLightboxIdx((i) => (i == null ? null : (i - 1 + GALLERY.length) % GALLERY.length))
+  }, [])
+
+  useEffect(() => {
+    if (lightboxIdx == null) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeLightbox()
+      else if (e.key === 'ArrowRight') nextImage()
+      else if (e.key === 'ArrowLeft') prevImage()
+    }
+    window.addEventListener('keydown', onKey)
+    // Prevent body scroll while lightbox is open
+    document.body.style.overflow = 'hidden'
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      document.body.style.overflow = ''
+    }
+  }, [lightboxIdx, closeLightbox, nextImage, prevImage])
+
   return (
     <CustomerLayout>
       <DocumentTitle title="Gallery — Spice Garden Steakhouse" />
@@ -438,16 +468,184 @@ export function GalleryPage() {
         titleAccent="Gallery"
         description="Browse photos of our delicious dishes, beautiful dining area, and happy moments of our customers."
       />
-      <ScrollReveal as="section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        {/* Editorial gallery-wall grid — alternating aspect ratios (tall / wide
+         * / square) so the eye reads it as intentional composition rather
+         * than a uniform tile grid. */}
+        <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
           {GALLERY.map((src, i) => (
-            <ScrollReveal as="li" key={i} delay={i * 0.05} className="aspect-square overflow-hidden c-card group rounded-2xl">
-              <img src={src} alt={`Gallery Photo ${i + 1}`} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-            </ScrollReveal>
+            <GalleryTile
+              key={i}
+              src={src}
+              index={i}
+              onClick={() => setLightboxIdx(i)}
+              reduce={!!reduce}
+            />
           ))}
         </ul>
-      </ScrollReveal>
+      </section>
+
+      {/* Lightbox — full-screen dark backdrop with big image + prev/next arrows
+       * + close button + counter. Click-outside or ESC also closes. */}
+      <AnimatePresence>
+        {lightboxIdx != null ? (
+          <motion.div
+            key="lightbox"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-md"
+            onClick={closeLightbox}
+          >
+            {/* Close button — top-right */}
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); closeLightbox() }}
+              aria-label="Close"
+              className="absolute top-4 right-4 sm:top-6 sm:right-6 size-11 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white flex items-center justify-center transition-colors z-10"
+            >
+              <X className="size-5" />
+            </button>
+
+            {/* Counter — top-left */}
+            <div className="absolute top-4 left-4 sm:top-6 sm:left-6 text-white/85 text-[11px] font-bold uppercase tracking-[0.24em] z-10">
+              {String(lightboxIdx + 1).padStart(2, '0')}{' '}
+              <span className="opacity-60">/</span>{' '}
+              {String(GALLERY.length).padStart(2, '0')}
+            </div>
+
+            {/* Prev arrow */}
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); prevImage() }}
+              aria-label="Previous image"
+              className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 size-12 sm:size-14 rounded-full bg-white/10 hover:bg-[var(--c-accent,#C9A96E)] hover:text-black border border-white/20 text-white flex items-center justify-center transition-all hover:scale-110 z-10"
+            >
+              <ChevronLeft className="size-6" />
+            </button>
+            {/* Next arrow */}
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); nextImage() }}
+              aria-label="Next image"
+              className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 size-12 sm:size-14 rounded-full bg-white/10 hover:bg-[var(--c-accent,#C9A96E)] hover:text-black border border-white/20 text-white flex items-center justify-center transition-all hover:scale-110 z-10"
+            >
+              <ChevronRight className="size-6" />
+            </button>
+
+            {/* Big image — cross-fade between slides */}
+            <AnimatePresence mode="wait">
+              <motion.img
+                key={lightboxIdx}
+                src={GALLERY[lightboxIdx]}
+                alt={`Gallery photo ${lightboxIdx + 1}`}
+                onError={handleImageError('gallery')}
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.04 }}
+                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                onClick={(e) => e.stopPropagation()}
+                className="max-w-[92vw] max-h-[85vh] object-contain rounded-xl shadow-[0_30px_80px_rgba(0,0,0,0.6)]"
+              />
+            </AnimatePresence>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </CustomerLayout>
+  )
+}
+
+/**
+ * GalleryTile — inner card with its own useMouseTilt hook so each tile
+ * tracks the cursor independently. Alternating aspect ratios give the
+ * grid an editorial rhythm.
+ */
+function GalleryTile({
+  src,
+  index,
+  onClick,
+  reduce,
+}: {
+  src: string
+  index: number
+  onClick: () => void
+  reduce: boolean
+}) {
+  const tilt = useMouseTilt<HTMLLIElement>(8, 1.02)
+
+  // Editorial aspect rotation — mixes tall/wide/square in a repeatable pattern.
+  const aspect =
+    index % 4 === 0 ? 'aspect-[3/4]' :
+    index % 4 === 1 ? 'aspect-square' :
+    index % 4 === 2 ? 'aspect-[4/3]' :
+    'aspect-square'
+
+  return (
+    <motion.li
+      ref={tilt.ref}
+      initial={{ opacity: 0, y: 32, scale: 0.94 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: false, margin: '-60px' }}
+      transition={{
+        duration: 0.65,
+        delay: reduce ? 0 : index * 0.05,
+        ease: [0.16, 1, 0.3, 1],
+      }}
+      onMouseMove={tilt.onMouseMove}
+      onMouseLeave={tilt.onMouseLeave}
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() }
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label={`Open gallery photo ${index + 1}`}
+      className={`relative overflow-hidden rounded-2xl cursor-zoom-in group shadow-xl border border-white/5 hover:border-[var(--c-accent,#C9A96E)]/60 ${aspect}`}
+      style={{
+        perspective: '1200px',
+        transition: 'transform 250ms cubic-bezier(0.16,1,0.3,1), border-color 260ms',
+        transformStyle: 'preserve-3d',
+        willChange: 'transform',
+      }}
+    >
+      <img
+        src={src}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        onError={handleImageError('gallery')}
+        className="absolute inset-0 w-full h-full object-cover transition-transform duration-[900ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.10] group-hover:brightness-[1.05]"
+      />
+      {/* Bottom fade for hover indicator */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0"
+        style={{
+          background:
+            'linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(0,0,0,0.5) 92%, rgba(0,0,0,0.75) 100%)',
+        }}
+      />
+      {/* Gold corner glow on hover */}
+      <div
+        aria-hidden="true"
+        className="absolute -top-8 -right-8 size-24 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(circle, rgba(201,169,110,0.4) 0%, transparent 65%)',
+        }}
+      />
+      {/* Zoom icon — appears on hover, center of tile */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div
+          className="size-12 rounded-full flex items-center justify-center backdrop-blur-md border border-white/25 shadow-lg"
+          style={{ background: 'rgba(201, 169, 110, 0.28)' }}
+        >
+          <ZoomIn className="size-5 text-white" aria-hidden />
+        </div>
+      </div>
+    </motion.li>
   )
 }
 

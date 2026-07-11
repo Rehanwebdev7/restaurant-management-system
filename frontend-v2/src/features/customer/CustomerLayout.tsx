@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { tokens } from '@/lib/auth/tokens'
 import { useMagnetic } from '@/hooks/use-magnetic'
+import BrandSplash from '@/features/customer/pages/HomePage/BrandSplash'
 
 // Brand icons (Facebook/Instagram/Twitter removed in newer lucide-react).
 const Facebook = ({ className }: { className?: string }) => (
@@ -374,6 +375,9 @@ export default function CustomerLayout({ children, transparent = false }: Props)
 
   return (
     <div className={cn('customer-shell', theme.mode === 'light' && 'customer-shell--light')}>
+      {/* First-visit branded splash — session-flagged. Custom gold cursor
+       * removed per user feedback (native cursor keeps things stable). */}
+      <BrandSplash />
       <CustomerScrollProgress />
       {/* Per-tenant marquee — text + colors + speed come from
        * `CustBrandingController` (widened 2026-07-10). Hidden entirely when
@@ -519,7 +523,7 @@ export default function CustomerLayout({ children, transparent = false }: Props)
             </button>
 
             {/* Icon row */}
-            <button className="p-1.5 hover:text-[--c-accent] transition-colors" aria-label="Search" onClick={() => setShowSearch(true)}>
+            <button className="c-header-icon" aria-label="Search" onClick={() => setShowSearch(true)}>
               <Search className="size-[18px]" />
             </button>
             {/* Theme toggle removed 2026-07-10 — user asked for a single theme
@@ -528,7 +532,7 @@ export default function CustomerLayout({ children, transparent = false }: Props)
              * store hook mount so useCustomerTheme continues to work in code
              * that reads mode; only the visible switcher is gone. */}
             <button
-              className="p-1.5 hover:text-[--c-accent] transition-colors hidden sm:inline-flex relative"
+              className="c-header-icon hidden sm:inline-flex relative"
               aria-label={`Wishlist (${wishlist.ids.length})`}
               onClick={() => setShowWishlist(true)}
             >
@@ -543,7 +547,7 @@ export default function CustomerLayout({ children, transparent = false }: Props)
               ) : null}
             </button>
             <button
-              className="p-1.5 hover:text-[--c-accent] transition-colors relative"
+              className="c-header-icon relative"
               onClick={() => setShowCart(true)}
               aria-label="Cart"
             >
@@ -561,7 +565,7 @@ export default function CustomerLayout({ children, transparent = false }: Props)
               <DropdownMenuPrimitive.Root>
                 <DropdownMenuPrimitive.Trigger asChild>
                   <button
-                    className="p-1.5 hover:text-[--c-accent] transition-colors"
+                    className="c-header-icon"
                     aria-label="Account menu"
                   >
                     <User className="size-[18px]" />
@@ -626,7 +630,7 @@ export default function CustomerLayout({ children, transparent = false }: Props)
               </DropdownMenuPrimitive.Root>
             ) : (
               <button
-                className="p-1.5 hover:text-[--c-accent] transition-colors inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.18em]"
+                className="c-header-icon inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.18em]"
                 onClick={() => setShowLogin(true)}
                 aria-label="Sign in"
                 aria-expanded={showLogin}
@@ -1276,7 +1280,7 @@ function WishlistContents({ wishlist, cart, onClose, navigate }: WishlistContent
 
 export function HeroSection({
   bg, subtitle, titleA, titleAccent, description, primaryCta, primaryOnClick, secondaryCta, secondaryOnClick,
-  showRotator = false, heroImages, withCurve = false,
+  showRotator = false, heroImages, withCurve = false, bgVideo,
 }: {
   bg: string
   subtitle: string
@@ -1300,7 +1304,14 @@ export function HeroSection({
    * unified light-beige category section below.
    */
   withCurve?: boolean
+  /**
+   * Optional muted background video URL. When provided, renders a looping
+   * autoplay video behind the hero content. If the video fails to load,
+   * the existing image rotator takes over — no visible fallback needed.
+   */
+  bgVideo?: string
 }) {
+  const [videoOk, setVideoOk] = useState(true)
   const ROTATE_IMAGES =
     heroImages && heroImages.length > 0
       ? heroImages
@@ -1370,6 +1381,25 @@ export function HeroSection({
       animate="visible"
       variants={heroContainerVariants}
     >
+      {/* Optional background video — muted autoplay loop for a cinematic
+       * "living kitchen" feel. Sits above the CSS bg image but below the
+       * rotator + content. If the video 404s or is blocked, `onError` flips
+       * `videoOk` false and the image rotator takes over. */}
+      {bgVideo && videoOk ? (
+        <video
+          src={bgVideo}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          onError={() => setVideoOk(false)}
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+          style={{ zIndex: 0 }}
+        />
+      ) : null}
+
       {/* Ambient gradient orbs — three blurred blobs that drift with slow
        * eased keyframes, giving the hero a Sweetgreen / Linear / Stripe
        * living-canvas feel. Sits under content (z-1), above bg image.
@@ -1377,7 +1407,19 @@ export function HeroSection({
       <div className="hero-orb hero-orb--a" aria-hidden="true" />
       <div className="hero-orb hero-orb--b" aria-hidden="true" />
       <div className="hero-orb hero-orb--c" aria-hidden="true" />
-      {showRotator ? (
+
+      {/* Hero steam — 4 wisps rise from the bottom-center of the hero,
+       * suggesting "hot food just landed on the table". Pure CSS
+       * animation, respects reduced-motion via customer.css. */}
+      <div className="hero-steam" aria-hidden="true">
+        <span className="hero-steam__wisp hero-steam__wisp--1" />
+        <span className="hero-steam__wisp hero-steam__wisp--2" />
+        <span className="hero-steam__wisp hero-steam__wisp--3" />
+        <span className="hero-steam__wisp hero-steam__wisp--4" />
+      </div>
+      {/* Rotator only when there's no active video — video wins the layer
+       * when playing, rotator kicks back in if video errors. */}
+      {showRotator && (!bgVideo || !videoOk) ? (
         <>
           <AnimatePresence mode="popLayout">
             <motion.div
