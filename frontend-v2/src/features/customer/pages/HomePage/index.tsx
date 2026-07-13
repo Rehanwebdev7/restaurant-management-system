@@ -88,33 +88,35 @@ export function HomePage() {
        * "Explore The Full Menu" CTA. Full menu still lives on /menu. */}
       <ChefSignatures />
 
-      {/* Auto-scrolling gallery strip — horizontal linked to vertical page scroll */}
-      <ScrollReveal><GallerySlider /></ScrollReveal>
-
-      {/* Brand story showcase — editorial restaurant identity anchor.
-       * Replaces the earlier FeaturedSpotlight (broken dish images) with
-       * a warm brand-story block using real backend `aboutUs` + derivable
-       * highlights. MenuCategoriesGrid removed per user feedback ("home
-       * page br menu ki jarurat nahi"). */}
-      <BrandStoryShowcase />
-
-      {/* Three ways to enjoy — Dine / Delivery / Reserve
-       * Wrapped in espresso chapter break — breaks the cream monotony
-       * with a warm-brown editorial rhythm point. Text auto-flips to
-       * white via .c-section-espresso rules. */}
-      <div className="c-section-espresso">
-        <SignatureExperience />
+      {/* Auto-scrolling gallery strip — horizontal linked to vertical page scroll.
+       * Paper wash — subtle editorial texture, no color shift. */}
+      <div className="c-wash-paper">
+        <ScrollReveal><GallerySlider /></ScrollReveal>
       </div>
 
-      {/* Cinematic Ken Burns lifestyle separator */}
+      {/* Brand story showcase — editorial restaurant identity anchor.
+       * Sage wash — soft freshness for the story chapter. */}
+      <div className="c-wash-sage">
+        <BrandStoryShowcase />
+      </div>
+
+      {/* Three ways to enjoy — Dine / Delivery / Reserve
+       * Espresso wrap removed 2026-07-13 — Lazy Dog reference commits
+       * to all-cream flow. Rhythm driven by warm wash tints
+       * (sage/paper/terracotta), not dark chapter breaks. */}
+      <SignatureExperience />
+
+      {/* Cinematic Ken Burns lifestyle separator (full-bleed image, no wash) */}
       <LifestyleBanner
         eyebrow="THE ART OF HOSPITALITY"
         quote="Great food is memory in the making — cooked with intention, served with warmth, and shared without hurry."
         attribution="Our Kitchen Philosophy"
       />
 
-      {/* How It Works — 3-step editorial */}
-      <HowItWorks />
+      {/* How It Works — 3-step editorial. Terracotta wash for warm handoff. */}
+      <div className="c-wash-terracotta">
+        <HowItWorks />
+      </div>
 
       {/* Why Dine with Us Segment */}
       <ScrollReveal as="section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-[--c-border]">
@@ -144,10 +146,16 @@ export function HomePage() {
        * self-gates on `useSeedMode()` so real tenants see only their own data.
        * ChefStorySection removed 2026-07-13 (user: hardcoded chef bio hard to
        * maintain per-tenant, prefer removing over faking). */}
-      <ScrollReveal><AwardsTimeline /></ScrollReveal>
+      <div className="c-wash-paper">
+        <ScrollReveal><AwardsTimeline /></ScrollReveal>
+      </div>
       <PressMarquee />
-      <ScrollReveal><StoryTimeline /></ScrollReveal>
-      <ScrollReveal><TestimonialsSection /></ScrollReveal>
+      <div className="c-wash-sage">
+        <ScrollReveal><StoryTimeline /></ScrollReveal>
+      </div>
+      <div className="c-wash-terracotta">
+        <ScrollReveal><TestimonialsSection /></ScrollReveal>
+      </div>
       <StatsSection />
       <ScrollReveal><FAQAccordion /></ScrollReveal>
       <ScrollReveal><ReservationCallToActionSection /></ScrollReveal>

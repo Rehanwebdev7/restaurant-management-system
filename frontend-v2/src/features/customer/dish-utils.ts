@@ -28,3 +28,14 @@ export function isNewDish(createdAt: string | null | undefined): boolean {
   const daysDiff = (Date.now() - then) / (1000 * 60 * 60 * 24)
   return daysDiff < 14 && daysDiff >= 0
 }
+
+/**
+ * "Most Loved" gate — dish has a high rating AND enough reviews to trust it.
+ * Powers the MOST LOVED corner ribbon. Both fields already surface from
+ * backend `menu_items` (rating average + ratingCount).
+ */
+export function isMostLoved(rating: number | null | undefined, reviewCount: number | null | undefined): boolean {
+  const r = typeof rating === 'number' ? rating : 0
+  const n = typeof reviewCount === 'number' ? reviewCount : 0
+  return r >= 4.5 && n >= 10
+}

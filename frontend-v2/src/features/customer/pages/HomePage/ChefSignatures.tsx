@@ -1,9 +1,10 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
-import { ArrowRight, Sparkles, Star } from 'lucide-react'
+import { ArrowRight, Flame, Heart, Sparkles, Star } from 'lucide-react'
 import { useCustomerCatalog, type Dish } from '@/features/customer/catalog'
 import { handleImageError } from '@/features/customer/image-fallback'
+import { isMostLoved, isNewDish } from '@/features/customer/dish-utils'
 import { useMouseTilt } from '@/hooks/use-mouse-tilt'
 
 /**
@@ -180,18 +181,10 @@ function SignatureCard({
               'radial-gradient(circle, rgba(201,169,110,0.4) 0%, transparent 65%)',
           }}
         />
-        {dish.signature ? (
-          <div
-            className="absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[0.22em] shadow-md z-[1]"
-            style={{
-              background: 'var(--c-accent, #C9A96E)',
-              color: 'var(--c-button-primary-fg, #0A0A0A)',
-            }}
-          >
-            <Sparkles className="size-3 fill-current" aria-hidden />
-            Chef's Pick
-          </div>
-        ) : null}
+        {/* Single ribbon per card, priority: CHEF'S PICK > MOST LOVED > NEW.
+         * All three data-driven from backend fields — SaaS-safe, never
+         * fake. If none apply, no ribbon (silent). */}
+        <SignatureRibbon dish={dish} />
         {dish.reviewCount > 0 ? (
           <div className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-black/55 backdrop-blur-md border border-white/15 px-2.5 py-1 text-white text-[10px] font-bold z-[1]">
             <Star className="size-3 fill-current" aria-hidden />
@@ -227,4 +220,59 @@ function SignatureCard({
       </motion.button>
     </div>
   )
+}
+
+/**
+ * SignatureRibbon — dynamic corner badge driven by real backend fields.
+ * Priority (single badge per card):
+ *   1. CHEF'S PICK — `dish.signature` (backend `isRecommended`)
+ *   2. MOST LOVED — `rating >= 4.5 && reviewCount >= 10`
+ *   3. NEW — `createdAt` within the last 14 days
+ *
+ * Returns null when none apply — no fake badges rendered for demo tenants.
+ */
+function SignatureRibbon({ dish }: { dish: Dish }) {
+  if (dish.signature) {
+    return (
+      <div
+        className="c-ribbon c-ribbon--gold absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[9px] font-extrabold uppercase tracking-[0.22em] shadow-lg z-[2]"
+        style={{
+          background: 'linear-gradient(135deg, #F5E5B8 0%, #C9A96E 100%)',
+          color: '#1A1A1A',
+        }}
+      >
+        <Sparkles className="size-3 fill-current" aria-hidden />
+        Chef's Pick
+      </div>
+    )
+  }
+  if (isMostLoved(dish.rating, dish.reviewCount)) {
+    return (
+      <div
+        className="c-ribbon c-ribbon--terracotta absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[9px] font-extrabold uppercase tracking-[0.22em] shadow-lg z-[2]"
+        style={{
+          background: 'linear-gradient(135deg, #B4593F 0%, #8C3D28 100%)',
+          color: '#FFFCF6',
+        }}
+      >
+        <Heart className="size-3 fill-current" aria-hidden />
+        Most Loved
+      </div>
+    )
+  }
+  if (isNewDish(dish.createdAt)) {
+    return (
+      <div
+        className="c-ribbon c-ribbon--sage absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[9px] font-extrabold uppercase tracking-[0.22em] shadow-lg z-[2]"
+        style={{
+          background: 'linear-gradient(135deg, #A9BFA6 0%, #6E8B6A 100%)',
+          color: '#1A1A1A',
+        }}
+      >
+        <Flame className="size-3 fill-current" aria-hidden />
+        New
+      </div>
+    )
+  }
+  return null
 }

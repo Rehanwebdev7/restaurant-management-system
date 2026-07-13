@@ -234,7 +234,11 @@ export const DISHES: Dish[] = [
 // image bytes ~60 %. Desktop browsers up-scale slightly but it's imperceptible
 // at the dark overlay we apply on top.
 export const HERO_IMAGES = {
-  home:      'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80',
+  // Home hero — appetite-first warm food close-up (matches Lazy Dog cream
+  // vibe). Cook's board with warm brown breads + fresh ingredients →
+  // reads warm on cream vignette, no color clash. Replaced the earlier
+  // steak-on-plate shot (too dark for light mode).
+  home:      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1600&q=80',
   signature: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800&q=80',
   whyUs:     'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80',
   gallery:   'https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=800&q=80',
