@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   fetchCustomerMenuItems,
@@ -5,12 +6,14 @@ import {
   fetchCustomerBranches,
   fetchCustomerSliders,
   fetchCustomerBranding,
+  fetchCustomerGallery,
   customerSendOtp,
   customerVerifyOtp,
   customerLoginPassword,
   placeCustomerOrder,
   fetchCustomerOrders,
   type PlaceOrderInput,
+  type CustomerGalleryImage,
 } from '@/api/services/customer'
 
 /**
@@ -60,6 +63,39 @@ export function useCustomerBranding() {
     queryFn: fetchCustomerBranding,
     staleTime: 10 * 60_000,
   })
+}
+
+/**
+ * Gallery for the resolved tenant. Auto-derives `restaurantId` from the
+ * first known branch — consumers just pass an optional category filter.
+ *
+ * `category` filters client-side (case-insensitive substring against
+ * RestaurantGalleryEntity.category — backend stores free-form uppercased
+ * strings, no enum). If the filter matches zero rows, returns all rows
+ * (avoids empty sections when a tenant hasn't tagged categories).
+ */
+export function useCustomerGallery(category?: string) {
+  const branchesQ = useCustomerBranches()
+  const restaurantId = branchesQ.data?.find(
+    (b) => b.restaurantId != null,
+  )?.restaurantId
+  const q = useQuery({
+    queryKey: ['customer', 'gallery', restaurantId ?? 'unset'],
+    queryFn: () =>
+      restaurantId ? fetchCustomerGallery(restaurantId) : Promise.resolve([]),
+    enabled: restaurantId != null && restaurantId > 0,
+    staleTime: 5 * 60_000,
+  })
+  const all: CustomerGalleryImage[] = q.data ?? []
+  const filtered = useMemo(() => {
+    if (!category) return all
+    const needle = category.toLowerCase()
+    const hits = all.filter((g) =>
+      (g.category ?? '').toLowerCase().includes(needle),
+    )
+    return hits.length > 0 ? hits : all
+  }, [all, category])
+  return { ...q, all, filtered }
 }
 
 export function useCustomerOrders() {

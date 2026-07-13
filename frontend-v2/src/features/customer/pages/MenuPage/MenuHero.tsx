@@ -32,7 +32,7 @@ export default function MenuHero() {
   return (
     <section
       ref={sectionRef}
-      className="relative w-full overflow-hidden h-[50vh] min-h-[380px] max-h-[600px]"
+      className="menu-hero relative w-full overflow-hidden h-[50vh] min-h-[380px] max-h-[600px]"
     >
       {/* Parallax image */}
       <motion.div

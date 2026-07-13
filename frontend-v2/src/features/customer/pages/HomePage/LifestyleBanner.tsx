@@ -1,7 +1,10 @@
-import { useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
 import { handleImageError } from '@/features/customer/image-fallback'
 import ImageRotator from '@/features/customer/pages/HomePage/ImageRotator'
+import { useCustomerGallery } from '@/api/queries/customer'
+import { useSeedMode } from '@/features/customer/content/useSeedMode'
+import { SeedBadge } from '@/features/customer/content/SeedBadge'
 
 /**
  * LifestyleBanner — full-bleed cinematic separator with slow Ken Burns
@@ -21,10 +24,13 @@ interface Props {
   height?: 'md' | 'lg' | 'xl'
 }
 
-const DEFAULT_IMAGES = [
-  'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1800&q=80',
-  'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1800&q=80',
-  'https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=1800&q=80',
+/** Seed fallback — BRIGHT ambient photos (cream light theme friendly).
+ * Used only when caller passes nothing AND backend gallery has < 2
+ * ambience rows. Real tenants with tagged ambience photos see their own. */
+const SEED_AMBIENCE = [
+  'https://images.unsplash.com/photo-1590846406792-0adc7f938f1d?auto=format&fit=crop&w=1800&q=80',
+  'https://images.unsplash.com/photo-1517840901100-8179e982acb7?auto=format&fit=crop&w=1800&q=80',
+  'https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?auto=format&fit=crop&w=1800&q=80',
 ]
 
 export default function LifestyleBanner({
@@ -35,12 +41,17 @@ export default function LifestyleBanner({
   attribution = 'Our Kitchen Philosophy',
   height = 'lg',
 }: Props) {
-  // Precedence: explicit `images` array > single `image` prop > defaults set.
-  const activeImages = images && images.length > 0
-    ? images
-    : image
-      ? [image]
-      : DEFAULT_IMAGES
+  const seedMode = useSeedMode()
+  const ambienceGallery = useCustomerGallery('ambience')
+  // Precedence: explicit `images` prop > single `image` prop > backend
+  // gallery (ambience-tagged) > seed fallback.
+  const { activeImages, usingSeed } = useMemo(() => {
+    if (images && images.length > 0) return { activeImages: images, usingSeed: false }
+    if (image) return { activeImages: [image], usingSeed: false }
+    const live = ambienceGallery.filtered.map((g) => g.imageUrl)
+    if (live.length >= 2) return { activeImages: live, usingSeed: false }
+    return { activeImages: SEED_AMBIENCE, usingSeed: true }
+  }, [images, image, ambienceGallery.filtered])
   const reduce = useReducedMotion()
   const sectionRef = useRef<HTMLElement | null>(null)
 
@@ -64,7 +75,7 @@ export default function LifestyleBanner({
   return (
     <section
       ref={sectionRef}
-      className={`relative overflow-hidden my-16 sm:my-24 ${heightClass}`}
+      className={`c-lifestyle-banner relative overflow-hidden my-16 sm:my-24 ${heightClass}`}
     >
       <motion.div
         aria-hidden="true"
@@ -101,6 +112,12 @@ export default function LifestyleBanner({
         aria-hidden="true"
         className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/45 to-black/70"
       />
+
+      {seedMode && usingSeed ? (
+        <div className="absolute top-4 right-4 z-[2]">
+          <SeedBadge label="Sample photos" />
+        </div>
+      ) : null}
 
       <div className="relative z-[1] h-full flex items-center justify-center px-6 sm:px-12 lg:px-24 text-center text-white">
         <div className="max-w-3xl">

@@ -112,6 +112,17 @@ export interface CustomerSlider {
   linkUrl?: string | null
 }
 
+export interface CustomerGalleryImage {
+  id: number
+  imageUrl: string
+  driveImageUrl?: string | null
+  title?: string | null
+  description?: string | null
+  category?: string | null
+  platform?: string | null
+  displayOrder?: number | null
+}
+
 export interface CustomerBranding {
   /** Resolved tenant id — drives every other tenant-scoped fetch. */
   restaurantId?: number | null
@@ -300,6 +311,32 @@ export async function fetchCustomerSliders(branchId?: number): Promise<CustomerS
       params: branchId ? { branchId } : undefined,
     })
     return unwrap<CustomerSlider[]>(r, 'data.data') ?? []
+  } catch {
+    return []
+  }
+}
+
+export async function fetchCustomerGallery(
+  restaurantId: number,
+  platform?: string,
+): Promise<CustomerGalleryImage[]> {
+  try {
+    const r = await apiClient.get('/api/public/customer/gallery/get_gallery', {
+      params: { restaurantId, ...(platform ? { platform } : {}) },
+    })
+    const raw = unwrap<Array<Record<string, unknown>>>(r, 'data.data') ?? []
+    return raw
+      .map((row) => ({
+        id: Number(row.id),
+        imageUrl: String(row.imageUrl ?? row.driveImageUrl ?? ''),
+        driveImageUrl: (row.driveImageUrl as string | null) ?? null,
+        title: (row.title as string | null) ?? null,
+        description: (row.description as string | null) ?? null,
+        category: (row.category as string | null) ?? null,
+        platform: (row.platform as string | null) ?? null,
+        displayOrder: (row.displayOrder as number | null) ?? null,
+      }))
+      .filter((g) => g.imageUrl.length > 0)
   } catch {
     return []
   }

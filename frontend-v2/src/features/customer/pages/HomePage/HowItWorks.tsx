@@ -42,7 +42,7 @@ export default function HowItWorks() {
   const reduce = useReducedMotion()
 
   return (
-    <section className="c-section-tinted relative px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+    <section className="c-section-espresso relative px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
       <div className="max-w-6xl mx-auto">
       <div className="text-center mb-12 sm:mb-16">
         <motion.p

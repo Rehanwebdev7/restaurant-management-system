@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
 import { ArrowRight, Sparkles, MapPin, ChefHat, Leaf, Clock } from 'lucide-react'
 import { useBrand } from '@/components/providers/BrandProvider'
-import { useCustomerBranches } from '@/api/queries/customer'
+import { useCustomerBranches, useCustomerGallery } from '@/api/queries/customer'
 import { SeedBadge } from '@/features/customer/content/SeedBadge'
 import { useSeedMode } from '@/features/customer/content/useSeedMode'
 import ImageRotator from '@/features/customer/pages/HomePage/ImageRotator'
@@ -29,13 +29,14 @@ import ImageRotator from '@/features/customer/pages/HomePage/ImageRotator'
  * Single hover effect — light CTA arrow slide.
  */
 
-// Rotating collection of restaurant interior photos. Auto-cycles via
-// <ImageRotator>. Later swap-per-tenant will come from a backend media
-// endpoint (see BACKEND_TODO.md).
-const SHOWCASE_IMAGES = [
-  'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1400&q=80',
-  'https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=1400&q=80',
-  'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1400&q=80',
+// Seed fallback — BRIGHT restaurant photos so cream light theme pops
+// (dark shots washed on ivory). Used only when backend gallery has < 2
+// showcase/interior rows. Real tenants who upload gallery photos never
+// see these.
+const SEED_SHOWCASE = [
+  'https://images.unsplash.com/photo-1517840901100-8179e982acb7?auto=format&fit=crop&w=1400&q=80',
+  'https://images.unsplash.com/photo-1590846406792-0adc7f938f1d?auto=format&fit=crop&w=1400&q=80',
+  'https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?auto=format&fit=crop&w=1400&q=80',
 ]
 
 const FALLBACK_ABOUT =
@@ -65,6 +66,18 @@ export default function BrandStoryShowcase() {
   const imageScale = reduce ? 1 : imageScaleRaw
 
   const branchCount = branchesQuery.data?.length ?? 0
+  const showcaseGallery = useCustomerGallery('showcase')
+  const interiorGallery = useCustomerGallery('interior')
+  const showcaseImages = useMemo(() => {
+    const live = [
+      ...showcaseGallery.filtered,
+      ...interiorGallery.filtered,
+    ]
+    const uniq = Array.from(new Map(live.map((g) => [g.id, g])).values())
+    if (uniq.length >= 2) return uniq.map((g) => g.imageUrl)
+    return SEED_SHOWCASE
+  }, [showcaseGallery.filtered, interiorGallery.filtered])
+  const usingSeedShowcase = showcaseImages === SEED_SHOWCASE
 
   const highlights: Highlight[] = useMemo(() => {
     const list: Highlight[] = [
@@ -121,11 +134,16 @@ export default function BrandStoryShowcase() {
               className="absolute inset-0 w-full h-[115%]"
             >
               <ImageRotator
-                images={SHOWCASE_IMAGES}
+                images={showcaseImages}
                 interval={6000}
                 kind="showcase"
                 alt={brand.restaurantName ?? 'Restaurant interior'}
               />
+              {seedMode && usingSeedShowcase ? (
+                <div className="absolute top-3 left-3 z-[2]">
+                  <SeedBadge label="Sample photos" />
+                </div>
+              ) : null}
             </motion.div>
             {/* Warm cream corner accent — signature editorial cue */}
             <div

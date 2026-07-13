@@ -12,12 +12,12 @@ interface ThemeState {
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set) => ({
-      // DARK default (2026-07-10 v5, final). Every card was built dark-first
-      // (ChefSignatures, BrandStory highlight tiles, SignatureExperience, etc.)
-      // and the tenant category is fine-dining / steakhouse — labrochette /
-      // Ruth's Chris / Nobu are all dark. Light-mode overrides removed; if a
-      // fast-casual tenant ships later, revive the toggle then.
-      mode: 'dark',
+      // LIGHT default (2026-07-11 v6). User asked for bright cream restaurant
+      // premium (Cava / Toast / labrochette-lunch vibe) — dark felt heavy.
+      // Palette locked: warm ivory base + gold + soft terracotta secondary.
+      // Every dark-first card gets a light-mode CSS variant instead of a
+      // lower-opacity dark card, so images stay appetizing on cream.
+      mode: 'light',
       toggle: () =>
         set((state) => ({
           mode: state.mode === 'dark' ? 'light' : 'dark',
@@ -25,11 +25,10 @@ export const useThemeStore = create<ThemeState>()(
       setMode: (mode) => set({ mode }),
     }),
     {
-      // Persist key bumped to v2 on 2026-07-10 so old localStorage entries
-      // (defaulted to 'dark' before the bright-first UX shift) are invalidated.
-      // Users see the new bright default on next visit; anyone who wants dark
-      // can toggle again and their choice persists on the new v2 key.
-      name: 'customer_theme_mode_v5',
+      // Persist key bumped to v6 (2026-07-11) so stale dark preferences from
+      // v5 are invalidated. Users land on cream default; toggle to dark still
+      // works and persists on v6.
+      name: 'customer_theme_mode_v6',
     }
   )
 )

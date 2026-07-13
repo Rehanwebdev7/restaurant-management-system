@@ -9,6 +9,7 @@ import {
 import { tokens } from '@/lib/auth/tokens'
 import { useMagnetic } from '@/hooks/use-magnetic'
 import BrandSplash from '@/features/customer/pages/HomePage/BrandSplash'
+import AmbientKitchen from '@/features/customer/effects/AmbientKitchen'
 
 // Brand icons (Facebook/Instagram/Twitter removed in newer lucide-react).
 const Facebook = ({ className }: { className?: string }) => (
@@ -378,6 +379,7 @@ export default function CustomerLayout({ children, transparent = false }: Props)
       {/* First-visit branded splash — session-flagged. Custom gold cursor
        * removed per user feedback (native cursor keeps things stable). */}
       <BrandSplash />
+      <AmbientKitchen />
       <CustomerScrollProgress />
       {/* Per-tenant marquee — text + colors + speed come from
        * `CustBrandingController` (widened 2026-07-10). Hidden entirely when
@@ -1486,7 +1488,9 @@ export function HeroSection({
          */}
         <motion.h1 className="display" variants={heroTitleVariants}>
           <HeroAnimatedWords text={titleA} />
-          <HeroAnimatedWords text={titleAccent} accent />
+          <span className="hero-accent">
+            <HeroAnimatedWords text={titleAccent} accent />
+          </span>
         </motion.h1>
         <motion.p
           className="text-base sm:text-lg text-[--c-text-soft] mt-6 max-w-xl mx-auto"

@@ -1,7 +1,11 @@
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { UtensilsCrossed, Bike, CalendarHeart, ArrowRight, Check } from 'lucide-react'
 import ImageRotator from '@/features/customer/pages/HomePage/ImageRotator'
+import { useCustomerGallery } from '@/api/queries/customer'
+import { useSeedMode } from '@/features/customer/content/useSeedMode'
+import { SeedBadge } from '@/features/customer/content/SeedBadge'
 import { cn } from '@/lib/utils'
 
 /**
@@ -21,11 +25,15 @@ interface Experience {
   description: string
   cta: string
   route: string
-  images: string[]
+  seed: string[]
+  category: string
   Icon: typeof UtensilsCrossed
   features: string[]
 }
 
+/** Seed image sets — only used when backend gallery has < 2 rows tagged
+ * with the matching category. Real tenants who upload category-tagged
+ * photos (DINING / DELIVERY / RESERVATION) see their own. */
 const EXPERIENCES: Experience[] = [
   {
     title: 'Dine With Us',
@@ -34,9 +42,10 @@ const EXPERIENCES: Experience[] = [
       'Warm interiors, considered lighting, and plates prepared à la minute — an evening built for lingering.',
     cta: 'Explore The Room',
     route: '/gallery',
-    images: [
-      'https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=1400&q=80',
-      'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1400&q=80',
+    category: 'dining',
+    seed: [
+      'https://images.unsplash.com/photo-1517840901100-8179e982acb7?auto=format&fit=crop&w=1400&q=80',
+      'https://images.unsplash.com/photo-1590846406792-0adc7f938f1d?auto=format&fit=crop&w=1400&q=80',
       'https://images.unsplash.com/photo-1544148103-0773bf10d330?auto=format&fit=crop&w=1400&q=80',
     ],
     Icon: UtensilsCrossed,
@@ -49,10 +58,11 @@ const EXPERIENCES: Experience[] = [
       'The same kitchen craft, packed with care and dispatched fresh. Order in a few taps, track it in real time.',
     cta: 'Browse The Menu',
     route: '/menu',
-    images: [
-      'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1400&q=80',
+    category: 'delivery',
+    seed: [
+      'https://images.unsplash.com/photo-1565958011703-44f9829ba187?auto=format&fit=crop&w=1400&q=80',
       'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1400&q=80',
-      'https://images.unsplash.com/photo-1567620832903-9fc6debc209f?auto=format&fit=crop&w=1400&q=80',
+      'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=1400&q=80',
     ],
     Icon: Bike,
     features: ['Kitchen-fresh, packed hot', 'Live order tracking', 'Sealed for hygiene'],
@@ -64,10 +74,11 @@ const EXPERIENCES: Experience[] = [
       'Whether it is a quiet dinner for two or a table of ten, our team will hold the room for you.',
     cta: 'Book Now',
     route: '/contact',
-    images: [
-      'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1400&q=80',
-      'https://images.unsplash.com/photo-1592861956120-e524fc739696?auto=format&fit=crop&w=1400&q=80',
-      'https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=1400&q=80',
+    category: 'reservation',
+    seed: [
+      'https://images.unsplash.com/photo-1521017432531-fbd92d768814?auto=format&fit=crop&w=1400&q=80',
+      'https://images.unsplash.com/photo-1543007629-4a04b5ad1156?auto=format&fit=crop&w=1400&q=80',
+      'https://images.unsplash.com/photo-1544148103-0773bf10d330?auto=format&fit=crop&w=1400&q=80',
     ],
     Icon: CalendarHeart,
     features: ['Priority seating', 'Custom occasions & set menus', 'Complimentary bread service'],
@@ -77,6 +88,28 @@ const EXPERIENCES: Experience[] = [
 export default function SignatureExperience() {
   const navigate = useNavigate()
   const reduce = useReducedMotion()
+  const seedMode = useSeedMode()
+  const diningGallery = useCustomerGallery('dining')
+  const deliveryGallery = useCustomerGallery('delivery')
+  const reservationGallery = useCustomerGallery('reservation')
+
+  const resolved = useMemo(() => {
+    return EXPERIENCES.map((exp) => {
+      const pool =
+        exp.category === 'dining'
+          ? diningGallery.filtered
+          : exp.category === 'delivery'
+            ? deliveryGallery.filtered
+            : reservationGallery.filtered
+      const live = pool.map((g) => g.imageUrl)
+      const usingSeed = live.length < 2
+      return { exp, images: usingSeed ? exp.seed : live, usingSeed }
+    })
+  }, [
+    diningGallery.filtered,
+    deliveryGallery.filtered,
+    reservationGallery.filtered,
+  ])
 
   return (
     <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
@@ -103,7 +136,7 @@ export default function SignatureExperience() {
       </div>
 
       <div className="space-y-20 sm:space-y-28">
-        {EXPERIENCES.map((exp, i) => {
+        {resolved.map(({ exp, images, usingSeed }, i) => {
           const imageLeft = i % 2 === 0 // 0, 2 → image left; 1 → image right
           return (
             <div
@@ -146,11 +179,16 @@ export default function SignatureExperience() {
                   style={{ filter: 'brightness(1.02) contrast(1.02)' }}
                 >
                   <ImageRotator
-                    images={exp.images}
+                    images={images}
                     interval={6000}
                     kind="ambience"
                     alt={exp.title}
                   />
+                  {seedMode && usingSeed ? (
+                    <div className="absolute top-3 right-3 z-[4]">
+                      <SeedBadge label="Sample" />
+                    </div>
+                  ) : null}
                   {/* Faint corner label — subtle, doesn't cover the photo */}
                   <div
                     aria-hidden="true"

@@ -20,9 +20,9 @@ import {
 } from '@/features/customer/catalog'
 import { useCustomerSliders } from '@/api/queries/customer'
 import { submitPublicReservation } from '@/api/services/customer'
+import ReservationWizard from '@/features/customer/pages/HomePage/ReservationWizard'
 import GallerySlider from '@/features/customer/pages/HomePage/GallerySlider'
 import ChefSignatures from '@/features/customer/pages/HomePage/ChefSignatures'
-import ChefStorySection from '@/features/customer/pages/HomePage/ChefStorySection'
 import AwardsTimeline from '@/features/customer/pages/HomePage/AwardsTimeline'
 import PressMarquee from '@/features/customer/pages/HomePage/PressMarquee'
 import StoryTimeline from '@/features/customer/pages/HomePage/StoryTimeline'
@@ -69,10 +69,10 @@ export function HomePage() {
        * per user feedback). Backend sliders take precedence via heroImages. */}
       <HeroSection
         bg={HERO_IMAGES.home}
-        subtitle="FRESH & DELICIOUS MEALS"
-        titleA="Delicious Food &"
-        titleAccent="Great Taste"
-        description="Enjoy great food and a wonderful dining atmosphere. Every dish is prepared with fresh, high-quality ingredients."
+        subtitle="CURATED · CHEF-CRAFTED · UNFORGETTABLE"
+        titleA="A Table Set For"
+        titleAccent="Timeless Craft"
+        description="Every plate tells a story — of craft, of care, of moments savored slowly. Welcome to your table."
         primaryCta="ORDER NOW"
         primaryOnClick={() => navigate('/menu')}
         secondaryCta="RESERVE A TABLE"
@@ -98,8 +98,13 @@ export function HomePage() {
        * page br menu ki jarurat nahi"). */}
       <BrandStoryShowcase />
 
-      {/* Three ways to enjoy — Dine / Delivery / Reserve */}
-      <SignatureExperience />
+      {/* Three ways to enjoy — Dine / Delivery / Reserve
+       * Wrapped in espresso chapter break — breaks the cream monotony
+       * with a warm-brown editorial rhythm point. Text auto-flips to
+       * white via .c-section-espresso rules. */}
+      <div className="c-section-espresso">
+        <SignatureExperience />
+      </div>
 
       {/* Cinematic Ken Burns lifestyle separator */}
       <LifestyleBanner
@@ -136,8 +141,9 @@ export function HomePage() {
       </ScrollReveal>
 
       {/* Editorial content stack — new sections lower on the page, each
-       * self-gates on `useSeedMode()` so real tenants see only their own data. */}
-      <ScrollReveal><ChefStorySection /></ScrollReveal>
+       * self-gates on `useSeedMode()` so real tenants see only their own data.
+       * ChefStorySection removed 2026-07-13 (user: hardcoded chef bio hard to
+       * maintain per-tenant, prefer removing over faking). */}
       <ScrollReveal><AwardsTimeline /></ScrollReveal>
       <PressMarquee />
       <ScrollReveal><StoryTimeline /></ScrollReveal>
@@ -273,8 +279,6 @@ const formatTimeLabel = (timeStr: string) => {
 }
 
 function ReservationCallToActionSection() {
-  const [form, setForm] = useState({ name: '', phone: '', date: '', time: '', guests: 2 })
-  const [submitting, setSubmitting] = useState(false)
   const sectionRef = useRef<HTMLElement | null>(null)
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -282,140 +286,24 @@ function ReservationCallToActionSection() {
   })
   const bgY = useTransform(scrollYProgress, [0, 1], ['15%', '-25%'])
 
-  const handleDateChange = (d: Date | undefined) => {
-    if (!d) {
-      setForm({ ...form, date: '' })
-      return
-    }
-    const yyyy = d.getFullYear()
-    const mm = String(d.getMonth() + 1).padStart(2, '0')
-    const dd = String(d.getDate()).padStart(2, '0')
-    setForm({ ...form, date: `${yyyy}-${mm}-${dd}` })
-  }
-
-  const submit = async () => {
-    if (!form.name || !/^[6-9]\d{9}$/.test(form.phone) || !form.date || !form.time) {
-      toast.warning('Please enter your name, valid 10-digit mobile, date and time')
-      return
-    }
-    setSubmitting(true)
-    // Wire real backend POST /api/customer/table_booking/public/add.
-    // Note (verified in backend audit): `guests` and `notes` are silently
-    // dropped by the current TableBookingEntity — user-approved trade-off
-    // until backend columns are added. Restaurant team receives name+phone+date+time.
-    const result = await submitPublicReservation({
-      name: form.name.trim(),
-      phone: form.phone,
-      date: form.date,
-      time: form.time,
-      guests: form.guests,
-    })
-    setSubmitting(false)
-    if (!result.ok) {
-      toast.error(result.message || 'Reservation failed — please try again or call us directly.')
-      return
-    }
-    toast.success(
-      `Table request received — booking #${result.data.reservationId}. We'll call to confirm shortly.`,
-    )
-    setForm({ name: '', phone: '', date: '', time: '', guests: 2 })
-  }
   return (
-    <section ref={sectionRef} className="relative py-24 my-16 overflow-hidden">
+    <section ref={sectionRef} className="c-section-espresso relative py-24 my-16 overflow-hidden">
       <motion.div
         aria-hidden="true"
-        className="absolute inset-x-0 -top-[20%] -bottom-[20%] bg-cover bg-center"
+        className="absolute inset-x-0 -top-[20%] -bottom-[20%] bg-cover bg-center opacity-[0.18]"
         style={{
           y: bgY,
           backgroundImage: 'url(https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1280&q=75)',
+          mixBlendMode: 'overlay',
         }}
-      />
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 bg-gradient-to-b from-black/85 via-black/90 to-black/95"
       />
       <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <p className="subtitle">RESERVE YOUR TABLE</p>
         <div className="c-divider" />
         <h2 className="display text-3xl sm:text-5xl mb-4">Book a <span>Memorable</span> Evening</h2>
-        <p className="text-sm text-[--c-text-soft] mb-8 max-w-md mx-auto">Walk-ins are welcome but we recommend booking ahead to guarantee your favorite table.</p>
-        <div className="c-card p-6 sm:p-8 grid grid-cols-1 sm:grid-cols-2 gap-4 text-left max-w-2xl mx-auto rounded-2xl bg-black/50 backdrop-blur-md border border-[--c-border]">
-          <input className="c-input bg-white/5 border-white/10" placeholder="Your name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          <input className="c-input bg-white/5 border-white/10" inputMode="numeric" maxLength={10} placeholder="10-digit mobile" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })} />
-          <div className="relative">
-            <span className="absolute left-3 top-[6px] text-[--c-text-muted] text-[9px] font-bold tracking-wider uppercase z-10">Date</span>
-            <DateField
-              value={form.date ? new Date(form.date) : undefined}
-              onChange={handleDateChange}
-              placeholder="Select date"
-              className="c-input-selector font-normal"
-            />
-          </div>
-          <div className="relative">
-            <span className="absolute left-3 top-[6px] text-[--c-text-muted] text-[9px] font-bold tracking-wider uppercase z-10">Time</span>
-            <Popover>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  className="c-input-selector font-normal cursor-pointer"
-                >
-                  <Clock className="size-4 text-[--c-text-muted] absolute left-4 bottom-[8px]" />
-                  <span>{form.time ? formatTimeLabel(form.time) : 'Select time'}</span>
-                  <ChevronDown className="size-4 opacity-50" />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-64 p-3 bg-black/95 backdrop-blur-md border border-white/15 rounded-xl shadow-2xl text-white z-50">
-                <div className="space-y-3 max-h-60 overflow-y-auto scrollbar-hide">
-                  <p className="text-[10px] font-bold text-[--c-accent] uppercase tracking-wider mb-2">Lunch Slots</p>
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {TIME_SLOTS.slice(0, 7).map((t) => (
-                      <button
-                        key={t}
-                        type="button"
-                        onClick={() => setForm({ ...form, time: t })}
-                        className={cn(
-                          "text-[10px] py-1.5 px-1 rounded-lg text-center cursor-pointer transition-colors border",
-                          form.time === t 
-                            ? "bg-[var(--c-primary)] border-[var(--c-primary)] text-white font-bold" 
-                            : "bg-white/5 border-white/10 text-[--c-text-soft] hover:bg-white/10 hover:text-white"
-                        )}
-                      >
-                        {formatTimeLabel(t)}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="h-px bg-white/10 my-3" />
-                  <p className="text-[10px] font-bold text-[--c-accent] uppercase tracking-wider mb-2">Dinner Slots</p>
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {TIME_SLOTS.slice(7).map((t) => (
-                      <button
-                        key={t}
-                        type="button"
-                        onClick={() => setForm({ ...form, time: t })}
-                        className={cn(
-                          "text-[10px] py-1.5 px-1 rounded-lg text-center cursor-pointer transition-colors border",
-                          form.time === t 
-                            ? "bg-[var(--c-primary)] border-[var(--c-primary)] text-white font-bold" 
-                            : "bg-white/5 border-white/10 text-[--c-text-soft] hover:bg-white/10 hover:text-white"
-                        )}
-                      >
-                        {formatTimeLabel(t)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-          <input className="c-input sm:col-span-2 bg-white/5 border-white/10" type="number" min={1} max={20} placeholder="Number of guests" value={form.guests} onChange={(e) => setForm({ ...form, guests: Number(e.target.value) })} onWheel={(e) => e.currentTarget.blur()} />
-          <button
-            className="c-button-primary sm:col-span-2 inline-flex items-center justify-center gap-2 py-3.5 rounded-xl cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-            onClick={submit}
-            disabled={submitting}
-          >
-            <Calendar className="size-4" />
-            {submitting ? 'RESERVING…' : 'RESERVE TABLE NOW'}
-          </button>
+        <p className="text-sm mb-8 max-w-md mx-auto opacity-80">Walk-ins are welcome but we recommend booking ahead to guarantee your favorite table.</p>
+        <div className="c-glass-card p-6 sm:p-8 max-w-xl mx-auto">
+          <ReservationWizard />
         </div>
       </div>
     </section>
