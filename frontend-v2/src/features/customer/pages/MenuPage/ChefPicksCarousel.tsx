@@ -2,6 +2,7 @@ import { useMemo, useRef } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { Sparkles, ChevronLeft, ChevronRight, Star } from 'lucide-react'
 import { useCustomerCatalog, type Dish } from '@/features/customer/catalog'
+import { formatPrice } from '@/features/customer/format'
 import { handleImageError } from '@/features/customer/image-fallback'
 
 /**
@@ -39,7 +40,7 @@ export default function ChefPicksCarousel() {
           <motion.p
             initial={{ opacity: 0, y: 8 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, margin: '-40px' }}
+            viewport={{ once: true, margin: '-40px' }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             className="subtitle inline-flex items-center gap-2 mb-2"
           >
@@ -49,7 +50,7 @@ export default function ChefPicksCarousel() {
           <motion.h2
             initial={{ opacity: 0, y: 14 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, margin: '-40px' }}
+            viewport={{ once: true, margin: '-40px' }}
             transition={{ duration: 0.6, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
             className="display text-2xl sm:text-3xl lg:text-4xl leading-tight"
           >
@@ -93,7 +94,7 @@ export default function ChefPicksCarousel() {
             key={dish.id}
             initial={{ opacity: 0, y: 32, scale: 0.94 }}
             whileInView={{ opacity: 1, y: 0, scale: 1 }}
-            viewport={{ once: false, margin: '-40px' }}
+            viewport={{ once: true, margin: '-40px' }}
             transition={{
               duration: 0.6,
               delay: (i % 4) * 0.08,
@@ -150,7 +151,7 @@ export default function ChefPicksCarousel() {
                 </h3>
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-sm font-bold" style={{ color: 'var(--c-accent, #C9A96E)' }}>
-                    ${dish.price}
+                    {formatPrice(dish.price)}
                   </span>
                   {dish.preparationMinutes ? (
                     <span className="text-[10px] opacity-80">

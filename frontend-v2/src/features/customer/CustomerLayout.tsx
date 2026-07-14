@@ -31,6 +31,11 @@ const Twitter = ({ className }: { className?: string }) => (
 )
 import { useWishlist, useCustomerTheme } from '@/features/customer/customer-store'
 import { DISHES, useCart, setSelectedBranchId as catalogSetSelectedBranchId } from '@/features/customer/catalog'
+import { formatPrice } from '@/features/customer/format'
+import { useSeedMode } from '@/features/customer/content/useSeedMode'
+import CustomerErrorBoundary from '@/features/customer/CustomerErrorBoundary'
+import CartFlyLayer from '@/features/customer/CartFlyLayer'
+import ReservationModal, { OPEN_RESERVATION_EVENT } from '@/features/customer/ReservationModal'
 import { useBrand } from '@/components/providers/BrandProvider'
 import { useCustomerBranches, useCustomerSendOtp, useCustomerVerifyOtp } from '@/api/queries/customer'
 import { Phone as PhoneIcon, KeyRound, UserCircle2, ChevronLeft } from 'lucide-react'
@@ -114,12 +119,23 @@ export default function CustomerLayout({ children, transparent = false }: Props)
   const [showWishlist, setShowWishlist] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
   const [showCart, setShowCart] = useState(false)
+  const [showReserve, setShowReserve] = useState(false)
+
+  // Listen for the global "open reservation" event so any Reserve CTA
+  // anywhere in the tree (footer, mobile nav, hero CTA) can pop the modal
+  // without prop drilling. See openReservation() in ReservationModal.tsx.
+  useEffect(() => {
+    const handler = () => setShowReserve(true)
+    document.addEventListener(OPEN_RESERVATION_EVENT, handler)
+    return () => document.removeEventListener(OPEN_RESERVATION_EVENT, handler)
+  }, [])
   const [selectedBranchId, setSelectedBranchId] = useState<number>(readSelectedBranchId)
 
   const theme = useCustomerTheme()
   const wishlist = useWishlist()
   const cart = useCart()
   const brand = useBrand()
+  const seedMode = useSeedMode()
   // Live branch list from `/api/customer/restaurant_branch/public/all`.
   // The backend resolves the tenant from the Host header and only returns
   // branches that belong to that restaurant. We pass no args — the host
@@ -483,7 +499,11 @@ export default function CustomerLayout({ children, transparent = false }: Props)
 
           {/* Right: branch + actions (compact) */}
           <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0" style={{ color: 'var(--c-text)' }}>
-            {/* Branch selector — moved right, only on lg+ */}
+            {/* Branch selector — hidden when no real branches loaded.
+             * P1.7 fix: never surface the "Loading… / Resolving branch from
+             * your domain…" placeholder chip to users. Show only when the
+             * live branches array has at least one entry. */}
+            {branchesQuery.data && branchesQuery.data.length > 0 ? (
             <div className="hidden lg:block relative" ref={branchPickerRef}>
               <button
                 onClick={() => setShowBranch(!showBranch)}
@@ -515,11 +535,14 @@ export default function CustomerLayout({ children, transparent = false }: Props)
                 </div>
               ) : null}
             </div>
+            ) : null}
 
-            {/* Reserve CTA — hidden on smaller, compact on md+ */}
+            {/* Reserve CTA — opens the dedicated booking modal (was
+             * navigating to /contact which showed the same page as the
+             * Contact nav link — user asked to split these). */}
             <button
               className="hidden md:inline-flex items-center justify-center !text-[10px] !px-3 !py-2 c-button-outline"
-              onClick={() => navigate('/contact')}
+              onClick={() => setShowReserve(true)}
             >
               RESERVE
             </button>
@@ -552,6 +575,7 @@ export default function CustomerLayout({ children, transparent = false }: Props)
               className="c-header-icon relative"
               onClick={() => setShowCart(true)}
               aria-label="Cart"
+              data-cart-icon="1"
             >
               <ShoppingBag className="size-5" />
               {cart.items.length > 0 ? (
@@ -713,6 +737,13 @@ export default function CustomerLayout({ children, transparent = false }: Props)
 
       {/* Cart drawer */}
       <CartDrawer open={showCart} onClose={() => setShowCart(false)} />
+
+      {/* Reservation modal — Reserve CTA opens this instead of navigating
+       * to /contact (which is now contact-info only). */}
+      <ReservationModal open={showReserve} onClose={() => setShowReserve(false)} />
+
+      {/* Flying add-to-cart coin overlay (fixed z-9999, pointer-events-none) */}
+      <CartFlyLayer />
 
       {/* Sign-in centred modal — proper dialog with backdrop blur instead
        * of an off-axis dropdown. Pattern matches Notion / Linear / Stripe
@@ -938,7 +969,9 @@ export default function CustomerLayout({ children, transparent = false }: Props)
 
       {/* Body — adds bottom padding so MobileBottomNav doesn't cover content */}
       <main className="relative z-[1] pb-20 lg:pb-0">
-        <PageTransition>{children}</PageTransition>
+        <PageTransition>
+          <CustomerErrorBoundary>{children}</CustomerErrorBoundary>
+        </PageTransition>
       </main>
 
       {/* Mobile bottom navigation — Swiggy/Zomato-style */}
@@ -948,7 +981,7 @@ export default function CustomerLayout({ children, transparent = false }: Props)
        * navigation. All practical fields (phone, email, address, social,
        * FSSAI, GST) come from `useBrand()` — widened branding endpoint
        * powers real per-tenant content. */}
-      <footer className="c-footer hidden lg:block relative z-[1] mt-10">
+      <footer className="c-footer relative z-[1] mt-10">
         {/* Slim gold hairline as the only footer boundary — the "Let's stay
          * in touch" hero block was removed; columns now sit right below. */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
@@ -1060,11 +1093,18 @@ export default function CustomerLayout({ children, transparent = false }: Props)
           </div>
         </div>
 
-        {/* Bottom bar — copyright + powered-by */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 pt-4 border-t border-[--c-border]">
+        {/* Bottom bar — copyright + powered-by.
+         * P1.9: dynamic year. P1.8: Powered-by gated behind seedMode
+         * (white-label tenants don't advertise the SaaS backend). Extra
+         * bottom padding on mobile so it clears the fixed bottom nav. */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 pt-4 pb-24 lg:pb-6 border-t border-[--c-border]">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-[--c-text-muted]">
-            <p>© 2026 {brand.restaurantName} · All rights reserved</p>
-            <p className="opacity-80">Crafted with care · Powered by RMS</p>
+            <p>© {new Date().getFullYear()} {brand.restaurantName} · All rights reserved</p>
+            {seedMode ? (
+              <p className="opacity-80">Crafted with care · Powered by RMS</p>
+            ) : (
+              <p className="opacity-80">Crafted with care</p>
+            )}
           </div>
         </div>
       </footer>
@@ -1230,7 +1270,7 @@ function WishlistContents({ wishlist, cart, onClose, navigate }: WishlistContent
                       <span className={dish.veg ? 'veg-icon' : 'nonveg-icon'} />
                       {dish.name}
                     </p>
-                    <p className="text-xs gold-text font-semibold">${dish.price}</p>
+                    <p className="text-xs gold-text font-semibold">{formatPrice(dish.price)}</p>
                   </div>
                   <div className="flex flex-col gap-1">
                     <button

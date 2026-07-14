@@ -76,7 +76,7 @@ export default function MenuHighlights() {
     <motion.div
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: false, margin: '-40px' }}
+      viewport={{ once: true, margin: '-40px' }}
       variants={{
         hidden: {},
         visible: { transition: { staggerChildren: 0.08 } },

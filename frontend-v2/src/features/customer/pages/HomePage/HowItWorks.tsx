@@ -48,7 +48,7 @@ export default function HowItWorks() {
         <motion.p
           initial={{ opacity: 0, y: 8 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, margin: '-80px' }}
+          viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
           className="subtitle"
         >
@@ -58,7 +58,7 @@ export default function HowItWorks() {
         <motion.h2
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, margin: '-80px' }}
+          viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.65, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
           className="display text-3xl sm:text-4xl lg:text-5xl"
         >
@@ -78,7 +78,7 @@ export default function HowItWorks() {
               key={step.title}
               initial={{ opacity: 0, y: 32 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false, margin: '-60px' }}
+              viewport={{ once: true, margin: '-60px' }}
               transition={{
                 duration: 0.75,
                 delay: i * 0.15,

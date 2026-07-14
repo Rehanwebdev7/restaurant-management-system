@@ -8,6 +8,7 @@ import CustomerLayout from '@/features/customer/CustomerLayout'
 import { toast } from '@/lib/toast'
 import { tokens } from '@/lib/auth/tokens'
 import { DocumentTitle } from '@/lib/seo/document-title'
+import { useBrand } from '@/components/providers/BrandProvider'
 import {
   fetchCustomerAddresses,
   addCustomerAddress,
@@ -119,6 +120,7 @@ function LabelIcon({ label }: { label: Address['label'] }) {
 }
 
 export function ProfilePage() {
+  const brand = useBrand()
   const [activeTab, setActiveTab] = useState<'info' | 'addresses'>(() => {
     if (typeof window !== 'undefined') {
       const search = window.location.search
@@ -317,7 +319,7 @@ export function ProfilePage() {
 
   return (
     <CustomerLayout>
-      <DocumentTitle title="My Account — Spice Garden" />
+      <DocumentTitle title={`My Account — ${brand.restaurantName}`} />
       <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <p className="subtitle">ACCOUNT PANEL</p>
         <div className="c-divider !ml-0" />

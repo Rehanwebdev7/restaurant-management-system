@@ -26,13 +26,16 @@ import { CATEGORIES, DISHES, type Dish } from '@/features/customer/catalog'
 import { cn } from '@/lib/utils'
 
 export type DietFilter = 'all' | 'veg' | 'nonveg'
+export type SpiceFilter = 'any' | 'mild' | 'medium' | 'hot'
 
 export interface CustomerFilters {
   cat: string | null
   diet: DietFilter
+  spice: SpiceFilter
   q: string
   setCat: (id: string | null) => void
   setDiet: (d: DietFilter) => void
+  setSpice: (s: SpiceFilter) => void
   setQ: (q: string) => void
   reset: () => void
   filtered: Dish[]
@@ -47,6 +50,9 @@ export function useCustomerFilters(source: readonly Dish[] = DISHES): CustomerFi
   const cat = params.get('cat')
   const dietRaw = params.get('veg')
   const diet: DietFilter = dietRaw === 'true' ? 'veg' : dietRaw === 'false' ? 'nonveg' : 'all'
+  const spiceRaw = params.get('spice')
+  const spice: SpiceFilter =
+    spiceRaw === 'mild' || spiceRaw === 'medium' || spiceRaw === 'hot' ? spiceRaw : 'any'
   const q = params.get('q') ?? ''
 
   const update = (patch: Record<string, string | null>): void => {
@@ -64,6 +70,12 @@ export function useCustomerFilters(source: readonly Dish[] = DISHES): CustomerFi
       if (cat && d.category !== cat) return false
       if (diet === 'veg' && !d.veg) return false
       if (diet === 'nonveg' && d.veg) return false
+      if (spice !== 'any') {
+        const level = (d.spiceLevel || '').toUpperCase().trim()
+        if (spice === 'mild' && !(level === 'MILD' || level === 'LOW' || level === 'MILDLY_SPICY')) return false
+        if (spice === 'medium' && !(level === 'MEDIUM' || level === 'MED' || level === 'MODERATE')) return false
+        if (spice === 'hot' && !(level === 'HOT' || level === 'SPICY' || level === 'EXTRA_HOT' || level === 'VERY_HOT' || level === 'HIGH')) return false
+      }
       if (!needle) return true
       return (
         d.name.toLowerCase().includes(needle) ||
@@ -71,16 +83,18 @@ export function useCustomerFilters(source: readonly Dish[] = DISHES): CustomerFi
         d.category.toLowerCase().includes(needle)
       )
     })
-  }, [source, cat, diet, q])
+  }, [source, cat, diet, spice, q])
 
   return {
     cat,
     diet,
+    spice,
     q,
     setCat: (id) => update({ cat: id }),
     setDiet: (d) => update({ veg: d === 'veg' ? 'true' : d === 'nonveg' ? 'false' : null }),
+    setSpice: (s) => update({ spice: s === 'any' ? null : s }),
     setQ: (next) => update({ q: next }),
-    reset: () => update({ cat: null, veg: null, q: null }),
+    reset: () => update({ cat: null, veg: null, spice: null, q: null }),
     filtered,
     total: source.length,
   }
@@ -122,9 +136,9 @@ export function CustomerFilterBar({
   hideCategoryPills = false,
   searchPlaceholder = 'Search dishes…',
 }: CustomerFilterBarProps) {
-  const { cat, diet, q, setCat, setDiet, setQ, reset, filtered, total } = filters
+  const { cat, diet, spice, q, setCat, setDiet, setSpice, setQ, reset, filtered, total } = filters
   const showingCount = filtered.length
-  const hasActive = cat !== null || diet !== 'all' || q.trim().length > 0
+  const hasActive = cat !== null || diet !== 'all' || spice !== 'any' || q.trim().length > 0
 
   return (
     <div
@@ -190,6 +204,36 @@ export function CustomerFilterBar({
                     'size-3.5 transition-colors',
                     isActive ? 'text-white' : opt.id === 'veg' ? 'text-green-500' : opt.id === 'nonveg' ? 'text-red-500' : 'text-neutral-400'
                   )} />
+                  {opt.label}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* P2.18 — Spice level chips. Real backend field `spiceLevel`. */}
+          <div
+            className="inline-flex rounded-full overflow-hidden shrink-0 p-0.5 border border-[var(--c-border)]"
+            role="group"
+            aria-label="Spice level filter"
+          >
+            {[
+              { id: 'any' as const, label: 'Any', emoji: null },
+              { id: 'mild' as const, label: 'Mild', emoji: '🌶' },
+              { id: 'medium' as const, label: 'Medium', emoji: '🌶🌶' },
+              { id: 'hot' as const, label: 'Hot', emoji: '🌶🌶🌶' },
+            ].map((opt) => {
+              const isActive = spice === opt.id
+              return (
+                <button
+                  key={opt.id}
+                  onClick={() => setSpice(opt.id)}
+                  className={cn(
+                    'inline-flex items-center gap-1 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] transition-all rounded-full cursor-pointer',
+                    isActive ? 'bg-[var(--c-terracotta)] text-white' : 'text-[var(--c-text-soft)] hover:text-[var(--c-terracotta)]',
+                  )}
+                  aria-pressed={isActive}
+                >
+                  {opt.emoji ? <span aria-hidden className="text-[9px]">{opt.emoji}</span> : null}
                   {opt.label}
                 </button>
               )

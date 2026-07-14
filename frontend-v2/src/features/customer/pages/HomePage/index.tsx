@@ -1,9 +1,9 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
 import {
   Star, Award, ChefHat, Leaf,
-  Calendar, Camera, ShoppingBag, Clock, ChevronDown
+  Calendar, ShoppingBag, Clock, ChevronDown, MapPin
 } from 'lucide-react'
 import { DateField } from '@/components/ui/date-field'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -14,11 +14,12 @@ import { CountUp } from '@/components/ui/count-up'
 import { useMounted } from '@/hooks/use-mounted'
 import { toast } from '@/lib/toast'
 import { DocumentTitle } from '@/lib/seo/document-title'
+import { useBrand } from '@/components/providers/BrandProvider'
 import {
   HERO_IMAGES, useCart, useCustomerCatalog,
   useSelectedBranchId,
 } from '@/features/customer/catalog'
-import { useCustomerSliders } from '@/api/queries/customer'
+import { useCustomerBranches, useCustomerSliders } from '@/api/queries/customer'
 import { submitPublicReservation } from '@/api/services/customer'
 import ReservationWizard from '@/features/customer/pages/HomePage/ReservationWizard'
 import GallerySlider from '@/features/customer/pages/HomePage/GallerySlider'
@@ -40,10 +41,25 @@ import '@/styles/customer.css'
 
 export function HomePage() {
   const navigate = useNavigate()
+  const brand = useBrand()
   const catalog = useCustomerCatalog()
   const { branchId } = useSelectedBranchId()
   const slidersQ = useCustomerSliders(branchId)
   const mounted = useMounted(200)
+
+  // Preload hero fallback image so it's ready before framer motion needs it.
+  // Backend sliders (when present) win, but the fallback is always the LCP
+  // candidate for a fresh tenant with no slider content.
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    const link = document.createElement('link')
+    link.rel = 'preload'
+    link.as = 'image'
+    link.href = HERO_IMAGES.home
+    link.fetchPriority = 'high'
+    document.head.appendChild(link)
+    return () => { document.head.removeChild(link) }
+  }, [])
   // Silence "unused var" — some downstream sections still gate on `catalog`
   // via useCustomerCatalog() calls internally; the ref here is only for
   // consistency with prior code and future additions.
@@ -61,8 +77,8 @@ export function HomePage() {
   return (
     <CustomerLayout transparent>
       <DocumentTitle
-        title="Spice Garden Steakhouse — Hand-Crafted Indian Dining"
-        description="Reserve a table or order online from Spice Garden — chef-crafted Indian cuisine, signature kebabs, butter chicken, and more. Three branches across Mumbai."
+        title={`${brand.restaurantName} — ${brand.tagline || 'Reserve a Table or Order Online'}`}
+        description={brand.aboutUs || `Reserve a table or order online from ${brand.restaurantName}.`}
       />
 
       {/* Premium Hero Rotator Reveal — image cycling only (video removed
@@ -81,6 +97,10 @@ export function HomePage() {
         heroImages={heroImages}
         withCurve
       />
+
+      {/* Trust signals strip (P4.30/31/32) — aggregate rating, branch
+       * count, FSSAI. Renders only when the underlying data is real. */}
+      <TrustSignalsStrip />
 
       {/* Chef's Signatures — replaces the cream section + CategoryChain orbit
        * + full Popular Dishes grid (2026-07-10, per user request).
@@ -127,9 +147,13 @@ export function HomePage() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
-            { Icon: ChefHat, title: 'Hand-Crafted by Chefs', text: 'Every dish prepared fresh by our experienced kitchen team.' },
-            { Icon: Leaf, title: 'Farm-Fresh Ingredients', text: 'Sourced daily from trusted local farms for peak flavour.' },
-            { Icon: Award, title: 'Award-Winning Recipes', text: 'Heritage recipes refined over decades for an unforgettable bite.' },
+            /* Copy neutralized 2026-07-13 (P1.10) — earlier claims
+             * ("Award-Winning Recipes") would be a lie for a fresh tenant
+             * with no such credential. These lines are safe hospitality
+             * language applicable to any restaurant. */
+            { Icon: ChefHat, title: 'Made With Care', text: 'Every plate prepared fresh by our kitchen team, order after order.' },
+            { Icon: Leaf, title: 'Ingredients That Matter', text: 'Sourced with intention — because good food starts with good ingredients.' },
+            { Icon: Award, title: 'Warm Hospitality', text: 'Come as a guest, leave feeling looked after. That is the promise at the table.' },
           ].map(({ Icon, title, text }, i) => (
             <ScrollReveal key={title} delay={i * 0.08} className="c-card p-8 text-center group hover:-translate-y-1.5 transition-transform duration-300 rounded-2xl bg-[--c-bg-elev]">
               <div className="inline-flex size-16 rounded-full border border-[--c-accent] items-center justify-center gold-text mb-5 group-hover:bg-[--c-accent] group-hover:text-black transition-colors">
@@ -161,7 +185,10 @@ export function HomePage() {
       <ScrollReveal><ReservationCallToActionSection /></ScrollReveal>
       <BranchLocator />
       <ScrollReveal><NewsletterSection /></ScrollReveal>
-      <ScrollReveal><InstagramFeedSection /></ScrollReveal>
+      {/* Follow-Us card (replaces the deleted Instagram grid). Renders only
+       * when the tenant has at least one social link on their branding.
+       * Zero-lie SaaS-safe. */}
+      <FollowUsCard />
 
       {/* Animated Floating Cart Action Bubble */}
       <AnimatePresence>
@@ -187,6 +214,122 @@ export function HomePage() {
         )}
       </AnimatePresence>
     </CustomerLayout>
+  )
+}
+
+/**
+ * TrustSignalsStrip — three signal-of-legitimacy pills that a real customer
+ * scans for in the first 5 seconds. Every pill is derived from ACTUAL
+ * backend data, so nothing fake ships:
+ *   • Aggregate rating (avg dish rating × total review count)
+ *   • Branch count ("3 branches in Mumbai")
+ *   • FSSAI Lic. verified
+ * Any pill with missing data silently hides. If all hide, the strip
+ * returns null so we don't leave an awkward empty band.
+ */
+function TrustSignalsStrip() {
+  const brand = useBrand()
+  const catalog = useCustomerCatalog()
+  const { data: branches } = useCustomerBranches()
+
+  const aggRating = useMemo(() => {
+    const rated = catalog.dishes.filter((d) => d.reviewCount > 0)
+    if (rated.length === 0) return null
+    const totalReviews = rated.reduce((s, d) => s + d.reviewCount, 0)
+    const weighted = rated.reduce((s, d) => s + d.rating * d.reviewCount, 0)
+    if (totalReviews === 0) return null
+    return { avg: weighted / totalReviews, count: totalReviews }
+  }, [catalog.dishes])
+
+  const branchCount = (branches ?? []).length
+  const firstCity = (branches ?? [])[0]?.city ?? null
+  const showFssai = Boolean(brand.fssaiNumber)
+
+  // Delivery ETA approximation — max prep across dishes + 25 min average
+  // rider time. Approximation acceptable per audit (P4.33) until backend
+  // ships a real ETA endpoint. Hides when no prep data available.
+  const eta = useMemo(() => {
+    const preps = catalog.dishes
+      .map((d) => d.preparationMinutes ?? 0)
+      .filter((n) => n > 0)
+    if (preps.length === 0) return null
+    const maxPrep = Math.max(...preps)
+    return { min: maxPrep + 20, max: maxPrep + 30 }
+  }, [catalog.dishes])
+
+  if (!aggRating && branchCount === 0 && !showFssai && !eta) return null
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-4 sm:-mt-6 relative z-[3]">
+      <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+        {aggRating ? (
+          <div className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 border shadow-sm text-[12px]" style={{ background: 'var(--c-bg-elev, #FFFCF6)', borderColor: 'rgba(201, 169, 110, 0.4)' }}>
+            <span aria-hidden style={{ color: 'var(--c-accent)' }}>★</span>
+            <span className="font-bold" style={{ color: 'var(--c-text)' }}>{aggRating.avg.toFixed(1)}</span>
+            <span className="text-[--c-text-soft]">· {aggRating.count.toLocaleString('en-IN')} ratings</span>
+          </div>
+        ) : null}
+        {branchCount > 0 ? (
+          <div className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 border shadow-sm text-[12px]" style={{ background: 'var(--c-bg-elev, #FFFCF6)', borderColor: 'rgba(201, 169, 110, 0.4)' }}>
+            <MapPin className="size-3.5" style={{ color: 'var(--c-terracotta)' }} aria-hidden />
+            <span className="font-bold" style={{ color: 'var(--c-text)' }}>{branchCount}</span>
+            <span className="text-[--c-text-soft]">{branchCount === 1 ? 'branch' : 'branches'}{firstCity ? ` in ${firstCity}` : ''}</span>
+          </div>
+        ) : null}
+        {showFssai ? (
+          <div className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 border shadow-sm text-[12px]" style={{ background: 'var(--c-bg-elev, #FFFCF6)', borderColor: 'rgba(169, 191, 166, 0.55)' }} title={`FSSAI Lic. ${brand.fssaiNumber}`}>
+            <span aria-hidden className="inline-flex items-center justify-center size-4 rounded-full font-bold text-white text-[10px]" style={{ background: '#6E8B6A' }}>✓</span>
+            <span className="font-bold" style={{ color: 'var(--c-text)' }}>FSSAI</span>
+            <span className="text-[--c-text-soft] font-mono text-[11px]">{brand.fssaiNumber}</span>
+          </div>
+        ) : null}
+        {eta ? (
+          <div className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 border shadow-sm text-[12px]" style={{ background: 'var(--c-bg-elev, #FFFCF6)', borderColor: 'rgba(201, 169, 110, 0.4)' }} title="Estimated delivery time — includes prep + rider">
+            <Clock className="size-3.5" style={{ color: 'var(--c-accent)' }} aria-hidden />
+            <span className="font-bold" style={{ color: 'var(--c-text)' }}>{eta.min}–{eta.max} min</span>
+            <span className="text-[--c-text-soft]">delivery</span>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
+function FollowUsCard() {
+  const brand = useBrand()
+  const links = brand.socialLinks
+  const items = [
+    { key: 'facebook', label: 'Facebook', href: links.facebook, Icon: null },
+    { key: 'instagram', label: 'Instagram', href: links.instagram, Icon: null },
+    { key: 'twitter', label: 'Twitter', href: links.twitter, Icon: null },
+    { key: 'youtube', label: 'YouTube', href: links.youtube, Icon: null },
+  ].filter((i) => Boolean(i.href))
+  if (items.length === 0) return null
+  return (
+    <ScrollReveal as="section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div className="text-center">
+        <p className="subtitle">STAY IN THE LOOP</p>
+        <div className="c-divider" />
+        <h2 className="display text-3xl sm:text-4xl mb-3">Follow <span>{brand.restaurantName}</span></h2>
+        <p className="text-sm text-[--c-text-soft] max-w-lg mx-auto leading-relaxed mb-8">
+          New dishes, chef's specials, and behind-the-scenes moments — first on our socials.
+        </p>
+        <div className="flex items-center justify-center gap-3 flex-wrap">
+          {items.map(({ key, label, href }) => (
+            <a
+              key={key}
+              href={href!}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="c-button-outline inline-flex items-center gap-2 !py-2.5 !px-5 rounded-full"
+              aria-label={`Open ${brand.restaurantName} on ${label}`}
+            >
+              {label}
+            </a>
+          ))}
+        </div>
+      </div>
+    </ScrollReveal>
   )
 }
 
@@ -241,7 +384,7 @@ function TestimonialsSection() {
             key={t.name}
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, margin: '-60px' }}
+            viewport={{ once: true, margin: '-60px' }}
             transition={{ duration: 0.4, delay: i * 0.08, ease: [0.16, 1, 0.3, 1] }}
             className="testimonial-compact"
           >
@@ -318,38 +461,3 @@ function ReservationCallToActionSection() {
   )
 }
 
-const INSTAGRAM_FEED = [
-  'https://images.unsplash.com/photo-1567620832903-9fc6debc209f?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1551024506-0bccd828d307?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80',
-]
-
-function InstagramFeedSection() {
-  return (
-    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-[--c-border]">
-      <ScrollReveal className="text-center mb-10">
-        <p className="subtitle">FOLLOW OUR JOURNEY</p>
-        <div className="c-divider" />
-        <h2 className="display text-3xl sm:text-4xl"><span>@spicegarden</span> · Instagram</h2>
-      </ScrollReveal>
-      <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {INSTAGRAM_FEED.map((src, i) => (
-          <ScrollReveal as="li" key={i} delay={i * 0.06} className="relative aspect-square overflow-hidden group cursor-pointer rounded-xl">
-            <img src={src} alt={`Instagram post ${i + 1}`} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/45 transition-all duration-300 grid place-items-center">
-              <Camera className="size-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-          </ScrollReveal>
-        ))}
-      </ul>
-      <div className="text-center mt-8">
-        <a href="https://instagram.com" target="_blank" rel="noreferrer" className="c-button-outline inline-flex items-center gap-2 px-6 py-2.5 rounded-full">
-          FOLLOW @SPICEGARDEN
-        </a>
-      </div>
-    </section>
-  )
-}

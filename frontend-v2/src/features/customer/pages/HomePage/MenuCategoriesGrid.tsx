@@ -62,7 +62,7 @@ export default function MenuCategoriesGrid() {
         <motion.p
           initial={{ opacity: 0, y: 8 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, margin: '-80px' }}
+          viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
           className="subtitle"
         >
@@ -72,7 +72,7 @@ export default function MenuCategoriesGrid() {
         <motion.h2
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, margin: '-80px' }}
+          viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.65, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
           className="display text-3xl sm:text-4xl lg:text-5xl"
         >
@@ -81,7 +81,7 @@ export default function MenuCategoriesGrid() {
         <motion.p
           initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, margin: '-80px' }}
+          viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.6, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
           className="mt-4 max-w-xl mx-auto text-center text-[13px] sm:text-sm text-[var(--c-cream-text-soft,#6B5B45)] leading-relaxed"
         >
@@ -96,7 +96,7 @@ export default function MenuCategoriesGrid() {
             type="button"
             initial={{ opacity: 0, y: 32 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, margin: '-60px' }}
+            viewport={{ once: true, margin: '-60px' }}
             transition={{
               duration: 0.7,
               delay: (i % 3) * 0.08,

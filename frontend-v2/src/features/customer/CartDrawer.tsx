@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion, type Transition } from 'framer-motion'
 import { ShoppingBag, X, Plus, Minus, ChevronRight, Trash2 } from 'lucide-react'
 import { DISHES, useCart, useCustomerCatalog, type Dish } from '@/features/customer/catalog'
+import { formatPrice } from '@/features/customer/format'
 import { useHaptic } from '@/hooks/use-haptic'
 import { toast } from '@/lib/toast'
 import { useBodyScrollLock } from '@/lib/useBodyScrollLock'
@@ -24,6 +25,42 @@ import { tokens } from '@/lib/auth/tokens'
  */
 const drawerSpring: Transition = { type: 'spring', stiffness: 320, damping: 32, mass: 0.9 }
 const reducedTransition: Transition = { duration: 0 }
+
+/**
+ * Free-delivery threshold (₹). Currently a client-side constant; when backend
+ * ships `brand.freeDeliveryThreshold`, swap this for the tenant value.
+ */
+const FREE_DELIVERY_THRESHOLD = 499
+
+function FreeDeliveryMeter({ subtotal, threshold }: { subtotal: number; threshold: number }) {
+  const unlocked = subtotal >= threshold
+  const remaining = Math.max(0, threshold - subtotal)
+  const pct = Math.min(100, Math.round((subtotal / threshold) * 100))
+  return (
+    <div className="rounded-lg p-3 mb-2" style={{ background: unlocked ? 'rgba(169, 191, 166, 0.16)' : 'rgba(201, 169, 110, 0.10)', border: '1px solid rgba(201, 169, 110, 0.28)' }}>
+      <p className="text-[11px] font-semibold mb-1.5" style={{ color: unlocked ? '#4A6B47' : 'var(--c-text)' }}>
+        {unlocked ? (
+          <span className="inline-flex items-center gap-1.5">
+            <span aria-hidden>🎉</span> Free delivery unlocked
+          </span>
+        ) : (
+          <>Add <span className="font-bold" style={{ color: 'var(--c-terracotta)' }}>{formatPrice(remaining)}</span> more to unlock free delivery</>
+        )}
+      </p>
+      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(26,26,26,0.08)' }}>
+        <div
+          className="h-full transition-all duration-500 ease-out"
+          style={{
+            width: `${pct}%`,
+            background: unlocked
+              ? 'linear-gradient(90deg, #A9BFA6, #6E8B6A)'
+              : 'linear-gradient(90deg, var(--c-accent), var(--c-terracotta))',
+          }}
+        />
+      </div>
+    </div>
+  )
+}
 
 interface Props {
   open: boolean
@@ -189,46 +226,74 @@ function CartContents({
       <div className="flex-1 overflow-y-auto p-5">
         {lines.length === 0 ? (
           <div className="text-center py-12">
-            <ShoppingBag className="size-12 mx-auto mb-4 opacity-30" />
-            <p className="font-semibold mb-1">Your cart is empty</p>
-            <p className="text-xs text-[--c-text-muted] mb-5">
-              Add a dish from the menu to get started.
+            <div className="mx-auto mb-4 size-20 rounded-full flex items-center justify-center" style={{ background: 'rgba(201,169,110,0.14)' }}>
+              <ShoppingBag className="size-9" style={{ color: 'var(--c-accent)' }} aria-hidden />
+            </div>
+            <p className="display text-xl font-semibold mb-1">Your cart is empty</p>
+            <p className="text-sm text-[--c-text-muted] mb-6 max-w-[240px] mx-auto leading-relaxed">
+              Add a dish from the menu and it will appear here.
             </p>
+            <button
+              type="button"
+              onClick={() => { onClose(); navigate('/menu') }}
+              className="c-button-primary inline-flex items-center gap-2"
+            >
+              Browse Menu <ChevronRight className="size-4" />
+            </button>
           </div>
         ) : (
           <ul className="space-y-3">
             {lines.map((l) => (
-              <li
-                key={l.id}
-                className="flex items-center gap-3 p-2 rounded border border-[--c-border]"
-              >
-                <img src={l.img} alt={l.name} loading="lazy" decoding="async" className="size-16 rounded object-cover shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm truncate">
-                    <span className={l.veg ? 'veg-icon' : 'nonveg-icon'} />
-                    {l.name}
-                  </p>
-                  <p className="text-[11px] text-[--c-text-muted]">
-                    ${l.price} × {l.qty}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1 border border-[--c-accent] rounded">
-                  <button
-                    className="px-2 py-1"
-                    onClick={() => { haptic.vibrate(l.qty === 1 ? 'heavy' : 'light'); setQty(l.id, -1) }}
-                    aria-label={`Decrease ${l.name}`}
-                  >
-                    {l.qty === 1 ? <Trash2 className="size-3" /> : <Minus className="size-3" />}
-                  </button>
-                  <span className="text-sm font-mono tabular-nums w-5 text-center">{l.qty}</span>
-                  <button
-                    className="px-2 py-1"
-                    onClick={() => { haptic.vibrate('light'); setQty(l.id, 1) }}
-                    aria-label={`Increase ${l.name}`}
-                  >
-                    <Plus className="size-3" />
-                  </button>
-                </div>
+              <li key={l.id} className="relative overflow-hidden rounded">
+                {/* Underlay revealed on swipe-left — tap = delete line */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    haptic.vibrate('heavy')
+                    // Remove line completely regardless of qty
+                    for (let i = 0; i < l.qty; i++) setQty(l.id, -1)
+                  }}
+                  aria-label={`Remove ${l.name}`}
+                  className="absolute inset-y-0 right-0 w-20 flex items-center justify-center bg-gradient-to-l from-[var(--c-terracotta,#B4593F)] to-[#8C3D28] text-white text-[10px] font-bold uppercase tracking-widest"
+                >
+                  <Trash2 className="size-4" />
+                </button>
+                {/* Draggable content — swipe left to reveal delete */}
+                <motion.div
+                  drag="x"
+                  dragConstraints={{ left: -80, right: 0 }}
+                  dragElastic={0.12}
+                  dragMomentum={false}
+                  className="relative flex items-center gap-3 p-2 rounded border border-[--c-border] bg-[var(--c-bg-elev,#FFFCF6)] cursor-grab active:cursor-grabbing touch-pan-y"
+                >
+                  <img src={l.img} alt={l.name} loading="lazy" decoding="async" className="size-16 rounded object-cover shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm truncate">
+                      <span className={l.veg ? 'veg-icon' : 'nonveg-icon'} />
+                      {l.name}
+                    </p>
+                    <p className="text-[11px] text-[--c-text-muted]">
+                      {formatPrice(l.price)} × {l.qty}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 border border-[--c-accent] rounded-full">
+                    <button
+                      className="size-11 inline-flex items-center justify-center active:scale-95 transition-transform"
+                      onClick={() => { haptic.vibrate(l.qty === 1 ? 'heavy' : 'light'); setQty(l.id, -1) }}
+                      aria-label={`Decrease ${l.name}`}
+                    >
+                      {l.qty === 1 ? <Trash2 className="size-4" /> : <Minus className="size-4" />}
+                    </button>
+                    <span className="text-sm font-mono tabular-nums w-5 text-center">{l.qty}</span>
+                    <button
+                      className="size-11 inline-flex items-center justify-center active:scale-95 transition-transform"
+                      onClick={() => { haptic.vibrate('light'); setQty(l.id, 1) }}
+                      aria-label={`Increase ${l.name}`}
+                    >
+                      <Plus className="size-4" />
+                    </button>
+                  </div>
+                </motion.div>
               </li>
             ))}
           </ul>
@@ -236,18 +301,21 @@ function CartContents({
       </div>
       {lines.length > 0 ? (
         <div className="p-5 border-t border-[--c-border] space-y-2">
+          {/* Free-delivery meter — drive-up-AOV pattern. Threshold ₹499
+           * fallback until backend adds brand.freeDeliveryThreshold. */}
+          <FreeDeliveryMeter subtotal={subtotal} threshold={FREE_DELIVERY_THRESHOLD} />
           <div className="flex items-center justify-between text-sm">
             <span className="text-[--c-text-soft]">Subtotal</span>
-            <span className="tabular-nums">${subtotal.toLocaleString('en-US')}</span>
+            <span className="tabular-nums">{formatPrice(subtotal)}</span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-[--c-text-soft]">GST 5%</span>
-            <span className="tabular-nums">${gst.toLocaleString('en-US')}</span>
+            <span className="tabular-nums">{formatPrice(gst)}</span>
           </div>
           <div className="flex items-center justify-between pt-2 border-t border-[--c-border]">
             <span className="font-semibold">Total</span>
             <span className="display text-2xl gold-text">
-              ${total.toLocaleString('en-US')}
+              {formatPrice(total)}
             </span>
           </div>
           <button

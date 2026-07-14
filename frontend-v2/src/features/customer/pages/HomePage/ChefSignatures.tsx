@@ -5,6 +5,7 @@ import { ArrowRight, Flame, Heart, Sparkles, Star } from 'lucide-react'
 import { useCustomerCatalog, type Dish } from '@/features/customer/catalog'
 import { handleImageError } from '@/features/customer/image-fallback'
 import { isMostLoved, isNewDish } from '@/features/customer/dish-utils'
+import { formatPrice } from '@/features/customer/format'
 import { useMouseTilt } from '@/hooks/use-mouse-tilt'
 
 /**
@@ -39,6 +40,12 @@ export default function ChefSignatures() {
     return catalog.dishes.slice(0, MAX_CARDS)
   }, [catalog.dishes])
 
+  // First-paint gate: while the catalog is still loading, render a skeleton
+  // of the 4-card grid so the layout doesn't jump into view. When the fetch
+  // resolves with zero picks (fresh tenant, no dishes), hide the section
+  // entirely instead of showing an empty skeleton forever.
+  const isLoading = catalog.dishes.length === 0
+  if (isLoading) return <ChefSignaturesSkeleton />
   if (picks.length === 0) return null
 
   const chefsPickCount = catalog.dishes.filter((d) => d.signature).length
@@ -49,7 +56,7 @@ export default function ChefSignatures() {
         <motion.p
           initial={{ opacity: 0, y: 8 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, margin: '-80px' }}
+          viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
           className="subtitle inline-flex items-center gap-2"
         >
@@ -60,7 +67,7 @@ export default function ChefSignatures() {
         <motion.h2
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, margin: '-80px' }}
+          viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.65, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
           className="display text-3xl sm:text-4xl lg:text-5xl"
         >
@@ -69,7 +76,7 @@ export default function ChefSignatures() {
         <motion.p
           initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, margin: '-80px' }}
+          viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.6, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
           className="mt-4 max-w-xl mx-auto text-center text-[13px] sm:text-sm text-[var(--c-text-soft)] leading-relaxed"
         >
@@ -88,7 +95,7 @@ export default function ChefSignatures() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: false, margin: '-40px' }}
+        viewport={{ once: true, margin: '-40px' }}
         transition={{ duration: 0.6, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
         className="mt-12 sm:mt-14 flex justify-center"
       >
@@ -133,7 +140,7 @@ function SignatureCard({
         type="button"
         initial={{ opacity: 0, y: 40, scale: 0.94 }}
         whileInView={{ opacity: 1, y: 0, scale: 1 }}
-        viewport={{ once: false, margin: '-60px' }}
+        viewport={{ once: true, margin: '-60px' }}
         transition={{
           duration: 0.7,
           delay: (index % 4) * 0.09,
@@ -208,7 +215,7 @@ function SignatureCard({
               className="text-lg font-bold"
               style={{ color: 'var(--c-accent, #C9A96E)' }}
             >
-              ${dish.price}
+              {formatPrice(dish.price)}
             </span>
             {dish.preparationMinutes ? (
               <span className="text-[10px] opacity-80">
@@ -219,6 +226,36 @@ function SignatureCard({
         </div>
       </motion.button>
     </div>
+  )
+}
+
+/**
+ * ChefSignaturesSkeleton — visible during catalog load. Matches the arched
+ * card silhouette + eyebrow + centred CTA rhythm so nothing jumps when real
+ * content lands. Pulsing warm-cream shimmer via .c-skeleton-shimmer.
+ */
+function ChefSignaturesSkeleton() {
+  return (
+    <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+      <div className="text-center mb-12 sm:mb-14">
+        <div className="c-skeleton-shimmer h-3 w-40 mx-auto rounded" />
+        <div className="c-divider" />
+        <div className="c-skeleton-shimmer h-10 w-80 max-w-full mx-auto rounded mt-4" />
+        <div className="c-skeleton-shimmer h-3 w-64 mx-auto rounded mt-4" />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
+        {[0, 1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="c-signature-card c-skeleton-shimmer w-full aspect-[4/5]"
+            style={{ borderRadius: '40% 40% 18px 18px / 22% 22% 18px 18px' }}
+          />
+        ))}
+      </div>
+      <div className="mt-12 sm:mt-14 flex justify-center">
+        <div className="c-skeleton-shimmer h-10 w-56 rounded-full" />
+      </div>
+    </section>
   )
 }
 

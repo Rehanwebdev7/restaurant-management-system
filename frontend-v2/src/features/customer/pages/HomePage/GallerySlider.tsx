@@ -89,7 +89,7 @@ export default function GallerySlider() {
           <motion.p
             initial={{ opacity: 0, y: 8 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, margin: '-60px' }}
+            viewport={{ once: true, margin: '-60px' }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             className="subtitle"
           >
@@ -98,7 +98,7 @@ export default function GallerySlider() {
           <motion.h2
             initial={{ opacity: 0, y: 14 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, margin: '-60px' }}
+            viewport={{ once: true, margin: '-60px' }}
             transition={{ duration: 0.6, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
             className="display text-3xl sm:text-4xl lg:text-5xl leading-tight"
           >

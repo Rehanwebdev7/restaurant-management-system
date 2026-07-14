@@ -105,61 +105,76 @@ export default function ReservationWizard() {
   }
 
   return (
-    <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
-      <input
-        className="c-input sm:col-span-2"
-        placeholder="Your name"
-        value={form.name}
-        onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-      />
-      <input
-        className="c-input"
-        inputMode="numeric"
-        maxLength={10}
-        placeholder="10-digit mobile"
-        value={form.phone}
-        onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value.replace(/\D/g, '').slice(0, 10) }))}
-      />
-      <input
-        className="c-input"
-        type="number"
-        min={1}
-        max={20}
-        placeholder="Guests"
-        value={form.guests}
-        onChange={(e) => setForm((f) => ({ ...f, guests: Math.max(1, Math.min(20, Number(e.target.value) || 1)) }))}
-        onWheel={(e) => e.currentTarget.blur()}
-      />
-      <input
-        className="c-input"
-        type="date"
-        min={minDate}
-        value={form.date}
-        onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
-      />
-      <select
-        className="c-input"
-        value={form.time}
-        onChange={(e) => setForm((f) => ({ ...f, time: e.target.value }))}
-      >
-        <option value="">Select time</option>
-        {TIME_SLOTS.map((t) => (
-          <option key={t} value={t}>{formatTimeLabel(t)}</option>
-        ))}
-      </select>
+    <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+      <label className="sm:col-span-2 block">
+        <span className="block text-[10px] font-bold uppercase tracking-[0.18em] mb-1.5 opacity-70">Full name</span>
+        <input
+          className="c-input"
+          placeholder="e.g. Arjun Verma"
+          value={form.name}
+          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+        />
+      </label>
+      <label className="block">
+        <span className="block text-[10px] font-bold uppercase tracking-[0.18em] mb-1.5 opacity-70">Mobile</span>
+        <input
+          className="c-input"
+          inputMode="numeric"
+          maxLength={10}
+          placeholder="10-digit number"
+          value={form.phone}
+          onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value.replace(/\D/g, '').slice(0, 10) }))}
+        />
+      </label>
+      <label className="block">
+        <span className="block text-[10px] font-bold uppercase tracking-[0.18em] mb-1.5 opacity-70">Guests</span>
+        <input
+          className="c-input"
+          type="number"
+          min={1}
+          max={20}
+          placeholder="2"
+          value={form.guests}
+          onChange={(e) => setForm((f) => ({ ...f, guests: Math.max(1, Math.min(20, Number(e.target.value) || 1)) }))}
+          onWheel={(e) => e.currentTarget.blur()}
+        />
+      </label>
+      <label className="block">
+        <span className="block text-[10px] font-bold uppercase tracking-[0.18em] mb-1.5 opacity-70">Date</span>
+        <input
+          className="c-input"
+          type="date"
+          min={minDate}
+          value={form.date}
+          onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
+        />
+      </label>
+      <label className="block">
+        <span className="block text-[10px] font-bold uppercase tracking-[0.18em] mb-1.5 opacity-70">Time</span>
+        <select
+          className="c-input"
+          value={form.time}
+          onChange={(e) => setForm((f) => ({ ...f, time: e.target.value }))}
+        >
+          <option value="">Select time</option>
+          {TIME_SLOTS.map((t) => (
+            <option key={t} value={t}>{formatTimeLabel(t)}</option>
+          ))}
+        </select>
+      </label>
 
       <button
         type="button"
         onClick={submit}
         disabled={!canSubmit || submitting}
         className={cn(
-          'sm:col-span-2 py-3.5 rounded-xl font-bold uppercase tracking-[0.24em] text-sm transition-all mt-2',
+          'sm:col-span-2 py-4 rounded-xl font-bold uppercase tracking-[0.24em] text-sm transition-all mt-3 inline-flex items-center justify-center gap-2',
           canSubmit && !submitting
             ? 'bg-gradient-to-r from-[var(--c-accent,#C9A96E)] to-[var(--c-terracotta,#B4593F)] text-[#14100C] shadow-[0_10px_28px_rgba(201,169,110,0.30)] hover:shadow-[0_14px_36px_rgba(180,89,63,0.35)] hover:scale-[1.01]'
             : 'bg-white/10 text-white/40 cursor-not-allowed',
         )}
       >
-        {submitting ? 'Reserving…' : 'Reserve Table'}
+        {submitting ? 'Reserving…' : canSubmit ? 'Reserve Table' : 'Fill Details to Reserve'}
       </button>
     </div>
   )

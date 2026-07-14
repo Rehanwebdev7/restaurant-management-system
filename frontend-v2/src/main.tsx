@@ -27,7 +27,25 @@ createRoot(rootEl).render(
         <QueryProvider>
           <BrandProvider>
             <App />
-            <Toaster richColors closeButton position="top-right" theme="system" />
+            <Toaster
+              closeButton
+              position="top-right"
+              theme="light"
+              toastOptions={{
+                classNames: {
+                  toast: 'c-toast',
+                  success: 'c-toast--success',
+                  error: 'c-toast--error',
+                  warning: 'c-toast--warning',
+                  info: 'c-toast--info',
+                  title: 'c-toast__title',
+                  description: 'c-toast__desc',
+                  actionButton: 'c-toast__btn',
+                  cancelButton: 'c-toast__btn c-toast__btn--cancel',
+                  closeButton: 'c-toast__close',
+                },
+              }}
+            />
           </BrandProvider>
         </QueryProvider>
       </ThemeProvider>

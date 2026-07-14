@@ -17,6 +17,8 @@ import {
   CheckCircle2, ClipboardList, ChefHat, Bike, PackageCheck, MapPin, Clock, Star, RotateCcw,
 } from 'lucide-react'
 import CustomerLayout from '@/features/customer/CustomerLayout'
+import { formatPrice } from '@/features/customer/format'
+import { useBrand } from '@/components/providers/BrandProvider'
 import { DocumentTitle } from '@/lib/seo/document-title'
 import { toast } from '@/lib/toast'
 import { cn } from '@/lib/utils'
@@ -131,6 +133,7 @@ function backendOrderToUi(d: BackendOrderDetail, fallbackId: string): CustomerOr
 }
 
 export default function OrderTracking() {
+  const brand = useBrand()
   const { id = '' } = useParams<{ id: string }>()
   const navigate = useNavigate()
   // Backend-fetched detail when available; falls back to the local cart
@@ -161,7 +164,7 @@ export default function OrderTracking() {
 
   return (
     <CustomerLayout>
-      <DocumentTitle title={`Tracking ${order.id} — Spice Garden`} />
+      <DocumentTitle title={`Tracking ${order.id} — ${brand.restaurantName}`} />
       <section className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <p className="subtitle">YOUR ORDER STATUS</p>
         <div className="c-divider !ml-0" />
@@ -271,15 +274,15 @@ export default function OrderTracking() {
           <div className="p-5 space-y-2 border-t border-[--c-border]">
             <div className="flex items-center justify-between text-sm">
               <span className="text-[--c-text-soft]">Subtotal</span>
-              <span className="tabular-nums">${order.subtotal.toLocaleString('en-US')}</span>
+              <span className="tabular-nums">{formatPrice(order.subtotal)}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-[--c-text-soft]">GST 5%</span>
-              <span className="tabular-nums">${order.gst.toLocaleString('en-US')}</span>
+              <span className="tabular-nums">{formatPrice(order.gst)}</span>
             </div>
             <div className="flex items-center justify-between pt-3 border-t border-[--c-border]">
               <span className="font-semibold">Total</span>
-              <span className="display text-2xl gold-text">${order.total.toLocaleString('en-US')}</span>
+              <span className="display text-2xl gold-text">{formatPrice(order.total)}</span>
             </div>
           </div>
         </div>

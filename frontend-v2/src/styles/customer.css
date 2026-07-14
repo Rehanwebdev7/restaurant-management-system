@@ -889,28 +889,36 @@
   border-radius: 4px;
 }
 
+/* Indian FSSAI diet marks — bordered square with inner shape.
+ * Veg = green square with green filled circle (per FSSAI regs).
+ * Non-veg = red square with red filled circle. Both share the same
+ * bordered-square frame so they read as a "pair" at a glance. */
 .customer-shell .veg-icon::before {
   content: '';
   display: inline-block;
-  width: 0.65rem;
-  height: 0.65rem;
-  background: #4caf50;
-  border-radius: 1px;
-  border: 1px solid #4caf50;
+  width: 0.72rem;
+  height: 0.72rem;
+  background: #FFFFFF;
+  border: 1.5px solid #2E7D32;
+  border-radius: 2px;
   margin-right: 0.5rem;
   vertical-align: middle;
+  position: relative;
+  background-image: radial-gradient(circle at center, #2E7D32 0%, #2E7D32 42%, transparent 44%);
 }
 
 .customer-shell .nonveg-icon::before {
   content: '';
   display: inline-block;
-  width: 0.65rem;
-  height: 0.65rem;
-  background: #d32f2f;
-  border-radius: 50%;
-  border: 1px solid #d32f2f;
+  width: 0.72rem;
+  height: 0.72rem;
+  background: #FFFFFF;
+  border: 1.5px solid #C62828;
+  border-radius: 2px;
   margin-right: 0.5rem;
   vertical-align: middle;
+  position: relative;
+  background-image: radial-gradient(circle at center, #C62828 0%, #C62828 42%, transparent 44%);
 }
 
 /* ============================================================
@@ -3228,6 +3236,364 @@
   left: 8%;
 }
 
+/* ─────────────────────────────────────────────────────────────
+ * TOAST THEME (2026-07-13 — P2.19)
+ * Cream/gold/terracotta palette for sonner toasts so notifications
+ * feel part of the brand instead of stock neutrals.
+ * ───────────────────────────────────────────────────────────── */
+[data-sonner-toaster] .c-toast {
+  background: #FFFCF6 !important;
+  color: #1A1A1A !important;
+  border: 1px solid rgba(201, 169, 110, 0.35) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 12px 32px -12px rgba(96, 72, 44, 0.28), 0 4px 12px rgba(96, 72, 44, 0.12) !important;
+  font-family: inherit !important;
+  padding: 0.9rem 1rem !important;
+}
+[data-sonner-toaster] .c-toast--success {
+  border-left: 4px solid #6E8B6A !important;
+}
+[data-sonner-toaster] .c-toast--error {
+  border-left: 4px solid #B4593F !important;
+  background: #FFF6F3 !important;
+}
+[data-sonner-toaster] .c-toast--warning {
+  border-left: 4px solid #C9A96E !important;
+}
+[data-sonner-toaster] .c-toast--info {
+  border-left: 4px solid #A9BFA6 !important;
+}
+[data-sonner-toaster] .c-toast__title {
+  font-weight: 700 !important;
+  font-size: 0.9rem !important;
+  letter-spacing: -0.005em !important;
+  color: #1A1A1A !important;
+}
+[data-sonner-toaster] .c-toast__desc {
+  font-size: 0.8rem !important;
+  color: #5A4E3E !important;
+  margin-top: 0.15rem !important;
+}
+[data-sonner-toaster] .c-toast__btn {
+  background: linear-gradient(135deg, #C9A96E, #B4593F) !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  border-radius: 9999px !important;
+  padding: 0.4rem 0.9rem !important;
+  font-weight: 700 !important;
+  font-size: 0.7rem !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+}
+[data-sonner-toaster] .c-toast__btn--cancel {
+  background: transparent !important;
+  color: #5A4E3E !important;
+  border: 1px solid rgba(26, 26, 26, 0.15) !important;
+}
+[data-sonner-toaster] .c-toast__close {
+  background: rgba(26, 26, 26, 0.06) !important;
+  color: #5A4E3E !important;
+  border: none !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * SKELETON SHIMMER (2026-07-13 — P2.14)
+ * Warm cream pulsing shimmer for first-paint skeleton states.
+ * Applied via .c-skeleton-shimmer utility on skeleton blocks so
+ * home + drawer content doesn't jump when catalog loads.
+ * ───────────────────────────────────────────────────────────── */
+.customer-shell .c-skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: rgba(96, 72, 44, 0.08);
+  border: 1px solid rgba(26, 26, 26, 0.05);
+}
+.customer-shell .c-skeleton-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 252, 246, 0.55) 45%,
+    rgba(255, 252, 246, 0.8) 50%,
+    rgba(255, 252, 246, 0.55) 55%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  animation: c-skeleton-sweep 1.4s ease-in-out infinite;
+}
+@keyframes c-skeleton-sweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .customer-shell .c-skeleton-shimmer::after {
+    animation: none;
+    opacity: 0.5;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * RESERVATION MODAL FORM OVERRIDES (2026-07-13)
+ * The modal renders on a cream card, but ReservationWizard uses
+ * `.c-input` which is dark-first. Force cream/light inputs +
+ * clearly visible title/text so the form looks premium light.
+ * ───────────────────────────────────────────────────────────── */
+
+/* Title + subtitle inside the modal — force charcoal on cream */
+.c-reserve-modal .subtitle {
+  color: var(--c-terracotta, #B4593F) !important;
+  font-weight: 800;
+  text-shadow: none !important;
+}
+.c-reserve-modal h2,
+.c-reserve-modal h3,
+.c-reserve-modal .display {
+  color: #1A1A1A !important;
+  text-shadow: none !important;
+}
+.c-reserve-modal p {
+  color: #5A4E3E !important;
+}
+
+/* Inputs inside the modal — cream frame, charcoal text, gold focus.
+ * Beats the default dark-mode `.customer-shell .c-input` rule via
+ * more specific selector scoped to `.c-reserve-modal`. */
+.c-reserve-modal .c-input,
+.c-reserve-modal input.c-input,
+.c-reserve-modal select.c-input,
+.c-reserve-modal textarea.c-input {
+  background: #FFFFFF !important;
+  border: 1.5px solid rgba(201, 169, 110, 0.32) !important;
+  color: #1A1A1A !important;
+  backdrop-filter: none !important;
+  padding: 0.85rem 1.1rem !important;
+  border-radius: 12px !important;
+  font-size: 0.9rem !important;
+  transition: border-color 0.2s, box-shadow 0.2s !important;
+}
+.c-reserve-modal .c-input::placeholder,
+.c-reserve-modal input.c-input::placeholder,
+.c-reserve-modal textarea.c-input::placeholder {
+  color: #8C7C6A !important;
+  opacity: 1 !important;
+}
+.c-reserve-modal .c-input:focus,
+.c-reserve-modal input.c-input:focus,
+.c-reserve-modal select.c-input:focus,
+.c-reserve-modal textarea.c-input:focus {
+  outline: none !important;
+  border-color: var(--c-accent, #C9A96E) !important;
+  box-shadow: 0 0 0 4px rgba(201, 169, 110, 0.18) !important;
+  background: #FFFCF6 !important;
+}
+/* Date + time native pickers keep visible caret icons on light bg */
+.c-reserve-modal input[type="date"].c-input,
+.c-reserve-modal input[type="time"].c-input,
+.c-reserve-modal input[type="number"].c-input {
+  color: #1A1A1A !important;
+  cursor: pointer;
+}
+.c-reserve-modal select.c-input {
+  appearance: menulist;
+  cursor: pointer;
+}
+/* Chromium calendar / clock picker indicators — force visible + gold
+ * tinted so user sees the affordance clearly. Without this, the icon
+ * blends into the cream background and looks like "no calendar". */
+.c-reserve-modal input[type="date"]::-webkit-calendar-picker-indicator,
+.c-reserve-modal input[type="time"]::-webkit-calendar-picker-indicator {
+  opacity: 1 !important;
+  filter: invert(65%) sepia(37%) saturate(507%) hue-rotate(6deg) brightness(93%) contrast(88%);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  background-color: rgba(201, 169, 110, 0.12);
+  transition: background-color 0.2s;
+}
+.c-reserve-modal input[type="date"]:hover::-webkit-calendar-picker-indicator,
+.c-reserve-modal input[type="time"]:hover::-webkit-calendar-picker-indicator {
+  background-color: rgba(201, 169, 110, 0.28);
+}
+/* Firefox — hide default arrow buttons, keep field clickable */
+.c-reserve-modal input[type="date"]::-webkit-inner-spin-button,
+.c-reserve-modal input[type="time"]::-webkit-inner-spin-button {
+  display: none;
+}
+
+/* Submit button — always visible cream-on-gold gradient inside the
+ * modal, even when the underlying framer motion child sets its own
+ * gradient (we still want the disabled state to read on cream). */
+.c-reserve-modal button[type="button"] {
+  color: #1A1A1A;
+}
+.c-reserve-modal button[type="button"]:disabled {
+  color: rgba(26, 26, 26, 0.45) !important;
+  background: rgba(26, 26, 26, 0.06) !important;
+  cursor: not-allowed;
+}
+
+/* Success confirmation block on cream */
+.c-reserve-modal .display + .text-sm,
+.c-reserve-modal .display + p {
+  color: #5A4E3E !important;
+}
+
+/* Field labels in the modal — dark charcoal with terracotta accent so
+ * they read editorial-crisp on cream. */
+.c-reserve-modal label > span {
+  color: #5A4E3E !important;
+  opacity: 1 !important;
+}
+.c-reserve-modal label:focus-within > span {
+  color: var(--c-terracotta, #B4593F) !important;
+}
+
+/* Success screen chip + "Book Another" — override the wizard's dark-mode
+ * white/6 + white/15 utilities that were invisible on cream. */
+.c-reserve-modal .bg-white\/6,
+.c-reserve-modal .bg-white\/10 {
+  background: rgba(201, 169, 110, 0.12) !important;
+}
+.c-reserve-modal .border-white\/15,
+.c-reserve-modal .border-white\/25 {
+  border-color: rgba(201, 169, 110, 0.45) !important;
+}
+.c-reserve-modal .text-\[\#FFFCF6\] {
+  color: #1A1A1A !important;
+}
+
+/* Disabled state of the submit inside the wizard — was `bg-white/10 text-white/40`
+ * which vanishes on cream. Warm gold-outline "pending" look — reads
+ * inviting rather than dead-grey. Includes a helpful tooltip on hover. */
+.c-reserve-modal button.bg-white\/10.text-white\/40 {
+  background: rgba(255, 252, 246, 0.7) !important;
+  color: rgba(90, 78, 62, 0.75) !important;
+  border: 1.5px dashed rgba(201, 169, 110, 0.6) !important;
+  box-shadow: 0 4px 12px -6px rgba(201, 169, 110, 0.35) !important;
+  letter-spacing: 0.28em !important;
+}
+.c-reserve-modal button.bg-white\/10.text-white\/40::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+  background: rgba(201, 169, 110, 0.6);
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * PRIMARY BUTTON LOADING SPINNER (2026-07-13 — P2.22)
+ * Add `data-loading="1"` to any .c-button-primary to show an
+ * inline spinner + hide the label. Button becomes non-interactive.
+ * ───────────────────────────────────────────────────────────── */
+.customer-shell .c-button-primary[data-loading="1"] {
+  color: transparent !important;
+  cursor: not-allowed !important;
+  pointer-events: none;
+  opacity: 0.85;
+}
+.customer-shell .c-button-primary[data-loading="1"]::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  margin-left: -9px;
+  margin-top: -9px;
+  border-radius: 50%;
+  border: 2.5px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #FFFFFF;
+  animation: c-btn-spin 0.75s linear infinite;
+  z-index: 3;
+}
+@keyframes c-btn-spin {
+  100% { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .customer-shell .c-button-primary[data-loading="1"]::before {
+    animation-duration: 2.5s;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * CTA WARM SHINE SWEEP (2026-07-13 — P2.23)
+ * Gold gradient sweep left→right on c-button-primary hover.
+ * Apple/Linear-style premium tactile hover.
+ * ───────────────────────────────────────────────────────────── */
+.customer-shell .c-button-primary {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.customer-shell .c-button-primary::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -30%;
+  width: 40%;
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.55) 50%,
+    transparent 100%
+  );
+  transform: skewX(-18deg);
+  pointer-events: none;
+  transition: left 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 1;
+}
+.customer-shell .c-button-primary:hover::after {
+  left: 130%;
+}
+@media (prefers-reduced-motion: reduce) {
+  .customer-shell .c-button-primary::after {
+    transition: none;
+    display: none;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * CART RECEIVE PULSE (2026-07-13 — P2.11)
+ * Fires on the header cart icon when a flying add-to-cart coin
+ * lands. Small warm bounce + brief gold ring so the receive
+ * moment reads tactile. CartFlyLayer adds/removes .c-cart-receive.
+ * ───────────────────────────────────────────────────────────── */
+.customer-shell .c-cart-receive {
+  animation: c-cart-receive 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.customer-shell .c-cart-receive::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid var(--c-accent);
+  opacity: 0;
+  pointer-events: none;
+  animation: c-cart-receive-ring 0.55s ease-out;
+}
+@keyframes c-cart-receive {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.25) rotate(-6deg); }
+  70% { transform: scale(0.94) rotate(3deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+@keyframes c-cart-receive-ring {
+  0% { opacity: 0.7; transform: scale(0.8); }
+  100% { opacity: 0; transform: scale(1.8); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .customer-shell .c-cart-receive,
+  .customer-shell .c-cart-receive::before {
+    animation: none;
+  }
+}
+
 /* Dish steam — was pure white, invisible on cream. In light mode use warm
  * terracotta-tinted smoke so it reads as delicate atmosphere per plate. */
 .customer-shell.customer-shell--light .c-dish-steam__wisp {
@@ -4187,9 +4553,14 @@
  *   7. Hero image: slow Ken Burns loop while idle
  * ───────────────────────────────────────────────────────────── */
 
-/* Taller header — restaurant sites use 88-96px for editorial presence */
+/* Taller header — restaurant sites use 88-96px for editorial presence.
+ * Safe-area padding respects PWA notch on iPhone / notched Android. */
 .customer-shell .c-header {
-  height: 92px;
+  height: calc(92px + env(safe-area-inset-top, 0px));
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.customer-shell .marquee-bar {
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 /* Light-mode transparent header override — the default rule forces

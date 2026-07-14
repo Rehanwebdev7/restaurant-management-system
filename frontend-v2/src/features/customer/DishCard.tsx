@@ -28,6 +28,8 @@ import { useHaptic } from '@/hooks/use-haptic'
 import { toast } from '@/lib/toast'
 import DishDetailModal from '@/features/customer/DishDetailModal'
 import { spiceCount, isNewDish } from '@/features/customer/dish-utils'
+import { flyToCart } from '@/features/customer/fly-to-cart'
+import { formatPrice } from '@/features/customer/format'
 import { handleImageError } from '@/features/customer/image-fallback'
 
 interface Props {
@@ -56,6 +58,12 @@ export default function DishCard({ dish }: Props) {
     e.stopPropagation()
     haptic.vibrate('light')
     setQty(dish.id, 1)
+    // Fire the gold coin flying from this card's image to the header cart
+    // icon. Reduced-motion is respected inside CartFlyLayer.
+    const imgEl = (e.currentTarget as HTMLElement)
+      .closest('[data-dish-card]')
+      ?.querySelector<HTMLImageElement>('img')
+    if (imgEl) flyToCart(imgEl, dish.img)
     toast.success(`${dish.name} added to cart`)
   }
 
@@ -63,6 +71,10 @@ export default function DishCard({ dish }: Props) {
     e.stopPropagation()
     haptic.vibrate('light')
     setQty(dish.id, 1)
+    const imgEl = (e.currentTarget as HTMLElement)
+      .closest('[data-dish-card]')
+      ?.querySelector<HTMLImageElement>('img')
+    if (imgEl) flyToCart(imgEl, dish.img)
   }
   const dec = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -87,6 +99,7 @@ export default function DishCard({ dish }: Props) {
   return (
     <>
       <motion.article
+        data-dish-card
         className="backdrop-blur-lg bg-neutral-900/35 border border-white/10 rounded-2xl overflow-hidden group relative flex flex-col cursor-pointer transition-all duration-500 hover:border-[--c-accent]/50 hover:shadow-[0_8px_30px_rgb(0,0,0,0.5)] hover:shadow-[var(--c-shadow-primary-sm)]"
         aria-label={dish.name}
         whileHover={hover}
@@ -220,16 +233,16 @@ export default function DishCard({ dish }: Props) {
           {/* Portion hint — only when backend provides half / quarter prices */}
           {(dish.halfPrice || dish.qtrPrice) ? (
             <p className="text-[10px] font-semibold text-[--c-text-soft] flex gap-1.5">
-              {dish.halfPrice ? <span>Half ${dish.halfPrice}</span> : null}
+              {dish.halfPrice ? <span>Half {formatPrice(dish.halfPrice)}</span> : null}
               {dish.halfPrice && dish.qtrPrice ? <span aria-hidden>·</span> : null}
-              {dish.qtrPrice ? <span>Qtr ${dish.qtrPrice}</span> : null}
+              {dish.qtrPrice ? <span>Qtr {formatPrice(dish.qtrPrice)}</span> : null}
             </p>
           ) : null}
 
           {/* Price + Button row */}
           <div className="flex items-center justify-between gap-2 mt-auto pt-2.5 border-t border-white/5">
             <p className="display text-lg lg:text-xl leading-none font-bold gold-text shrink-0">
-              ${dish.price}
+              {formatPrice(dish.price)}
             </p>
 
             {line ? (

@@ -58,7 +58,7 @@ export default function BranchLocator() {
         <motion.p
           initial={{ opacity: 0, y: 8 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, margin: '-80px' }}
+          viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
           className="subtitle"
         >
@@ -68,7 +68,7 @@ export default function BranchLocator() {
         <motion.h2
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, margin: '-80px' }}
+          viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.65, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
           className="display text-3xl sm:text-4xl lg:text-5xl"
         >
@@ -85,7 +85,7 @@ export default function BranchLocator() {
         <motion.div
           initial={{ opacity: 0, x: -30 }}
           whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: false, margin: '-60px' }}
+          viewport={{ once: true, margin: '-60px' }}
           transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
           className="relative overflow-hidden rounded-3xl shadow-xl aspect-[4/3] lg:aspect-auto lg:min-h-[420px]"
         >
@@ -118,7 +118,7 @@ export default function BranchLocator() {
                 type="button"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: false, margin: '-40px' }}
+                viewport={{ once: true, margin: '-40px' }}
                 transition={{
                   duration: 0.5,
                   delay: i * 0.08,

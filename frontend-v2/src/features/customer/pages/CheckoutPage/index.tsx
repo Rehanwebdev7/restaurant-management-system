@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MapPin, ChevronRight, Lock, Home, Briefcase, Plus, AlertTriangle } from 'lucide-react'
 import CustomerLayout from '@/features/customer/CustomerLayout'
+import { formatPrice } from '@/features/customer/format'
+import { useBrand } from '@/components/providers/BrandProvider'
 import { toast } from '@/lib/toast'
 import { cn } from '@/lib/utils'
 import { DocumentTitle } from '@/lib/seo/document-title'
@@ -40,6 +42,7 @@ interface Address {
 
 export function CheckoutPage() {
   const navigate = useNavigate()
+  const brand = useBrand()
   const { items } = useCart()
   const catalog = useCustomerCatalog()
   const { branchId } = useSelectedBranchId()
@@ -254,7 +257,7 @@ export function CheckoutPage() {
   if (!isSignedIn) {
     return (
       <CustomerLayout>
-        <DocumentTitle title="Checkout — Spice Garden" />
+        <DocumentTitle title={`Checkout — ${brand.restaurantName}`} />
         <section className="max-w-md mx-auto px-4 py-24 text-center">
           <div className="backdrop-blur-xl bg-neutral-900/40 border border-white/10 p-8 rounded-2xl shadow-xl flex flex-col items-center">
             <div className="size-16 rounded-full bg-[--c-accent]/15 flex items-center justify-center mb-6">
@@ -282,7 +285,7 @@ export function CheckoutPage() {
   if (items.length === 0) {
     return (
       <CustomerLayout>
-        <DocumentTitle title="Checkout — Spice Garden" />
+        <DocumentTitle title={`Checkout — ${brand.restaurantName}`} />
         <section className="max-w-md mx-auto px-4 py-24 text-center">
           <div className="c-card p-8 rounded-2xl bg-[--c-bg-elev]">
             <h2 className="display text-2xl mb-2">Cart is Empty</h2>
@@ -301,7 +304,7 @@ export function CheckoutPage() {
 
   return (
     <CustomerLayout>
-      <DocumentTitle title="Checkout — Spice Garden" />
+      <DocumentTitle title={`Checkout — ${brand.restaurantName}`} />
       <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <p className="subtitle">FINAL STEP</p>
         <div className="c-divider !ml-0" />
@@ -494,7 +497,7 @@ export function CheckoutPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-sm uppercase tracking-wider text-white">Self Pickup Point</h3>
-                  <p className="text-xs text-[--c-text-soft] mt-2 font-semibold">Spice Garden Steakhouse (Main Branch)</p>
+                  <p className="text-xs text-[--c-text-soft] mt-2 font-semibold">{brand.restaurantName} (Main Branch)</p>
                   <p className="text-xs text-[--c-text-muted] mt-1 leading-relaxed">
                     Opposite Bandra Fort, Land's End, Bandra West, Mumbai - 400050
                   </p>
@@ -665,12 +668,13 @@ export function CheckoutPage() {
                   >
                     <button
                       className={cn(
-                        'w-full py-4 rounded-xl font-bold tracking-wider transition-all inline-flex items-center justify-center gap-2 uppercase',
+                        'relative w-full py-4 rounded-xl font-bold tracking-wider transition-all inline-flex items-center justify-center gap-2 uppercase',
                         isPlaceDisabled
                           ? 'bg-neutral-800 text-neutral-500 border border-neutral-700 cursor-not-allowed'
-                          : 'c-button-primary hover:shadow-[var(--c-shadow-primary)] cursor-pointer'
+                          : 'c-button-primary hover:shadow-[var(--c-shadow-primary)] cursor-pointer',
                       )}
-                      disabled={isPlaceDisabled}
+                      disabled={isPlaceDisabled || placeOrder.isPending}
+                      data-loading={placeOrder.isPending ? '1' : undefined}
                       onClick={() => finishOrder('Order placed · ETA 28 minutes')}
                     >
                       PLACE ORDER · CASH ON DELIVERY
@@ -695,7 +699,7 @@ export function CheckoutPage() {
                       <div className="truncate pr-4 flex-1">
                         <span className="text-[--c-text] font-semibold">{item.qty}x</span> {d.name}
                       </div>
-                      <span className="font-mono text-[--c-text-soft] shrink-0">${(d.price * item.qty).toLocaleString('en-US')}</span>
+                      <span className="font-mono text-[--c-text-soft] shrink-0">{formatPrice(d.price * item.qty)}</span>
                     </div>
                   )
                 })}
@@ -704,21 +708,21 @@ export function CheckoutPage() {
               <div className="border-t border-[--c-border] pt-3.5 space-y-2.5 text-xs font-semibold text-[--c-text-soft]">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
-                  <span className="font-mono">${items.reduce((acc, l) => {
+                  <span className="font-mono">{formatPrice(items.reduce((acc, l) => {
                     const d = catalog.dishes.find((x) => x.id === l.id) ?? DISHES.find((x) => x.id === l.id)
                     return d ? acc + d.price * l.qty : acc
-                  }, 0).toLocaleString('en-US')}</span>
+                  }, 0))}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Tax & GST (5%)</span>
-                  <span className="font-mono">${Math.round(items.reduce((acc, l) => {
+                  <span className="font-mono">{formatPrice(Math.round(items.reduce((acc, l) => {
                     const d = catalog.dishes.find((x) => x.id === l.id) ?? DISHES.find((x) => x.id === l.id)
                     return d ? acc + d.price * l.qty : acc
-                  }, 0) * 0.05).toLocaleString('en-US')}</span>
+                  }, 0) * 0.05))}</span>
                 </div>
                 <div className="border-t border-[--c-border] pt-3 flex justify-between text-sm font-bold text-[--c-text]">
                   <span>Total Amount</span>
-                  <span className="font-mono gold-text text-base">${total.toLocaleString('en-US')}</span>
+                  <span className="font-mono gold-text text-base">{formatPrice(total)}</span>
                 </div>
               </div>
 

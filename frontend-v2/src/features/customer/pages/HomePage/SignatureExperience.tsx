@@ -117,7 +117,7 @@ export default function SignatureExperience() {
         <motion.p
           initial={{ opacity: 0, y: 8 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, margin: '-80px' }}
+          viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
           className="subtitle"
         >
@@ -127,7 +127,7 @@ export default function SignatureExperience() {
         <motion.h2
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, margin: '-80px' }}
+          viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.65, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
           className="display text-3xl sm:text-4xl lg:text-5xl"
         >
@@ -154,7 +154,7 @@ export default function SignatureExperience() {
               <motion.div
                 initial={{ opacity: 0, x: imageLeft ? -40 : 40 }}
                 whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: false, margin: '-80px' }}
+                viewport={{ once: true, margin: '-80px' }}
                 transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
                 className="relative aspect-[4/5] sm:aspect-[5/4] lg:aspect-[4/5] lg:[direction:ltr]"
               >
@@ -210,7 +210,7 @@ export default function SignatureExperience() {
               <motion.div
                 initial={{ opacity: 0, x: imageLeft ? 40 : -40 }}
                 whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: false, margin: '-80px' }}
+                viewport={{ once: true, margin: '-80px' }}
                 transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
                 className="lg:[direction:ltr]"
               >
@@ -235,7 +235,7 @@ export default function SignatureExperience() {
                       key={feature}
                       initial={{ opacity: 0, x: -12 }}
                       whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: false, margin: '-60px' }}
+                      viewport={{ once: true, margin: '-60px' }}
                       transition={{
                         duration: 0.5,
                         delay: 0.2 + fi * 0.08,

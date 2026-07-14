@@ -5,6 +5,7 @@ import { useRef } from 'react'
 import { Star, Sparkles, ArrowRight } from 'lucide-react'
 import { useCustomerCatalog } from '@/features/customer/catalog'
 import { spiceCount, isNewDish } from '@/features/customer/dish-utils'
+import { formatPrice } from '@/features/customer/format'
 import { Flame, Clock } from 'lucide-react'
 
 /**
@@ -76,7 +77,7 @@ export default function FeaturedSpotlight() {
           <motion.p
             initial={{ opacity: 0, y: 8 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, margin: '-80px' }}
+            viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             className="subtitle inline-flex items-center gap-2"
           >
@@ -91,7 +92,7 @@ export default function FeaturedSpotlight() {
           <motion.div
             initial={{ opacity: 0, x: -40 }}
             whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: false, margin: '-60px' }}
+            viewport={{ once: true, margin: '-60px' }}
             transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
             className="relative overflow-hidden rounded-3xl aspect-[4/5] shadow-2xl"
           >
@@ -128,7 +129,7 @@ export default function FeaturedSpotlight() {
           <motion.div
             initial={{ opacity: 0, x: 40 }}
             whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: false, margin: '-60px' }}
+            viewport={{ once: true, margin: '-60px' }}
             transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
             className="text-center md:text-left"
           >
@@ -172,7 +173,7 @@ export default function FeaturedSpotlight() {
             {/* Price + CTA */}
             <div className="flex flex-col sm:flex-row items-center md:items-start sm:items-center gap-4 sm:gap-6 justify-center md:justify-start">
               <p className="display text-3xl sm:text-4xl gold-text font-bold leading-none">
-                ${featured.price}
+                {formatPrice(featured.price)}
               </p>
               <button
                 type="button"

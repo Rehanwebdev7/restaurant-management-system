@@ -122,7 +122,7 @@ export default function BrandStoryShowcase() {
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: false, margin: '-80px' }}
+            viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
             className="relative overflow-hidden rounded-3xl aspect-[4/5] lg:aspect-[5/6] shadow-2xl"
           >
@@ -161,7 +161,7 @@ export default function BrandStoryShowcase() {
             <motion.p
               initial={{ opacity: 0, y: 8 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false, margin: '-80px' }}
+              viewport={{ once: true, margin: '-80px' }}
               transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
               className="subtitle mb-3"
             >
@@ -173,7 +173,7 @@ export default function BrandStoryShowcase() {
             <motion.h2
               initial="hidden"
               whileInView="visible"
-              viewport={{ once: false, margin: '-80px' }}
+              viewport={{ once: true, margin: '-80px' }}
               variants={{
                 hidden: {},
                 visible: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
@@ -199,7 +199,7 @@ export default function BrandStoryShowcase() {
               <motion.p
                 initial={{ opacity: 0, y: 12 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: false, margin: '-80px' }}
+                viewport={{ once: true, margin: '-80px' }}
                 transition={{ duration: 0.65, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
                 className="subtitle text-[11px] tracking-[0.32em] mb-6 opacity-80"
               >
@@ -210,7 +210,7 @@ export default function BrandStoryShowcase() {
             <motion.p
               initial={{ opacity: 0, y: 12 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false, margin: '-80px' }}
+              viewport={{ once: true, margin: '-80px' }}
               transition={{ duration: 0.7, delay: 0.45, ease: [0.16, 1, 0.3, 1] }}
               className="text-sm sm:text-base text-[var(--c-cream-text-soft,#6B5B45)] leading-relaxed mb-8 max-w-lg"
             >
@@ -230,7 +230,7 @@ export default function BrandStoryShowcase() {
             <motion.div
               initial="hidden"
               whileInView="visible"
-              viewport={{ once: false, margin: '-80px' }}
+              viewport={{ once: true, margin: '-80px' }}
               variants={{
                 hidden: {},
                 visible: { transition: { staggerChildren: 0.09, delayChildren: 0.55 } },
@@ -291,7 +291,7 @@ export default function BrandStoryShowcase() {
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false, margin: '-80px' }}
+              viewport={{ once: true, margin: '-80px' }}
               transition={{ duration: 0.6, delay: 0.85, ease: [0.16, 1, 0.3, 1] }}
               className="flex flex-wrap gap-3"
             >

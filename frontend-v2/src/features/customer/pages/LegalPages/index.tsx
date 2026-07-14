@@ -2,8 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   MapPin, Phone, Mail, Clock, Calendar, ChefHat, Leaf,
-  Loader2, Soup, Plus, Minus, ChevronRight, ChevronLeft, FileText,
-  ShieldCheck, RotateCcw, Users, X, ZoomIn
+  Soup, Plus, Minus, ChevronRight, ChevronLeft, FileText,
+  ShieldCheck, RotateCcw, Users, X, ZoomIn,
+  MessageCircle, Sparkles, Facebook, Instagram, Twitter,
+  UtensilsCrossed, Cake, Briefcase,
 } from 'lucide-react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import CustomerLayout, { HeroSection } from '@/features/customer/CustomerLayout'
@@ -16,8 +18,11 @@ import {
   HERO_IMAGES, GALLERY, useCart, useCustomerCatalog,
   DISHES
 } from '@/features/customer/catalog'
-import { submitPublicReservation } from '@/api/services/customer'
 import DishCard from '@/features/customer/DishCard'
+import { formatPrice } from '@/features/customer/format'
+import { openReservation } from '@/features/customer/ReservationModal'
+import { useBrand } from '@/components/providers/BrandProvider'
+import { useCustomerBranches } from '@/api/queries/customer'
 import { cn } from '@/lib/utils'
 import { tokens } from '@/lib/auth/tokens'
 import '@/styles/customer.css'
@@ -78,7 +83,7 @@ export function CartPage() {
                     <button className="px-2.5 py-1.5 cursor-pointer text-[--c-text-soft] hover:text-white" onClick={() => setQty(l.id, 1)} aria-label="Increase quantity"><Plus className="size-3.5" /></button>
                   </div>
                   <p className="font-mono tabular-nums w-20 sm:w-28 text-right gold-text font-bold shrink-0">
-                    ${l.subtotal.toLocaleString('en-US')}
+                    {formatPrice(l.subtotal)}
                   </p>
                 </li>
               ))}
@@ -86,15 +91,15 @@ export function CartPage() {
             <div className="p-5 space-y-3.5 border-t border-[--c-border] bg-black/10">
               <div className="flex items-center justify-between text-sm font-semibold text-[--c-text-soft]">
                 <span>Subtotal</span>
-                <span className="font-mono">${subtotal.toLocaleString('en-US')}</span>
+                <span className="font-mono">{formatPrice(subtotal)}</span>
               </div>
               <div className="flex items-center justify-between text-sm font-semibold text-[--c-text-soft]">
                 <span>GST (5%)</span>
-                <span className="font-mono">${gst.toLocaleString('en-US')}</span>
+                <span className="font-mono">{formatPrice(gst)}</span>
               </div>
               <div className="flex items-center justify-between pt-3.5 border-t border-[--c-border] text-base font-bold text-[--c-text]">
                 <span>Total Amount</span>
-                <span className="display text-2xl gold-text font-mono font-bold">${total.toLocaleString('en-US')}</span>
+                <span className="display text-2xl gold-text font-mono font-bold">{formatPrice(total)}</span>
               </div>
               <button
                 className="c-button-primary w-full mt-4 py-4 rounded-xl cursor-pointer font-bold tracking-wider inline-flex items-center justify-center gap-2 hover:shadow-[var(--c-shadow-primary)] transition-shadow"
@@ -119,189 +124,361 @@ export function CartPage() {
 }
 
 /* ====================================================================== */
-/* 2. CONTACT / RESERVATIONS PAGE                                         */
+/* 2. CONTACT PAGE (booking form moved to header Reserve modal)           */
 /* ====================================================================== */
-const RESERVATIONS_KEY = 'customer_reservations'
-
-interface StoredReservation {
-  id: string
-  submittedAt: string
-  name: string
-  email: string
-  phone: string
-  date: string
-  time: string
-  guests: number
-  notes: string
-  status: 'requested'
-}
-
-function readReservations(): StoredReservation[] {
-  if (typeof window === 'undefined') return []
-  try {
-    const raw = localStorage.getItem(RESERVATIONS_KEY)
-    if (!raw) return []
-    const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? parsed : []
-  } catch { return [] }
-}
 
 export function ContactPage() {
-  const initialForm = { name: '', email: '', phone: '', date: '', time: '', guests: 2, notes: '' }
-  const [form, setForm] = useState(initialForm)
-  const [errors, setErrors] = useState<Partial<Record<keyof typeof initialForm, string>>>({})
-  const [history, setHistory] = useState<StoredReservation[]>(readReservations)
-  const [loading, setLoading] = useState(false)
+  // Contact page rewritten 2026-07-13: removed booking form (moved to the
+  // Reserve modal on the header CTA). Contact page is now pure contact
+  // info — address, phone, email, hours, embedded map, WhatsApp CTA.
+  // All data derives from `useBrand()` + first branch; hardcoded Spice
+  // Garden literals removed.
+  const brand = useBrand()
+  const { data: branches } = useCustomerBranches()
+  const firstBranch = branches?.[0]
+  const address = brand.address || firstBranch?.address
+  const phone = brand.phone
+  const email = brand.email
+  const whatsappNumber = brand.whatsappNumber
 
-  const validate = (): boolean => {
-    const next: typeof errors = {}
-    if (!form.name.trim() || form.name.trim().length < 2) next.name = 'Name must be at least 2 characters'
-    if (!/^[6-9][0-9]{9}$/.test(form.phone)) next.phone = 'Enter a valid 10-digit Indian mobile number'
-    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) next.email = 'Invalid email address'
-    if (!form.date) next.date = 'Pick a reservation date'
-    if (!form.time) next.time = 'Pick a reservation time'
-    if (!form.guests || form.guests < 1) next.guests = 'At least one guest required'
-    setErrors(next)
-    return Object.keys(next).length === 0
-  }
+  const socialLinks = [
+    { key: 'facebook', label: 'Facebook', Icon: Facebook, href: brand.socialLinks.facebook },
+    { key: 'instagram', label: 'Instagram', Icon: Instagram, href: brand.socialLinks.instagram },
+    { key: 'twitter', label: 'Twitter', Icon: Twitter, href: brand.socialLinks.twitter },
+  ].filter((s) => Boolean(s.href))
 
-  const submit = async () => {
-    if (!validate()) {
-      toast.warning('Please fix the highlighted fields')
-      return
-    }
+  const contactCards = [
+    phone ? {
+      key: 'call',
+      Icon: Phone,
+      label: 'Call Us',
+      value: phone,
+      href: `tel:${phone}`,
+      accent: 'var(--c-accent, #C9A96E)',
+    } : null,
+    whatsappNumber ? {
+      key: 'wa',
+      Icon: MessageCircle,
+      label: 'WhatsApp',
+      value: 'Chat with us',
+      href: `https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}`,
+      accent: '#25D366',
+      external: true,
+    } : null,
+    email ? {
+      key: 'email',
+      Icon: Mail,
+      label: 'Email',
+      value: email,
+      href: `mailto:${email}`,
+      accent: 'var(--c-terracotta, #B4593F)',
+    } : null,
+    address ? {
+      key: 'visit',
+      Icon: MapPin,
+      label: 'Visit Us',
+      value: firstBranch?.name || 'Directions',
+      href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`,
+      accent: '#6E8B6A',
+      external: true,
+    } : null,
+  ].filter(Boolean) as { key: string; Icon: typeof Phone; label: string; value: string; href: string; accent: string; external?: boolean }[]
 
-    setLoading(true)
-    const backendRes = await submitPublicReservation({
-      name: form.name.trim(),
-      phone: form.phone,
-      email: form.email,
-      date: form.date,
-      time: form.time,
-      guests: form.guests,
-      notes: form.notes,
-    })
-    setLoading(false)
-
-    const localId = backendRes.ok && backendRes.data.reservationId
-      ? `RSV-${backendRes.data.reservationId}`
-      : `RSV-${Date.now()}`
-
-    const record: StoredReservation = {
-      id: localId,
-      submittedAt: new Date().toLocaleString('en-US'),
-      ...form,
-      status: 'requested',
-    }
-
-    const next = [record, ...history].slice(0, 10)
-    setHistory(next)
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(RESERVATIONS_KEY, JSON.stringify(next))
-    }
-
-    if (backendRes.ok) {
-      toast.success("Reservation submitted — we will call to confirm your table shortly.")
-    } else {
-      toast.warning('Saved locally — couldn’t reach the server. We will retry on next connection.')
-    }
-    setForm(initialForm)
-    setErrors({})
-  }
+  const reasonsToReach = [
+    { Icon: UtensilsCrossed, title: 'Private Dining', body: "Reserve a private space for a milestone dinner, celebration, or an intimate meal that deserves more room." },
+    { Icon: Users, title: 'Large Groups', body: 'Planning a get-together? Let us help you seat, plan the menu, and set the perfect table for your party.' },
+    { Icon: Cake, title: 'Special Occasions', body: "Birthdays, anniversaries, proposals — tell us what's happening and we'll make it memorable." },
+    { Icon: Briefcase, title: 'Media & Partnerships', body: 'Press, collabs, or business questions? Our team will get back to you within one working day.' },
+  ]
 
   return (
     <CustomerLayout>
-      <DocumentTitle title="Contact & Reservations — Spice Garden" />
+      <DocumentTitle
+        title={`Contact — ${brand.restaurantName}`}
+        description={`Get in touch with ${brand.restaurantName}. Address, phone, email, and opening hours.`}
+      />
       <HeroSection
         bg={HERO_IMAGES.contact}
-        subtitle="EASY TABLE BOOKING & LOCATIONS"
-        titleA="Book Your"
-        titleAccent="Table Online"
-        description="Reserve your table for a smooth visit. We are ready to serve you with warm hospitality."
+        subtitle="WE'RE HERE FOR YOU"
+        titleA="Get in"
+        titleAccent="Touch"
+        description={`Questions, special occasions, or just saying hello — reach ${brand.restaurantName} the way that suits you best.`}
       />
-      <ScrollReveal as="section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+
+      {/* ── Quick contact chips — 4 pill cards, tappable, high visibility ── */}
+      {contactCards.length > 0 ? (
+        <ScrollReveal as="section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-2">
+          <div className={cn(
+            'grid gap-4',
+            contactCards.length === 1 && 'sm:grid-cols-1',
+            contactCards.length === 2 && 'sm:grid-cols-2',
+            contactCards.length === 3 && 'sm:grid-cols-3',
+            contactCards.length === 4 && 'sm:grid-cols-2 lg:grid-cols-4',
+          )}>
+            {contactCards.map(({ key, Icon, label, value, href, accent, external }) => (
+              <a
+                key={key}
+                href={href}
+                target={external ? '_blank' : undefined}
+                rel={external ? 'noopener noreferrer' : undefined}
+                className="group c-card p-5 rounded-2xl border border-[--c-border] flex items-center gap-4 hover:-translate-y-1 hover:shadow-lg transition-all"
+                style={{ background: 'var(--c-bg-elev)' }}
+              >
+                <span
+                  className="inline-flex items-center justify-center size-12 rounded-full shrink-0 group-hover:scale-110 transition-transform"
+                  style={{ background: `${accent}22`, color: accent }}
+                  aria-hidden
+                >
+                  <Icon className="size-6" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="subtitle text-[10px] tracking-[0.22em] mb-0.5" style={{ color: 'var(--c-text-soft)' }}>{label}</p>
+                  <p className="font-semibold text-[13px] truncate" style={{ color: 'var(--c-text)' }}>{value}</p>
+                </div>
+                <ChevronRight className="size-4 text-[--c-text-muted] shrink-0 group-hover:translate-x-1 transition-transform" aria-hidden />
+              </a>
+            ))}
+          </div>
+        </ScrollReveal>
+      ) : null}
+
+      {/* ── Reach the restaurant — details + hero photo ── */}
+      <ScrollReveal as="section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-6">
             <div>
               <p className="subtitle">VISIT US</p>
               <div className="c-divider !ml-0" />
-              <h2 className="display text-3xl">Reach the <span>Restaurant</span></h2>
+              <h2 className="display text-3xl sm:text-4xl lg:text-5xl leading-tight">Reach the <span>Restaurant</span></h2>
+              <p className="mt-4 text-[14px] leading-relaxed" style={{ color: 'var(--c-text-soft)' }}>
+                Walk in, call ahead, or drop a note. However you reach us, expect a warm hello and a table set with care.
+              </p>
             </div>
-            <ul className="space-y-4 text-sm font-medium text-[--c-text-soft]">
-              <li className="flex items-start gap-3"><MapPin className="size-5 gold-text mt-0.5 shrink-0" /><span>123 Sea Breeze Lane, Bandra West, Mumbai · 400050</span></li>
-              <li className="flex items-start gap-3"><Phone className="size-5 gold-text mt-0.5 shrink-0" />+91 9876543210</li>
-              <li className="flex items-start gap-3"><Mail className="size-5 gold-text mt-0.5 shrink-0" />hello@spicegarden.com</li>
-              <li className="flex items-start gap-3"><Clock className="size-5 gold-text mt-0.5 shrink-0" /><span>Mon–Sun · 11:00 AM – 11:30 PM</span></li>
+
+            <ul className="space-y-5 text-sm font-medium">
+              {address ? (
+                <li className="flex items-start gap-4">
+                  <span className="inline-flex items-center justify-center size-10 rounded-full shrink-0" style={{ background: 'rgba(201,169,110,0.14)' }}>
+                    <MapPin className="size-5" style={{ color: 'var(--c-accent)' }} />
+                  </span>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.22em] font-bold mb-0.5" style={{ color: 'var(--c-text-soft)' }}>Address</p>
+                    <p style={{ color: 'var(--c-text)' }}>{address}</p>
+                  </div>
+                </li>
+              ) : null}
+              {phone ? (
+                <li className="flex items-start gap-4">
+                  <span className="inline-flex items-center justify-center size-10 rounded-full shrink-0" style={{ background: 'rgba(201,169,110,0.14)' }}>
+                    <Phone className="size-5" style={{ color: 'var(--c-accent)' }} />
+                  </span>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.22em] font-bold mb-0.5" style={{ color: 'var(--c-text-soft)' }}>Phone</p>
+                    <a href={`tel:${phone}`} className="hover:gold-text transition-colors" style={{ color: 'var(--c-text)' }}>{phone}</a>
+                  </div>
+                </li>
+              ) : null}
+              {email ? (
+                <li className="flex items-start gap-4">
+                  <span className="inline-flex items-center justify-center size-10 rounded-full shrink-0" style={{ background: 'rgba(201,169,110,0.14)' }}>
+                    <Mail className="size-5" style={{ color: 'var(--c-accent)' }} />
+                  </span>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.22em] font-bold mb-0.5" style={{ color: 'var(--c-text-soft)' }}>Email</p>
+                    <a href={`mailto:${email}`} className="hover:gold-text transition-colors" style={{ color: 'var(--c-text)' }}>{email}</a>
+                  </div>
+                </li>
+              ) : null}
+              <li className="flex items-start gap-4">
+                <span className="inline-flex items-center justify-center size-10 rounded-full shrink-0" style={{ background: 'rgba(201,169,110,0.14)' }}>
+                  <Clock className="size-5" style={{ color: 'var(--c-accent)' }} />
+                </span>
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.22em] font-bold mb-0.5" style={{ color: 'var(--c-text-soft)' }}>Hours</p>
+                  <p style={{ color: 'var(--c-text)' }}>Open daily — please call for the day's hours.</p>
+                </div>
+              </li>
             </ul>
-            <img src={HERO_IMAGES.contact} alt="Bandra Location Map" loading="lazy" decoding="async" className="w-full rounded-2xl c-card object-cover" />
-          </div>
 
-          <div className="c-card p-6 sm:p-8 space-y-4 rounded-2xl bg-[--c-bg-elev] border border-[--c-border]">
-            <p className="subtitle">RESERVE A TABLE</p>
-            <div className="c-divider !ml-0" />
-            <h3 className="display text-2xl">Book Online</h3>
-
-            <div className="space-y-3">
-              <div>
-                <input className="c-input" placeholder="Your name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} aria-invalid={!!errors.name} />
-                {errors.name && <p className="text-xs text-red-400 mt-1">{errors.name}</p>}
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <input className="c-input" placeholder="Email (optional)" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} aria-invalid={!!errors.email} />
-                  {errors.email && <p className="text-xs text-red-400 mt-1">{errors.email}</p>}
-                </div>
-                <div>
-                  <input className="c-input" placeholder="10-digit Phone Number" inputMode="tel" maxLength={10} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })} aria-invalid={!!errors.phone} />
-                  {errors.phone && <p className="text-xs text-red-400 mt-1">{errors.phone}</p>}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <input className="c-input text-xs" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} aria-invalid={!!errors.date} />
-                  {errors.date && <p className="text-xs text-red-400 mt-1">{errors.date}</p>}
-                </div>
-                <div>
-                  <input className="c-input text-xs" type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} aria-invalid={!!errors.time} />
-                  {errors.time && <p className="text-xs text-red-400 mt-1">{errors.time}</p>}
-                </div>
-                <div>
-                  <input className="c-input" type="number" min={1} max={25} placeholder="Guests" value={form.guests} onChange={(e) => setForm({ ...form, guests: Number(e.target.value) })} aria-invalid={!!errors.guests} />
-                  {errors.guests && <p className="text-xs text-red-400 mt-1">{errors.guests}</p>}
-                </div>
-              </div>
-
-              <textarea className="c-input" rows={3} placeholder="Special instructions / notes (optional)" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
-
+            <div className="flex flex-wrap gap-3 pt-4">
               <button
-                disabled={loading}
-                className="c-button-primary w-full py-3.5 rounded-xl cursor-pointer inline-flex items-center justify-center gap-2 hover:shadow-[var(--c-shadow-primary)] transition-shadow"
-                onClick={submit}
+                type="button"
+                onClick={openReservation}
+                className="c-button-primary inline-flex items-center gap-2"
               >
-                {loading ? <Loader2 className="size-4 animate-spin" /> : <Calendar className="size-4" />}
-                RESERVE TABLE
+                <Calendar className="size-4" />
+                Reserve a Table
               </button>
+              {whatsappNumber ? (
+                <a
+                  href={`https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="c-button-outline inline-flex items-center gap-2"
+                >
+                  <MessageCircle className="size-4" />
+                  Chat on WhatsApp
+                </a>
+              ) : null}
             </div>
-
-            {history.length > 0 && (
-              <div className="pt-4 border-t border-[--c-border] mt-4">
-                <p className="subtitle text-[10px] tracking-wider mb-3">YOUR RECENT REQUESTS</p>
-                <ul className="space-y-2">
-                  {history.slice(0, 3).map((r) => (
-                    <li key={r.id} className="flex items-center justify-between text-xs p-3 rounded-xl border border-[--c-border] bg-black/10">
-                      <div className="min-w-0 pr-2">
-                        <p className="font-mono gold-text font-bold truncate">{r.id}</p>
-                        <p className="text-[--c-text-muted] mt-0.5">{r.date} · {r.time} · {r.guests} guests</p>
-                      </div>
-                      <span className="c-tag shrink-0 !text-amber-400 !border-amber-500/40">Requested</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
           </div>
+
+          <div className="rounded-3xl overflow-hidden border border-[--c-border] c-card">
+            <img
+              src={HERO_IMAGES.contact}
+              alt={`${brand.restaurantName} interior`}
+              loading="lazy"
+              decoding="async"
+              className="w-full aspect-[4/3] object-cover"
+              onError={handleImageError('ambience')}
+            />
+            {firstBranch?.address ? (
+              <div className="p-5" style={{ background: 'var(--c-bg-elev)' }}>
+                <p className="subtitle text-[10px] tracking-[0.22em] mb-1">MAIN BRANCH</p>
+                <p className="font-semibold text-base" style={{ color: 'var(--c-text)' }}>{firstBranch.name}</p>
+                <p className="text-[13px] mt-0.5" style={{ color: 'var(--c-text-soft)' }}>{firstBranch.address}</p>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </ScrollReveal>
+
+      {/* ── Reasons to reach out — 4 editorial cards ── */}
+      <div className="c-wash-sage">
+        <ScrollReveal as="section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+          <div className="text-center mb-12">
+            <p className="subtitle">HOW CAN WE HELP</p>
+            <div className="c-divider" />
+            <h2 className="display text-3xl sm:text-4xl">Reasons to <span>Reach Out</span></h2>
+            <p className="mt-4 max-w-xl mx-auto text-[14px] leading-relaxed" style={{ color: 'var(--c-text-soft)' }}>
+              Whatever brings you here, we're glad you did. A quick note about what you're looking for helps us serve you better.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {reasonsToReach.map(({ Icon, title, body }, i) => (
+              <ScrollReveal
+                key={title}
+                delay={i * 0.08}
+                as="article"
+                className="p-6 rounded-2xl border border-[--c-border] hover:-translate-y-1 transition-transform group"
+                style={{ background: 'var(--c-bg-elev)' }}
+              >
+                <span
+                  className="inline-flex items-center justify-center size-12 rounded-full mb-4 group-hover:scale-110 transition-transform"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(201,169,110,0.18), rgba(180,89,63,0.14))',
+                    color: 'var(--c-accent)',
+                  }}
+                  aria-hidden
+                >
+                  <Icon className="size-6" />
+                </span>
+                <h3 className="display text-xl mb-2" style={{ color: 'var(--c-text)' }}>{title}</h3>
+                <p className="text-[13px] leading-relaxed" style={{ color: 'var(--c-text-soft)' }}>{body}</p>
+              </ScrollReveal>
+            ))}
+          </div>
+        </ScrollReveal>
+      </div>
+
+      {/* ── All branches grid — only when tenant has multiple ── */}
+      {branches && branches.length > 1 ? (
+        <ScrollReveal as="section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+          <div className="text-center mb-12">
+            <p className="subtitle">FIND US</p>
+            <div className="c-divider" />
+            <h2 className="display text-3xl sm:text-4xl">Our <span>Branches</span></h2>
+            <p className="mt-3 text-[13px]" style={{ color: 'var(--c-text-soft)' }}>
+              {branches.length} location{branches.length === 1 ? '' : 's'} · pick the one closest to you
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {branches.map((b, i) => (
+              <ScrollReveal
+                key={b.id}
+                delay={i * 0.06}
+                as="article"
+                className="p-6 rounded-2xl border border-[--c-border] hover:-translate-y-1 transition-transform"
+                style={{ background: 'var(--c-bg-elev)' }}
+              >
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <span className="inline-flex items-center justify-center size-10 rounded-full shrink-0" style={{ background: 'rgba(201,169,110,0.14)', color: 'var(--c-accent)' }}>
+                    <MapPin className="size-5" />
+                  </span>
+                  {b.city ? (
+                    <span className="text-[10px] uppercase tracking-[0.22em] font-bold px-2 py-1 rounded-full" style={{ background: 'rgba(180,89,63,0.12)', color: 'var(--c-terracotta)' }}>
+                      {b.city}
+                    </span>
+                  ) : null}
+                </div>
+                <h3 className="font-bold text-base mb-1" style={{ color: 'var(--c-text)' }}>{b.name}</h3>
+                <p className="text-[13px] leading-relaxed" style={{ color: 'var(--c-text-soft)' }}>{b.address}</p>
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(b.address)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-4 inline-flex items-center gap-1 text-[12px] font-bold uppercase tracking-[0.16em] hover:underline"
+                  style={{ color: 'var(--c-accent)' }}
+                >
+                  Get Directions <ChevronRight className="size-3" />
+                </a>
+              </ScrollReveal>
+            ))}
+          </div>
+        </ScrollReveal>
+      ) : null}
+
+      {/* ── Follow along — social icons row (only if any set) ── */}
+      {socialLinks.length > 0 ? (
+        <div className="c-wash-terracotta">
+          <ScrollReveal as="section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 text-center">
+            <p className="subtitle">STAY IN THE LOOP</p>
+            <div className="c-divider" />
+            <h2 className="display text-2xl sm:text-3xl mb-6">Follow <span>Along</span></h2>
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              {socialLinks.map(({ key, label, Icon, href }) => (
+                <a
+                  key={key}
+                  href={href!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`${brand.restaurantName} on ${label}`}
+                  className="inline-flex items-center justify-center size-12 rounded-full border border-[--c-border] hover:-translate-y-1 hover:shadow-md transition-all"
+                  style={{ background: 'var(--c-bg-elev)', color: 'var(--c-text)' }}
+                >
+                  <Icon className="size-5" />
+                </a>
+              ))}
+            </div>
+          </ScrollReveal>
+        </div>
+      ) : null}
+
+      {/* ── Bottom Reserve CTA card ── */}
+      <ScrollReveal as="section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+        <div
+          className="rounded-3xl p-10 sm:p-14 text-center relative overflow-hidden border border-[--c-border]"
+          style={{ background: 'linear-gradient(135deg, rgba(201,169,110,0.14), rgba(180,89,63,0.10))' }}
+        >
+          <span
+            className="inline-flex items-center justify-center size-14 rounded-full mb-4"
+            style={{ background: 'linear-gradient(135deg, #F5E5B8, #C9A96E)' }}
+          >
+            <Sparkles className="size-6" style={{ color: '#1A1A1A' }} />
+          </span>
+          <p className="subtitle text-[10px] tracking-[0.28em] mb-2" style={{ color: 'var(--c-terracotta)' }}>THE TABLE IS READY</p>
+          <h2 className="display text-3xl sm:text-4xl lg:text-5xl mb-3">Ready to <span>book</span>?</h2>
+          <p className="text-[14px] max-w-lg mx-auto mb-6 leading-relaxed" style={{ color: 'var(--c-text-soft)' }}>
+            Reserve online in less than a minute — we'll follow up with a call to confirm your table.
+          </p>
+          <button
+            type="button"
+            onClick={openReservation}
+            className="c-button-primary inline-flex items-center gap-2"
+          >
+            <Calendar className="size-4" />
+            Reserve Your Table
+          </button>
         </div>
       </ScrollReveal>
     </CustomerLayout>
@@ -587,7 +764,7 @@ function GalleryTile({
       ref={tilt.ref}
       initial={{ opacity: 0, y: 32, scale: 0.94 }}
       whileInView={{ opacity: 1, y: 0, scale: 1 }}
-      viewport={{ once: false, margin: '-60px' }}
+      viewport={{ once: true, margin: '-60px' }}
       transition={{
         duration: 0.65,
         delay: reduce ? 0 : index * 0.05,
@@ -736,7 +913,7 @@ export function MyOrdersPage() {
                   )}>
                     {o.status === 'synced' ? 'Confirmed' : 'Pending sync'}
                   </span>
-                  <p className="font-mono gold-text font-bold text-base shrink-0">${o.total?.toLocaleString('en-US')}</p>
+                  <p className="font-mono gold-text font-bold text-base shrink-0">{formatPrice(o.total)}</p>
                 </div>
               </li>
             ))}

@@ -15,6 +15,8 @@ import { useHaptic } from '@/hooks/use-haptic'
 import { toast } from '@/lib/toast'
 import DishDetailModal from '@/features/customer/DishDetailModal'
 import { spiceCount, isNewDish } from '@/features/customer/dish-utils'
+import { flyToCart } from '@/features/customer/fly-to-cart'
+import { formatPrice } from '@/features/customer/format'
 import { handleImageError } from '@/features/customer/image-fallback'
 
 interface Props {
@@ -42,14 +44,27 @@ export default function DishCardRound({ dish }: Props) {
     e.stopPropagation()
     haptic.vibrate('light')
     setQty(dish.id, 1)
+    const imgEl = (e.currentTarget as HTMLElement)
+      .closest('[data-dish-card]')
+      ?.querySelector<HTMLImageElement>('img')
+    if (imgEl) flyToCart(imgEl, dish.img)
     toast.success(`${dish.name} added to cart`)
   }
-  const inc = (e: React.MouseEvent) => { e.stopPropagation(); haptic.vibrate('light'); setQty(dish.id, 1) }
+  const inc = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    haptic.vibrate('light')
+    setQty(dish.id, 1)
+    const imgEl = (e.currentTarget as HTMLElement)
+      .closest('[data-dish-card]')
+      ?.querySelector<HTMLImageElement>('img')
+    if (imgEl) flyToCart(imgEl, dish.img)
+  }
   const dec = (e: React.MouseEvent) => { e.stopPropagation(); haptic.vibrate('light'); setQty(dish.id, -1) }
 
   return (
     <>
       <motion.article
+        data-dish-card
         className="dish-card-round"
         aria-label={dish.name}
         whileHover={reduceMotion ? undefined : { y: -6 }}
@@ -157,13 +172,13 @@ export default function DishCardRound({ dish }: Props) {
            * prices. Full price stays as the main call-out below. */}
           {(dish.halfPrice || dish.qtrPrice) ? (
             <p className="dish-card-round-portions" aria-label="Portion options">
-              {dish.halfPrice ? <span>Half ${dish.halfPrice}</span> : null}
+              {dish.halfPrice ? <span>Half {formatPrice(dish.halfPrice)}</span> : null}
               {dish.halfPrice && dish.qtrPrice ? <span aria-hidden> · </span> : null}
-              {dish.qtrPrice ? <span>Qtr ${dish.qtrPrice}</span> : null}
+              {dish.qtrPrice ? <span>Qtr {formatPrice(dish.qtrPrice)}</span> : null}
             </p>
           ) : null}
 
-          <p className="dish-card-round-price">${dish.price}</p>
+          <p className="dish-card-round-price">{formatPrice(dish.price)}</p>
         </div>
 
         <div className="dish-card-round-actions">

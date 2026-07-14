@@ -124,7 +124,7 @@ export default function LifestyleBanner({
           <motion.p
             initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, margin: '-100px' }}
+            viewport={{ once: true, margin: '-100px' }}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.32em] opacity-85 mb-6"
           >
@@ -133,7 +133,7 @@ export default function LifestyleBanner({
           <motion.blockquote
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, margin: '-100px' }}
+            viewport={{ once: true, margin: '-100px' }}
             transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
             className="display italic text-2xl sm:text-3xl lg:text-4xl leading-snug mb-6"
           >
@@ -142,7 +142,7 @@ export default function LifestyleBanner({
           <motion.p
             initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, margin: '-100px' }}
+            viewport={{ once: true, margin: '-100px' }}
             transition={{ duration: 0.7, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className="text-[11px] sm:text-xs uppercase tracking-[0.28em] opacity-80"
           >

@@ -1,4 +1,6 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { PullToRefresh } from '@/components/ui/pull-to-refresh'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronRight, ChevronDown, Sparkles, ShoppingCart, Calendar, ArrowUp } from 'lucide-react'
@@ -6,6 +8,7 @@ import CustomerLayout from '@/features/customer/CustomerLayout'
 import { ScrollReveal } from '@/components/ui/scroll-reveal'
 import { useMounted } from '@/hooks/use-mounted'
 import { DocumentTitle } from '@/lib/seo/document-title'
+import { useBrand } from '@/components/providers/BrandProvider'
 import { useCustomerCatalog } from '@/features/customer/catalog'
 import CustomerFilterBar, { useCustomerFilters } from '@/features/customer/CustomerFilterBar'
 import DishCardRound, { DishCardRoundGridSkeleton } from '@/features/customer/DishCardRound'
@@ -29,9 +32,29 @@ const HEADER_STICKY_OFFSET = 72 // Site header height — sticky cluster anchors
  */
 export function MenuPage() {
   const navigate = useNavigate()
+  const brand = useBrand()
   const catalog = useCustomerCatalog()
   const filters = useCustomerFilters(catalog.dishes)
   const { filtered, cat, setCat } = filters
+  // P2.16 — sort dropdown. Local state; combines with useCustomerFilters
+  // downstream. Sorts a copy of `filtered` so filter memoization is safe.
+  const [sortKey, setSortKey] = useState<'default' | 'price-asc' | 'price-desc' | 'popular' | 'prep'>('default')
+  const sorted = useMemo(() => {
+    if (sortKey === 'default') return filtered
+    const arr = [...filtered]
+    switch (sortKey) {
+      case 'price-asc':
+        return arr.sort((a, b) => a.price - b.price)
+      case 'price-desc':
+        return arr.sort((a, b) => b.price - a.price)
+      case 'popular':
+        return arr.sort((a, b) => (b.rating || 0) * b.reviewCount - (a.rating || 0) * a.reviewCount)
+      case 'prep':
+        return arr.sort((a, b) => (a.preparationMinutes ?? 999) - (b.preparationMinutes ?? 999))
+      default:
+        return arr
+    }
+  }, [filtered, sortKey])
   const mounted = useMounted(200)
 
   // Infinite scroll batch rendering
@@ -151,23 +174,36 @@ export function MenuPage() {
     const io = new IntersectionObserver((entries) => {
       const e = entries[0]
       if (e && e.isIntersecting) {
-        setVisibleCount((n) => Math.min(n + PAGE_SIZE, filtered.length))
+        setVisibleCount((n) => Math.min(n + PAGE_SIZE, sorted.length))
       }
     }, { rootMargin: '600px 0px' })
     io.observe(el)
     return () => io.disconnect()
-  }, [filtered.length])
+  }, [sorted.length])
 
-  const visibleDishes = filtered.slice(0, visibleCount)
-  const hasMore = visibleCount < filtered.length
+  const visibleDishes = sorted.slice(0, visibleCount)
+  const hasMore = visibleCount < sorted.length
+
+  // P3.26 — Pull-to-refresh handler. Invalidates the customer menu +
+  // categories queries so react-query refetches on the current branchId.
+  // No-op on desktop (PullToRefresh internally short-circuits).
+  const qc = useQueryClient()
+  const onRefresh = async () => {
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: ['customer', 'menu'] }),
+      qc.invalidateQueries({ queryKey: ['customer', 'categories'] }),
+    ])
+  }
 
   return (
     <CustomerLayout>
       <DocumentTitle
-        title="Menu — Spice Garden Steakhouse"
-        description="Browse the full Spice Garden menu — starters, mains, breads, drinks and desserts. Order online or reserve a table at any of our three Mumbai branches."
+        title={`Menu — ${brand.restaurantName}`}
+        description={`Browse the full ${brand.restaurantName} menu. Order online or reserve a table.`}
       />
 
+      {/* P3.26 — pull-to-refresh (mobile only, desktop passthrough) */}
+      <PullToRefresh onRefresh={onRefresh}>
       {/* ─── Section 1 — Cinematic hero banner with parallax + kinetic title.
        * Replaces the old flat text heading with an editorial full-bleed
        * image. Scrolls away with the page. ─── */}
@@ -273,6 +309,28 @@ export function MenuPage() {
                 </p>
               ) : (
                 <>
+                  {/* P2.16 — sort dropdown + result count. Sits above the grid
+                   * so users can quickly reorder without scrolling back up. */}
+                  <div className="flex items-center justify-between gap-3 mb-5 flex-wrap">
+                    <p className="text-[13px] text-[var(--c-text-soft)]">
+                      Showing <span className="font-bold text-[var(--c-text)]">{sorted.length}</span> {sorted.length === 1 ? 'dish' : 'dishes'}
+                    </p>
+                    <label className="inline-flex items-center gap-2 text-[13px]">
+                      <span className="text-[var(--c-text-soft)]">Sort:</span>
+                      <select
+                        value={sortKey}
+                        onChange={(e) => setSortKey(e.target.value as typeof sortKey)}
+                        className="c-input !py-1.5 !px-3 !text-[13px] !w-auto rounded-full"
+                        aria-label="Sort dishes"
+                      >
+                        <option value="default">Featured</option>
+                        <option value="popular">Most Loved</option>
+                        <option value="price-asc">Price: Low to High</option>
+                        <option value="price-desc">Price: High to Low</option>
+                        <option value="prep">Fastest Prep</option>
+                      </select>
+                    </label>
+                  </div>
                   <motion.ul
                     layout
                     className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6"
@@ -288,7 +346,7 @@ export function MenuPage() {
                             layout
                             initial={{ opacity: 0, x: 100, y: 24, scale: 0.9, rotate: -1.5 }}
                             whileInView={{ opacity: 1, x: 0, y: 0, scale: 1, rotate: 0 }}
-                            viewport={{ once: false, margin: '-40px' }}
+                            viewport={{ once: true, margin: '-40px' }}
                             exit={{ opacity: 0, scale: 0.95 }}
                             transition={{
                               duration: 0.65,
@@ -373,6 +431,7 @@ export function MenuPage() {
           </div>
         </main>
       </div>
+      </PullToRefresh>
     </CustomerLayout>
   )
 }

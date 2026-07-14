@@ -5,6 +5,8 @@ import {
   CheckCircle2, ClipboardList, ChefHat, Bike, PackageCheck, MapPin, Clock, RotateCcw, MessageSquarePlus
 } from 'lucide-react'
 import CustomerLayout from '@/features/customer/CustomerLayout'
+import { formatPrice } from '@/features/customer/format'
+import { useBrand } from '@/components/providers/BrandProvider'
 import { DocumentTitle } from '@/lib/seo/document-title'
 import { toast } from '@/lib/toast'
 import { cn } from '@/lib/utils'
@@ -118,6 +120,7 @@ function backendOrderToUi(d: BackendOrderDetail, fallbackId: string): CustomerOr
 }
 
 export function OrderTrackingPage() {
+  const brand = useBrand()
   const { id = '' } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [backendOrder, setBackendOrder] = useState<CustomerOrder | null>(null)
@@ -144,7 +147,7 @@ export function OrderTrackingPage() {
 
   return (
     <CustomerLayout>
-      <DocumentTitle title={`Tracking ${order.id} — Spice Garden`} />
+      <DocumentTitle title={`Tracking ${order.id} — ${brand.restaurantName}`} />
       <section className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <p className="subtitle">LIVE TRACKING</p>
         <div className="c-divider !ml-0" />
@@ -248,10 +251,10 @@ export function OrderTrackingPage() {
               <li key={line.id} className="p-4 flex items-center justify-between gap-3 text-sm">
                 <div className="min-w-0">
                   <p className="font-semibold truncate">{line.name}</p>
-                  <p className="text-xs text-[--c-text-muted] mt-0.5">${line.price} × {line.qty}</p>
+                  <p className="text-xs text-[--c-text-muted] mt-0.5">{formatPrice(line.price)} × {line.qty}</p>
                 </div>
                 <p className="font-mono tabular-nums gold-text font-bold text-right">
-                  ${(line.price * line.qty).toLocaleString('en-US')}
+                  {formatPrice(line.price * line.qty)}
                 </p>
               </li>
             ))}
@@ -259,15 +262,15 @@ export function OrderTrackingPage() {
           <div className="p-5 space-y-2.5 border-t border-[--c-border] text-xs font-semibold text-[--c-text-soft]">
             <div className="flex justify-between">
               <span>Subtotal</span>
-              <span className="font-mono">${order.subtotal.toLocaleString('en-US')}</span>
+              <span className="font-mono">{formatPrice(order.subtotal)}</span>
             </div>
             <div className="flex justify-between">
               <span>GST 5%</span>
-              <span className="font-mono">${order.gst.toLocaleString('en-US')}</span>
+              <span className="font-mono">{formatPrice(order.gst)}</span>
             </div>
             <div className="border-t border-[--c-border] pt-3 flex justify-between text-sm font-bold text-[--c-text]">
               <span>Grand Total</span>
-              <span className="font-mono gold-text text-lg">${order.total.toLocaleString('en-US')}</span>
+              <span className="font-mono gold-text text-lg">{formatPrice(order.total)}</span>
             </div>
           </div>
         </div>

@@ -1,7 +1,8 @@
 /**
  * Global search dialog — opened from the search icon in CustomerLayout.
  *
- * Filters the existing DISHES list (legacy parity until backend search lands).
+ * Filters the LIVE tenant catalog (via useCustomerCatalog). Falls back to the
+ * DISHES seed only when the live catalog is empty (demo tenants / offline).
  * Remembers the last 5 queries in localStorage `customer_search_history`.
  */
 
@@ -9,7 +10,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Search, X, History, Sparkles, Plus } from 'lucide-react'
-import { DISHES, CATEGORIES, useCart } from '@/features/customer/catalog'
+import { DISHES, CATEGORIES, useCart, useCustomerCatalog } from '@/features/customer/catalog'
+import { formatPrice } from '@/features/customer/format'
 import { toast } from '@/lib/toast'
 import { cn } from '@/lib/utils'
 import { useBodyScrollLock } from '@/lib/useBodyScrollLock'
@@ -45,6 +47,7 @@ interface Props {
 export default function SearchModal({ open, onClose }: Props) {
   const navigate = useNavigate()
   const cart = useCart()
+  const catalog = useCustomerCatalog()
   const reduceMotion = useReducedMotion()
   const [query, setQuery] = useState('')
   const [history, setHistory] = useState<string[]>(readHistory)
@@ -69,13 +72,16 @@ export default function SearchModal({ open, onClose }: Props) {
   const results = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (!q) return [] as typeof DISHES
-    return DISHES.filter(
+    // Prefer live tenant catalog; fall back to seed if empty (demo tenants
+    // or when catalog is still loading).
+    const source = catalog.dishes.length > 0 ? catalog.dishes : DISHES
+    return source.filter(
       (d) =>
         d.name.toLowerCase().includes(q) ||
         d.description.toLowerCase().includes(q) ||
         d.category.toLowerCase().includes(q),
     )
-  }, [query])
+  }, [query, catalog.dishes])
 
   const commitHistory = (term: string): void => {
     const t = term.trim()
@@ -227,7 +233,7 @@ export default function SearchModal({ open, onClose }: Props) {
                             {d.name}
                             {d.signature ? <Sparkles className="size-3 gold-text" /> : null}
                           </p>
-                          <p className="text-xs gold-text font-semibold">${d.price}</p>
+                          <p className="text-xs gold-text font-semibold">{formatPrice(d.price)}</p>
                         </button>
                         <button
                           className="c-button-outline !py-1 !px-2 !text-[10px] inline-flex items-center gap-1"
