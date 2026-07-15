@@ -1,6 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
-import { PullToRefresh } from '@/components/ui/pull-to-refresh'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronRight, ChevronDown, Sparkles, ShoppingCart, Calendar, ArrowUp } from 'lucide-react'
@@ -8,12 +6,10 @@ import CustomerLayout from '@/features/customer/CustomerLayout'
 import { ScrollReveal } from '@/components/ui/scroll-reveal'
 import { useMounted } from '@/hooks/use-mounted'
 import { DocumentTitle } from '@/lib/seo/document-title'
-import { useBrand } from '@/components/providers/BrandProvider'
 import { useCustomerCatalog } from '@/features/customer/catalog'
 import CustomerFilterBar, { useCustomerFilters } from '@/features/customer/CustomerFilterBar'
 import DishCardRound, { DishCardRoundGridSkeleton } from '@/features/customer/DishCardRound'
 import CategoryChainSection from '@/features/customer/pages/HomePage/CategoryChainSection'
-import MenuHero from '@/features/customer/pages/MenuPage/MenuHero'
 import { cn } from '@/lib/utils'
 import '@/styles/customer.css'
 
@@ -32,29 +28,9 @@ const HEADER_STICKY_OFFSET = 72 // Site header height — sticky cluster anchors
  */
 export function MenuPage() {
   const navigate = useNavigate()
-  const brand = useBrand()
   const catalog = useCustomerCatalog()
   const filters = useCustomerFilters(catalog.dishes)
   const { filtered, cat, setCat } = filters
-  // P2.16 — sort dropdown. Local state; combines with useCustomerFilters
-  // downstream. Sorts a copy of `filtered` so filter memoization is safe.
-  const [sortKey, setSortKey] = useState<'default' | 'price-asc' | 'price-desc' | 'popular' | 'prep'>('default')
-  const sorted = useMemo(() => {
-    if (sortKey === 'default') return filtered
-    const arr = [...filtered]
-    switch (sortKey) {
-      case 'price-asc':
-        return arr.sort((a, b) => a.price - b.price)
-      case 'price-desc':
-        return arr.sort((a, b) => b.price - a.price)
-      case 'popular':
-        return arr.sort((a, b) => (b.rating || 0) * b.reviewCount - (a.rating || 0) * a.reviewCount)
-      case 'prep':
-        return arr.sort((a, b) => (a.preparationMinutes ?? 999) - (b.preparationMinutes ?? 999))
-      default:
-        return arr
-    }
-  }, [filtered, sortKey])
   const mounted = useMounted(200)
 
   // Infinite scroll batch rendering
@@ -174,45 +150,109 @@ export function MenuPage() {
     const io = new IntersectionObserver((entries) => {
       const e = entries[0]
       if (e && e.isIntersecting) {
-        setVisibleCount((n) => Math.min(n + PAGE_SIZE, sorted.length))
+        setVisibleCount((n) => Math.min(n + PAGE_SIZE, filtered.length))
       }
     }, { rootMargin: '600px 0px' })
     io.observe(el)
     return () => io.disconnect()
-  }, [sorted.length])
+  }, [filtered.length])
 
-  const visibleDishes = sorted.slice(0, visibleCount)
-  const hasMore = visibleCount < sorted.length
-
-  // P3.26 — Pull-to-refresh handler. Invalidates the customer menu +
-  // categories queries so react-query refetches on the current branchId.
-  // No-op on desktop (PullToRefresh internally short-circuits).
-  const qc = useQueryClient()
-  const onRefresh = async () => {
-    await Promise.all([
-      qc.invalidateQueries({ queryKey: ['customer', 'menu'] }),
-      qc.invalidateQueries({ queryKey: ['customer', 'categories'] }),
-    ])
-  }
+  const visibleDishes = filtered.slice(0, visibleCount)
+  const hasMore = visibleCount < filtered.length
 
   return (
     <CustomerLayout>
       <DocumentTitle
-        title={`Menu — ${brand.restaurantName}`}
-        description={`Browse the full ${brand.restaurantName} menu. Order online or reserve a table.`}
+        title="Menu — Spice Garden Steakhouse"
+        description="Browse the full Spice Garden menu — starters, mains, breads, drinks and desserts. Order online or reserve a table at any of our three Mumbai branches."
       />
 
-      {/* P3.26 — pull-to-refresh (mobile only, desktop passthrough) */}
-      <PullToRefresh onRefresh={onRefresh}>
-      {/* ─── Section 1 — Cinematic hero banner with parallax + kinetic title.
-       * Replaces the old flat text heading with an editorial full-bleed
-       * image. Scrolls away with the page. ─── */}
-      <MenuHero />
-
-      {/* MenuHighlights + ChefPicksCarousel both removed per user feedback —
-       * user preferred the menu to flow straight from hero into the filter +
-       * grid without editorial intermezzos. Components kept on disk for
-       * potential later use. */}
+      {/* ─── Section 1 — Menu hero with full-bleed food photo + Ken Burns
+       * zoom + brass accent floating particles (2026-07-15 user request). ─── */}
+      <div
+        className="menu-page-heading relative overflow-hidden"
+        style={{ minHeight: '380px', paddingTop: '80px', paddingBottom: '80px' }}
+      >
+        {/* Full-bleed dark food photography background with Ken Burns */}
+        <motion.div
+          aria-hidden
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage:
+              'url(https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=2000&q=85)',
+          }}
+          initial={{ scale: 1.08 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 12, ease: 'linear' }}
+        />
+        {/* Cinematic dark overlay so text stays readable + creates focus */}
+        <div
+          aria-hidden
+          className="absolute inset-0"
+          style={{
+            background:
+              'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.75) 60%, rgba(0,0,0,0.92) 100%)',
+          }}
+        />
+        {/* Subtle brass particles */}
+        <div aria-hidden className="absolute inset-0 pointer-events-none">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <motion.span
+              key={i}
+              className="absolute rounded-full"
+              style={{
+                width: 4 + (i % 3) * 2,
+                height: 4 + (i % 3) * 2,
+                background: 'var(--c-primary, #C89B3C)',
+                opacity: 0.35,
+                left: `${10 + i * 20}%`,
+                top: `${20 + (i % 3) * 25}%`,
+              }}
+              animate={{
+                y: [0, -40, 0],
+                opacity: [0.15, 0.5, 0.15],
+              }}
+              transition={{
+                duration: 6 + i,
+                repeat: Infinity,
+                delay: i * 0.8,
+                ease: 'easeInOut',
+              }}
+            />
+          ))}
+        </div>
+        {/* Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          <motion.p
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+            className="inline-flex items-center gap-3 text-[10px] font-extrabold uppercase tracking-[0.32em] text-[var(--c-primary)] mb-4"
+          >
+            <span className="inline-block w-8 h-[1.5px] bg-[var(--c-primary)]" />
+            Our Full Menu
+            <span className="inline-block w-8 h-[1.5px] bg-[var(--c-primary)]" />
+          </motion.p>
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.28, ease: [0.16, 1, 0.3, 1] }}
+            className="display text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-white"
+            style={{ textShadow: '0 4px 30px rgba(0, 0, 0, 0.5)' }}
+          >
+            Browse Our <span className="gold-text italic">Delicious</span> Dishes
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            className="mt-5 max-w-xl mx-auto text-sm sm:text-base text-white/70 leading-relaxed font-light"
+          >
+            From starters to desserts — every plate is composed with the
+            freshest ingredients and served the moment it&apos;s ready.
+          </motion.p>
+        </div>
+      </div>
 
       {/* ─── Wrapper to constrain sticky boundary and prevent footer overlap ─── */}
       <div className="menu-main-content-flow relative">
@@ -309,28 +349,6 @@ export function MenuPage() {
                 </p>
               ) : (
                 <>
-                  {/* P2.16 — sort dropdown + result count. Sits above the grid
-                   * so users can quickly reorder without scrolling back up. */}
-                  <div className="flex items-center justify-between gap-3 mb-5 flex-wrap">
-                    <p className="text-[13px] text-[var(--c-text-soft)]">
-                      Showing <span className="font-bold text-[var(--c-text)]">{sorted.length}</span> {sorted.length === 1 ? 'dish' : 'dishes'}
-                    </p>
-                    <label className="inline-flex items-center gap-2 text-[13px]">
-                      <span className="text-[var(--c-text-soft)]">Sort:</span>
-                      <select
-                        value={sortKey}
-                        onChange={(e) => setSortKey(e.target.value as typeof sortKey)}
-                        className="c-input !py-1.5 !px-3 !text-[13px] !w-auto rounded-full"
-                        aria-label="Sort dishes"
-                      >
-                        <option value="default">Featured</option>
-                        <option value="popular">Most Loved</option>
-                        <option value="price-asc">Price: Low to High</option>
-                        <option value="price-desc">Price: High to Low</option>
-                        <option value="prep">Fastest Prep</option>
-                      </select>
-                    </label>
-                  </div>
                   <motion.ul
                     layout
                     className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6"
@@ -346,7 +364,7 @@ export function MenuPage() {
                             layout
                             initial={{ opacity: 0, x: 100, y: 24, scale: 0.9, rotate: -1.5 }}
                             whileInView={{ opacity: 1, x: 0, y: 0, scale: 1, rotate: 0 }}
-                            viewport={{ once: true, margin: '-40px' }}
+                            viewport={{ once: false, margin: '-40px' }}
                             exit={{ opacity: 0, scale: 0.95 }}
                             transition={{
                               duration: 0.65,
@@ -431,7 +449,6 @@ export function MenuPage() {
           </div>
         </main>
       </div>
-      </PullToRefresh>
     </CustomerLayout>
   )
 }

@@ -3,13 +3,10 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion, useScroll, useTransform, type Variants } from 'framer-motion'
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu'
 import {
-  Menu, Search, MapPin, ShoppingBag, User, ChevronDown, Heart, X, Trash2, Plus,
+  Menu, Search, MapPin, Sun, Moon, ShoppingBag, User, ChevronDown, Heart, X, Trash2, Plus,
   Phone, Mail, ChevronRight, Edit3, ClipboardList, MapPinned, LogOut,
 } from 'lucide-react'
 import { tokens } from '@/lib/auth/tokens'
-import { useMagnetic } from '@/hooks/use-magnetic'
-import BrandSplash from '@/features/customer/pages/HomePage/BrandSplash'
-import AmbientKitchen from '@/features/customer/effects/AmbientKitchen'
 
 // Brand icons (Facebook/Instagram/Twitter removed in newer lucide-react).
 const Facebook = ({ className }: { className?: string }) => (
@@ -31,11 +28,6 @@ const Twitter = ({ className }: { className?: string }) => (
 )
 import { useWishlist, useCustomerTheme } from '@/features/customer/customer-store'
 import { DISHES, useCart, setSelectedBranchId as catalogSetSelectedBranchId } from '@/features/customer/catalog'
-import { formatPrice } from '@/features/customer/format'
-import { useSeedMode } from '@/features/customer/content/useSeedMode'
-import CustomerErrorBoundary from '@/features/customer/CustomerErrorBoundary'
-import CartFlyLayer from '@/features/customer/CartFlyLayer'
-import ReservationModal, { OPEN_RESERVATION_EVENT } from '@/features/customer/ReservationModal'
 import { useBrand } from '@/components/providers/BrandProvider'
 import { useCustomerBranches, useCustomerSendOtp, useCustomerVerifyOtp } from '@/api/queries/customer'
 import { Phone as PhoneIcon, KeyRound, UserCircle2, ChevronLeft } from 'lucide-react'
@@ -43,6 +35,7 @@ import { CustomerScrollProgress } from '@/components/ui/customer-scroll-progress
 import { useBodyScrollLock } from '@/lib/useBodyScrollLock'
 import SearchModal from '@/features/customer/SearchModal'
 import CartDrawer from '@/features/customer/CartDrawer'
+import ReservationModal from '@/features/customer/ReservationModal'
 import MobileBottomNav, { OPEN_WISHLIST_EVENT } from '@/features/customer/MobileBottomNav'
 import { PageTransition } from '@/components/ui/page-transition'
 import { toast } from '@/lib/toast'
@@ -90,6 +83,61 @@ interface Props {
   transparent?: boolean
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+ * IconButton — header icon with small label underneath (2026-07-15).
+ * Desktop: icon (20px) + label (8px uppercase) stacked vertically.
+ * Mobile: icon-only, no label (space too tight).
+ * Optional badge (top-right for counts) + optional data-* attrs
+ * (needed for `data-cart-icon` fly-to-cart contract).
+ * ═══════════════════════════════════════════════════════════════════ */
+function IconButton({
+  label,
+  ariaLabel,
+  onClick,
+  title,
+  hideOnMobile,
+  badge,
+  dataAttr,
+  children,
+}: {
+  label: string
+  ariaLabel: string
+  onClick: () => void
+  title?: string
+  hideOnMobile?: boolean
+  badge?: number
+  dataAttr?: Record<string, string>
+  children: ReactNode
+}) {
+  return (
+    <button
+      className={cn(
+        'group relative flex flex-col items-center gap-0.5 px-2 py-1 hover:text-[--c-accent] transition-colors',
+        hideOnMobile && 'hidden sm:inline-flex',
+      )}
+      onClick={onClick}
+      aria-label={ariaLabel}
+      title={title}
+      {...(dataAttr ?? {})}
+    >
+      <span className="relative">
+        {children}
+        {typeof badge === 'number' && badge > 0 ? (
+          <span
+            className="absolute -top-1.5 -right-2 text-[9px] font-bold rounded-full min-w-4 h-4 px-1 flex items-center justify-center"
+            style={{ background: 'var(--c-accent)', color: 'var(--c-button-primary-fg, #111)' }}
+          >
+            {badge > 99 ? '99+' : badge}
+          </span>
+        ) : null}
+      </span>
+      <span className="hidden md:block text-[8px] font-bold uppercase tracking-[0.16em] opacity-70 group-hover:opacity-100 transition-opacity">
+        {label}
+      </span>
+    </button>
+  )
+}
+
 export default function CustomerLayout({ children, transparent = false }: Props) {
   const navigate = useNavigate()
   const [showMobile, setShowMobile] = useState(false)
@@ -119,23 +167,12 @@ export default function CustomerLayout({ children, transparent = false }: Props)
   const [showWishlist, setShowWishlist] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
   const [showCart, setShowCart] = useState(false)
-  const [showReserve, setShowReserve] = useState(false)
-
-  // Listen for the global "open reservation" event so any Reserve CTA
-  // anywhere in the tree (footer, mobile nav, hero CTA) can pop the modal
-  // without prop drilling. See openReservation() in ReservationModal.tsx.
-  useEffect(() => {
-    const handler = () => setShowReserve(true)
-    document.addEventListener(OPEN_RESERVATION_EVENT, handler)
-    return () => document.removeEventListener(OPEN_RESERVATION_EVENT, handler)
-  }, [])
   const [selectedBranchId, setSelectedBranchId] = useState<number>(readSelectedBranchId)
 
   const theme = useCustomerTheme()
   const wishlist = useWishlist()
   const cart = useCart()
   const brand = useBrand()
-  const seedMode = useSeedMode()
   // Live branch list from `/api/customer/restaurant_branch/public/all`.
   // The backend resolves the tenant from the Host header and only returns
   // branches that belong to that restaurant. We pass no args — the host
@@ -392,40 +429,14 @@ export default function CustomerLayout({ children, transparent = false }: Props)
 
   return (
     <div className={cn('customer-shell', theme.mode === 'light' && 'customer-shell--light')}>
-      {/* First-visit branded splash — session-flagged. Custom gold cursor
-       * removed per user feedback (native cursor keeps things stable). */}
-      <BrandSplash />
-      <AmbientKitchen />
       <CustomerScrollProgress />
-      {/* Per-tenant marquee — text + colors + speed come from
-       * `CustBrandingController` (widened 2026-07-10). Hidden entirely when
-       * the tenant has `marqueeIsLive === false` OR the text field is empty.
-       * Each `|`-separated fragment becomes its own item in the loop. */}
-      {brand.marqueeIsLive && brand.marqueeText ? (
-        <div
-          className="marquee-bar"
-          style={{
-            background: brand.marqueeBgColor ?? undefined,
-            color: brand.marqueeTextColor ?? undefined,
-            // marqueeSpeed is seconds-per-full-loop (30 = default). Slower
-            // values mean smoother reading; faster values feel urgent.
-            ['--marquee-duration' as string]: `${brand.marqueeSpeed}s`,
-          }}
-        >
-          <span className="marquee-track">
-            {[0, 1].map((iter) => (
-              // Duplicate the track so the CSS translate loop reads as seamless.
-              <span key={iter} className="inline-block whitespace-nowrap">
-                {brand.marqueeText.split('|').map((piece, i) => (
-                  <span key={i}>
-                    ✦ {piece.trim()} &nbsp;&nbsp;
-                  </span>
-                ))}
-              </span>
-            ))}
-          </span>
-        </div>
-      ) : null}
+      {/* Marquee */}
+      <div className="marquee-bar">
+        <span className="marquee-track">
+          ✦ Order before 9 PM for next-day delivery ✦ Free delivery on orders above ₹499 ✦ New menu launched — Try our Chef's Signature dishes ✦ Reserve your table — Book online &nbsp;&nbsp;
+          ✦ Order before 9 PM for next-day delivery ✦ Free delivery on orders above ₹499 ✦ New menu launched — Try our Chef's Signature dishes ✦ Reserve your table — Book online &nbsp;&nbsp;
+        </span>
+      </div>
 
       {/* Header — compact, single row, brand from DB */}
       <header className={cn('c-header relative', transparent && 'c-header--transparent')}>
@@ -478,8 +489,8 @@ export default function CustomerLayout({ children, transparent = false }: Props)
             {[
               { to: '/', label: 'HOME' },
               { to: '/menu', label: 'MENU' },
+              // { to: '/signature', label: 'SIGNATURE' },
               { to: '/gallery', label: 'GALLERY' },
-              { to: '/about', label: 'ABOUT' },
               { to: '/locations', label: 'LOCATIONS' },
               { to: '/contact', label: 'CONTACT' },
             ].map((n) => (
@@ -499,11 +510,7 @@ export default function CustomerLayout({ children, transparent = false }: Props)
 
           {/* Right: branch + actions (compact) */}
           <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0" style={{ color: 'var(--c-text)' }}>
-            {/* Branch selector — hidden when no real branches loaded.
-             * P1.7 fix: never surface the "Loading… / Resolving branch from
-             * your domain…" placeholder chip to users. Show only when the
-             * live branches array has at least one entry. */}
-            {branchesQuery.data && branchesQuery.data.length > 0 ? (
+            {/* Branch selector — moved right, only on lg+ */}
             <div className="hidden lg:block relative" ref={branchPickerRef}>
               <button
                 onClick={() => setShowBranch(!showBranch)}
@@ -535,66 +542,71 @@ export default function CustomerLayout({ children, transparent = false }: Props)
                 </div>
               ) : null}
             </div>
-            ) : null}
 
-            {/* Reserve CTA — opens the dedicated booking modal (was
-             * navigating to /contact which showed the same page as the
-             * Contact nav link — user asked to split these). */}
+            {/* Reserve CTA — card-style brass pill (2026-07-15). Dispatches
+             * `customer:open-reservation` so ReservationModal opens overlay
+             * from any page instead of navigating to /contact. */}
             <button
-              className="hidden md:inline-flex items-center justify-center !text-[10px] !px-3 !py-2 c-button-outline"
-              onClick={() => setShowReserve(true)}
+              className="hidden md:inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-full font-bold text-[10px] tracking-[0.24em] uppercase transition-all duration-300 hover:-translate-y-0.5 active:scale-95"
+              style={{
+                background: 'var(--c-accent)',
+                color: 'var(--c-button-primary-fg, #111)',
+                boxShadow: '0 8px 20px -6px rgba(var(--c-accent-rgb, 200 155 60), 0.5)',
+              }}
+              onClick={() => window.dispatchEvent(new CustomEvent('customer:open-reservation'))}
             >
-              RESERVE
+              Reserve
             </button>
 
-            {/* Icon row */}
-            <button className="c-header-icon" aria-label="Search" onClick={() => setShowSearch(true)}>
-              <Search className="size-[18px]" />
-            </button>
-            {/* Theme toggle removed 2026-07-10 — user asked for a single theme
-             * ("light mode ka hata"). The customer surface commits to the
-             * current default (persisted via useThemeStore). Kept the theme
-             * store hook mount so useCustomerTheme continues to work in code
-             * that reads mode; only the visible switcher is gone. */}
-            <button
-              className="c-header-icon hidden sm:inline-flex relative"
-              aria-label={`Wishlist (${wishlist.ids.length})`}
+            {/* Icon row — bigger icons + small uppercase labels underneath on
+             * desktop, icon-only on mobile (space too tight). Vertical stack:
+             * icon on top, label below with 2px gap.
+             * PRESERVED: all onClick + aria-label + data-cart-icon. */}
+            <IconButton
+              label="Search"
+              ariaLabel="Search"
+              onClick={() => setShowSearch(true)}
+            >
+              <Search className="size-[20px]" />
+            </IconButton>
+            <IconButton
+              label={theme.mode === 'dark' ? 'Light' : 'Dark'}
+              ariaLabel={`Toggle ${theme.mode === 'dark' ? 'light' : 'dark'} mode`}
+              onClick={theme.toggle}
+              title={`${theme.mode === 'dark' ? 'Switch to light' : 'Switch to dark'} · Ctrl/Cmd+D`}
+              hideOnMobile
+            >
+              {theme.mode === 'dark' ? <Sun className="size-[20px]" /> : <Moon className="size-[20px]" />}
+            </IconButton>
+            <IconButton
+              label="Wishlist"
+              ariaLabel={`Wishlist (${wishlist.ids.length})`}
               onClick={() => setShowWishlist(true)}
+              hideOnMobile
+              badge={wishlist.ids.length > 0 ? wishlist.ids.length : undefined}
             >
-              <Heart className={cn('size-[18px]', wishlist.ids.length > 0 && 'fill-current gold-text')} />
-              {wishlist.ids.length > 0 ? (
-                <span
-                  className="absolute -top-0.5 -right-0.5 text-[9px] font-bold rounded-full size-3.5 flex items-center justify-center"
-                  style={{ background: 'var(--c-accent)', color: 'var(--c-button-primary-fg)' }}
-                >
-                  {wishlist.ids.length}
-                </span>
-              ) : null}
-            </button>
-            <button
-              className="c-header-icon relative"
+              <Heart className={cn('size-[20px]', wishlist.ids.length > 0 && 'fill-current')} style={wishlist.ids.length > 0 ? { color: 'var(--c-accent)' } : undefined} />
+            </IconButton>
+            <IconButton
+              label="Cart"
+              ariaLabel="Cart"
               onClick={() => setShowCart(true)}
-              aria-label="Cart"
-              data-cart-icon="1"
+              badge={cart.items.length > 0 ? cart.items.reduce((a, l) => a + l.qty, 0) : undefined}
+              dataAttr={{ 'data-cart-icon': '1' }}
             >
-              <ShoppingBag className="size-5" />
-              {cart.items.length > 0 ? (
-                <span
-                  className="absolute -top-0.5 -right-0.5 text-[10px] font-bold rounded-full size-4 flex items-center justify-center"
-                  style={{ background: 'var(--c-accent)', color: 'var(--c-button-primary-fg)' }}
-                >
-                  {cart.items.reduce((a, l) => a + l.qty, 0)}
-                </span>
-              ) : null}
-            </button>
+              <ShoppingBag className="size-[20px]" />
+            </IconButton>
             {isSignedIn ? (
               <DropdownMenuPrimitive.Root>
                 <DropdownMenuPrimitive.Trigger asChild>
                   <button
-                    className="c-header-icon"
+                    className="group flex flex-col items-center gap-0.5 px-2 py-1 hover:text-[--c-accent] transition-colors"
                     aria-label="Account menu"
                   >
-                    <User className="size-[18px]" />
+                    <User className="size-[20px]" />
+                    <span className="hidden md:block text-[8px] font-bold uppercase tracking-[0.16em] opacity-70 group-hover:opacity-100 transition-opacity">
+                      Account
+                    </span>
                   </button>
                 </DropdownMenuPrimitive.Trigger>
                 <DropdownMenuPrimitive.Portal>
@@ -656,13 +668,15 @@ export default function CustomerLayout({ children, transparent = false }: Props)
               </DropdownMenuPrimitive.Root>
             ) : (
               <button
-                className="c-header-icon inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.18em]"
+                className="group flex flex-col items-center gap-0.5 px-2 py-1 hover:text-[--c-accent] transition-colors"
                 onClick={() => setShowLogin(true)}
                 aria-label="Sign in"
                 aria-expanded={showLogin}
               >
-                <User className="size-[18px]" />
-                <span className="hidden md:inline">SIGN IN</span>
+                <User className="size-[20px]" />
+                <span className="hidden md:block text-[8px] font-bold uppercase tracking-[0.16em] opacity-70 group-hover:opacity-100 transition-opacity">
+                  Sign In
+                </span>
               </button>
             )}
           </div>
@@ -738,12 +752,9 @@ export default function CustomerLayout({ children, transparent = false }: Props)
       {/* Cart drawer */}
       <CartDrawer open={showCart} onClose={() => setShowCart(false)} />
 
-      {/* Reservation modal — Reserve CTA opens this instead of navigating
-       * to /contact (which is now contact-info only). */}
-      <ReservationModal open={showReserve} onClose={() => setShowReserve(false)} />
-
-      {/* Flying add-to-cart coin overlay (fixed z-9999, pointer-events-none) */}
-      <CartFlyLayer />
+      {/* Reservation modal — opens on `customer:open-reservation` event
+       * dispatched from header Reserve button, marquee, or any CTA. */}
+      <ReservationModal />
 
       {/* Sign-in centred modal — proper dialog with backdrop blur instead
        * of an off-axis dropdown. Pattern matches Notion / Linear / Stripe
@@ -969,163 +980,61 @@ export default function CustomerLayout({ children, transparent = false }: Props)
 
       {/* Body — adds bottom padding so MobileBottomNav doesn't cover content */}
       <main className="relative z-[1] pb-20 lg:pb-0">
-        <PageTransition>
-          <CustomerErrorBoundary>{children}</CustomerErrorBoundary>
-        </PageTransition>
+        <PageTransition>{children}</PageTransition>
       </main>
 
       {/* Mobile bottom navigation — Swiggy/Zomato-style */}
       <MobileBottomNav />
 
       {/* Footer — hidden on mobile because BottomTabBar provides primary
-       * navigation. All practical fields (phone, email, address, social,
-       * FSSAI, GST) come from `useBrand()` — widened branding endpoint
-       * powers real per-tenant content. */}
-      <footer className="c-footer relative z-[1] mt-10">
-        {/* Slim gold hairline as the only footer boundary — the "Let's stay
-         * in touch" hero block was removed; columns now sit right below. */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-          <div className="c-footer-hairline" aria-hidden />
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Brand column — sans-serif name so long tenant names fit one line
-           * (Cormorant serif was pushing "Spice Garden Pvt Ltd" to 3 lines). */}
+       * navigation. Show only on lg+ so the layout feels like a mobile app
+       * on phones (no long marketing footer) and a full website on desktop. */}
+      <footer className="sg-footer hidden lg:block relative z-[1] mt-20 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
-            {brand.logoUrl ? (
-              <img
-                src={brand.logoUrl}
-                alt=""
-                className="h-8 w-auto mb-2 object-contain"
-                loading="lazy"
-                onError={(e) => { e.currentTarget.style.display = 'none' }}
-              />
-            ) : null}
-            <p className="font-sans font-extrabold text-[13px] uppercase tracking-[0.14em] leading-tight">
-              {brand.restaurantName}
-            </p>
-            <p className="text-[9px] mt-0.5 opacity-70 uppercase tracking-[0.22em]">{brand.tagline}</p>
-            {brand.aboutUs ? (
-              <p className="text-[13px] text-[--c-text-soft] mt-3 line-clamp-3 leading-relaxed">{brand.aboutUs}</p>
-            ) : (
-              <p className="text-[13px] text-[--c-text-soft] mt-3 leading-relaxed">Hand-crafted dishes, warm hospitality, and an unforgettable dining experience.</p>
-            )}
-            {/* Animated social icons — hover lifts + fills with brand gold */}
-            <div className="flex items-center gap-2 mt-4">
-              {brand.socialLinks.facebook ? (
-                <a href={brand.socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="c-footer-social" aria-label="Facebook"><Facebook className="size-3.5" aria-hidden="true" /></a>
-              ) : null}
-              {brand.socialLinks.instagram ? (
-                <a href={brand.socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="c-footer-social" aria-label="Instagram"><Instagram className="size-3.5" aria-hidden="true" /></a>
-              ) : null}
-              {brand.socialLinks.twitter ? (
-                <a href={brand.socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="c-footer-social" aria-label="Twitter / X"><Twitter className="size-3.5" aria-hidden="true" /></a>
-              ) : null}
+            <p className="display text-3xl">{brand.restaurantName}</p>
+            <p className="subtitle text-[10px] mt-1">{brand.tagline}</p>
+            <p className="text-sm text-[--c-text-soft] mt-4">Hand-crafted dishes, warm hospitality, and an unforgettable dining experience.</p>
+            <div className="flex items-center gap-3 mt-4">
+              <a href="#" className="hover:gold-text" aria-label="Facebook"><Facebook className="size-4" aria-hidden="true" /></a>
+              <a href="#" className="hover:gold-text" aria-label="Instagram"><Instagram className="size-4" aria-hidden="true" /></a>
+              <a href="#" className="hover:gold-text" aria-label="Twitter"><Twitter className="size-4" aria-hidden="true" /></a>
             </div>
           </div>
-
-          {/* Explore column */}
           <div>
-            <p className="subtitle text-[9px] tracking-[0.24em]">EXPLORE</p>
-            <div className="c-footer-divider" aria-hidden />
-            <ul className="space-y-1.5 text-[13px]">
-              <li><NavLink to="/menu" className="c-footer-link">Menu</NavLink></li>
-              <li><NavLink to="/signature" className="c-footer-link">Signature Dishes</NavLink></li>
-              <li><NavLink to="/gallery" className="c-footer-link">Gallery</NavLink></li>
-              <li><NavLink to="/locations" className="c-footer-link">Locations</NavLink></li>
-              <li><NavLink to="/about" className="c-footer-link">About Us</NavLink></li>
+            <p className="subtitle">Explore</p>
+            <div className="c-divider !ml-0" />
+            <ul className="space-y-2 text-sm">
+              <li><NavLink to="/menu" className="hover:gold-text">Menu</NavLink></li>
+              <li><NavLink to="/signature" className="hover:gold-text">Signature Dishes</NavLink></li>
+              <li><NavLink to="/gallery" className="hover:gold-text">Gallery</NavLink></li>
+              <li><NavLink to="/why-us" className="hover:gold-text">Why Us</NavLink></li>
+              <li><NavLink to="/locations" className="hover:gold-text">Locations</NavLink></li>
+              <li><NavLink to="/about" className="hover:gold-text">About Us</NavLink></li>
             </ul>
           </div>
-
-          {/* Legal column */}
           <div>
-            <p className="subtitle text-[9px] tracking-[0.24em]">LEGAL</p>
-            <div className="c-footer-divider" aria-hidden />
-            <ul className="space-y-1.5 text-[13px]">
-              <li><NavLink to="/terms" className="c-footer-link">Terms of Service</NavLink></li>
-              <li><NavLink to="/privacy" className="c-footer-link">Privacy Policy</NavLink></li>
-              <li><NavLink to="/refund" className="c-footer-link">Refund & Cancellation</NavLink></li>
-              <li><NavLink to="/contact" className="c-footer-link">Book a Table</NavLink></li>
-              {brand.fssaiNumber ? (
-                <li className="text-[--c-text-muted] text-[10px] pt-2 border-t border-[--c-border] mt-2">FSSAI Lic. <span className="font-mono">{brand.fssaiNumber}</span></li>
-              ) : null}
-              {brand.gstNumber ? (
-                <li className="text-[--c-text-muted] text-[10px]">GSTIN <span className="font-mono">{brand.gstNumber}</span></li>
-              ) : null}
+            <p className="subtitle">Legal</p>
+            <div className="c-divider !ml-0" />
+            <ul className="space-y-2 text-sm">
+              <li><NavLink to="/terms" className="hover:gold-text">Terms of Service</NavLink></li>
+              <li><NavLink to="/privacy" className="hover:gold-text">Privacy Policy</NavLink></li>
+              <li><NavLink to="/refund" className="hover:gold-text">Refund & Cancellation</NavLink></li>
+              <li><NavLink to="/contact" className="hover:gold-text">Book a Table</NavLink></li>
             </ul>
           </div>
-
-          {/* Reach column */}
           <div>
-            <p className="subtitle text-[9px] tracking-[0.24em]">REACH US</p>
-            <div className="c-footer-divider" aria-hidden />
-            <ul className="space-y-2 text-[13px]">
-              {brand.address ? (
-                <li className="flex items-start gap-2">
-                  <span className="c-footer-icon shrink-0"><MapPin className="size-3.5" /></span>
-                  <span className="text-[--c-text-soft] leading-snug">{brand.address}</span>
-                </li>
-              ) : branch?.address ? (
-                <li className="flex items-start gap-2">
-                  <span className="c-footer-icon shrink-0"><MapPin className="size-3.5" /></span>
-                  <span className="text-[--c-text-soft] leading-snug">{branch.address}</span>
-                </li>
-              ) : null}
-              {brand.phone ? (
-                <li className="flex items-center gap-2">
-                  <span className="c-footer-icon shrink-0"><Phone className="size-3.5" /></span>
-                  <a href={`tel:${brand.phone}`} className="c-footer-link">{brand.phone}</a>
-                </li>
-              ) : null}
-              {brand.email ? (
-                <li className="flex items-center gap-2">
-                  <span className="c-footer-icon shrink-0"><Mail className="size-3.5" /></span>
-                  <a href={`mailto:${brand.email}`} className="c-footer-link">{brand.email}</a>
-                </li>
-              ) : null}
-              {brand.whatsappNumber ? (
-                <li className="flex items-center gap-2">
-                  <span className="c-footer-icon c-footer-icon--whatsapp shrink-0"><Phone className="size-3.5" /></span>
-                  <a href={`https://wa.me/${brand.whatsappNumber.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="c-footer-link">WhatsApp</a>
-                </li>
-              ) : null}
+            <p className="subtitle">Reach Us</p>
+            <div className="c-divider !ml-0" />
+            <ul className="space-y-2 text-sm">
+              <li className="flex items-center gap-2"><MapPin className="size-4 gold-text" /> {branch?.address}</li>
+              <li className="flex items-center gap-2"><Phone className="size-4 gold-text" /> +91 9876543210</li>
+              <li className="flex items-center gap-2"><Mail className="size-4 gold-text" /> hello@spicegarden.com</li>
             </ul>
           </div>
         </div>
-
-        {/* Bottom bar — copyright + powered-by.
-         * P1.9: dynamic year. P1.8: Powered-by gated behind seedMode
-         * (white-label tenants don't advertise the SaaS backend). Extra
-         * bottom padding on mobile so it clears the fixed bottom nav. */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 pt-4 pb-24 lg:pb-6 border-t border-[--c-border]">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-[--c-text-muted]">
-            <p>© {new Date().getFullYear()} {brand.restaurantName} · All rights reserved</p>
-            {seedMode ? (
-              <p className="opacity-80">Crafted with care · Powered by RMS</p>
-            ) : (
-              <p className="opacity-80">Crafted with care</p>
-            )}
-          </div>
-        </div>
+        <p className="text-center text-xs text-[--c-text-muted] mt-10 border-t border-[--c-border] pt-6">© 2026 {brand.restaurantName} {brand.tagline} · Powered by RMS</p>
       </footer>
-
-      {/* Floating WhatsApp CTA — only when tenant has configured whatsappNumber.
-       * Bottom-right FAB, above MobileBottomNav on phones, standalone on desktop.
-       * Uses the standard wa.me deep link so mobile taps open WhatsApp directly. */}
-      {brand.whatsappNumber ? (
-        <a
-          href={`https://wa.me/${brand.whatsappNumber.replace(/[^0-9]/g, '')}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Chat on WhatsApp"
-          className="fixed bottom-24 right-4 lg:bottom-6 lg:right-6 z-40 size-14 rounded-full bg-[#25D366] hover:bg-[#20BA5A] text-white flex items-center justify-center shadow-xl transition-transform hover:scale-110 active:scale-95"
-          style={{ boxShadow: '0 10px 30px rgba(37, 211, 102, 0.4)' }}
-        >
-          <svg viewBox="0 0 24 24" fill="currentColor" className="size-7" aria-hidden="true">
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.464 3.488" />
-          </svg>
-        </a>
-      ) : null}
     </div>
   )
 }
@@ -1153,19 +1062,6 @@ const heroWordVariants: Variants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] } },
 }
 
-// Accent word — behaves as a container so each letter can stagger in.
-// Combined with heroLetterVariants below, gives the accent title an
-// editorial letter-by-letter reveal that reads as premium.
-const heroAccentWordVariants: Variants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.045 } },
-}
-
-const heroLetterVariants: Variants = {
-  hidden: { opacity: 0, y: 22 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1] } },
-}
-
 const heroDescriptionVariants: Variants = {
   hidden: { opacity: 0, y: 14 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 1.1 } },
@@ -1180,43 +1076,16 @@ function HeroAnimatedWords({ text, accent = false }: { text: string; accent?: bo
   const words = text.split(' ')
   return (
     <>
-      {words.map((word, i) => {
-        if (accent) {
-          // Letter-by-letter reveal — each word is a stagger container over
-          // its own letters. Reads as more premium than the whole-word flip
-          // and only used on the accent title (short strings), so perf-safe.
-          return (
-            <motion.span
-              key={`${word}-${i}`}
-              variants={heroAccentWordVariants}
-              className="inline-block"
-              style={{ marginRight: '0.25em' }}
-            >
-              <span className="inline-block">
-                {[...word].map((letter, j) => (
-                  <motion.span
-                    key={`${letter}-${j}`}
-                    variants={heroLetterVariants}
-                    className="inline-block"
-                  >
-                    {letter}
-                  </motion.span>
-                ))}
-              </span>
-            </motion.span>
-          )
-        }
-        return (
-          <motion.span
-            key={`${word}-${i}`}
-            variants={heroWordVariants}
-            className="inline-block"
-            style={{ marginRight: '0.25em' }}
-          >
-            {word}
-          </motion.span>
-        )
-      })}
+      {words.map((word, i) => (
+        <motion.span
+          key={`${word}-${i}`}
+          variants={heroWordVariants}
+          className="inline-block"
+          style={{ marginRight: '0.25em' }}
+        >
+          {accent ? <span>{word}</span> : word}
+        </motion.span>
+      ))}
     </>
   )
 }
@@ -1270,7 +1139,7 @@ function WishlistContents({ wishlist, cart, onClose, navigate }: WishlistContent
                       <span className={dish.veg ? 'veg-icon' : 'nonveg-icon'} />
                       {dish.name}
                     </p>
-                    <p className="text-xs gold-text font-semibold">{formatPrice(dish.price)}</p>
+                    <p className="text-xs gold-text font-semibold">₹{dish.price}</p>
                   </div>
                   <div className="flex flex-col gap-1">
                     <button
@@ -1322,7 +1191,7 @@ function WishlistContents({ wishlist, cart, onClose, navigate }: WishlistContent
 
 export function HeroSection({
   bg, subtitle, titleA, titleAccent, description, primaryCta, primaryOnClick, secondaryCta, secondaryOnClick,
-  showRotator = false, heroImages, withCurve = false, bgVideo,
+  showRotator = false, heroImages, withCurve = false,
 }: {
   bg: string
   subtitle: string
@@ -1346,14 +1215,7 @@ export function HeroSection({
    * unified light-beige category section below.
    */
   withCurve?: boolean
-  /**
-   * Optional muted background video URL. When provided, renders a looping
-   * autoplay video behind the hero content. If the video fails to load,
-   * the existing image rotator takes over — no visible fallback needed.
-   */
-  bgVideo?: string
 }) {
-  const [videoOk, setVideoOk] = useState(true)
   const ROTATE_IMAGES =
     heroImages && heroImages.length > 0
       ? heroImages
@@ -1377,28 +1239,13 @@ export function HeroSection({
   // on the section element keeps mouse-move off the React render path.
   const sectionRef = useRef<HTMLElement | null>(null)
   const reduce = useReducedMotion()
-
-  // Magnetic CTAs — buttons drift toward the cursor within ~120px, giving
-  // the hero a Linear/Stripe-tier interactive hook. Composed with the blob
-  // handler in a single onMouseMove so we keep one pointer listener.
-  const magneticPrimary = useMagnetic<HTMLButtonElement>(140, 0.28)
-  const magneticSecondary = useMagnetic<HTMLButtonElement>(140, 0.2)
-
   const onMouseMove = (e: React.MouseEvent<HTMLElement>) => {
-    if (!reduce) {
-      const rect = e.currentTarget.getBoundingClientRect()
-      const px = ((e.clientX - rect.left) / rect.width) * 100
-      const py = ((e.clientY - rect.top) / rect.height) * 100
-      e.currentTarget.style.setProperty('--blob-x', `${px}%`)
-      e.currentTarget.style.setProperty('--blob-y', `${py}%`)
-    }
-    magneticPrimary.onParentMouseMove(e)
-    magneticSecondary.onParentMouseMove(e)
-  }
-
-  const onMouseLeave = () => {
-    magneticPrimary.onParentMouseLeave()
-    magneticSecondary.onParentMouseLeave()
+    if (reduce) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    const px = ((e.clientX - rect.left) / rect.width) * 100
+    const py = ((e.clientY - rect.top) / rect.height) * 100
+    e.currentTarget.style.setProperty('--blob-x', `${px}%`)
+    e.currentTarget.style.setProperty('--blob-y', `${py}%`)
   }
 
   // Parallax on the hero background — image drifts down a touch as the user
@@ -1416,52 +1263,13 @@ export function HeroSection({
     <motion.section
       ref={sectionRef}
       onMouseMove={onMouseMove}
-      onMouseLeave={onMouseLeave}
       className="hero-bg relative overflow-hidden"
       style={{ backgroundImage: `url(${current})` }}
       initial="hidden"
       animate="visible"
       variants={heroContainerVariants}
     >
-      {/* Optional background video — muted autoplay loop for a cinematic
-       * "living kitchen" feel. Sits above the CSS bg image but below the
-       * rotator + content. If the video 404s or is blocked, `onError` flips
-       * `videoOk` false and the image rotator takes over. */}
-      {bgVideo && videoOk ? (
-        <video
-          src={bgVideo}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          onError={() => setVideoOk(false)}
-          aria-hidden="true"
-          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-          style={{ zIndex: 0 }}
-        />
-      ) : null}
-
-      {/* Ambient gradient orbs — three blurred blobs that drift with slow
-       * eased keyframes, giving the hero a Sweetgreen / Linear / Stripe
-       * living-canvas feel. Sits under content (z-1), above bg image.
-       * CSS handles the drift + light/dark blend modes + reduced-motion. */}
-      <div className="hero-orb hero-orb--a" aria-hidden="true" />
-      <div className="hero-orb hero-orb--b" aria-hidden="true" />
-      <div className="hero-orb hero-orb--c" aria-hidden="true" />
-
-      {/* Hero steam — 4 wisps rise from the bottom-center of the hero,
-       * suggesting "hot food just landed on the table". Pure CSS
-       * animation, respects reduced-motion via customer.css. */}
-      <div className="hero-steam" aria-hidden="true">
-        <span className="hero-steam__wisp hero-steam__wisp--1" />
-        <span className="hero-steam__wisp hero-steam__wisp--2" />
-        <span className="hero-steam__wisp hero-steam__wisp--3" />
-        <span className="hero-steam__wisp hero-steam__wisp--4" />
-      </div>
-      {/* Rotator only when there's no active video — video wins the layer
-       * when playing, rotator kicks back in if video errors. */}
-      {showRotator && (!bgVideo || !videoOk) ? (
+      {showRotator ? (
         <>
           <AnimatePresence mode="popLayout">
             <motion.div
@@ -1528,9 +1336,7 @@ export function HeroSection({
          */}
         <motion.h1 className="display" variants={heroTitleVariants}>
           <HeroAnimatedWords text={titleA} />
-          <span className="hero-accent">
-            <HeroAnimatedWords text={titleAccent} accent />
-          </span>
+          <HeroAnimatedWords text={titleAccent} accent />
         </motion.h1>
         <motion.p
           className="text-base sm:text-lg text-[--c-text-soft] mt-6 max-w-xl mx-auto"
@@ -1543,24 +1349,8 @@ export function HeroSection({
             className="mt-8 flex items-center justify-center gap-3 flex-wrap"
             variants={heroCtaVariants}
           >
-            {primaryCta ? (
-              <button
-                ref={magneticPrimary.ref}
-                className="c-button-primary"
-                onClick={primaryOnClick}
-              >
-                {primaryCta}
-              </button>
-            ) : null}
-            {secondaryCta ? (
-              <button
-                ref={magneticSecondary.ref}
-                className="c-button-outline"
-                onClick={secondaryOnClick}
-              >
-                {secondaryCta}
-              </button>
-            ) : null}
+            {primaryCta ? <button className="c-button-primary" onClick={primaryOnClick}>{primaryCta}</button> : null}
+            {secondaryCta ? <button className="c-button-outline" onClick={secondaryOnClick}>{secondaryCta}</button> : null}
           </motion.div>
         ) : null}
         {/* No decorative divider inside the hero text — the bottom-right

@@ -4,17 +4,13 @@ import { Soup } from 'lucide-react'
 import { CATEGORIES } from '@/features/customer/catalog'
 import { cn } from '@/lib/utils'
 
-export interface OrbitItem {
+interface OrbitItem {
   id: string | null
   label: string
   img?: string
-  /** Backend-supplied description — shown as tooltip on hover. */
-  description?: string | null
-  /** Client-computed count of items in this category. */
-  itemCount?: number
 }
 
-const DEFAULT_ORBIT_ITEMS: OrbitItem[] = [
+const ORBIT_ITEMS: OrbitItem[] = [
   { id: null, label: 'ALL' },
   ...CATEGORIES.map((c) => ({ id: c.id, label: c.name, img: c.img })),
 ]
@@ -29,12 +25,6 @@ interface Props {
    * 'valley' (MenuPage) — center nodes at BOTTOM of valley, edges rise UP.
    */
   variant?: OrbitVariant
-  /**
-   * Backend-driven category list (with item counts + descriptions). When
-   * absent or empty, falls back to hardcoded CATEGORIES so demo mode still
-   * renders. Always prepend an "ALL" node in the caller when using this.
-   */
-  items?: OrbitItem[]
 }
 
 interface OrbitNodeWrapperProps {
@@ -85,18 +75,10 @@ function OrbitNodeWrapper({ index, trackX, dimensions, reduce, variant, children
   )
 }
 
-export default function CategoryChainSection({ selected, onSelect, variant = 'dome', items }: Props) {
+export default function CategoryChainSection({ selected, onSelect, variant = 'dome' }: Props) {
   const reduce = useReducedMotion()
   const stripRef = useRef<HTMLDivElement | null>(null)
   const isDragging = useRef(false)
-
-  // Prefer caller-supplied backend-driven items; fall back to hardcoded
-  // list when demo mode / offline / not yet resolved. This keeps SaaS
-  // tenants seeing THEIR real categories while dev demos still render.
-  const ORBIT_ITEMS = useMemo<OrbitItem[]>(
-    () => (items && items.length > 1 ? items : DEFAULT_ORBIT_ITEMS),
-    [items],
-  )
 
   const [dimensions, setDimensions] = useState(() => {
     if (typeof window === 'undefined') return { vw: 1024, nodeWidth: 76, gap: 40, paddingLeft: 60 }
@@ -112,8 +94,10 @@ export default function CategoryChainSection({ selected, onSelect, variant = 'do
     const handleResize = () => {
       const vw = window.innerWidth
       const isMobile = vw < 640
-      const nodeWidth = isMobile ? 60 : Math.min(76, Math.max(60, vw * 0.075))
-      const gap = isMobile ? 20 : Math.min(48, Math.max(24, vw * 0.03))
+      // Bumped up 2026-07-15 (user asked for bigger nodes for attractiveness).
+      // Was 60 / 76 (mobile / desktop); now 76 / 104 for more visual weight.
+      const nodeWidth = isMobile ? 76 : Math.min(104, Math.max(84, vw * 0.09))
+      const gap = isMobile ? 22 : Math.min(56, Math.max(30, vw * 0.035))
       const paddingLeft = vw * 0.06
       setDimensions({ vw, nodeWidth, gap, paddingLeft })
     }
@@ -192,12 +176,7 @@ export default function CategoryChainSection({ selected, onSelect, variant = 'do
                 type="button"
                 onClick={() => onSelect(item.id)}
                 aria-pressed={isActive}
-                aria-label={
-                  item.itemCount != null
-                    ? `Filter by ${item.label} (${item.itemCount} dishes)`
-                    : `Filter by ${item.label}`
-                }
-                title={item.description ?? undefined}
+                aria-label={`Filter by ${item.label}`}
                 className={cn(
                   'orbit-node',
                   isAll && 'orbit-node--all',
@@ -214,14 +193,6 @@ export default function CategoryChainSection({ selected, onSelect, variant = 'do
                     decoding="async"
                   />
                 )}
-                {/* Item-count pill — only shown when caller supplied a real
-                 * count (backend-driven). Zero-count is still rendered as a
-                 * factual signal ("no dishes right now"). */}
-                {item.itemCount != null ? (
-                  <span className="orbit-node-count" aria-hidden="true">
-                    {item.itemCount}
-                  </span>
-                ) : null}
               </button>
               <span className="orbit-label">{item.label}</span>
             </OrbitNodeWrapper>

@@ -1,28 +1,22 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   MapPin, Phone, Mail, Clock, Calendar, ChefHat, Leaf,
-  Soup, Plus, Minus, ChevronRight, ChevronLeft, FileText,
+  Loader2, Soup, Plus, Minus, ChevronLeft, ChevronRight, FileText,
   ShieldCheck, RotateCcw, Users, X, ZoomIn,
-  MessageCircle, Sparkles, Facebook, Instagram, Twitter,
-  UtensilsCrossed, Cake, Briefcase,
+  Building2, Sparkles, HelpCircle, Newspaper, MessageCircle, ChevronDown, Send, Utensils,
 } from 'lucide-react'
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import CustomerLayout, { HeroSection } from '@/features/customer/CustomerLayout'
 import { toast } from '@/lib/toast'
 import { DocumentTitle } from '@/lib/seo/document-title'
 import { ScrollReveal } from '@/components/ui/scroll-reveal'
-import { useMouseTilt } from '@/hooks/use-mouse-tilt'
-import { handleImageError } from '@/features/customer/image-fallback'
 import {
   HERO_IMAGES, GALLERY, useCart, useCustomerCatalog,
   DISHES
 } from '@/features/customer/catalog'
+import { submitPublicReservation } from '@/api/services/customer'
 import DishCard from '@/features/customer/DishCard'
-import { formatPrice } from '@/features/customer/format'
-import { openReservation } from '@/features/customer/ReservationModal'
-import { useBrand } from '@/components/providers/BrandProvider'
-import { useCustomerBranches } from '@/api/queries/customer'
 import { cn } from '@/lib/utils'
 import { tokens } from '@/lib/auth/tokens'
 import '@/styles/customer.css'
@@ -75,7 +69,7 @@ export function CartPage() {
                       <span className={l.veg ? 'veg-icon' : 'nonveg-icon'} />
                       <span className="truncate">{l.name}</span>
                     </p>
-                    <p className="text-xs text-[--c-text-muted] mt-1 font-medium">${l.price} each</p>
+                    <p className="text-xs text-[--c-text-muted] mt-1 font-medium">₹{l.price} each</p>
                   </div>
                   <div className="flex items-center gap-1.5 border border-[--c-accent] rounded-lg bg-black/20 shrink-0">
                     <button className="px-2.5 py-1.5 cursor-pointer text-[--c-text-soft] hover:text-white" onClick={() => setQty(l.id, -1)} aria-label="Decrease quantity"><Minus className="size-3.5" /></button>
@@ -83,7 +77,7 @@ export function CartPage() {
                     <button className="px-2.5 py-1.5 cursor-pointer text-[--c-text-soft] hover:text-white" onClick={() => setQty(l.id, 1)} aria-label="Increase quantity"><Plus className="size-3.5" /></button>
                   </div>
                   <p className="font-mono tabular-nums w-20 sm:w-28 text-right gold-text font-bold shrink-0">
-                    {formatPrice(l.subtotal)}
+                    ₹{l.subtotal.toLocaleString('en-IN')}
                   </p>
                 </li>
               ))}
@@ -91,15 +85,15 @@ export function CartPage() {
             <div className="p-5 space-y-3.5 border-t border-[--c-border] bg-black/10">
               <div className="flex items-center justify-between text-sm font-semibold text-[--c-text-soft]">
                 <span>Subtotal</span>
-                <span className="font-mono">{formatPrice(subtotal)}</span>
+                <span className="font-mono">₹{subtotal.toLocaleString('en-IN')}</span>
               </div>
               <div className="flex items-center justify-between text-sm font-semibold text-[--c-text-soft]">
                 <span>GST (5%)</span>
-                <span className="font-mono">{formatPrice(gst)}</span>
+                <span className="font-mono">₹{gst.toLocaleString('en-IN')}</span>
               </div>
               <div className="flex items-center justify-between pt-3.5 border-t border-[--c-border] text-base font-bold text-[--c-text]">
                 <span>Total Amount</span>
-                <span className="display text-2xl gold-text font-mono font-bold">{formatPrice(total)}</span>
+                <span className="display text-2xl gold-text font-mono font-bold">₹{total.toLocaleString('en-IN')}</span>
               </div>
               <button
                 className="c-button-primary w-full mt-4 py-4 rounded-xl cursor-pointer font-bold tracking-wider inline-flex items-center justify-center gap-2 hover:shadow-[var(--c-shadow-primary)] transition-shadow"
@@ -124,363 +118,647 @@ export function CartPage() {
 }
 
 /* ====================================================================== */
-/* 2. CONTACT PAGE (booking form moved to header Reserve modal)           */
+/* 2. CONTACT / RESERVATIONS PAGE                                         */
 /* ====================================================================== */
+const RESERVATIONS_KEY = 'customer_reservations'
+
+interface StoredReservation {
+  id: string
+  submittedAt: string
+  name: string
+  email: string
+  phone: string
+  date: string
+  time: string
+  guests: number
+  notes: string
+  status: 'requested'
+}
+
+function readReservations(): StoredReservation[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = localStorage.getItem(RESERVATIONS_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
+  } catch { return [] }
+}
 
 export function ContactPage() {
-  // Contact page rewritten 2026-07-13: removed booking form (moved to the
-  // Reserve modal on the header CTA). Contact page is now pure contact
-  // info — address, phone, email, hours, embedded map, WhatsApp CTA.
-  // All data derives from `useBrand()` + first branch; hardcoded Spice
-  // Garden literals removed.
-  const brand = useBrand()
-  const { data: branches } = useCustomerBranches()
-  const firstBranch = branches?.[0]
-  const address = brand.address || firstBranch?.address
-  const phone = brand.phone
-  const email = brand.email
-  const whatsappNumber = brand.whatsappNumber
+  const initialForm = { name: '', email: '', phone: '', date: '', time: '', guests: 2, notes: '' }
+  const [form, setForm] = useState(initialForm)
+  const [errors, setErrors] = useState<Partial<Record<keyof typeof initialForm, string>>>({})
+  const [history, setHistory] = useState<StoredReservation[]>(readReservations)
+  const [loading, setLoading] = useState(false)
 
-  const socialLinks = [
-    { key: 'facebook', label: 'Facebook', Icon: Facebook, href: brand.socialLinks.facebook },
-    { key: 'instagram', label: 'Instagram', Icon: Instagram, href: brand.socialLinks.instagram },
-    { key: 'twitter', label: 'Twitter', Icon: Twitter, href: brand.socialLinks.twitter },
-  ].filter((s) => Boolean(s.href))
+  const validate = (): boolean => {
+    const next: typeof errors = {}
+    if (!form.name.trim() || form.name.trim().length < 2) next.name = 'Name must be at least 2 characters'
+    if (!/^[6-9][0-9]{9}$/.test(form.phone)) next.phone = 'Enter a valid 10-digit Indian mobile number'
+    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) next.email = 'Invalid email address'
+    if (!form.date) next.date = 'Pick a reservation date'
+    if (!form.time) next.time = 'Pick a reservation time'
+    if (!form.guests || form.guests < 1) next.guests = 'At least one guest required'
+    setErrors(next)
+    return Object.keys(next).length === 0
+  }
 
-  const contactCards = [
-    phone ? {
-      key: 'call',
-      Icon: Phone,
-      label: 'Call Us',
-      value: phone,
-      href: `tel:${phone}`,
-      accent: 'var(--c-accent, #C9A96E)',
-    } : null,
-    whatsappNumber ? {
-      key: 'wa',
-      Icon: MessageCircle,
-      label: 'WhatsApp',
-      value: 'Chat with us',
-      href: `https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}`,
-      accent: '#25D366',
-      external: true,
-    } : null,
-    email ? {
-      key: 'email',
-      Icon: Mail,
-      label: 'Email',
-      value: email,
-      href: `mailto:${email}`,
-      accent: 'var(--c-terracotta, #B4593F)',
-    } : null,
-    address ? {
-      key: 'visit',
-      Icon: MapPin,
-      label: 'Visit Us',
-      value: firstBranch?.name || 'Directions',
-      href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`,
-      accent: '#6E8B6A',
-      external: true,
-    } : null,
-  ].filter(Boolean) as { key: string; Icon: typeof Phone; label: string; value: string; href: string; accent: string; external?: boolean }[]
+  const submit = async () => {
+    if (!validate()) {
+      toast.warning('Please fix the highlighted fields')
+      return
+    }
 
-  const reasonsToReach = [
-    { Icon: UtensilsCrossed, title: 'Private Dining', body: "Reserve a private space for a milestone dinner, celebration, or an intimate meal that deserves more room." },
-    { Icon: Users, title: 'Large Groups', body: 'Planning a get-together? Let us help you seat, plan the menu, and set the perfect table for your party.' },
-    { Icon: Cake, title: 'Special Occasions', body: "Birthdays, anniversaries, proposals — tell us what's happening and we'll make it memorable." },
-    { Icon: Briefcase, title: 'Media & Partnerships', body: 'Press, collabs, or business questions? Our team will get back to you within one working day.' },
+    setLoading(true)
+    const backendRes = await submitPublicReservation({
+      name: form.name.trim(),
+      phone: form.phone,
+      email: form.email,
+      date: form.date,
+      time: form.time,
+      guests: form.guests,
+      notes: form.notes,
+    })
+    setLoading(false)
+
+    const localId = backendRes.ok && backendRes.data.reservationId
+      ? `RSV-${backendRes.data.reservationId}`
+      : `RSV-${Date.now()}`
+
+    const record: StoredReservation = {
+      id: localId,
+      submittedAt: new Date().toLocaleString('en-IN'),
+      ...form,
+      status: 'requested',
+    }
+
+    const next = [record, ...history].slice(0, 10)
+    setHistory(next)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(RESERVATIONS_KEY, JSON.stringify(next))
+    }
+
+    if (backendRes.ok) {
+      toast.success("Reservation submitted — we will call to confirm your table shortly.")
+    } else {
+      toast.warning('Saved locally — couldn’t reach the server. We will retry on next connection.')
+    }
+    setForm(initialForm)
+    setErrors({})
+  }
+
+  // Cream + ink theme tokens (aligned with HomePage cream sections)
+  const CREAM = 'var(--c-cream, #FAF6F0)'
+  const INK = 'var(--c-text-dark, #1A1210)'
+  const BRASS = 'var(--c-accent, #C89B3C)'
+
+  const HELP_CATEGORIES = [
+    { Icon: HelpCircle, title: 'General Enquiries', text: 'Menu questions, dietary needs, allergies, or anything else — our guest desk answers in under 4 hours.', cta: 'hello@spicegarden.com', href: 'mailto:hello@spicegarden.com' },
+    { Icon: Calendar, title: 'Reservations', text: 'Reserve a table, modify an existing booking, or ask about waitlist availability for weekend evenings.', cta: '+91 9876543210', href: 'tel:+919876543210' },
+    { Icon: Sparkles, title: 'Private Events', text: 'Birthdays, anniversaries, corporate dinners, weddings — our event manager will design a bespoke evening.', cta: 'events@spicegarden.com', href: 'mailto:events@spicegarden.com' },
+    { Icon: Newspaper, title: 'Media & Press', text: 'Reviews, features, chef interviews, food photography visits — our PR team responds within one working day.', cta: 'press@spicegarden.com', href: 'mailto:press@spicegarden.com' },
   ]
+
+  const DEPT_LINES = [
+    { title: 'Reservation Desk', phone: '+91 9876543210', email: 'reservations@spicegarden.com', hours: 'Daily · 9 AM – 11 PM', note: 'Fastest for same-day bookings' },
+    { title: 'Event Manager', phone: '+91 9876543220', email: 'events@spicegarden.com', hours: 'Mon–Sat · 10 AM – 7 PM', note: 'Birthdays, sangeets, buyouts' },
+    { title: 'Catering & Off-Site', phone: '+91 9876543230', email: 'catering@spicegarden.com', hours: 'Mon–Sat · 10 AM – 7 PM', note: 'Home & office deliveries · 20+ pax' },
+    { title: 'Corporate Sales', phone: '+91 9876543240', email: 'corporate@spicegarden.com', hours: 'Mon–Fri · 10 AM – 6 PM', note: 'Meal contracts, gift cards, invoicing' },
+    { title: 'Guest Relations', phone: '+91 9876543250', email: 'care@spicegarden.com', hours: 'Daily · 11 AM – 11 PM', note: 'Feedback, complaints, lost items' },
+    { title: 'Careers & HR', phone: '+91 9876543260', email: 'careers@spicegarden.com', hours: 'Mon–Fri · 10 AM – 6 PM', note: 'Chefs, service, management roles' },
+  ]
+
+  const SCHEDULE = [
+    { day: 'Monday – Thursday', lunch: '11:00 AM – 3:30 PM', dinner: '6:30 PM – 11:00 PM' },
+    { day: 'Friday', lunch: '11:00 AM – 3:30 PM', dinner: '6:30 PM – 11:30 PM' },
+    { day: 'Saturday', lunch: '11:00 AM – 4:00 PM', dinner: '6:00 PM – 11:30 PM' },
+    { day: 'Sunday', lunch: '10:30 AM – 4:00 PM (Brunch)', dinner: '6:30 PM – 11:00 PM' },
+    { day: 'Public Holidays', lunch: '11:00 AM – 4:00 PM', dinner: '6:30 PM – 11:30 PM' },
+  ]
+
+  const HOURS_NOTES = [
+    { Icon: Clock, title: 'Happy Hour', text: 'Weekdays 5:30 PM – 7:30 PM · 25% off cocktails and small plates at the bar.' },
+    { Icon: Utensils, title: 'Kitchen Close', text: 'Last food order 30 mins before closing. Bar stays open until close.' },
+    { Icon: ChefHat, title: 'Sunday Brunch', text: 'Live jazz + bottomless mimosas at the Powai branch, 11 AM – 3 PM.' },
+    { Icon: Sparkles, title: 'Festive Hours', text: 'Diwali, Christmas & New Year — extended hours + special tasting menu. Book 2 weeks ahead.' },
+  ]
+
+  const FAQS = [
+    { q: 'Do I need to reserve, or can I walk in?', a: "Walk-ins are always welcome, but weekend evenings (Fri–Sun after 7:30 PM) usually have a 20–30 minute wait. We recommend reserving online — it takes under a minute and holds your table until 15 minutes past your slot." },
+    { q: 'Is there a dress code?', a: "Smart casual across all branches. We ask that guests avoid beachwear, gym clothes, or overly informal attire in the evenings. Kids are welcome any time in their favourite outfits." },
+    { q: 'Can you accommodate food allergies and dietary needs?', a: "Absolutely. Every dish is flagged for common allergens (nuts, dairy, gluten, seafood). Tell us at booking or on arrival — our chefs will adjust or suggest alternatives. We also have Jain, vegan, and gluten-free variants for most menu items." },
+    { q: 'Do you serve alcohol?', a: "Yes, all three branches are fully licensed. We have a curated wine list (Indian + imported), a full-service bar, and a sommelier at Bandra. Andheri and Powai serve cocktails, wines, and spirits." },
+    { q: 'How do I book a private dining room or event?', a: "Fill in the reservation form above and mention 'Private Dining' in the notes, or email events@spicegarden.com. Our event manager will call within 4 hours to discuss menu, setup, and pricing. Rooms seat 8–40; full-restaurant buyouts also available." },
+    { q: 'What about parking?', a: "Complimentary valet at all three branches. Powai additionally has a free surface lot for 40 cars. Bandra and Andheri branches are also well-connected by metro and local train — see our Locations page for details." },
+    { q: 'Do you deliver?', a: "Yes — via Zomato, Swiggy, and our own website (with a 10% off first-order discount for direct orders). Delivery zone covers most of Mumbai suburbs; check your PIN code at checkout." },
+    { q: 'Can I get a GST invoice for corporate meals?', a: "Yes. Provide your company name and GSTIN at billing or in the booking notes, and we'll issue a compliant invoice immediately. For monthly meal contracts, email corporate@spicegarden.com." },
+  ]
+
+  const nextBookingId = history[0]?.id
 
   return (
     <CustomerLayout>
-      <DocumentTitle
-        title={`Contact — ${brand.restaurantName}`}
-        description={`Get in touch with ${brand.restaurantName}. Address, phone, email, and opening hours.`}
-      />
+      <DocumentTitle title="Contact & Reservations — Spice Garden" />
       <HeroSection
         bg={HERO_IMAGES.contact}
-        subtitle="WE'RE HERE FOR YOU"
-        titleA="Get in"
-        titleAccent="Touch"
-        description={`Questions, special occasions, or just saying hello — reach ${brand.restaurantName} the way that suits you best.`}
+        subtitle="WE'RE HERE TO HELP"
+        titleA="Contact &"
+        titleAccent="Reservations"
+        description="Reserve a table, book a private event, or ask us anything. Our team responds fast — most enquiries answered within four hours."
       />
 
-      {/* ── Quick contact chips — 4 pill cards, tappable, high visibility ── */}
-      {contactCards.length > 0 ? (
-        <ScrollReveal as="section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-2">
-          <div className={cn(
-            'grid gap-4',
-            contactCards.length === 1 && 'sm:grid-cols-1',
-            contactCards.length === 2 && 'sm:grid-cols-2',
-            contactCards.length === 3 && 'sm:grid-cols-3',
-            contactCards.length === 4 && 'sm:grid-cols-2 lg:grid-cols-4',
-          )}>
-            {contactCards.map(({ key, Icon, label, value, href, accent, external }) => (
-              <a
-                key={key}
-                href={href}
-                target={external ? '_blank' : undefined}
-                rel={external ? 'noopener noreferrer' : undefined}
-                className="group c-card p-5 rounded-2xl border border-[--c-border] flex items-center gap-4 hover:-translate-y-1 hover:shadow-lg transition-all"
-                style={{ background: 'var(--c-bg-elev)' }}
-              >
-                <span
-                  className="inline-flex items-center justify-center size-12 rounded-full shrink-0 group-hover:scale-110 transition-transform"
-                  style={{ background: `${accent}22`, color: accent }}
-                  aria-hidden
-                >
-                  <Icon className="size-6" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="subtitle text-[10px] tracking-[0.22em] mb-0.5" style={{ color: 'var(--c-text-soft)' }}>{label}</p>
-                  <p className="font-semibold text-[13px] truncate" style={{ color: 'var(--c-text)' }}>{value}</p>
-                </div>
-                <ChevronRight className="size-4 text-[--c-text-muted] shrink-0 group-hover:translate-x-1 transition-transform" aria-hidden />
-              </a>
-            ))}
-          </div>
-        </ScrollReveal>
-      ) : null}
-
-      {/* ── Reach the restaurant — details + hero photo ── */}
-      <ScrollReveal as="section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div className="space-y-6">
-            <div>
-              <p className="subtitle">VISIT US</p>
-              <div className="c-divider !ml-0" />
-              <h2 className="display text-3xl sm:text-4xl lg:text-5xl leading-tight">Reach the <span>Restaurant</span></h2>
-              <p className="mt-4 text-[14px] leading-relaxed" style={{ color: 'var(--c-text-soft)' }}>
-                Walk in, call ahead, or drop a note. However you reach us, expect a warm hello and a table set with care.
-              </p>
-            </div>
-
-            <ul className="space-y-5 text-sm font-medium">
-              {address ? (
-                <li className="flex items-start gap-4">
-                  <span className="inline-flex items-center justify-center size-10 rounded-full shrink-0" style={{ background: 'rgba(201,169,110,0.14)' }}>
-                    <MapPin className="size-5" style={{ color: 'var(--c-accent)' }} />
-                  </span>
-                  <div>
-                    <p className="text-[10px] uppercase tracking-[0.22em] font-bold mb-0.5" style={{ color: 'var(--c-text-soft)' }}>Address</p>
-                    <p style={{ color: 'var(--c-text)' }}>{address}</p>
-                  </div>
-                </li>
-              ) : null}
-              {phone ? (
-                <li className="flex items-start gap-4">
-                  <span className="inline-flex items-center justify-center size-10 rounded-full shrink-0" style={{ background: 'rgba(201,169,110,0.14)' }}>
-                    <Phone className="size-5" style={{ color: 'var(--c-accent)' }} />
-                  </span>
-                  <div>
-                    <p className="text-[10px] uppercase tracking-[0.22em] font-bold mb-0.5" style={{ color: 'var(--c-text-soft)' }}>Phone</p>
-                    <a href={`tel:${phone}`} className="hover:gold-text transition-colors" style={{ color: 'var(--c-text)' }}>{phone}</a>
-                  </div>
-                </li>
-              ) : null}
-              {email ? (
-                <li className="flex items-start gap-4">
-                  <span className="inline-flex items-center justify-center size-10 rounded-full shrink-0" style={{ background: 'rgba(201,169,110,0.14)' }}>
-                    <Mail className="size-5" style={{ color: 'var(--c-accent)' }} />
-                  </span>
-                  <div>
-                    <p className="text-[10px] uppercase tracking-[0.22em] font-bold mb-0.5" style={{ color: 'var(--c-text-soft)' }}>Email</p>
-                    <a href={`mailto:${email}`} className="hover:gold-text transition-colors" style={{ color: 'var(--c-text)' }}>{email}</a>
-                  </div>
-                </li>
-              ) : null}
-              <li className="flex items-start gap-4">
-                <span className="inline-flex items-center justify-center size-10 rounded-full shrink-0" style={{ background: 'rgba(201,169,110,0.14)' }}>
-                  <Clock className="size-5" style={{ color: 'var(--c-accent)' }} />
-                </span>
-                <div>
-                  <p className="text-[10px] uppercase tracking-[0.22em] font-bold mb-0.5" style={{ color: 'var(--c-text-soft)' }}>Hours</p>
-                  <p style={{ color: 'var(--c-text)' }}>Open daily — please call for the day's hours.</p>
-                </div>
-              </li>
-            </ul>
-
-            <div className="flex flex-wrap gap-3 pt-4">
-              <button
-                type="button"
-                onClick={openReservation}
-                className="c-button-primary inline-flex items-center gap-2"
-              >
-                <Calendar className="size-4" />
-                Reserve a Table
-              </button>
-              {whatsappNumber ? (
-                <a
-                  href={`https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="c-button-outline inline-flex items-center gap-2"
-                >
-                  <MessageCircle className="size-4" />
-                  Chat on WhatsApp
-                </a>
-              ) : null}
-            </div>
+      {/* SECTION 1 — Cream · Reservation form + Visit us */}
+      <section style={{ background: CREAM, color: INK }} className="w-full sg-section-cream">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+          <div className="text-center mb-12">
+            <p className="text-[10px] font-bold tracking-[0.28em] uppercase mb-3" style={{ color: BRASS }}>
+              Reserve Your Table
+            </p>
+            <div className="h-px w-16 mx-auto mb-4" style={{ background: BRASS }} />
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl leading-tight" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+              A Table Awaits
+              <span className="italic ml-2" style={{ color: BRASS }}>Your Story</span>
+            </h2>
+            <p className="mt-4 text-sm sm:text-base max-w-2xl mx-auto opacity-70">
+              Fill in a few details and we'll confirm within minutes — usually with a quick call to check any special requests.
+            </p>
           </div>
 
-          <div className="rounded-3xl overflow-hidden border border-[--c-border] c-card">
-            <img
-              src={HERO_IMAGES.contact}
-              alt={`${brand.restaurantName} interior`}
-              loading="lazy"
-              decoding="async"
-              className="w-full aspect-[4/3] object-cover"
-              onError={handleImageError('ambience')}
-            />
-            {firstBranch?.address ? (
-              <div className="p-5" style={{ background: 'var(--c-bg-elev)' }}>
-                <p className="subtitle text-[10px] tracking-[0.22em] mb-1">MAIN BRANCH</p>
-                <p className="font-semibold text-base" style={{ color: 'var(--c-text)' }}>{firstBranch.name}</p>
-                <p className="text-[13px] mt-0.5" style={{ color: 'var(--c-text-soft)' }}>{firstBranch.address}</p>
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            {/* Visit us column */}
+            <div className="lg:col-span-2 space-y-6">
+              <div className="rounded-2xl overflow-hidden aspect-[4/3] relative">
+                <img
+                  src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80"
+                  alt="Spice Garden interior"
+                  loading="lazy"
+                  decoding="async"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex flex-col justify-end p-6 text-white">
+                  <p className="text-[10px] font-bold tracking-[0.28em] uppercase" style={{ color: BRASS }}>Flagship Branch</p>
+                  <p className="text-2xl mt-1" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>Bandra West</p>
+                </div>
               </div>
-            ) : null}
-          </div>
-        </div>
-      </ScrollReveal>
 
-      {/* ── Reasons to reach out — 4 editorial cards ── */}
-      <div className="c-wash-sage">
-        <ScrollReveal as="section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
-          <div className="text-center mb-12">
-            <p className="subtitle">HOW CAN WE HELP</p>
-            <div className="c-divider" />
-            <h2 className="display text-3xl sm:text-4xl">Reasons to <span>Reach Out</span></h2>
-            <p className="mt-4 max-w-xl mx-auto text-[14px] leading-relaxed" style={{ color: 'var(--c-text-soft)' }}>
-              Whatever brings you here, we're glad you did. A quick note about what you're looking for helps us serve you better.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {reasonsToReach.map(({ Icon, title, body }, i) => (
-              <ScrollReveal
-                key={title}
-                delay={i * 0.08}
-                as="article"
-                className="p-6 rounded-2xl border border-[--c-border] hover:-translate-y-1 transition-transform group"
-                style={{ background: 'var(--c-bg-elev)' }}
-              >
-                <span
-                  className="inline-flex items-center justify-center size-12 rounded-full mb-4 group-hover:scale-110 transition-transform"
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(201,169,110,0.18), rgba(180,89,63,0.14))',
-                    color: 'var(--c-accent)',
-                  }}
-                  aria-hidden
-                >
-                  <Icon className="size-6" />
-                </span>
-                <h3 className="display text-xl mb-2" style={{ color: 'var(--c-text)' }}>{title}</h3>
-                <p className="text-[13px] leading-relaxed" style={{ color: 'var(--c-text-soft)' }}>{body}</p>
-              </ScrollReveal>
-            ))}
-          </div>
-        </ScrollReveal>
-      </div>
+              <div className="rounded-2xl p-6 sm:p-7 bg-white" style={{ border: `1px solid rgba(200,155,60,0.3)` }}>
+                <p className="text-[10px] font-bold tracking-[0.28em] uppercase mb-4" style={{ color: BRASS }}>Visit Us — Flagship</p>
+                <ul className="space-y-3.5 text-sm">
+                  <li className="flex items-start gap-3">
+                    <MapPin className="size-5 mt-0.5 shrink-0" style={{ color: BRASS }} />
+                    <span className="opacity-80" style={{ color: INK }}>123 Sea Breeze Lane, Bandra West, Mumbai · 400050</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Phone className="size-5 mt-0.5 shrink-0" style={{ color: BRASS }} />
+                    <a href="tel:+919876543210" className="opacity-80 hover:opacity-100 hover:underline" style={{ color: INK }}>+91 9876543210</a>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Mail className="size-5 mt-0.5 shrink-0" style={{ color: BRASS }} />
+                    <a href="mailto:hello@spicegarden.com" className="opacity-80 hover:opacity-100 hover:underline" style={{ color: INK }}>hello@spicegarden.com</a>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <MessageCircle className="size-5 mt-0.5 shrink-0" style={{ color: BRASS }} />
+                    <a href="https://wa.me/919876543210" target="_blank" rel="noopener noreferrer" className="opacity-80 hover:opacity-100 hover:underline" style={{ color: INK }}>WhatsApp us — quick replies</a>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Clock className="size-5 mt-0.5 shrink-0" style={{ color: BRASS }} />
+                    <span className="opacity-80" style={{ color: INK }}>Mon–Sun · 11:00 AM – 11:30 PM</span>
+                  </li>
+                </ul>
 
-      {/* ── All branches grid — only when tenant has multiple ── */}
-      {branches && branches.length > 1 ? (
-        <ScrollReveal as="section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
-          <div className="text-center mb-12">
-            <p className="subtitle">FIND US</p>
-            <div className="c-divider" />
-            <h2 className="display text-3xl sm:text-4xl">Our <span>Branches</span></h2>
-            <p className="mt-3 text-[13px]" style={{ color: 'var(--c-text-soft)' }}>
-              {branches.length} location{branches.length === 1 ? '' : 's'} · pick the one closest to you
-            </p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {branches.map((b, i) => (
-              <ScrollReveal
-                key={b.id}
-                delay={i * 0.06}
-                as="article"
-                className="p-6 rounded-2xl border border-[--c-border] hover:-translate-y-1 transition-transform"
-                style={{ background: 'var(--c-bg-elev)' }}
-              >
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <span className="inline-flex items-center justify-center size-10 rounded-full shrink-0" style={{ background: 'rgba(201,169,110,0.14)', color: 'var(--c-accent)' }}>
-                    <MapPin className="size-5" />
-                  </span>
-                  {b.city ? (
-                    <span className="text-[10px] uppercase tracking-[0.22em] font-bold px-2 py-1 rounded-full" style={{ background: 'rgba(180,89,63,0.12)', color: 'var(--c-terracotta)' }}>
-                      {b.city}
-                    </span>
-                  ) : null}
+                <div className="mt-5 pt-5 border-t" style={{ borderColor: 'rgba(200,155,60,0.25)' }}>
+                  <p className="text-[11px] italic leading-relaxed opacity-70" style={{ color: INK }}>
+                    Also at <b>Andheri East</b> and <b>Powai</b> — see the{' '}
+                    <a href="/locations" className="underline font-semibold" style={{ color: BRASS }}>Locations page</a>{' '}
+                    for full details.
+                  </p>
                 </div>
-                <h3 className="font-bold text-base mb-1" style={{ color: 'var(--c-text)' }}>{b.name}</h3>
-                <p className="text-[13px] leading-relaxed" style={{ color: 'var(--c-text-soft)' }}>{b.address}</p>
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(b.address)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-4 inline-flex items-center gap-1 text-[12px] font-bold uppercase tracking-[0.16em] hover:underline"
-                  style={{ color: 'var(--c-accent)' }}
+              </div>
+            </div>
+
+            {/* Booking form column */}
+            <div className="sg-form-card lg:col-span-3 rounded-2xl p-6 sm:p-8 lg:p-10">
+              <div className="flex items-start justify-between gap-4 mb-6">
+                <div>
+                  <p className="text-[10px] font-bold tracking-[0.28em] uppercase mb-2" style={{ color: BRASS }}>Book Online</p>
+                  <h3 className="text-2xl sm:text-3xl leading-tight" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", color: INK }}>
+                    Reserve <span className="italic" style={{ color: BRASS }}>Your Table</span>
+                  </h3>
+                </div>
+                <Calendar className="size-8 shrink-0" style={{ color: BRASS }} />
+              </div>
+
+              <div className="space-y-3.5">
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-1 block" style={{ color: INK }}>Your Name</label>
+                  <input
+                    className="w-full px-4 py-3 rounded-lg text-sm outline-none transition-colors focus:border-[--c-accent]"
+                    style={{ background: CREAM, border: `1.5px solid rgba(200,155,60,0.35)`, color: INK }}
+                    placeholder="e.g. Aarav Kapoor"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    aria-invalid={!!errors.name}
+                  />
+                  {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-1 block" style={{ color: INK }}>Email (optional)</label>
+                    <input
+                      className="w-full px-4 py-3 rounded-lg text-sm outline-none transition-colors"
+                      style={{ background: CREAM, border: `1.5px solid rgba(200,155,60,0.35)`, color: INK }}
+                      placeholder="you@example.com"
+                      value={form.email}
+                      onChange={(e) => setForm({ ...form, email: e.target.value })}
+                      aria-invalid={!!errors.email}
+                    />
+                    {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-1 block" style={{ color: INK }}>Phone</label>
+                    <input
+                      className="w-full px-4 py-3 rounded-lg text-sm outline-none transition-colors"
+                      style={{ background: CREAM, border: `1.5px solid rgba(200,155,60,0.35)`, color: INK }}
+                      placeholder="10-digit mobile"
+                      inputMode="tel"
+                      maxLength={10}
+                      value={form.phone}
+                      onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                      aria-invalid={!!errors.phone}
+                    />
+                    {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-1 block" style={{ color: INK }}>Date</label>
+                    <input
+                      className="w-full px-3 py-3 rounded-lg text-xs outline-none"
+                      style={{ background: CREAM, border: `1.5px solid rgba(200,155,60,0.35)`, color: INK }}
+                      type="date"
+                      value={form.date}
+                      onChange={(e) => setForm({ ...form, date: e.target.value })}
+                      aria-invalid={!!errors.date}
+                    />
+                    {errors.date && <p className="text-xs text-red-500 mt-1">{errors.date}</p>}
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-1 block" style={{ color: INK }}>Time</label>
+                    <input
+                      className="w-full px-3 py-3 rounded-lg text-xs outline-none"
+                      style={{ background: CREAM, border: `1.5px solid rgba(200,155,60,0.35)`, color: INK }}
+                      type="time"
+                      value={form.time}
+                      onChange={(e) => setForm({ ...form, time: e.target.value })}
+                      aria-invalid={!!errors.time}
+                    />
+                    {errors.time && <p className="text-xs text-red-500 mt-1">{errors.time}</p>}
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-1 block" style={{ color: INK }}>Guests</label>
+                    <input
+                      className="w-full px-4 py-3 rounded-lg text-sm outline-none"
+                      style={{ background: CREAM, border: `1.5px solid rgba(200,155,60,0.35)`, color: INK }}
+                      type="number"
+                      min={1}
+                      max={25}
+                      placeholder="2"
+                      value={form.guests}
+                      onChange={(e) => setForm({ ...form, guests: Number(e.target.value) })}
+                      aria-invalid={!!errors.guests}
+                    />
+                    {errors.guests && <p className="text-xs text-red-500 mt-1">{errors.guests}</p>}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-1 block" style={{ color: INK }}>Special Requests (optional)</label>
+                  <textarea
+                    className="w-full px-4 py-3 rounded-lg text-sm outline-none resize-none"
+                    style={{ background: CREAM, border: `1.5px solid rgba(200,155,60,0.35)`, color: INK }}
+                    rows={3}
+                    placeholder="e.g. window seat, birthday cake setup, high-chair for baby, gluten-free options…"
+                    value={form.notes}
+                    onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                  />
+                </div>
+
+                <button
+                  disabled={loading}
+                  className="w-full py-4 rounded-full inline-flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest text-white transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
+                  style={{ background: INK }}
+                  onClick={submit}
                 >
-                  Get Directions <ChevronRight className="size-3" />
-                </a>
-              </ScrollReveal>
+                  {loading ? <Loader2 className="size-4 animate-spin" /> : <Calendar className="size-4" />}
+                  Reserve Table Now
+                </button>
+
+                <p className="text-[11px] text-center opacity-60 pt-1" style={{ color: INK }}>
+                  We'll confirm via SMS + call. Free to cancel up to 2 hours before.
+                </p>
+              </div>
+
+              {history.length > 0 && (
+                <div className="pt-6 border-t mt-6" style={{ borderColor: 'rgba(200,155,60,0.25)' }}>
+                  <p className="text-[10px] font-bold tracking-widest uppercase mb-3" style={{ color: BRASS }}>
+                    Your Recent Requests
+                    {nextBookingId ? <span className="opacity-60 ml-2 normal-case font-normal">· latest {nextBookingId}</span> : null}
+                  </p>
+                  <ul className="space-y-2">
+                    {history.slice(0, 3).map((r) => (
+                      <li key={r.id} className="flex items-center justify-between text-xs p-3 rounded-xl" style={{ background: 'rgba(200,155,60,0.06)', border: '1px solid rgba(200,155,60,0.2)' }}>
+                        <div className="min-w-0 pr-2">
+                          <p className="font-mono font-bold truncate" style={{ color: BRASS }}>{r.id}</p>
+                          <p className="opacity-70 mt-0.5" style={{ color: INK }}>{r.date} · {r.time} · {r.guests} guests</p>
+                        </div>
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase" style={{ background: BRASS, color: INK }}>Requested</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 2 — Dark · How Can We Help */}
+      <section className="w-full sg-section-dark">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+          <div className="text-center mb-12">
+            <p className="text-[10px] font-bold tracking-[0.28em] uppercase mb-3" style={{ color: BRASS }}>
+              Get in Touch
+            </p>
+            <div className="h-px w-16 mx-auto mb-4" style={{ background: BRASS }} />
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl leading-tight" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+              How Can
+              <span className="italic ml-2" style={{ color: BRASS }}>We Help?</span>
+            </h2>
+            <p className="mt-4 text-sm sm:text-base max-w-2xl mx-auto opacity-70">
+              Pick the right desk and get a faster response. Every message is read by a real person.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {HELP_CATEGORIES.map(({ Icon, title, text, cta, href }, i) => (
+              <motion.a
+                key={title}
+                href={href}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: i * 0.06 }}
+                className="sg-tile p-6 rounded-xl block"
+              >
+                <div className="sg-icon-ring inline-flex size-14 items-center justify-center mb-4">
+                  <Icon className="size-6" style={{ color: BRASS }} />
+                </div>
+                <h3 className="text-lg font-bold mb-2">{title}</h3>
+                <p className="text-sm opacity-70 leading-relaxed mb-4">{text}</p>
+                <p className="text-xs font-bold uppercase tracking-widest break-all" style={{ color: BRASS }}>{cta}</p>
+              </motion.a>
             ))}
           </div>
-        </ScrollReveal>
-      ) : null}
+        </div>
+      </section>
 
-      {/* ── Follow along — social icons row (only if any set) ── */}
-      {socialLinks.length > 0 ? (
-        <div className="c-wash-terracotta">
-          <ScrollReveal as="section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 text-center">
-            <p className="subtitle">STAY IN THE LOOP</p>
-            <div className="c-divider" />
-            <h2 className="display text-2xl sm:text-3xl mb-6">Follow <span>Along</span></h2>
-            <div className="flex items-center justify-center gap-3 flex-wrap">
-              {socialLinks.map(({ key, label, Icon, href }) => (
-                <a
-                  key={key}
-                  href={href!}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={`${brand.restaurantName} on ${label}`}
-                  className="inline-flex items-center justify-center size-12 rounded-full border border-[--c-border] hover:-translate-y-1 hover:shadow-md transition-all"
-                  style={{ background: 'var(--c-bg-elev)', color: 'var(--c-text)' }}
-                >
-                  <Icon className="size-5" />
-                </a>
-              ))}
+      {/* SECTION 3 — Cream · Direct Department Lines */}
+      <section style={{ background: CREAM, color: INK }} className="w-full sg-section-cream">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+          <div className="text-center mb-12">
+            <p className="text-[10px] font-bold tracking-[0.28em] uppercase mb-3" style={{ color: BRASS }}>
+              Direct Lines
+            </p>
+            <div className="h-px w-16 mx-auto mb-4" style={{ background: BRASS }} />
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl leading-tight" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+              Talk to the
+              <span className="italic ml-2" style={{ color: BRASS }}>Right Desk</span>
+            </h2>
+            <p className="mt-4 text-sm sm:text-base max-w-2xl mx-auto opacity-70">
+              Skip the switchboard — dial straight through to the team who can help.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {DEPT_LINES.map((d, i) => (
+              <motion.div
+                key={d.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: i * 0.05 }}
+                className="sg-tile p-6 rounded-2xl"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-bold mb-1">{d.title}</h3>
+                    <p className="text-xs opacity-60">{d.hours}</p>
+                  </div>
+                  <Building2 className="size-6 shrink-0" style={{ color: BRASS }} />
+                </div>
+
+                <div className="space-y-2 text-sm">
+                  <a href={`tel:${d.phone.replace(/\s/g, '')}`} className="flex items-center gap-2 opacity-80 hover:opacity-100 hover:underline">
+                    <Phone className="size-4 shrink-0" style={{ color: BRASS }} />
+                    <span className="font-mono">{d.phone}</span>
+                  </a>
+                  <a href={`mailto:${d.email}`} className="flex items-center gap-2 opacity-80 hover:opacity-100 hover:underline break-all">
+                    <Mail className="size-4 shrink-0" style={{ color: BRASS }} />
+                    {d.email}
+                  </a>
+                </div>
+
+                <p className="text-[11px] italic mt-4 pt-4 border-t opacity-70" style={{ borderColor: 'rgba(200,155,60,0.2)' }}>
+                  {d.note}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 4 — Dark · Business Hours + What to Know */}
+      <section className="w-full sg-section-dark">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+            <div>
+              <p className="text-[10px] font-bold tracking-[0.28em] uppercase mb-3" style={{ color: BRASS }}>
+                When We're Open
+              </p>
+              <div className="h-px w-16 mb-4" style={{ background: BRASS }} />
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl leading-tight mb-6" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+                Business
+                <span className="italic ml-2" style={{ color: BRASS }}>Hours</span>
+              </h2>
+
+              <div className="sg-table rounded-2xl">
+                <div className="sg-table-head grid grid-cols-3 px-5 py-3 text-[10px] font-bold uppercase tracking-widest">
+                  <span>Day</span>
+                  <span>Lunch</span>
+                  <span>Dinner</span>
+                </div>
+                {SCHEDULE.map((s) => (
+                  <div key={s.day} className="sg-table-row grid grid-cols-3 px-5 py-4 text-sm">
+                    <span className="font-bold">{s.day}</span>
+                    <span className="opacity-80">{s.lunch}</span>
+                    <span className="opacity-80">{s.dinner}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </ScrollReveal>
-        </div>
-      ) : null}
 
-      {/* ── Bottom Reserve CTA card ── */}
-      <ScrollReveal as="section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
-        <div
-          className="rounded-3xl p-10 sm:p-14 text-center relative overflow-hidden border border-[--c-border]"
-          style={{ background: 'linear-gradient(135deg, rgba(201,169,110,0.14), rgba(180,89,63,0.10))' }}
-        >
-          <span
-            className="inline-flex items-center justify-center size-14 rounded-full mb-4"
-            style={{ background: 'linear-gradient(135deg, #F5E5B8, #C9A96E)' }}
-          >
-            <Sparkles className="size-6" style={{ color: '#1A1A1A' }} />
-          </span>
-          <p className="subtitle text-[10px] tracking-[0.28em] mb-2" style={{ color: 'var(--c-terracotta)' }}>THE TABLE IS READY</p>
-          <h2 className="display text-3xl sm:text-4xl lg:text-5xl mb-3">Ready to <span>book</span>?</h2>
-          <p className="text-[14px] max-w-lg mx-auto mb-6 leading-relaxed" style={{ color: 'var(--c-text-soft)' }}>
-            Reserve online in less than a minute — we'll follow up with a call to confirm your table.
-          </p>
-          <button
-            type="button"
-            onClick={openReservation}
-            className="c-button-primary inline-flex items-center gap-2"
-          >
-            <Calendar className="size-4" />
-            Reserve Your Table
-          </button>
+            <div>
+              <p className="text-[10px] font-bold tracking-[0.28em] uppercase mb-3" style={{ color: BRASS }}>
+                Good to Know
+              </p>
+              <div className="h-px w-16 mb-4" style={{ background: BRASS }} />
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl leading-tight mb-6" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+                Special
+                <span className="italic ml-2" style={{ color: BRASS }}>Timings</span>
+              </h2>
+
+              <div className="space-y-3">
+                {HOURS_NOTES.map(({ Icon, title, text }, i) => (
+                  <motion.div
+                    key={title}
+                    initial={{ opacity: 0, x: 20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.4, delay: i * 0.06 }}
+                    className="sg-tile flex gap-4 p-5 rounded-xl"
+                  >
+                    <div className="sg-icon-ring shrink-0 inline-flex size-11 items-center justify-center">
+                      <Icon className="size-5" style={{ color: BRASS }} />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold mb-1">{title}</h3>
+                      <p className="text-sm opacity-70 leading-relaxed">{text}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
-      </ScrollReveal>
+      </section>
+
+      {/* SECTION 5 — Cream · FAQs */}
+      <section style={{ background: CREAM, color: INK }} className="w-full sg-section-cream">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+          <div className="text-center mb-10">
+            <p className="text-[10px] font-bold tracking-[0.28em] uppercase mb-3" style={{ color: BRASS }}>
+              Common Questions
+            </p>
+            <div className="h-px w-16 mx-auto mb-4" style={{ background: BRASS }} />
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl leading-tight" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+              Frequently Asked
+              <span className="italic ml-2" style={{ color: BRASS }}>Questions</span>
+            </h2>
+            <p className="mt-4 text-sm sm:text-base max-w-xl mx-auto opacity-70">
+              Everything guests ask us most. Still stuck? Drop a note above.
+            </p>
+          </div>
+
+          <ul className="space-y-3">
+            {FAQS.map((f, i) => (
+              <motion.li
+                key={f.q}
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.3, delay: i * 0.04 }}
+              >
+                <details className="group rounded-xl bg-white overflow-hidden transition-all" style={{ border: `1px solid rgba(200,155,60,0.3)` }}>
+                  <summary className="flex items-center justify-between gap-4 p-5 cursor-pointer list-none">
+                    <span className="text-sm sm:text-base font-bold" style={{ color: INK }}>{f.q}</span>
+                    <ChevronDown className="size-5 shrink-0 transition-transform duration-300 group-open:rotate-180" style={{ color: BRASS }} />
+                  </summary>
+                  <div className="px-5 pb-5 text-sm leading-relaxed opacity-75" style={{ color: INK }}>
+                    {f.a}
+                  </div>
+                </details>
+              </motion.li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* SECTION 6 — Dark · Follow us + Newsletter */}
+      <section className="w-full sg-section-dark">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <p className="text-[10px] font-bold tracking-[0.28em] uppercase mb-3" style={{ color: BRASS }}>
+                Stay in Touch
+              </p>
+              <div className="h-px w-16 mb-4" style={{ background: BRASS }} />
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl leading-tight mb-4" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+                Never Miss a
+                <span className="italic ml-2" style={{ color: BRASS }}>Chef's Special</span>
+              </h2>
+              <p className="text-sm sm:text-base opacity-70 mb-6">
+                One email a month — new menu drops, seasonal tastings, festival specials. No spam, unsubscribe with one click.
+              </p>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  toast.success('Subscribed — welcome to the family!')
+                }}
+                className="flex flex-col sm:flex-row gap-2"
+              >
+                <input
+                  type="email"
+                  required
+                  placeholder="your@email.com"
+                  className="sg-alt-input flex-1 px-4 py-3.5 text-sm"
+                />
+                <button
+                  type="submit"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-xs font-bold uppercase tracking-widest transition-all hover:-translate-y-0.5"
+                  style={{ background: BRASS, color: INK }}
+                >
+                  <Send className="size-4" /> Subscribe
+                </button>
+              </form>
+            </div>
+
+            <div>
+              <p className="text-[10px] font-bold tracking-[0.28em] uppercase mb-3" style={{ color: BRASS }}>
+                Follow Along
+              </p>
+              <div className="h-px w-16 mb-4" style={{ background: BRASS }} />
+              <h3 className="text-2xl sm:text-3xl leading-tight mb-6" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+                Behind the
+                <span className="italic ml-2" style={{ color: BRASS }}>Kitchen</span>
+              </h3>
+
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { label: 'Instagram', handle: '@spicegarden', href: 'https://instagram.com/spicegarden' },
+                  { label: 'Facebook', handle: 'Spice Garden Mumbai', href: 'https://facebook.com/spicegarden' },
+                  { label: 'WhatsApp', handle: '+91 98765 43210', href: 'https://wa.me/919876543210' },
+                  { label: 'YouTube', handle: '@SpiceGardenTV', href: 'https://youtube.com/@spicegardentv' },
+                ].map((s) => (
+                  <a
+                    key={s.label}
+                    href={s.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="sg-tile p-4 rounded-xl block"
+                  >
+                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-1">{s.label}</p>
+                    <p className="text-sm font-bold truncate" style={{ color: BRASS }}>{s.handle}</p>
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </CustomerLayout>
   )
 }
@@ -605,35 +883,75 @@ export function WhyUsPage() {
 }
 
 /* ====================================================================== */
-/* 5. GALLERY PAGE — lightbox + 3D tilt + editorial gallery-wall           */
+/* 5. GALLERY PAGE                                                        */
 /* ====================================================================== */
+
+// Extended gallery pool — base GALLERY (8) + 22 curated Unsplash food +
+// restaurant photos. 30 total. Enables meaningful pagination (2 pages of
+// 15 each). User request 2026-07-15: 15 per page.
+const GALLERY_EXTENDED = [
+  ...GALLERY,
+  'https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=1000&q=80',
+  'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1000&q=80',
+  'https://images.unsplash.com/photo-1600891964092-4316c288032e?auto=format&fit=crop&w=1000&q=80',
+  'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=1000&q=80',
+  'https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=1000&q=80',
+  'https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=1000&q=80',
+  'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?auto=format&fit=crop&w=1000&q=80',
+  'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=1000&q=80',
+  'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1000&q=80',
+  'https://images.unsplash.com/photo-1608897013039-887f21d8c804?auto=format&fit=crop&w=1000&q=80',
+  'https://images.unsplash.com/photo-1633478062482-790a3d211915?auto=format&fit=crop&w=1000&q=80',
+  'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1000&q=80',
+  'https://images.unsplash.com/photo-1541544181051-e46607bc22a4?auto=format&fit=crop&w=1000&q=80',
+  'https://images.unsplash.com/photo-1567521464027-f127ff144326?auto=format&fit=crop&w=1000&q=80',
+  'https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?auto=format&fit=crop&w=1000&q=80',
+  'https://images.unsplash.com/photo-1424847651672-bf20a4b0982b?auto=format&fit=crop&w=1000&q=80',
+  'https://images.unsplash.com/photo-1543353071-10c8ba85a904?auto=format&fit=crop&w=1000&q=80',
+  'https://images.unsplash.com/photo-1571997478779-2adcbbe9ab2f?auto=format&fit=crop&w=1000&q=80',
+  'https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?auto=format&fit=crop&w=1000&q=80',
+  'https://images.unsplash.com/photo-1478145046317-39f10e56b5e9?auto=format&fit=crop&w=1000&q=80',
+  'https://images.unsplash.com/photo-1493770348161-369560ae357d?auto=format&fit=crop&w=1000&q=80',
+  'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1000&q=80',
+]
+
+const GALLERY_PAGE_SIZE = 15
+
 export function GalleryPage() {
+  const [page, setPage] = useState(0)
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null)
-  const reduce = useReducedMotion()
+  const totalPages = Math.ceil(GALLERY_EXTENDED.length / GALLERY_PAGE_SIZE)
+  const visibleImages = useMemo(
+    () => GALLERY_EXTENDED.slice(page * GALLERY_PAGE_SIZE, (page + 1) * GALLERY_PAGE_SIZE),
+    [page]
+  )
 
-  const closeLightbox = useCallback(() => setLightboxIdx(null), [])
-  const nextImage = useCallback(() => {
-    setLightboxIdx((i) => (i == null ? null : (i + 1) % GALLERY.length))
-  }, [])
-  const prevImage = useCallback(() => {
-    setLightboxIdx((i) => (i == null ? null : (i - 1 + GALLERY.length) % GALLERY.length))
-  }, [])
-
-  useEffect(() => {
-    if (lightboxIdx == null) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeLightbox()
-      else if (e.key === 'ArrowRight') nextImage()
-      else if (e.key === 'ArrowLeft') prevImage()
+  // Scroll to top of grid when page changes
+  const gridTopRef = useRef<HTMLDivElement | null>(null)
+  const changePage = useCallback((newPage: number) => {
+    setPage(newPage)
+    if (gridTopRef.current) {
+      const y = gridTopRef.current.getBoundingClientRect().top + window.scrollY - 90
+      window.scrollTo({ top: y, behavior: 'smooth' })
     }
-    window.addEventListener('keydown', onKey)
-    // Prevent body scroll while lightbox is open
+  }, [])
+
+  // Lightbox keyboard nav
+  useEffect(() => {
+    if (lightboxIdx === null) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setLightboxIdx(null)
+      if (e.key === 'ArrowRight') setLightboxIdx((i) => (i === null ? 0 : (i + 1) % visibleImages.length))
+      if (e.key === 'ArrowLeft') setLightboxIdx((i) => (i === null ? 0 : (i - 1 + visibleImages.length) % visibleImages.length))
+    }
+    document.addEventListener('keydown', onKey)
+    const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => {
-      window.removeEventListener('keydown', onKey)
-      document.body.style.overflow = ''
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = prev
     }
-  }, [lightboxIdx, closeLightbox, nextImage, prevImage])
+  }, [lightboxIdx, visibleImages.length])
 
   return (
     <CustomerLayout>
@@ -646,183 +964,217 @@ export function GalleryPage() {
         description="Browse photos of our delicious dishes, beautiful dining area, and happy moments of our customers."
       />
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        {/* Editorial gallery-wall grid — alternating aspect ratios (tall / wide
-         * / square) so the eye reads it as intentional composition rather
-         * than a uniform tile grid. */}
-        <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
-          {GALLERY.map((src, i) => (
-            <GalleryTile
-              key={i}
-              src={src}
-              index={i}
-              onClick={() => setLightboxIdx(i)}
-              reduce={!!reduce}
+      {/* Cream grid section — 2026-07-15 user request. Full-width cream bg
+       * with animated page transitions + brass pagination + brass hover
+       * rings + lightbox on click. */}
+      <div style={{ background: 'var(--c-cream, #FAF6F0)' }} className="w-full" ref={gridTopRef}>
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
+          {/* Header — subtle intro */}
+          <div className="text-center mb-10 md:mb-12">
+            <p
+              className="text-[11px] font-bold uppercase tracking-[0.28em]"
+              style={{ color: 'var(--c-accent, #C89B3C)' }}
+            >
+              Every Frame · A Story
+            </p>
+            <div
+              className="mx-auto my-3 h-[1.5px] w-16"
+              style={{ background: 'var(--c-accent, #C89B3C)' }}
             />
-          ))}
-        </ul>
-      </section>
+            <p
+              className="text-sm max-w-xl mx-auto"
+              style={{ color: 'var(--c-text-dark, #1A1210)', opacity: 0.65, fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: 'italic', fontSize: '18px' }}
+            >
+              Showing {page * GALLERY_PAGE_SIZE + 1}–{Math.min((page + 1) * GALLERY_PAGE_SIZE, GALLERY_EXTENDED.length)} of {GALLERY_EXTENDED.length} photographs
+            </p>
+          </div>
 
-      {/* Lightbox — full-screen dark backdrop with big image + prev/next arrows
-       * + close button + counter. Click-outside or ESC also closes. */}
+          {/* Animated grid — cards fade/slide as page changes */}
+          <AnimatePresence mode="wait">
+            <motion.ul
+              key={page}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
+            >
+              {visibleImages.map((src, i) => (
+                <motion.li
+                  key={`${page}-${i}`}
+                  initial={{ opacity: 0, scale: 0.94, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{
+                    duration: 0.55,
+                    delay: Math.min(i * 0.04, 0.4),
+                    ease: [0.16, 1, 0.3, 1],
+                  }}
+                  className="group relative aspect-square overflow-hidden rounded-2xl cursor-pointer"
+                  style={{
+                    background: '#fff',
+                    boxShadow: '0 10px 26px -12px rgba(26, 18, 16, 0.2)',
+                    border: '1px solid rgba(200, 155, 60, 0.15)',
+                  }}
+                  onClick={() => setLightboxIdx(i)}
+                  whileHover={{ y: -6 }}
+                >
+                  <img
+                    src={src}
+                    alt={`Gallery photo ${page * GALLERY_PAGE_SIZE + i + 1}`}
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover transition-transform duration-[900ms] ease-out group-hover:scale-110"
+                  />
+                  {/* Brass ring on hover */}
+                  <div
+                    aria-hidden
+                    className="absolute inset-0 rounded-2xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                    style={{ boxShadow: 'inset 0 0 0 2px var(--c-accent, #C89B3C)' }}
+                  />
+                  {/* Dark overlay on hover + zoom icon */}
+                  <div
+                    aria-hidden
+                    className="absolute inset-0 bg-black/0 group-hover:bg-black/35 transition-all duration-500 grid place-items-center"
+                  >
+                    <ZoomIn className="size-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  </div>
+                </motion.li>
+              ))}
+            </motion.ul>
+          </AnimatePresence>
+
+          {/* Pagination controls — brass style */}
+          {totalPages > 1 ? (
+            <div className="flex items-center justify-center gap-2 mt-12 md:mt-16">
+              <button
+                type="button"
+                onClick={() => page > 0 && changePage(page - 1)}
+                disabled={page === 0}
+                aria-label="Previous page"
+                className="size-11 rounded-full flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                style={{
+                  border: '1.5px solid var(--c-accent, #C89B3C)',
+                  color: page === 0 ? 'var(--c-text-dark, #1A1210)' : 'var(--c-accent, #C89B3C)',
+                }}
+                onMouseEnter={(e) => {
+                  if (page !== 0) {
+                    e.currentTarget.style.background = 'var(--c-accent, #C89B3C)'
+                    e.currentTarget.style.color = '#fff'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.color = page === 0 ? 'var(--c-text-dark, #1A1210)' : 'var(--c-accent, #C89B3C)'
+                }}
+              >
+                <ChevronLeft className="size-4" />
+              </button>
+
+              {Array.from({ length: totalPages }).map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => changePage(i)}
+                  aria-label={`Page ${i + 1}`}
+                  aria-current={page === i ? 'page' : undefined}
+                  className="size-11 rounded-full font-bold text-sm tracking-wider transition-all"
+                  style={{
+                    background: page === i ? 'var(--c-accent, #C89B3C)' : 'transparent',
+                    color: page === i ? '#fff' : 'var(--c-text-dark, #1A1210)',
+                    border: `1.5px solid ${page === i ? 'var(--c-accent, #C89B3C)' : 'rgba(200, 155, 60, 0.3)'}`,
+                  }}
+                >
+                  {String(i + 1).padStart(2, '0')}
+                </button>
+              ))}
+
+              <button
+                type="button"
+                onClick={() => page < totalPages - 1 && changePage(page + 1)}
+                disabled={page === totalPages - 1}
+                aria-label="Next page"
+                className="size-11 rounded-full flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                style={{
+                  border: '1.5px solid var(--c-accent, #C89B3C)',
+                  color: page === totalPages - 1 ? 'var(--c-text-dark, #1A1210)' : 'var(--c-accent, #C89B3C)',
+                }}
+                onMouseEnter={(e) => {
+                  if (page !== totalPages - 1) {
+                    e.currentTarget.style.background = 'var(--c-accent, #C89B3C)'
+                    e.currentTarget.style.color = '#fff'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.color = page === totalPages - 1 ? 'var(--c-text-dark, #1A1210)' : 'var(--c-accent, #C89B3C)'
+                }}
+              >
+                <ChevronRight className="size-4" />
+              </button>
+            </div>
+          ) : null}
+        </section>
+      </div>
+
+      {/* Lightbox — fullscreen photo viewer with keyboard nav */}
       <AnimatePresence>
-        {lightboxIdx != null ? (
+        {lightboxIdx !== null ? (
           <motion.div
-            key="lightbox"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-md"
-            onClick={closeLightbox}
+            transition={{ duration: 0.25 }}
+            className="fixed inset-0 z-[90] flex items-center justify-center"
+            style={{ background: 'rgba(0,0,0,0.96)' }}
+            role="dialog"
+            aria-modal="true"
+            onClick={() => setLightboxIdx(null)}
           >
-            {/* Close button — top-right */}
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); closeLightbox() }}
+              onClick={(e) => { e.stopPropagation(); setLightboxIdx(null) }}
+              className="absolute top-6 right-6 size-11 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-colors z-10"
               aria-label="Close"
-              className="absolute top-4 right-4 sm:top-6 sm:right-6 size-11 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white flex items-center justify-center transition-colors z-10"
             >
               <X className="size-5" />
             </button>
-
-            {/* Counter — top-left */}
-            <div className="absolute top-4 left-4 sm:top-6 sm:left-6 text-white/85 text-[11px] font-bold uppercase tracking-[0.24em] z-10">
-              {String(lightboxIdx + 1).padStart(2, '0')}{' '}
-              <span className="opacity-60">/</span>{' '}
-              {String(GALLERY.length).padStart(2, '0')}
-            </div>
-
-            {/* Prev arrow */}
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); prevImage() }}
-              aria-label="Previous image"
-              className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 size-12 sm:size-14 rounded-full bg-white/10 hover:bg-[var(--c-accent,#C9A96E)] hover:text-black border border-white/20 text-white flex items-center justify-center transition-all hover:scale-110 z-10"
+              onClick={(e) => { e.stopPropagation(); setLightboxIdx((i) => i === null ? 0 : (i - 1 + visibleImages.length) % visibleImages.length) }}
+              className="absolute left-6 top-1/2 -translate-y-1/2 size-12 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-colors z-10"
+              aria-label="Previous"
             >
-              <ChevronLeft className="size-6" />
+              <ChevronLeft className="size-5" />
             </button>
-            {/* Next arrow */}
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); nextImage() }}
-              aria-label="Next image"
-              className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 size-12 sm:size-14 rounded-full bg-white/10 hover:bg-[var(--c-accent,#C9A96E)] hover:text-black border border-white/20 text-white flex items-center justify-center transition-all hover:scale-110 z-10"
+              onClick={(e) => { e.stopPropagation(); setLightboxIdx((i) => i === null ? 0 : (i + 1) % visibleImages.length) }}
+              className="absolute right-6 top-1/2 -translate-y-1/2 size-12 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-colors z-10"
+              aria-label="Next"
             >
-              <ChevronRight className="size-6" />
+              <ChevronRight className="size-5" />
             </button>
-
-            {/* Big image — cross-fade between slides */}
-            <AnimatePresence mode="wait">
-              <motion.img
-                key={lightboxIdx}
-                src={GALLERY[lightboxIdx]}
-                alt={`Gallery photo ${lightboxIdx + 1}`}
-                onError={handleImageError('gallery')}
-                initial={{ opacity: 0, scale: 0.96 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 1.04 }}
-                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                onClick={(e) => e.stopPropagation()}
-                className="max-w-[92vw] max-h-[85vh] object-contain rounded-xl shadow-[0_30px_80px_rgba(0,0,0,0.6)]"
-              />
-            </AnimatePresence>
+            <motion.img
+              key={lightboxIdx}
+              src={visibleImages[lightboxIdx]}
+              alt=""
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              className="max-w-[92vw] max-h-[85vh] object-contain rounded-lg shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <p
+              className="absolute bottom-6 left-1/2 -translate-x-1/2 font-mono text-[10px] tracking-[0.24em] font-bold"
+              style={{ color: 'var(--c-accent, #C89B3C)' }}
+            >
+              {String((lightboxIdx ?? 0) + 1).padStart(2, '0')} / {String(visibleImages.length).padStart(2, '0')} · Page {page + 1}
+            </p>
           </motion.div>
         ) : null}
       </AnimatePresence>
     </CustomerLayout>
-  )
-}
-
-/**
- * GalleryTile — inner card with its own useMouseTilt hook so each tile
- * tracks the cursor independently. Alternating aspect ratios give the
- * grid an editorial rhythm.
- */
-function GalleryTile({
-  src,
-  index,
-  onClick,
-  reduce,
-}: {
-  src: string
-  index: number
-  onClick: () => void
-  reduce: boolean
-}) {
-  const tilt = useMouseTilt<HTMLLIElement>(8, 1.02)
-
-  // Editorial aspect rotation — mixes tall/wide/square in a repeatable pattern.
-  const aspect =
-    index % 4 === 0 ? 'aspect-[3/4]' :
-    index % 4 === 1 ? 'aspect-square' :
-    index % 4 === 2 ? 'aspect-[4/3]' :
-    'aspect-square'
-
-  return (
-    <motion.li
-      ref={tilt.ref}
-      initial={{ opacity: 0, y: 32, scale: 0.94 }}
-      whileInView={{ opacity: 1, y: 0, scale: 1 }}
-      viewport={{ once: true, margin: '-60px' }}
-      transition={{
-        duration: 0.65,
-        delay: reduce ? 0 : index * 0.05,
-        ease: [0.16, 1, 0.3, 1],
-      }}
-      onMouseMove={tilt.onMouseMove}
-      onMouseLeave={tilt.onMouseLeave}
-      onClick={onClick}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() }
-      }}
-      role="button"
-      tabIndex={0}
-      aria-label={`Open gallery photo ${index + 1}`}
-      className={`relative overflow-hidden rounded-2xl cursor-zoom-in group shadow-xl border border-white/5 hover:border-[var(--c-accent,#C9A96E)]/60 ${aspect}`}
-      style={{
-        perspective: '1200px',
-        transition: 'transform 250ms cubic-bezier(0.16,1,0.3,1), border-color 260ms',
-        transformStyle: 'preserve-3d',
-        willChange: 'transform',
-      }}
-    >
-      <img
-        src={src}
-        alt=""
-        loading="lazy"
-        decoding="async"
-        onError={handleImageError('gallery')}
-        className="absolute inset-0 w-full h-full object-cover transition-transform duration-[900ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.10] group-hover:brightness-[1.05]"
-      />
-      {/* Bottom fade for hover indicator */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-0"
-        style={{
-          background:
-            'linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(0,0,0,0.5) 92%, rgba(0,0,0,0.75) 100%)',
-        }}
-      />
-      {/* Gold corner glow on hover */}
-      <div
-        aria-hidden="true"
-        className="absolute -top-8 -right-8 size-24 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-        style={{
-          background:
-            'radial-gradient(circle, rgba(201,169,110,0.4) 0%, transparent 65%)',
-        }}
-      />
-      {/* Zoom icon — appears on hover, center of tile */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-        <div
-          className="size-12 rounded-full flex items-center justify-center backdrop-blur-md border border-white/25 shadow-lg"
-          style={{ background: 'rgba(201, 169, 110, 0.28)' }}
-        >
-          <ZoomIn className="size-5 text-white" aria-hidden />
-        </div>
-      </div>
-    </motion.li>
   )
 }
 
@@ -913,7 +1265,7 @@ export function MyOrdersPage() {
                   )}>
                     {o.status === 'synced' ? 'Confirmed' : 'Pending sync'}
                   </span>
-                  <p className="font-mono gold-text font-bold text-base shrink-0">{formatPrice(o.total)}</p>
+                  <p className="font-mono gold-text font-bold text-base shrink-0">₹{o.total?.toLocaleString('en-IN')}</p>
                 </div>
               </li>
             ))}

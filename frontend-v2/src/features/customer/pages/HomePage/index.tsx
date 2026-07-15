@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
 import {
-  Star, Award, ChefHat, Leaf,
-  Calendar, ShoppingBag, Clock, ChevronDown, MapPin
+  Star, ChevronRight, Award, ChefHat, Leaf,
+  Calendar, Camera, ShoppingBag, Clock, ChevronDown
 } from 'lucide-react'
 import { DateField } from '@/components/ui/date-field'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -14,57 +14,31 @@ import { CountUp } from '@/components/ui/count-up'
 import { useMounted } from '@/hooks/use-mounted'
 import { toast } from '@/lib/toast'
 import { DocumentTitle } from '@/lib/seo/document-title'
-import { useBrand } from '@/components/providers/BrandProvider'
 import {
   HERO_IMAGES, useCart, useCustomerCatalog,
   useSelectedBranchId,
 } from '@/features/customer/catalog'
-import { useCustomerBranches, useCustomerSliders } from '@/api/queries/customer'
-import { submitPublicReservation } from '@/api/services/customer'
-import ReservationWizard from '@/features/customer/pages/HomePage/ReservationWizard'
+import { useCustomerSliders } from '@/api/queries/customer'
+import DishCardRound, { DishCardRoundGridSkeleton } from '@/features/customer/DishCardRound'
+import CategoryChainSection from '@/features/customer/pages/HomePage/CategoryChainSection'
 import GallerySlider from '@/features/customer/pages/HomePage/GallerySlider'
-import ChefSignatures from '@/features/customer/pages/HomePage/ChefSignatures'
-import AwardsTimeline from '@/features/customer/pages/HomePage/AwardsTimeline'
-import PressMarquee from '@/features/customer/pages/HomePage/PressMarquee'
-import StoryTimeline from '@/features/customer/pages/HomePage/StoryTimeline'
-import FAQAccordion from '@/features/customer/pages/HomePage/FAQAccordion'
-import NewsletterSection from '@/features/customer/pages/HomePage/NewsletterSection'
-import SignatureExperience from '@/features/customer/pages/HomePage/SignatureExperience'
-import HowItWorks from '@/features/customer/pages/HomePage/HowItWorks'
-import BrandStoryShowcase from '@/features/customer/pages/HomePage/BrandStoryShowcase'
-import LifestyleBanner from '@/features/customer/pages/HomePage/LifestyleBanner'
-import BranchLocator from '@/features/customer/pages/HomePage/BranchLocator'
-import { TESTIMONIALS_SEED } from '@/features/customer/content/seed/testimonials'
-import { SeedBadge } from '@/features/customer/content/SeedBadge'
-import { useSeedMode } from '@/features/customer/content/useSeedMode'
 import '@/styles/customer.css'
 
 export function HomePage() {
   const navigate = useNavigate()
-  const brand = useBrand()
   const catalog = useCustomerCatalog()
   const { branchId } = useSelectedBranchId()
   const slidersQ = useCustomerSliders(branchId)
   const mounted = useMounted(200)
 
-  // Preload hero fallback image so it's ready before framer motion needs it.
-  // Backend sliders (when present) win, but the fallback is always the LCP
-  // candidate for a fresh tenant with no slider content.
-  useEffect(() => {
-    if (typeof document === 'undefined') return
-    const link = document.createElement('link')
-    link.rel = 'preload'
-    link.as = 'image'
-    link.href = HERO_IMAGES.home
-    link.fetchPriority = 'high'
-    document.head.appendChild(link)
-    return () => { document.head.removeChild(link) }
-  }, [])
-  // Silence "unused var" — some downstream sections still gate on `catalog`
-  // via useCustomerCatalog() calls internally; the ref here is only for
-  // consistency with prior code and future additions.
-  void catalog
-  void mounted
+  const [selectedCat, setSelectedCat] = useState<string | null>(null)
+
+  // Memoized dishes filtered by local category state
+  const featuredDishes = useMemo(() => {
+    const list = catalog.dishes
+    if (!selectedCat) return list.slice(0, 8)
+    return list.filter(d => d.category === selectedCat).slice(0, 8)
+  }, [catalog.dishes, selectedCat])
 
   const heroImages = useMemo(
     () => (slidersQ.data && slidersQ.data.length > 0 ? slidersQ.data.map((s) => s.imageUrl) : []),
@@ -77,118 +51,217 @@ export function HomePage() {
   return (
     <CustomerLayout transparent>
       <DocumentTitle
-        title={`${brand.restaurantName} — ${brand.tagline || 'Reserve a Table or Order Online'}`}
-        description={brand.aboutUs || `Reserve a table or order online from ${brand.restaurantName}.`}
+        title="Spice Garden Steakhouse — Hand-Crafted Indian Dining"
+        description="Reserve a table or order online from Spice Garden — chef-crafted Indian cuisine, signature kebabs, butter chicken, and more. Three branches across Mumbai."
       />
 
-      {/* Premium Hero Rotator Reveal — image cycling only (video removed
-       * per user feedback). Backend sliders take precedence via heroImages. */}
+      {/* Premium Hero Rotator Reveal — with bottom wavy curve into beige section */}
       <HeroSection
         bg={HERO_IMAGES.home}
-        subtitle="CURATED · CHEF-CRAFTED · UNFORGETTABLE"
-        titleA="A Table Set For"
-        titleAccent="Timeless Craft"
-        description="Every plate tells a story — of craft, of care, of moments savored slowly. Welcome to your table."
+        subtitle="FRESH & DELICIOUS MEALS"
+        titleA="Delicious Food &"
+        titleAccent="Great Taste"
+        description="Enjoy great food and a wonderful dining atmosphere. Every dish is prepared with fresh, high-quality ingredients."
         primaryCta="ORDER NOW"
         primaryOnClick={() => navigate('/menu')}
         secondaryCta="RESERVE A TABLE"
-        secondaryOnClick={() => navigate('/contact')}
+        secondaryOnClick={() => window.dispatchEvent(new CustomEvent('customer:open-reservation'))}
         showRotator
         heroImages={heroImages}
         withCurve
       />
 
-      {/* Trust signals strip (P4.30/31/32) — aggregate rating, branch
-       * count, FSSAI. Renders only when the underlying data is real. */}
-      <TrustSignalsStrip />
+      {/* Unified cream section — SVG dome bleeds up into the hero, then a
+       * flat body holds:
+       *  1. Floating category orbit (nodes ride the SVG dome via CSS var)
+       *  2. "CHEF'S SPECIALS" + "Explore by Category" heading
+       *  3. Popular Dishes grid with staggered right-to-left entrance */}
+      <section className="cream-section">
+        {/* Smooth dome — cubic bezier ensures zero corner artifacts.
+         * `preserveAspectRatio="none"` stretches to viewport width. */}
+        <svg
+          className="cream-dome"
+          viewBox="0 0 1440 200"
+          preserveAspectRatio="none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          <path d="M0,200 L0,120 C 480,-40 960,-40 1440,120 L1440,200 Z" />
+        </svg>
 
-      {/* Chef's Signatures — replaces the cream section + CategoryChain orbit
-       * + full Popular Dishes grid (2026-07-10, per user request).
-       * Real backend `isRecommended` items with editorial 4-card layout +
-       * "Explore The Full Menu" CTA. Full menu still lives on /menu. */}
-      <ChefSignatures />
+        <CategoryChainSection
+          selected={selectedCat}
+          onSelect={(id) => setSelectedCat(id)}
+        />
 
-      {/* Auto-scrolling gallery strip — horizontal linked to vertical page scroll.
-       * Paper wash — subtle editorial texture, no color shift. */}
-      <div className="c-wash-paper">
-        <ScrollReveal><GallerySlider /></ScrollReveal>
-      </div>
-
-      {/* Brand story showcase — editorial restaurant identity anchor.
-       * Sage wash — soft freshness for the story chapter. */}
-      <div className="c-wash-sage">
-        <BrandStoryShowcase />
-      </div>
-
-      {/* Three ways to enjoy — Dine / Delivery / Reserve
-       * Espresso wrap removed 2026-07-13 — Lazy Dog reference commits
-       * to all-cream flow. Rhythm driven by warm wash tints
-       * (sage/paper/terracotta), not dark chapter breaks. */}
-      <SignatureExperience />
-
-      {/* Cinematic Ken Burns lifestyle separator (full-bleed image, no wash) */}
-      <LifestyleBanner
-        eyebrow="THE ART OF HOSPITALITY"
-        quote="Great food is memory in the making — cooked with intention, served with warmth, and shared without hurry."
-        attribution="Our Kitchen Philosophy"
-      />
-
-      {/* How It Works — 3-step editorial. Terracotta wash for warm handoff. */}
-      <div className="c-wash-terracotta">
-        <HowItWorks />
-      </div>
-
-      {/* Why Dine with Us Segment */}
-      <ScrollReveal as="section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-[--c-border]">
-        <div className="text-center mb-12">
-          <p className="subtitle">WHY DINE WITH US</p>
+        <div className="dish-grid-header">
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: false, margin: '-60px' }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="subtitle"
+          >
+            CHEF'S SIGNATURE
+          </motion.p>
           <div className="c-divider" />
-          <h2 className="display text-3xl sm:text-4xl">Crafted with <span>Heart</span></h2>
+          <motion.h2
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: false, margin: '-60px' }}
+            transition={{ duration: 0.6, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
+            className="display text-3xl sm:text-4xl lg:text-5xl"
+          >
+            Popular <span>Dishes</span>
+          </motion.h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            /* Copy neutralized 2026-07-13 (P1.10) — earlier claims
-             * ("Award-Winning Recipes") would be a lie for a fresh tenant
-             * with no such credential. These lines are safe hospitality
-             * language applicable to any restaurant. */
-            { Icon: ChefHat, title: 'Made With Care', text: 'Every plate prepared fresh by our kitchen team, order after order.' },
-            { Icon: Leaf, title: 'Ingredients That Matter', text: 'Sourced with intention — because good food starts with good ingredients.' },
-            { Icon: Award, title: 'Warm Hospitality', text: 'Come as a guest, leave feeling looked after. That is the promise at the table.' },
-          ].map(({ Icon, title, text }, i) => (
-            <ScrollReveal key={title} delay={i * 0.08} className="c-card p-8 text-center group hover:-translate-y-1.5 transition-transform duration-300 rounded-2xl bg-[--c-bg-elev]">
-              <div className="inline-flex size-16 rounded-full border border-[--c-accent] items-center justify-center gold-text mb-5 group-hover:bg-[--c-accent] group-hover:text-black transition-colors">
-                <Icon className="size-7" />
-              </div>
-              <h3 className="text-xl font-bold mb-3">{title}</h3>
-              <p className="text-sm text-[--c-text-soft] leading-relaxed">{text}</p>
-            </ScrollReveal>
-          ))}
-        </div>
-      </ScrollReveal>
 
-      {/* Editorial content stack — new sections lower on the page, each
-       * self-gates on `useSeedMode()` so real tenants see only their own data.
-       * ChefStorySection removed 2026-07-13 (user: hardcoded chef bio hard to
-       * maintain per-tenant, prefer removing over faking). */}
-      <div className="c-wash-paper">
-        <ScrollReveal><AwardsTimeline /></ScrollReveal>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-4">
+          {!mounted ? (
+            <DishCardRoundGridSkeleton count={8} />
+          ) : featuredDishes.length === 0 ? (
+            <p className="text-center text-[var(--c-cream-text-soft)] py-12">No dishes match this category. Try exploring the menu!</p>
+          ) : (
+            <>
+              <motion.ul
+                layout
+                className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6"
+              >
+                <AnimatePresence mode="popLayout">
+                  {featuredDishes.map((d, i) => {
+                    // Stagger cards in each row for a smooth, premium entrance animation as the user scrolls.
+                    const delay = (i % 4) * 0.08
+                    return (
+                      <motion.li
+                        layout
+                        initial={{ opacity: 0, y: 40, scale: 0.94 }}
+                        whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                        viewport={{ once: false, margin: '-40px' }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{
+                          duration: 0.6,
+                          delay,
+                          ease: [0.16, 1, 0.3, 1],
+                        }}
+                        key={d.id}
+                        className="list-none w-full"
+                      >
+                        <DishCardRound dish={d} />
+                      </motion.li>
+                    )
+                  })}
+                </AnimatePresence>
+              </motion.ul>
+
+              <div className="mt-10 flex flex-col items-center gap-3">
+                <button
+                  className="inline-flex items-center gap-2 px-8 py-3 rounded-full font-extrabold text-[11px] tracking-[0.18em] uppercase text-white cursor-pointer transition-all"
+                  style={{
+                    background: 'var(--c-teal)',
+                    boxShadow: '0 10px 24px var(--c-teal-glow)',
+                  }}
+                  onClick={() => navigate('/menu')}
+                >
+                  EXPLORE FULL MENU
+                  <ChevronRight className="size-4" />
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </section>
+
+      {/* Auto-scrolling gallery strip — horizontal linked to vertical page scroll */}
+      <GallerySlider />
+
+      {/* Why Dine with Us — CREAM bg (2026-07-15 user request). White
+       * cards on cream with brass icon rings + ink text. */}
+      <div style={{ background: 'var(--c-cream, #FAF6F0)' }} className="w-full">
+        <ScrollReveal as="section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+          <div className="text-center mb-12">
+            <p
+              className="text-[11px] font-bold uppercase tracking-[0.28em]"
+              style={{ color: 'var(--c-accent, #C89B3C)' }}
+            >
+              Why Dine With Us
+            </p>
+            <div
+              className="mx-auto my-3 h-[1.5px] w-16"
+              style={{ background: 'var(--c-accent, #C89B3C)' }}
+            />
+            <h2
+              className="text-3xl sm:text-4xl lg:text-5xl"
+              style={{
+                fontFamily: "'Cormorant Garamond', 'Playfair Display', Georgia, serif",
+                fontWeight: 500,
+                color: 'var(--c-text-dark, #1A1210)',
+                letterSpacing: '-0.01em',
+                lineHeight: 1.1,
+              }}
+            >
+              Crafted with{' '}
+              <span
+                style={{
+                  fontStyle: 'italic',
+                  fontWeight: 400,
+                  color: 'var(--c-accent, #C89B3C)',
+                }}
+              >
+                Heart
+              </span>
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              { Icon: ChefHat, title: 'Hand-Crafted by Chefs', text: 'Every dish prepared fresh by our experienced kitchen team.' },
+              { Icon: Leaf, title: 'Farm-Fresh Ingredients', text: 'Sourced daily from trusted local farms for peak flavour.' },
+              { Icon: Award, title: 'Award-Winning Recipes', text: 'Heritage recipes refined over decades for an unforgettable bite.' },
+            ].map(({ Icon, title, text }, i) => (
+              <ScrollReveal
+                key={title}
+                delay={i * 0.08}
+                className="p-8 text-center group hover:-translate-y-1.5 transition-all duration-300 rounded-2xl"
+                style={{
+                  background: 'linear-gradient(180deg, #E8F5F4 0%, #D4EDEB 100%)',
+                  border: '1px solid rgba(47, 184, 176, 0.28)',
+                  boxShadow: '0 10px 26px rgba(47, 184, 176, 0.15), 0 2px 6px rgba(47, 184, 176, 0.08)',
+                }}
+              >
+                <div
+                  className="inline-flex size-16 rounded-full items-center justify-center mb-5 transition-all group-hover:scale-110"
+                  style={{
+                    border: '1.5px solid var(--c-accent, #C89B3C)',
+                    color: 'var(--c-accent, #C89B3C)',
+                  }}
+                >
+                  <Icon className="size-7" />
+                </div>
+                <h3
+                  className="text-xl font-semibold mb-3"
+                  style={{
+                    fontFamily: "'Cormorant Garamond', 'Playfair Display', Georgia, serif",
+                    color: 'var(--c-text-dark, #1A1210)',
+                    fontSize: '22px',
+                  }}
+                >
+                  {title}
+                </h3>
+                <p
+                  className="text-sm leading-relaxed"
+                  style={{ color: 'var(--c-text-dark, #1A1210)', opacity: 0.7 }}
+                >
+                  {text}
+                </p>
+              </ScrollReveal>
+            ))}
+          </div>
+        </ScrollReveal>
       </div>
-      <PressMarquee />
-      <div className="c-wash-sage">
-        <ScrollReveal><StoryTimeline /></ScrollReveal>
-      </div>
-      <div className="c-wash-terracotta">
-        <ScrollReveal><TestimonialsSection /></ScrollReveal>
-      </div>
+
+      <ScrollReveal><TestimonialsSection /></ScrollReveal>
       <StatsSection />
-      <ScrollReveal><FAQAccordion /></ScrollReveal>
       <ScrollReveal><ReservationCallToActionSection /></ScrollReveal>
-      <BranchLocator />
-      <ScrollReveal><NewsletterSection /></ScrollReveal>
-      {/* Follow-Us card (replaces the deleted Instagram grid). Renders only
-       * when the tenant has at least one social link on their branding.
-       * Zero-lie SaaS-safe. */}
-      <FollowUsCard />
+      <ScrollReveal><InstagramFeedSection /></ScrollReveal>
 
       {/* Animated Floating Cart Action Bubble */}
       <AnimatePresence>
@@ -217,199 +290,138 @@ export function HomePage() {
   )
 }
 
-/**
- * TrustSignalsStrip — three signal-of-legitimacy pills that a real customer
- * scans for in the first 5 seconds. Every pill is derived from ACTUAL
- * backend data, so nothing fake ships:
- *   • Aggregate rating (avg dish rating × total review count)
- *   • Branch count ("3 branches in Mumbai")
- *   • FSSAI Lic. verified
- * Any pill with missing data silently hides. If all hide, the strip
- * returns null so we don't leave an awkward empty band.
- */
-function TrustSignalsStrip() {
-  const brand = useBrand()
-  const catalog = useCustomerCatalog()
-  const { data: branches } = useCustomerBranches()
-
-  const aggRating = useMemo(() => {
-    const rated = catalog.dishes.filter((d) => d.reviewCount > 0)
-    if (rated.length === 0) return null
-    const totalReviews = rated.reduce((s, d) => s + d.reviewCount, 0)
-    const weighted = rated.reduce((s, d) => s + d.rating * d.reviewCount, 0)
-    if (totalReviews === 0) return null
-    return { avg: weighted / totalReviews, count: totalReviews }
-  }, [catalog.dishes])
-
-  const branchCount = (branches ?? []).length
-  const firstCity = (branches ?? [])[0]?.city ?? null
-  const showFssai = Boolean(brand.fssaiNumber)
-
-  // Delivery ETA approximation — max prep across dishes + 25 min average
-  // rider time. Approximation acceptable per audit (P4.33) until backend
-  // ships a real ETA endpoint. Hides when no prep data available.
-  const eta = useMemo(() => {
-    const preps = catalog.dishes
-      .map((d) => d.preparationMinutes ?? 0)
-      .filter((n) => n > 0)
-    if (preps.length === 0) return null
-    const maxPrep = Math.max(...preps)
-    return { min: maxPrep + 20, max: maxPrep + 30 }
-  }, [catalog.dishes])
-
-  if (!aggRating && branchCount === 0 && !showFssai && !eta) return null
-
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-4 sm:-mt-6 relative z-[3]">
-      <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-        {aggRating ? (
-          <div className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 border shadow-sm text-[12px]" style={{ background: 'var(--c-bg-elev, #FFFCF6)', borderColor: 'rgba(201, 169, 110, 0.4)' }}>
-            <span aria-hidden style={{ color: 'var(--c-accent)' }}>★</span>
-            <span className="font-bold" style={{ color: 'var(--c-text)' }}>{aggRating.avg.toFixed(1)}</span>
-            <span className="text-[--c-text-soft]">· {aggRating.count.toLocaleString('en-IN')} ratings</span>
-          </div>
-        ) : null}
-        {branchCount > 0 ? (
-          <div className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 border shadow-sm text-[12px]" style={{ background: 'var(--c-bg-elev, #FFFCF6)', borderColor: 'rgba(201, 169, 110, 0.4)' }}>
-            <MapPin className="size-3.5" style={{ color: 'var(--c-terracotta)' }} aria-hidden />
-            <span className="font-bold" style={{ color: 'var(--c-text)' }}>{branchCount}</span>
-            <span className="text-[--c-text-soft]">{branchCount === 1 ? 'branch' : 'branches'}{firstCity ? ` in ${firstCity}` : ''}</span>
-          </div>
-        ) : null}
-        {showFssai ? (
-          <div className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 border shadow-sm text-[12px]" style={{ background: 'var(--c-bg-elev, #FFFCF6)', borderColor: 'rgba(169, 191, 166, 0.55)' }} title={`FSSAI Lic. ${brand.fssaiNumber}`}>
-            <span aria-hidden className="inline-flex items-center justify-center size-4 rounded-full font-bold text-white text-[10px]" style={{ background: '#6E8B6A' }}>✓</span>
-            <span className="font-bold" style={{ color: 'var(--c-text)' }}>FSSAI</span>
-            <span className="text-[--c-text-soft] font-mono text-[11px]">{brand.fssaiNumber}</span>
-          </div>
-        ) : null}
-        {eta ? (
-          <div className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 border shadow-sm text-[12px]" style={{ background: 'var(--c-bg-elev, #FFFCF6)', borderColor: 'rgba(201, 169, 110, 0.4)' }} title="Estimated delivery time — includes prep + rider">
-            <Clock className="size-3.5" style={{ color: 'var(--c-accent)' }} aria-hidden />
-            <span className="font-bold" style={{ color: 'var(--c-text)' }}>{eta.min}–{eta.max} min</span>
-            <span className="text-[--c-text-soft]">delivery</span>
-          </div>
-        ) : null}
-      </div>
-    </div>
-  )
-}
-
-function FollowUsCard() {
-  const brand = useBrand()
-  const links = brand.socialLinks
-  const items = [
-    { key: 'facebook', label: 'Facebook', href: links.facebook, Icon: null },
-    { key: 'instagram', label: 'Instagram', href: links.instagram, Icon: null },
-    { key: 'twitter', label: 'Twitter', href: links.twitter, Icon: null },
-    { key: 'youtube', label: 'YouTube', href: links.youtube, Icon: null },
-  ].filter((i) => Boolean(i.href))
-  if (items.length === 0) return null
-  return (
-    <ScrollReveal as="section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-      <div className="text-center">
-        <p className="subtitle">STAY IN THE LOOP</p>
-        <div className="c-divider" />
-        <h2 className="display text-3xl sm:text-4xl mb-3">Follow <span>{brand.restaurantName}</span></h2>
-        <p className="text-sm text-[--c-text-soft] max-w-lg mx-auto leading-relaxed mb-8">
-          New dishes, chef's specials, and behind-the-scenes moments — first on our socials.
-        </p>
-        <div className="flex items-center justify-center gap-3 flex-wrap">
-          {items.map(({ key, label, href }) => (
-            <a
-              key={key}
-              href={href!}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="c-button-outline inline-flex items-center gap-2 !py-2.5 !px-5 rounded-full"
-              aria-label={`Open ${brand.restaurantName} on ${label}`}
-            >
-              {label}
-            </a>
-          ))}
-        </div>
-      </div>
-    </ScrollReveal>
-  )
-}
-
 function StatsSection() {
-  // Hardcoded 200+/10000+/20+ numbers are placeholder — would be a lie for
-  // every real tenant. Gate behind seedMode; real tenants hide it entirely
-  // until a backend stats endpoint ships.
-  const showSeed = useSeedMode()
-  if (!showSeed) return null
   const STATS = [
     { value: 200, suffix: '+', label: 'Authentic Dishes' },
     { value: 10000, suffix: '+', label: 'Happy Customers' },
     { value: 20, suffix: '+', label: 'Years of Service' },
   ]
   return (
-    <ScrollReveal as="section" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="flex justify-center mb-4">
-        <SeedBadge />
-      </div>
-      <div className="grid grid-cols-3 gap-4 sm:gap-6 text-center">
-        {STATS.map((s, i) => (
-          <ScrollReveal key={s.label} delay={i * 0.1} className="c-card p-5 sm:p-8 rounded-2xl bg-[--c-bg-elev]">
-            <p className="display text-3xl sm:text-5xl gold-text leading-none font-bold">
-              <CountUp value={s.value} suffix={s.suffix} />
-            </p>
-            <p className="subtitle text-[10px] sm:text-[11px] mt-3 font-semibold uppercase tracking-wider">{s.label}</p>
-          </ScrollReveal>
-        ))}
-      </div>
-    </ScrollReveal>
+    <section className="sg-section-dark w-full">
+      <ScrollReveal as="div" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="grid grid-cols-3 gap-4 sm:gap-6 text-center">
+          {STATS.map((s, i) => (
+            <ScrollReveal key={s.label} delay={i * 0.1} className="sg-tile p-5 sm:p-8 rounded-2xl">
+              <p className="display text-3xl sm:text-5xl gold-text leading-none font-bold">
+                <CountUp value={s.value} suffix={s.suffix} />
+              </p>
+              <p className="subtitle text-[10px] sm:text-[11px] mt-3 font-semibold uppercase tracking-wider">{s.label}</p>
+            </ScrollReveal>
+          ))}
+        </div>
+      </ScrollReveal>
+    </section>
   )
 }
 
+const TESTIMONIALS = [
+  { quote: 'The butter chicken here is otherworldly. Every visit feels like a celebration.', name: 'Ananya Verma', role: 'Food Critic, Mumbai Mirror', rating: 5 },
+  { quote: 'Hands down the best Tandoori chicken in the city. The hospitality is unmatched.', name: 'Rahul Mehta', role: 'Regular Patron', rating: 5 },
+  { quote: 'Authentic flavours, premium ambience, and warm service. A perfect date-night spot.', name: 'Priya Sharma', role: 'Lifestyle Blogger', rating: 5 },
+]
+
 function TestimonialsSection() {
-  // Seed content — 3 large avatar+quote cards. Hidden for real tenants
-  // until the testimonials endpoint ships (see BACKEND_TODO.md).
-  const showSeed = useSeedMode()
-  if (!showSeed) return null
+  // Compact 3-across layout. WRAPPED in a full-width cream section
+  // (2026-07-15) so the page reads cream → dark → cream → dark rhythm
+  // instead of a monotone all-dark scroll. Text colors overridden inline
+  // (ink on cream) so cards read correctly on the new background.
   return (
-    <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
-      <ScrollReveal className="text-center mb-8">
-        <div className="flex items-center justify-center gap-3">
-          <p className="subtitle">WHAT GUESTS SAY</p>
-          <SeedBadge />
-        </div>
-        <div className="c-divider" />
-        <h2 className="display text-2xl sm:text-3xl">Loved by <span>Our Guests</span></h2>
-      </ScrollReveal>
-      <div className="testimonial-grid">
-        {TESTIMONIALS_SEED.map((t, i) => (
-          <motion.article
-            key={t.name}
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-60px' }}
-            transition={{ duration: 0.4, delay: i * 0.08, ease: [0.16, 1, 0.3, 1] }}
-            className="testimonial-compact"
+    <section
+      className="relative w-full py-20"
+      style={{ background: 'var(--c-cream, #FAF6F0)', color: 'var(--c-text-dark, #1A1210)' }}
+    >
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <ScrollReveal className="text-center mb-10">
+          <p
+            className="text-[11px] font-bold uppercase tracking-[0.28em]"
+            style={{ color: 'var(--c-accent, #C89B3C)' }}
           >
-            <span className="t-quote-mark" aria-hidden>"</span>
-            <div className="t-stars" aria-label={`Rated ${t.rating} stars`}>
-              {Array.from({ length: t.rating }).map((_, k) => (
-                <Star key={k} className="size-3.5 fill-current" />
-              ))}
-            </div>
-            <p className="t-quote">"{t.quote}"</p>
-            <div className="flex items-center gap-3 mt-4">
-              <img
-                src={t.avatarUrl}
-                alt={t.name}
-                loading="lazy"
-                decoding="async"
-                className="size-10 rounded-full object-cover ring-2 ring-[--c-accent]/40"
-              />
-              <div className="text-left">
-                <p className="t-name">{t.name}</p>
-                <p className="t-role">{t.role}</p>
+            What Guests Say
+          </p>
+          <div
+            className="mx-auto my-3 h-[1.5px] w-16"
+            style={{ background: 'var(--c-accent, #C89B3C)' }}
+          />
+          <h2
+            className="text-3xl sm:text-4xl lg:text-5xl"
+            style={{
+              fontFamily: "'Cormorant Garamond', 'Playfair Display', Georgia, serif",
+              fontWeight: 500,
+              color: 'var(--c-text-dark, #1A1210)',
+              letterSpacing: '-0.01em',
+              lineHeight: 1.1,
+            }}
+          >
+            Loved by{' '}
+            <span
+              style={{
+                fontStyle: 'italic',
+                fontWeight: 400,
+                color: 'var(--c-accent, #C89B3C)',
+              }}
+            >
+              Our Guests
+            </span>
+          </h2>
+        </ScrollReveal>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+          {TESTIMONIALS.map((t, i) => (
+            <motion.article
+              key={t.name}
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: false, margin: '-60px' }}
+              transition={{ duration: 0.4, delay: i * 0.08, ease: [0.16, 1, 0.3, 1] }}
+              className="sg-tile relative p-6 md:p-7 rounded-2xl"
+              style={{
+                background: 'linear-gradient(180deg, #E8F5F4 0%, #D4EDEB 100%)',
+                border: '1px solid rgba(47, 184, 176, 0.28)',
+                boxShadow: '0 10px 26px rgba(47, 184, 176, 0.15), 0 2px 6px rgba(47, 184, 176, 0.08)',
+              }}
+            >
+              <span
+                aria-hidden
+                className="absolute top-3 right-4 text-6xl leading-none opacity-15"
+                style={{ color: 'var(--c-accent, #C89B3C)', fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+              >
+                &ldquo;
+              </span>
+              <div
+                className="inline-flex gap-0.5 mb-3"
+                style={{ color: 'var(--c-accent, #C89B3C)' }}
+                aria-label={`Rated ${t.rating} stars`}
+              >
+                {Array.from({ length: t.rating }).map((_, k) => (
+                  <Star key={k} className="size-3.5 fill-current" />
+                ))}
               </div>
-            </div>
-          </motion.article>
-        ))}
+              <p
+                className="text-sm leading-relaxed mb-5"
+                style={{
+                  fontFamily: "'Cormorant Garamond', 'Playfair Display', Georgia, serif",
+                  fontStyle: 'italic',
+                  fontSize: '17px',
+                  color: 'var(--c-text-dark, #1A1210)',
+                  opacity: 0.85,
+                }}
+              >
+                &ldquo;{t.quote}&rdquo;
+              </p>
+              <p
+                className="text-sm font-semibold"
+                style={{ color: 'var(--c-text-dark, #1A1210)' }}
+              >
+                {t.name}
+              </p>
+              <p
+                className="text-[10px] uppercase tracking-widest font-semibold mt-1"
+                style={{ color: 'var(--c-text-dark, #1A1210)', opacity: 0.55 }}
+              >
+                {t.role}
+              </p>
+            </motion.article>
+          ))}
+        </div>
       </div>
     </section>
   )
@@ -430,6 +442,7 @@ const formatTimeLabel = (timeStr: string) => {
 }
 
 function ReservationCallToActionSection() {
+  const [form, setForm] = useState({ name: '', phone: '', date: '', time: '', guests: 2 })
   const sectionRef = useRef<HTMLElement | null>(null)
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -437,27 +450,209 @@ function ReservationCallToActionSection() {
   })
   const bgY = useTransform(scrollYProgress, [0, 1], ['15%', '-25%'])
 
+  const handleDateChange = (d: Date | undefined) => {
+    if (!d) {
+      setForm({ ...form, date: '' })
+      return
+    }
+    const yyyy = d.getFullYear()
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    const dd = String(d.getDate()).padStart(2, '0')
+    setForm({ ...form, date: `${yyyy}-${mm}-${dd}` })
+  }
+
+  const submit = () => {
+    if (!form.name || !/^[6-9]\d{9}$/.test(form.phone) || !form.date || !form.time) {
+      toast.warning('Please enter your name, valid 10-digit mobile, date and time')
+      return
+    }
+    toast.success(`Table requested for ${form.guests} guests on ${form.date} at ${formatTimeLabel(form.time)} — we will call to confirm.`)
+    setForm({ name: '', phone: '', date: '', time: '', guests: 2 })
+  }
   return (
-    <section ref={sectionRef} className="c-section-espresso relative py-24 my-16 overflow-hidden">
+    <section ref={sectionRef} className="relative py-24 my-16 overflow-hidden">
       <motion.div
         aria-hidden="true"
-        className="absolute inset-x-0 -top-[20%] -bottom-[20%] bg-cover bg-center opacity-[0.18]"
+        className="absolute inset-x-0 -top-[20%] -bottom-[20%] bg-cover bg-center"
         style={{
           y: bgY,
           backgroundImage: 'url(https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1280&q=75)',
-          mixBlendMode: 'overlay',
         }}
+      />
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 sg-reservation-overlay"
       />
       <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <p className="subtitle">RESERVE YOUR TABLE</p>
         <div className="c-divider" />
-        <h2 className="display text-3xl sm:text-5xl mb-4">Book a <span>Memorable</span> Evening</h2>
-        <p className="text-sm mb-8 max-w-md mx-auto opacity-80">Walk-ins are welcome but we recommend booking ahead to guarantee your favorite table.</p>
-        <div className="c-glass-card p-6 sm:p-8 max-w-xl mx-auto">
-          <ReservationWizard />
+        <h2 className="display text-3xl sm:text-5xl mb-4">Book a <span className="sg-shimmer-text italic">Memorable</span> Evening</h2>
+        <p className="text-sm text-[--c-text-soft] mb-8 max-w-md mx-auto">Walk-ins are welcome but we recommend booking ahead to guarantee your favorite table.</p>
+        <div className="sg-form-card p-6 sm:p-8 grid grid-cols-1 sm:grid-cols-2 gap-4 text-left max-w-2xl mx-auto rounded-2xl">
+          <input className="sg-alt-input px-4 py-3 text-sm" placeholder="Your name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          <input className="sg-alt-input px-4 py-3 text-sm" inputMode="numeric" maxLength={10} placeholder="10-digit mobile" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })} />
+          <div className="relative">
+            <span className="absolute left-3 top-[6px] text-[--c-text-muted] text-[9px] font-bold tracking-wider uppercase z-10">Date</span>
+            <DateField
+              value={form.date ? new Date(form.date) : undefined}
+              onChange={handleDateChange}
+              placeholder="Select date"
+              className="c-input-selector font-normal"
+            />
+          </div>
+          <div className="relative">
+            <span className="absolute left-3 top-[6px] text-[--c-text-muted] text-[9px] font-bold tracking-wider uppercase z-10">Time</span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="c-input-selector font-normal cursor-pointer"
+                >
+                  <Clock className="size-4 text-[--c-text-muted] absolute left-4 bottom-[8px]" />
+                  <span>{form.time ? formatTimeLabel(form.time) : 'Select time'}</span>
+                  <ChevronDown className="size-4 opacity-50" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-3 bg-black/95 backdrop-blur-md border border-white/15 rounded-xl shadow-2xl text-white z-50">
+                <div className="space-y-3 max-h-60 overflow-y-auto scrollbar-hide">
+                  <p className="text-[10px] font-bold text-[--c-accent] uppercase tracking-wider mb-2">Lunch Slots</p>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {TIME_SLOTS.slice(0, 7).map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => setForm({ ...form, time: t })}
+                        className={cn(
+                          "text-[10px] py-1.5 px-1 rounded-lg text-center cursor-pointer transition-colors border",
+                          form.time === t 
+                            ? "bg-[var(--c-primary)] border-[var(--c-primary)] text-white font-bold" 
+                            : "bg-white/5 border-white/10 text-[--c-text-soft] hover:bg-white/10 hover:text-white"
+                        )}
+                      >
+                        {formatTimeLabel(t)}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="h-px bg-white/10 my-3" />
+                  <p className="text-[10px] font-bold text-[--c-accent] uppercase tracking-wider mb-2">Dinner Slots</p>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {TIME_SLOTS.slice(7).map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => setForm({ ...form, time: t })}
+                        className={cn(
+                          "text-[10px] py-1.5 px-1 rounded-lg text-center cursor-pointer transition-colors border",
+                          form.time === t 
+                            ? "bg-[var(--c-primary)] border-[var(--c-primary)] text-white font-bold" 
+                            : "bg-white/5 border-white/10 text-[--c-text-soft] hover:bg-white/10 hover:text-white"
+                        )}
+                      >
+                        {formatTimeLabel(t)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+          <input className="sg-alt-input sm:col-span-2 px-4 py-3 text-sm" type="number" min={1} max={20} placeholder="Number of guests" value={form.guests} onChange={(e) => setForm({ ...form, guests: Number(e.target.value) })} onWheel={(e) => e.currentTarget.blur()} />
+          <button
+            className="sm:col-span-2 inline-flex items-center justify-center gap-2 py-3.5 rounded-full text-xs font-bold uppercase tracking-widest transition-all hover:-translate-y-0.5 hover:shadow-[0_15px_40px_-10px_rgba(200,155,60,0.55)]"
+            style={{ background: 'var(--c-accent, #C89B3C)', color: 'var(--c-text-dark, #1A1210)' }}
+            onClick={submit}
+          >
+            <Calendar className="size-4" /> Reserve Table Now
+          </button>
         </div>
       </div>
     </section>
   )
 }
 
+const INSTAGRAM_FEED = [
+  'https://images.unsplash.com/photo-1567620832903-9fc6debc209f?auto=format&fit=crop&w=600&q=80',
+  'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?auto=format&fit=crop&w=600&q=80',
+  'https://images.unsplash.com/photo-1551024506-0bccd828d307?auto=format&fit=crop&w=600&q=80',
+  'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80',
+  'https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=600&q=80',
+  'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80',
+]
+
+function InstagramFeedSection() {
+  return (
+    <div style={{ background: 'var(--c-cream, #FAF6F0)' }} className="w-full">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <ScrollReveal className="text-center mb-10">
+          <p
+            className="text-[11px] font-bold uppercase tracking-[0.28em]"
+            style={{ color: 'var(--c-accent, #C89B3C)' }}
+          >
+            Follow Our Journey
+          </p>
+          <div
+            className="mx-auto my-3 h-[1.5px] w-16"
+            style={{ background: 'var(--c-accent, #C89B3C)' }}
+          />
+          <h2
+            className="text-3xl sm:text-4xl lg:text-5xl"
+            style={{
+              fontFamily: "'Cormorant Garamond', 'Playfair Display', Georgia, serif",
+              fontWeight: 500,
+              color: 'var(--c-text-dark, #1A1210)',
+              letterSpacing: '-0.01em',
+              lineHeight: 1.1,
+            }}
+          >
+            <span
+              style={{
+                fontStyle: 'italic',
+                fontWeight: 400,
+                color: 'var(--c-accent, #C89B3C)',
+              }}
+            >
+              @spicegarden
+            </span>{' '}
+            · Instagram
+          </h2>
+        </ScrollReveal>
+        <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {INSTAGRAM_FEED.map((src, i) => (
+            <ScrollReveal
+              as="li"
+              key={i}
+              delay={i * 0.06}
+              className="sg-tile relative aspect-square overflow-hidden group cursor-pointer rounded-xl"
+            >
+              <img
+                src={src}
+                alt={`Instagram post ${i + 1}`}
+                loading="lazy"
+                decoding="async"
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/45 transition-all duration-300 grid place-items-center">
+                <Camera className="size-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+            </ScrollReveal>
+          ))}
+        </ul>
+        <div className="text-center mt-8">
+          <a
+            href="https://instagram.com"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full font-bold text-[11px] tracking-[0.22em] uppercase transition-all hover:scale-105"
+            style={{
+              background: 'var(--c-text-dark, #1A1210)',
+              color: 'var(--c-cream, #FAF6F0)',
+              boxShadow: '0 10px 24px -10px rgba(26, 18, 16, 0.4)',
+            }}
+          >
+            Follow @spicegarden
+          </a>
+        </div>
+      </section>
+    </div>
+  )
+}
