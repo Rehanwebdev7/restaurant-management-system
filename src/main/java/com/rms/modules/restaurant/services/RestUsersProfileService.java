@@ -537,7 +537,7 @@ public class RestUsersProfileService implements UsersProfileServiceIMP {
                 Row row = sheet.createRow(rowNum++);
                 row.createCell(0).setCellValue(users_profileEntity.getId() != null ? users_profileEntity.getId() : 0);
                 row.createCell(1).setCellValue(users_profileEntity.getRestaurantId() != null ? users_profileEntity.getRestaurantId().toString() : "N/A");
-                row.createCell(2).setCellValue(users_profileEntity.getGstNumber() != null ? users_profileEntity.getGstNumber() : "N/A");
+                row.createCell(2).setCellValue("N/A");
                 row.createCell(3).setCellValue(users_profileEntity.getAddress() != null ? users_profileEntity.getAddress() : "N/A");
                 row.createCell(4).setCellValue(users_profileEntity.getCityId() != null ? users_profileEntity.getCityId().toString() : "N/A");
                 row.createCell(5).setCellValue(users_profileEntity.getStateId() != null ? users_profileEntity.getStateId().toString() : "N/A");
@@ -547,9 +547,9 @@ public class RestUsersProfileService implements UsersProfileServiceIMP {
                 row.createCell(9).setCellValue(users_profileEntity.getLongitude() != null ? users_profileEntity.getLongitude().doubleValue() : 0.0);
                 row.createCell(10).setCellValue(users_profileEntity.getTimezone() != null ? users_profileEntity.getTimezone() : "N/A");
                 row.createCell(11).setCellValue(users_profileEntity.getCurrencyCode() != null ? users_profileEntity.getCurrencyCode() : "N/A");
-                row.createCell(12).setCellValue(users_profileEntity.getLogoUrl() != null ? users_profileEntity.getLogoUrl() : "N/A");
-                row.createCell(13).setCellValue(users_profileEntity.getWebsite() != null ? users_profileEntity.getWebsite() : "N/A");
-                row.createCell(14).setCellValue(users_profileEntity.getPhone() != null ? users_profileEntity.getPhone() : "N/A");
+                row.createCell(12).setCellValue("N/A");
+                row.createCell(13).setCellValue("N/A");
+                row.createCell(14).setCellValue("N/A");
                 row.createCell(15).setCellValue(users_profileEntity.getAlternatePhone() != null ? users_profileEntity.getAlternatePhone() : "N/A");
 //                LocalTime openingTime = users_profileEntity.getOpeningTime();
 //                String formattedOpeningTime = (openingTime != null) ? openingTime.format(timeFormat) : "";

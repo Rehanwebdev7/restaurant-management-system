@@ -4,7 +4,7 @@ import { motion, AnimatePresence, useReducedMotion, useScroll, useTransform, typ
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu'
 import {
   Menu, Search, MapPin, Sun, Moon, ShoppingBag, User, ChevronDown, Heart, X, Trash2, Plus,
-  Phone, Mail, ChevronRight, Edit3, ClipboardList, MapPinned, LogOut,
+  Phone, Mail, ChevronRight, Edit3, ClipboardList, MapPinned, LogOut, Bell,
 } from 'lucide-react'
 import { tokens } from '@/lib/auth/tokens'
 
@@ -36,6 +36,8 @@ import { useBodyScrollLock } from '@/lib/useBodyScrollLock'
 import SearchModal from '@/features/customer/SearchModal'
 import CartDrawer from '@/features/customer/CartDrawer'
 import ReservationModal from '@/features/customer/ReservationModal'
+import NotificationsPanel from '@/features/customer/NotificationsPanel'
+import { useUnreadNotificationCount } from '@/api/queries/customer'
 import MobileBottomNav, { OPEN_WISHLIST_EVENT } from '@/features/customer/MobileBottomNav'
 import { PageTransition } from '@/components/ui/page-transition'
 import { toast } from '@/lib/toast'
@@ -167,6 +169,9 @@ export default function CustomerLayout({ children, transparent = false }: Props)
   const [showWishlist, setShowWishlist] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
   const [showCart, setShowCart] = useState(false)
+  const [showNotifications, setShowNotifications] = useState(false)
+  const unreadNotifCountQ = useUnreadNotificationCount()
+  const unreadNotifCount = unreadNotifCountQ.data ?? 0
   const [selectedBranchId, setSelectedBranchId] = useState<number>(readSelectedBranchId)
 
   const theme = useCustomerTheme()
@@ -430,13 +435,26 @@ export default function CustomerLayout({ children, transparent = false }: Props)
   return (
     <div className={cn('customer-shell', theme.mode === 'light' && 'customer-shell--light')}>
       <CustomerScrollProgress />
-      {/* Marquee */}
-      <div className="marquee-bar">
-        <span className="marquee-track">
-          ✦ Order before 9 PM for next-day delivery ✦ Free delivery on orders above ₹499 ✦ New menu launched — Try our Chef's Signature dishes ✦ Reserve your table — Book online &nbsp;&nbsp;
-          ✦ Order before 9 PM for next-day delivery ✦ Free delivery on orders above ₹499 ✦ New menu launched — Try our Chef's Signature dishes ✦ Reserve your table — Book online &nbsp;&nbsp;
-        </span>
-      </div>
+      {/* Marquee — driven by business_settings.marquee_text via useBrand().
+       * `marqueeIsLive=false` hides the strip entirely. Text repeated twice
+       * so the CSS-animated track never leaves a gap while scrolling. */}
+      {brand.marqueeIsLive && brand.marqueeText ? (
+        <div
+          className="marquee-bar"
+          style={{
+            background: brand.marqueeBgColor ?? undefined,
+            color: brand.marqueeTextColor ?? undefined,
+            animationDuration: `${brand.marqueeSpeed}s`,
+          }}
+        >
+          <span
+            className="marquee-track"
+            style={{ animationDuration: `${brand.marqueeSpeed}s` }}
+          >
+            {brand.marqueeText}&nbsp;&nbsp;&nbsp;&nbsp;{brand.marqueeText}&nbsp;&nbsp;
+          </span>
+        </div>
+      ) : null}
 
       {/* Header — compact, single row, brand from DB */}
       <header className={cn('c-header relative', transparent && 'c-header--transparent')}>
@@ -586,6 +604,21 @@ export default function CustomerLayout({ children, transparent = false }: Props)
               badge={wishlist.ids.length > 0 ? wishlist.ids.length : undefined}
             >
               <Heart className={cn('size-[20px]', wishlist.ids.length > 0 && 'fill-current')} style={wishlist.ids.length > 0 ? { color: 'var(--c-accent)' } : undefined} />
+            </IconButton>
+            <IconButton
+              label="Alerts"
+              ariaLabel={`Notifications${unreadNotifCount > 0 ? ` (${unreadNotifCount} unread)` : ''}`}
+              onClick={() => {
+                if (!tokens.getCustomer()) {
+                  window.dispatchEvent(new CustomEvent('trigger-customer-login'))
+                  return
+                }
+                setShowNotifications(true)
+              }}
+              hideOnMobile
+              badge={unreadNotifCount > 0 ? unreadNotifCount : undefined}
+            >
+              <Bell className="size-[20px]" style={unreadNotifCount > 0 ? { color: 'var(--c-accent)' } : undefined} />
             </IconButton>
             <IconButton
               label="Cart"
@@ -755,6 +788,9 @@ export default function CustomerLayout({ children, transparent = false }: Props)
       {/* Reservation modal — opens on `customer:open-reservation` event
        * dispatched from header Reserve button, marquee, or any CTA. */}
       <ReservationModal />
+
+      {/* Notifications panel — opens on header Bell icon click (auth-gated). */}
+      <NotificationsPanel open={showNotifications} onClose={() => setShowNotifications(false)} />
 
       {/* Sign-in centred modal — proper dialog with backdrop blur instead
        * of an off-axis dropdown. Pattern matches Notion / Linear / Stripe
@@ -994,11 +1030,21 @@ export default function CustomerLayout({ children, transparent = false }: Props)
           <div>
             <p className="display text-3xl">{brand.restaurantName}</p>
             <p className="subtitle text-[10px] mt-1">{brand.tagline}</p>
-            <p className="text-sm text-[--c-text-soft] mt-4">Hand-crafted dishes, warm hospitality, and an unforgettable dining experience.</p>
+            <p className="text-sm text-[--c-text-soft] mt-4">
+              {brand.aboutUs
+                ? (brand.aboutUs.length > 160 ? brand.aboutUs.slice(0, 157).trimEnd() + '…' : brand.aboutUs)
+                : 'Hand-crafted dishes, warm hospitality, and an unforgettable dining experience.'}
+            </p>
             <div className="flex items-center gap-3 mt-4">
-              <a href="#" className="hover:gold-text" aria-label="Facebook"><Facebook className="size-4" aria-hidden="true" /></a>
-              <a href="#" className="hover:gold-text" aria-label="Instagram"><Instagram className="size-4" aria-hidden="true" /></a>
-              <a href="#" className="hover:gold-text" aria-label="Twitter"><Twitter className="size-4" aria-hidden="true" /></a>
+              {brand.socialLinks.facebook ? (
+                <a href={brand.socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="hover:gold-text" aria-label="Facebook"><Facebook className="size-4" aria-hidden="true" /></a>
+              ) : null}
+              {brand.socialLinks.instagram ? (
+                <a href={brand.socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="hover:gold-text" aria-label="Instagram"><Instagram className="size-4" aria-hidden="true" /></a>
+              ) : null}
+              {brand.socialLinks.twitter ? (
+                <a href={brand.socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="hover:gold-text" aria-label="Twitter"><Twitter className="size-4" aria-hidden="true" /></a>
+              ) : null}
             </div>
           </div>
           <div>
@@ -1027,13 +1073,21 @@ export default function CustomerLayout({ children, transparent = false }: Props)
             <p className="subtitle">Reach Us</p>
             <div className="c-divider !ml-0" />
             <ul className="space-y-2 text-sm">
-              <li className="flex items-center gap-2"><MapPin className="size-4 gold-text" /> {branch?.address}</li>
-              <li className="flex items-center gap-2"><Phone className="size-4 gold-text" /> +91 9876543210</li>
-              <li className="flex items-center gap-2"><Mail className="size-4 gold-text" /> hello@spicegarden.com</li>
+              {branch?.address ? (
+                <li className="flex items-center gap-2"><MapPin className="size-4 gold-text" /> {branch.address}</li>
+              ) : brand.address ? (
+                <li className="flex items-center gap-2"><MapPin className="size-4 gold-text" /> {brand.address}</li>
+              ) : null}
+              {brand.phone ? (
+                <li className="flex items-center gap-2"><Phone className="size-4 gold-text" /> <a href={`tel:${brand.phone}`} className="hover:gold-text">{brand.phone}</a></li>
+              ) : null}
+              {brand.email ? (
+                <li className="flex items-center gap-2"><Mail className="size-4 gold-text" /> <a href={`mailto:${brand.email}`} className="hover:gold-text">{brand.email}</a></li>
+              ) : null}
             </ul>
           </div>
         </div>
-        <p className="text-center text-xs text-[--c-text-muted] mt-10 border-t border-[--c-border] pt-6">© 2026 {brand.restaurantName} {brand.tagline} · Powered by RMS</p>
+        <p className="text-center text-xs text-[--c-text-muted] mt-10 border-t border-[--c-border] pt-6">© {new Date().getFullYear()} {brand.restaurantName} {brand.tagline} · Powered by RMS</p>
       </footer>
     </div>
   )

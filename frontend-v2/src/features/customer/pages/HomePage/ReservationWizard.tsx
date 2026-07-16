@@ -18,7 +18,9 @@ const TIME_SLOTS = [
 ]
 
 function formatTimeLabel(t: string): string {
-  const [h, m] = t.split(':').map(Number)
+  const [rawH, rawM] = t.split(':').map(Number)
+  const h = rawH ?? 0
+  const m = rawM ?? 0
   const period = h >= 12 ? 'PM' : 'AM'
   const hour12 = h % 12 === 0 ? 12 : h % 12
   return `${hour12}:${String(m).padStart(2, '0')} ${period}`

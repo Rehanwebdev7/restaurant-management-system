@@ -10,6 +10,7 @@ import {
   deleteCustomerAddress,
   type BackendCustomerAddress,
 } from '@/api/services/customer'
+import { useCities, usePincodes } from '@/api/queries/customer'
 
 /**
  * Customer addresses — full CRUD wired to
@@ -101,6 +102,9 @@ export default function Addresses() {
   const [draft, setDraft] = useState<Address>({ id: 0, label: 'Home', line1: '', line2: '', city: 'Mumbai', pincode: '', phone: '' })
   const [errors, setErrors] = useState<AddressErrors>({})
   const [loading, setLoading] = useState(false)
+  // Backend lookup dropdowns — fall back to plain text input if backend empty.
+  const citiesQ = useCities(null)          // all cities (no state filter for now)
+  const pincodesQ = usePincodes(null)      // all pincodes
   const [usingBackend, setUsingBackend] = useState(false)
 
   // Mirror to localStorage so guest browsers keep working and signed-in
@@ -285,11 +289,37 @@ export default function Addresses() {
           <input className="c-input" placeholder="Address line 2" value={draft.line2 ?? ''} onChange={(e) => setDraft({ ...draft, line2: e.target.value })} />
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <input className="c-input" placeholder="City" value={draft.city} onChange={(e) => setDraft({ ...draft, city: e.target.value })} aria-invalid={!!errors.city} />
+              <input
+                className="c-input"
+                placeholder="City"
+                list="sg-cities-list"
+                value={draft.city}
+                onChange={(e) => setDraft({ ...draft, city: e.target.value })}
+                aria-invalid={!!errors.city}
+              />
+              <datalist id="sg-cities-list">
+                {(citiesQ.data ?? []).map((c) => (
+                  <option key={c.id} value={c.name} />
+                ))}
+              </datalist>
               {errors.city ? <p className="text-xs text-red-400 mt-1">{errors.city}</p> : null}
             </div>
             <div>
-              <input className="c-input" inputMode="numeric" maxLength={6} placeholder="Pincode" value={draft.pincode} onChange={(e) => setDraft({ ...draft, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) })} aria-invalid={!!errors.pincode} />
+              <input
+                className="c-input"
+                inputMode="numeric"
+                maxLength={6}
+                placeholder="Pincode"
+                list="sg-pincodes-list"
+                value={draft.pincode}
+                onChange={(e) => setDraft({ ...draft, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) })}
+                aria-invalid={!!errors.pincode}
+              />
+              <datalist id="sg-pincodes-list">
+                {(pincodesQ.data ?? []).map((p) => (
+                  <option key={p.id} value={p.name} />
+                ))}
+              </datalist>
               {errors.pincode ? <p className="text-xs text-red-400 mt-1">{errors.pincode}</p> : null}
             </div>
           </div>

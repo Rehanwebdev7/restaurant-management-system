@@ -18,7 +18,11 @@ import {
   HERO_IMAGES, useCart, useCustomerCatalog,
   useSelectedBranchId,
 } from '@/features/customer/catalog'
-import { useCustomerSliders } from '@/api/queries/customer'
+import {
+  useCustomerSliders, useRestaurantHours,
+  useHomeTestimonials, useHomeStats, useHomeInstagram, useHomeWhyDine,
+} from '@/api/queries/customer'
+import { submitPublicReservation } from '@/api/services/customer'
 import DishCardRound, { DishCardRoundGridSkeleton } from '@/features/customer/DishCardRound'
 import CategoryChainSection from '@/features/customer/pages/HomePage/CategoryChainSection'
 import GallerySlider from '@/features/customer/pages/HomePage/GallerySlider'
@@ -70,6 +74,8 @@ export function HomePage() {
         heroImages={heroImages}
         withCurve
       />
+
+      <OpenClosedBadge />
 
       {/* Unified cream section — SVG dome bleeds up into the hero, then a
        * flat body holds:
@@ -211,50 +217,7 @@ export function HomePage() {
               </span>
             </h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              { Icon: ChefHat, title: 'Hand-Crafted by Chefs', text: 'Every dish prepared fresh by our experienced kitchen team.' },
-              { Icon: Leaf, title: 'Farm-Fresh Ingredients', text: 'Sourced daily from trusted local farms for peak flavour.' },
-              { Icon: Award, title: 'Award-Winning Recipes', text: 'Heritage recipes refined over decades for an unforgettable bite.' },
-            ].map(({ Icon, title, text }, i) => (
-              <ScrollReveal
-                key={title}
-                delay={i * 0.08}
-                className="p-8 text-center group hover:-translate-y-1.5 transition-all duration-300 rounded-2xl"
-                style={{
-                  background: 'linear-gradient(180deg, #E8F5F4 0%, #D4EDEB 100%)',
-                  border: '1px solid rgba(47, 184, 176, 0.28)',
-                  boxShadow: '0 10px 26px rgba(47, 184, 176, 0.15), 0 2px 6px rgba(47, 184, 176, 0.08)',
-                }}
-              >
-                <div
-                  className="inline-flex size-16 rounded-full items-center justify-center mb-5 transition-all group-hover:scale-110"
-                  style={{
-                    border: '1.5px solid var(--c-accent, #C89B3C)',
-                    color: 'var(--c-accent, #C89B3C)',
-                  }}
-                >
-                  <Icon className="size-7" />
-                </div>
-                <h3
-                  className="text-xl font-semibold mb-3"
-                  style={{
-                    fontFamily: "'Cormorant Garamond', 'Playfair Display', Georgia, serif",
-                    color: 'var(--c-text-dark, #1A1210)',
-                    fontSize: '22px',
-                  }}
-                >
-                  {title}
-                </h3>
-                <p
-                  className="text-sm leading-relaxed"
-                  style={{ color: 'var(--c-text-dark, #1A1210)', opacity: 0.7 }}
-                >
-                  {text}
-                </p>
-              </ScrollReveal>
-            ))}
-          </div>
+          <WhyDineTiles />
         </ScrollReveal>
       </div>
 
@@ -290,18 +253,136 @@ export function HomePage() {
   )
 }
 
-function StatsSection() {
-  const STATS = [
-    { value: 200, suffix: '+', label: 'Authentic Dishes' },
-    { value: 10000, suffix: '+', label: 'Happy Customers' },
-    { value: 20, suffix: '+', label: 'Years of Service' },
+/**
+ * OpenClosedBadge — subtle pill beneath hero showing today's open/close
+ * window. Silent when backend has no hours configured.
+ */
+function OpenClosedBadge() {
+  const hoursQ = useRestaurantHours()
+  const status = useMemo(() => {
+    const list = hoursQ.data ?? []
+    if (list.length === 0) return null
+    const dayNames = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
+    const now = new Date()
+    const today = dayNames[now.getDay()] ?? ''
+    const todaysHours = list.find((h) => (h.dayOfWeek ?? '').toUpperCase() === today)
+    if (!todaysHours) return null
+    if (todaysHours.isClosed) return { isOpen: false, label: 'Closed today', detail: '' }
+    if (!todaysHours.openTime || !todaysHours.closeTime) return null
+    const nowMin = now.getHours() * 60 + now.getMinutes()
+    const toMin = (t: string): number => {
+      const [h, m] = t.split(':').map(Number)
+      return (h ?? 0) * 60 + (m ?? 0)
+    }
+    const openMin = toMin(todaysHours.openTime)
+    const closeMin = toMin(todaysHours.closeTime)
+    const isOpen = nowMin >= openMin && nowMin <= closeMin
+    return {
+      isOpen,
+      label: isOpen ? 'Open now' : 'Closed now',
+      detail: `${todaysHours.openTime} – ${todaysHours.closeTime}`,
+    }
+  }, [hoursQ.data])
+
+  if (!status) return null
+  return (
+    <div className="flex justify-center -mt-4 mb-4 relative z-10">
+      <div
+        className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest backdrop-blur-md shadow-lg"
+        style={{
+          background: status.isOpen ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+          color: status.isOpen ? 'rgb(34, 197, 94)' : 'rgb(239, 68, 68)',
+          border: `1px solid ${status.isOpen ? 'rgba(34, 197, 94, 0.4)' : 'rgba(239, 68, 68, 0.4)'}`,
+        }}
+      >
+        <span className="size-2 rounded-full" style={{ background: 'currentColor' }} aria-hidden />
+        {status.label}
+        {status.detail ? <span className="opacity-70 normal-case font-medium">· {status.detail}</span> : null}
+      </div>
+    </div>
+  )
+}
+
+// 2026-07-16: "Why Dine" tiles driven by restaurant_content_blocks
+// (page=HOME, section_type=WHY_DINE). Falls back to a safe 3-tile default
+// so a tenant that hasn't seeded content still sees a filled section.
+function WhyDineTiles() {
+  const whyQ = useHomeWhyDine()
+  const iconMap: Record<string, typeof ChefHat> = { ChefHat, Leaf, Award }
+  const rows = (whyQ.data ?? []).map((b) => ({
+    id: b.id,
+    Icon: iconMap[b.iconName ?? ''] ?? ChefHat,
+    title: b.title ?? '',
+    text: b.description ?? b.subtitle ?? '',
+  }))
+  const fallback = [
+    { id: -1, Icon: ChefHat, title: 'Hand-Crafted by Chefs', text: 'Every dish prepared fresh by our experienced kitchen team.' },
+    { id: -2, Icon: Leaf, title: 'Farm-Fresh Ingredients', text: 'Sourced daily from trusted local farms for peak flavour.' },
+    { id: -3, Icon: Award, title: 'Award-Winning Recipes', text: 'Heritage recipes refined over decades for an unforgettable bite.' },
   ]
+  const list = rows.length > 0 ? rows : fallback
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {list.map(({ id, Icon, title, text }, i) => (
+        <ScrollReveal
+          key={id}
+          delay={i * 0.08}
+          className="p-8 text-center group hover:-translate-y-1.5 transition-all duration-300 rounded-2xl"
+          style={{
+            background: 'linear-gradient(180deg, #E8F5F4 0%, #D4EDEB 100%)',
+            border: '1px solid rgba(47, 184, 176, 0.28)',
+            boxShadow: '0 10px 26px rgba(47, 184, 176, 0.15), 0 2px 6px rgba(47, 184, 176, 0.08)',
+          }}
+        >
+          <div
+            className="inline-flex size-16 rounded-full items-center justify-center mb-5 transition-all group-hover:scale-110"
+            style={{
+              border: '1.5px solid var(--c-accent, #C89B3C)',
+              color: 'var(--c-accent, #C89B3C)',
+            }}
+          >
+            <Icon className="size-7" />
+          </div>
+          <h3
+            className="text-xl font-semibold mb-3"
+            style={{
+              fontFamily: "'Cormorant Garamond', 'Playfair Display', Georgia, serif",
+              color: 'var(--c-text-dark, #1A1210)',
+              fontSize: '22px',
+            }}
+          >
+            {title}
+          </h3>
+          <p
+            className="text-sm leading-relaxed"
+            style={{ color: 'var(--c-text-dark, #1A1210)', opacity: 0.7 }}
+          >
+            {text}
+          </p>
+        </ScrollReveal>
+      ))}
+    </div>
+  )
+}
+
+function StatsSection() {
+  const statsQ = useHomeStats()
+  const stats = (statsQ.data ?? []).map((b) => {
+    // Backend stores e.g. title="200+", subtitle="Authentic Dishes". Split
+    // the numeric part vs the suffix so we can drive <CountUp>.
+    const raw = b.title ?? ''
+    const match = raw.match(/^([\d,]+)\s*(.*)$/)
+    const value = match ? Number((match[1] ?? '').replace(/,/g, '')) || 0 : 0
+    const suffix = match ? (match[2] ?? '') : ''
+    return { id: b.id, value, suffix, label: b.subtitle ?? '' }
+  })
+  if (stats.length === 0) return null
   return (
     <section className="sg-section-dark w-full">
       <ScrollReveal as="div" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-3 gap-4 sm:gap-6 text-center">
-          {STATS.map((s, i) => (
-            <ScrollReveal key={s.label} delay={i * 0.1} className="sg-tile p-5 sm:p-8 rounded-2xl">
+          {stats.map((s, i) => (
+            <ScrollReveal key={s.id} delay={i * 0.1} className="sg-tile p-5 sm:p-8 rounded-2xl">
               <p className="display text-3xl sm:text-5xl gold-text leading-none font-bold">
                 <CountUp value={s.value} suffix={s.suffix} />
               </p>
@@ -314,13 +395,18 @@ function StatsSection() {
   )
 }
 
-const TESTIMONIALS = [
-  { quote: 'The butter chicken here is otherworldly. Every visit feels like a celebration.', name: 'Ananya Verma', role: 'Food Critic, Mumbai Mirror', rating: 5 },
-  { quote: 'Hands down the best Tandoori chicken in the city. The hospitality is unmatched.', name: 'Rahul Mehta', role: 'Regular Patron', rating: 5 },
-  { quote: 'Authentic flavours, premium ambience, and warm service. A perfect date-night spot.', name: 'Priya Sharma', role: 'Lifestyle Blogger', rating: 5 },
-]
-
 function TestimonialsSection() {
+  const testimonialsQ = useHomeTestimonials()
+  const testimonials = (testimonialsQ.data ?? []).map((b) => ({
+    id: b.id,
+    quote: b.description ?? '',
+    name: b.title ?? '',
+    role: b.subtitle ?? '',
+    rating: typeof (b.meta as Record<string, unknown> | null)?.rating === 'number'
+      ? (b.meta as { rating: number }).rating
+      : 5,
+  }))
+  if (testimonials.length === 0) return null
   // Compact 3-across layout. WRAPPED in a full-width cream section
   // (2026-07-15) so the page reads cream → dark → cream → dark rhythm
   // instead of a monotone all-dark scroll. Text colors overridden inline
@@ -365,9 +451,9 @@ function TestimonialsSection() {
           </h2>
         </ScrollReveal>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-          {TESTIMONIALS.map((t, i) => (
+          {testimonials.map((t, i) => (
             <motion.article
-              key={t.name}
+              key={t.id}
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: false, margin: '-60px' }}
@@ -461,13 +547,26 @@ function ReservationCallToActionSection() {
     setForm({ ...form, date: `${yyyy}-${mm}-${dd}` })
   }
 
-  const submit = () => {
+  const submit = async () => {
     if (!form.name || !/^[6-9]\d{9}$/.test(form.phone) || !form.date || !form.time) {
       toast.warning('Please enter your name, valid 10-digit mobile, date and time')
       return
     }
-    toast.success(`Table requested for ${form.guests} guests on ${form.date} at ${formatTimeLabel(form.time)} — we will call to confirm.`)
-    setForm({ name: '', phone: '', date: '', time: '', guests: 2 })
+    // Real backend submit (was fake toast-only before). Uses the same
+    // public reservation endpoint as ContactPage + ReservationModal.
+    const res = await submitPublicReservation({
+      name: form.name.trim(),
+      phone: form.phone,
+      date: form.date,
+      time: form.time,
+      guests: form.guests,
+    })
+    if (res.ok) {
+      toast.success(`Reservation submitted for ${form.guests} guests on ${form.date} at ${formatTimeLabel(form.time)} — we will call to confirm.`)
+      setForm({ name: '', phone: '', date: '', time: '', guests: 2 })
+    } else {
+      toast.warning(res.message)
+    }
   }
   return (
     <section ref={sectionRef} className="relative py-24 my-16 overflow-hidden">
@@ -570,16 +669,12 @@ function ReservationCallToActionSection() {
   )
 }
 
-const INSTAGRAM_FEED = [
-  'https://images.unsplash.com/photo-1567620832903-9fc6debc209f?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1551024506-0bccd828d307?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80',
-]
-
 function InstagramFeedSection() {
+  const instagramQ = useHomeInstagram()
+  const instagram = (instagramQ.data ?? [])
+    .map((b) => b.imageUrl || b.driveImageUrl || '')
+    .filter(Boolean) as string[]
+  if (instagram.length === 0) return null
   return (
     <div style={{ background: 'var(--c-cream, #FAF6F0)' }} className="w-full">
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
@@ -617,7 +712,7 @@ function InstagramFeedSection() {
           </h2>
         </ScrollReveal>
         <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {INSTAGRAM_FEED.map((src, i) => (
+          {instagram.map((src, i) => (
             <ScrollReveal
               as="li"
               key={i}

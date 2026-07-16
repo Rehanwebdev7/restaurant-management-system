@@ -372,7 +372,7 @@ public class CustUsersProfileService implements UsersProfileServiceIMP {
 								? users_profileEntity.getRestaurantId().toString()
 								: "N/A");
 				row.createCell(2).setCellValue(
-						users_profileEntity.getGstNumber() != null ? users_profileEntity.getGstNumber() : "N/A");
+						"N/A");
 				row.createCell(3).setCellValue(
 						users_profileEntity.getAddress() != null ? users_profileEntity.getAddress() : "N/A");
 				row.createCell(4).setCellValue(
@@ -398,11 +398,11 @@ public class CustUsersProfileService implements UsersProfileServiceIMP {
 				row.createCell(11).setCellValue(
 						users_profileEntity.getCurrencyCode() != null ? users_profileEntity.getCurrencyCode() : "N/A");
 				row.createCell(12).setCellValue(
-						users_profileEntity.getLogoUrl() != null ? users_profileEntity.getLogoUrl() : "N/A");
+						"N/A");
 				row.createCell(13).setCellValue(
-						users_profileEntity.getWebsite() != null ? users_profileEntity.getWebsite() : "N/A");
+						"N/A");
 				row.createCell(14)
-						.setCellValue(users_profileEntity.getPhone() != null ? users_profileEntity.getPhone() : "N/A");
+						.setCellValue("N/A");
 				row.createCell(15)
 						.setCellValue(users_profileEntity.getAlternatePhone() != null
 								? users_profileEntity.getAlternatePhone()

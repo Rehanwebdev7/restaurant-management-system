@@ -21,7 +21,12 @@ import { DocumentTitle } from '@/lib/seo/document-title'
 import { HERO_IMAGES } from '@/features/customer/catalog'
 import { toast } from '@/lib/toast'
 import { cn } from '@/lib/utils'
-import { useCustomerBranches } from '@/api/queries/customer'
+import {
+  useCustomerBranches,
+  useLocationsFacilities, useLocationsEvents, useLocationsAwards, useLocationsReach,
+} from '@/api/queries/customer'
+import type { LucideIcon } from 'lucide-react'
+import type { ContentBlock } from '@/api/services/customer'
 import { useBrand } from '@/components/providers/BrandProvider'
 
 interface Branch {
@@ -100,55 +105,46 @@ const CREAM = 'var(--c-cream, #FAF6F0)'
 const INK = 'var(--c-text-dark, #1A1210)'
 const BRASS = 'var(--c-accent, #C89B3C)'
 
-const FACILITIES = [
-  { Icon: Car, label: 'Valet Parking', note: 'Complimentary at all branches' },
-  { Icon: Wine, label: 'Full Bar & Sommelier', note: 'Curated Indian & imported labels' },
-  { Icon: ChefHat, label: 'Live Kitchen', note: 'Watch the chefs at work' },
-  { Icon: Accessibility, label: 'Wheelchair Access', note: 'Ramps + accessible restrooms' },
-  { Icon: Wifi, label: 'Free High-Speed Wi-Fi', note: 'For work-lunches or catch-ups' },
-  { Icon: PartyPopper, label: 'Private Dining Rooms', note: 'Seating 8–40 · projector on request' },
-  { Icon: Users, label: 'Family & Kids Menu', note: 'High-chairs + colouring kits' },
-  { Icon: ShieldCheck, label: 'FSSAI Certified', note: 'Kitchen audited every quarter' },
-]
+// Lucide icon-name → component map — resolves `iconName` string from backend
+// content_blocks table to the actual React component. Keep in sync with the
+// seed data icon_name values (Car, Wine, ChefHat, Award, etc.).
+const ICON_MAP: Record<string, LucideIcon> = {
+  Car, Wine, ChefHat, Accessibility, Wifi, PartyPopper, Users, ShieldCheck,
+  Cake, Building2, Sparkles, Train, MapPin, Clock, Award, Star,
+}
+const resolveIcon = (name?: string): LucideIcon => (name && ICON_MAP[name]) || Star
 
-const EVENTS = [
-  {
-    Icon: Cake,
-    title: 'Birthdays & Anniversaries',
-    text: 'A dedicated host, custom cake table setup, and a curated tasting menu that fits your budget.',
-    accent: 'From ₹1,200/head',
-  },
-  {
-    Icon: Building2,
-    title: 'Corporate & Team Dinners',
-    text: 'Private dining rooms with AV support, semi-buffet options, and GST invoices for reimbursements.',
-    accent: 'Groups of 12–60',
-  },
-  {
-    Icon: Sparkles,
-    title: 'Weddings & Sangeets',
-    text: 'Full-restaurant buyouts, off-site catering, live counters — mehendi, sangeet, cocktail evenings.',
-    accent: 'Full-venue buyouts',
-  },
-]
-
-const REACH = [
-  { Icon: Train, title: 'By Metro & Local', text: 'Andheri branch is a 3-min walk from Metro Line 1; Bandra is 10 min from Bandra Station (W).' },
-  { Icon: Car, title: 'By Car', text: 'All branches offer complimentary valet. Powai has a free surface lot for 40 cars.' },
-  { Icon: MapPin, title: 'Nearby Landmarks', text: 'Bandra — opposite Turner Rd Church. Andheri — behind Solitaire Corporate Park. Powai — next to Hiranandani Central Park.' },
-  { Icon: Clock, title: 'Peak-time Waits', text: 'Fri–Sat 8 PM onwards: expect 20–30 min without a reservation. Reserve online to skip the queue.' },
-]
-
-const AWARDS = [
-  { Icon: Award, label: 'Times Food Awards 2024', note: 'Best North Indian — Bandra' },
-  { Icon: Star, label: 'Zomato Gold Rated', note: '4.6★ across three branches' },
-  { Icon: ChefHat, label: 'Featured in Conde Nast', note: "Mumbai's 20 must-visit kitchens" },
-]
+// Mappers: ContentBlock (generic) → typed shape each section renders.
+const toFacility = (b: ContentBlock) => ({
+  id: b.id, Icon: resolveIcon(b.iconName), label: b.title ?? '', note: b.description ?? '',
+})
+const toEvent = (b: ContentBlock) => {
+  const meta = (b.meta as Record<string, unknown> | null) ?? {}
+  return {
+    id: b.id,
+    Icon: resolveIcon(b.iconName),
+    title: b.title ?? '',
+    text: b.description ?? '',
+    accent: (typeof meta.accent === 'string' ? meta.accent : '') as string,
+  }
+}
+const toReach = (b: ContentBlock) => ({
+  id: b.id, Icon: resolveIcon(b.iconName), title: b.title ?? '', text: b.description ?? '',
+})
+const toAward = (b: ContentBlock) => ({
+  id: b.id, Icon: resolveIcon(b.iconName), label: b.title ?? '', note: b.description ?? '',
+})
 
 export default function LocationsPage() {
   const navigate = useNavigate()
   const brand = useBrand()
   const branchesQuery = useCustomerBranches()
+
+  // Content blocks from backend (2026-07-16 real-data refactor).
+  const facilities = (useLocationsFacilities().data ?? []).map(toFacility)
+  const events     = (useLocationsEvents().data ?? []).map(toEvent)
+  const reach      = (useLocationsReach().data ?? []).map(toReach)
+  const awards     = (useLocationsAwards().data ?? []).map(toAward)
 
   const branches = useMemo<Branch[]>(() => {
     const live = branchesQuery.data ?? []
@@ -363,9 +359,9 @@ export default function LocationsPage() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-            {FACILITIES.map(({ Icon, label, note }, i) => (
+            {facilities.map(({ id, Icon, label, note }, i) => (
               <motion.div
-                key={label}
+                key={id}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -401,9 +397,9 @@ export default function LocationsPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {EVENTS.map(({ Icon, title, text, accent }, i) => (
+            {events.map(({ id, Icon, title, text, accent }, i) => (
               <motion.div
-                key={title}
+                key={id}
                 initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -468,9 +464,9 @@ export default function LocationsPage() {
             </div>
 
             <div className="space-y-4">
-              {REACH.map(({ Icon, title, text }, i) => (
+              {reach.map(({ id, Icon, title, text }, i) => (
                 <motion.div
-                  key={title}
+                  key={id}
                   initial={{ opacity: 0, x: 24 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
@@ -504,9 +500,9 @@ export default function LocationsPage() {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            {AWARDS.map(({ Icon, label, note }, i) => (
+            {awards.map(({ id, Icon, label, note }, i) => (
               <motion.div
-                key={label}
+                key={id}
                 initial={{ opacity: 0, scale: 0.95 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}

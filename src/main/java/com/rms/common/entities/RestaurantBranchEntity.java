@@ -52,6 +52,33 @@ public class RestaurantBranchEntity {
     @Column(name = "email")
     private String email;
 
+    // ---------- Rich per-branch metadata (LocationsPage cards) ----------
+    // Added 2026-07-16 to un-hardcode the `BRANCHES` const overlay in
+    // LocationsPage.tsx. All optional — null when owner hasn't filled them.
+
+    @Column(name = "specialty", length = 255)
+    private String specialty;
+
+    @Column(name = "seating", length = 255)
+    private String seating;
+
+    /** JSON array of strings, e.g. ["Anniversaries","Wine Pairings"]. */
+    @Column(name = "best_for", columnDefinition = "TEXT")
+    private String bestFor;
+
+    /** JSON array of strings, e.g. ["Valet Parking","Live Ghazal"]. */
+    @Column(name = "features", columnDefinition = "TEXT")
+    private String features;
+
+    @Column(name = "chef_note", columnDefinition = "TEXT")
+    private String chefNote;
+
+    @Column(name = "photo_url", length = 500)
+    private String photoUrl;
+
+    @Column(name = "drive_photo_url", length = 500)
+    private String drivePhotoUrl;
+
     @Column(name = "is_active")
     private Boolean isActive = false;
 

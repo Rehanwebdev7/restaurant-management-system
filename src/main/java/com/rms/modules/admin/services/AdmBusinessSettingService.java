@@ -4,12 +4,10 @@ import com.rms.common.entities.BusinessSettingEntity;
 import com.rms.common.entities.MarqueeMessageEntity;
 import com.rms.common.entities.TeamMemberEntity;
 import com.rms.common.entities.UsersEntity;
-import com.rms.common.entities.UsersProfileEntity;
 import com.rms.common.repositories.BusinessSettingRepository;
 import com.rms.common.repositories.MarqueeMessageRepository;
 import com.rms.common.repositories.TeamMemberRepository;
 import com.rms.common.repositories.UsersRepository;
-import com.rms.common.repositories.UsersProfileRepository;
 import com.rms.common.util.GoogleDriveUtil;
 import com.rms.common.util.FileUploadService;
 import com.rms.common.util.TokenUtil;
@@ -40,9 +38,6 @@ public class AdmBusinessSettingService {
 
     @Autowired
     private UsersRepository usersRepository;
-
-    @Autowired
-    private UsersProfileRepository usersProfileRepository;
 
     @Autowired
     private GoogleDriveUtil googleDriveUtil;
@@ -163,65 +158,13 @@ public class AdmBusinessSettingService {
 
         BusinessSettingEntity saved = businessSettingRepository.save(entity);
 
-        // Sync theme fields to UsersProfileEntity so the theme API reflects changes
-        syncThemeToProfile(user, body);
+        // NOTE (2026-07-16 schema refactor Phase 2): syncThemeToProfile() removed.
+        // Duplicate colors/logo/name/social/phone/website fields in users_profile
+        // are being deprecated — business_settings is now the sole source of
+        // truth for these fields. See /docs (or plan file) for Phase 3/4 that
+        // drops those columns from users_profile once observation window passes.
 
         return saved;
-    }
-
-    /**
-     * Sync primary color, logo, favicon, and website to UsersProfileEntity
-     * so the theme API (/api/global/theme/getByDomain) returns updated values
-     */
-    private void syncThemeToProfile(UsersEntity user, Map<String, Object> body) {
-        try {
-            UsersProfileEntity profile = usersProfileRepository.findByRestaurantId_id(user.getId());
-            if (profile == null) return;
-
-            boolean changed = false;
-            if (body.containsKey("primaryColor") && body.get("primaryColor") != null) {
-                profile.setPrimarys((String) body.get("primaryColor"));
-                changed = true;
-            }
-            if (body.containsKey("secondaryColor") && body.get("secondaryColor") != null) {
-                profile.setSecondary((String) body.get("secondaryColor"));
-                changed = true;
-            }
-            if (body.containsKey("tertiaryColor") && body.get("tertiaryColor") != null) {
-                profile.setTertiary((String) body.get("tertiaryColor"));
-                changed = true;
-            }
-            if (body.containsKey("fontColor") && body.get("fontColor") != null) {
-                profile.setFontColour((String) body.get("fontColor"));
-                changed = true;
-            }
-            if (body.containsKey("fontName") && body.get("fontName") != null) {
-                profile.setFontName((String) body.get("fontName"));
-                changed = true;
-            }
-            if (body.containsKey("logoUrl") && body.get("logoUrl") != null) {
-                profile.setLogoUrl((String) body.get("logoUrl"));
-                changed = true;
-            }
-            if (body.containsKey("faviconUrl") && body.get("faviconUrl") != null) {
-                profile.setFeviconUrl((String) body.get("faviconUrl"));
-                changed = true;
-            }
-            if (body.containsKey("domainUrl") && body.get("domainUrl") != null) {
-                profile.setWebsite((String) body.get("domainUrl"));
-                changed = true;
-            }
-            if (body.containsKey("businessName") && body.get("businessName") != null) {
-                profile.setRestaurantName((String) body.get("businessName"));
-                changed = true;
-            }
-            if (changed) {
-                usersProfileRepository.save(profile);
-                System.out.println("Theme synced to UsersProfile for user: " + user.getId());
-            }
-        } catch (Exception e) {
-            System.err.println("Failed to sync theme to profile: " + e.getMessage());
-        }
     }
 
     /**

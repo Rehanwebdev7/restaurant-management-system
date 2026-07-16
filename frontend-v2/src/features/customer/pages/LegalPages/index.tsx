@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   MapPin, Phone, Mail, Clock, Calendar, ChefHat, Leaf,
   Loader2, Soup, Plus, Minus, ChevronLeft, ChevronRight, FileText,
-  ShieldCheck, RotateCcw, Users, X, ZoomIn,
+  ShieldCheck, RotateCcw, X, ZoomIn,
   Building2, Sparkles, HelpCircle, Newspaper, MessageCircle, ChevronDown, Send, Utensils,
 } from 'lucide-react'
 import CustomerLayout, { HeroSection } from '@/features/customer/CustomerLayout'
@@ -16,6 +16,12 @@ import {
   DISHES
 } from '@/features/customer/catalog'
 import { submitPublicReservation } from '@/api/services/customer'
+import {
+  useCustomerOrders, useCustomerGallery, useRestaurantHours,
+  useContactHelpCategories, useContactDepartments, useContactHoursNotes, useContactFaqs,
+  useAboutTeam, useCustomerBranches,
+} from '@/api/queries/customer'
+import { useBrand } from '@/components/providers/BrandProvider'
 import DishCard from '@/features/customer/DishCard'
 import { cn } from '@/lib/utils'
 import { tokens } from '@/lib/auth/tokens'
@@ -213,47 +219,90 @@ export function ContactPage() {
   const INK = 'var(--c-text-dark, #1A1210)'
   const BRASS = 'var(--c-accent, #C89B3C)'
 
-  const HELP_CATEGORIES = [
-    { Icon: HelpCircle, title: 'General Enquiries', text: 'Menu questions, dietary needs, allergies, or anything else — our guest desk answers in under 4 hours.', cta: 'hello@spicegarden.com', href: 'mailto:hello@spicegarden.com' },
-    { Icon: Calendar, title: 'Reservations', text: 'Reserve a table, modify an existing booking, or ask about waitlist availability for weekend evenings.', cta: '+91 9876543210', href: 'tel:+919876543210' },
-    { Icon: Sparkles, title: 'Private Events', text: 'Birthdays, anniversaries, corporate dinners, weddings — our event manager will design a bespoke evening.', cta: 'events@spicegarden.com', href: 'mailto:events@spicegarden.com' },
-    { Icon: Newspaper, title: 'Media & Press', text: 'Reviews, features, chef interviews, food photography visits — our PR team responds within one working day.', cta: 'press@spicegarden.com', href: 'mailto:press@spicegarden.com' },
-  ]
+  // Icon-name → component map. Backend content_blocks store lucide icon
+  // keys as strings; we resolve them to actual components here.
+  const CONTACT_ICON_MAP: Record<string, typeof HelpCircle> = {
+    HelpCircle, Calendar, Sparkles, Newspaper, Clock, Utensils, ChefHat,
+    MessageCircle, Building2, Mail, Phone,
+  }
+  const resolveContactIcon = (name?: string) => (name && CONTACT_ICON_MAP[name]) || HelpCircle
 
-  const DEPT_LINES = [
-    { title: 'Reservation Desk', phone: '+91 9876543210', email: 'reservations@spicegarden.com', hours: 'Daily · 9 AM – 11 PM', note: 'Fastest for same-day bookings' },
-    { title: 'Event Manager', phone: '+91 9876543220', email: 'events@spicegarden.com', hours: 'Mon–Sat · 10 AM – 7 PM', note: 'Birthdays, sangeets, buyouts' },
-    { title: 'Catering & Off-Site', phone: '+91 9876543230', email: 'catering@spicegarden.com', hours: 'Mon–Sat · 10 AM – 7 PM', note: 'Home & office deliveries · 20+ pax' },
-    { title: 'Corporate Sales', phone: '+91 9876543240', email: 'corporate@spicegarden.com', hours: 'Mon–Fri · 10 AM – 6 PM', note: 'Meal contracts, gift cards, invoicing' },
-    { title: 'Guest Relations', phone: '+91 9876543250', email: 'care@spicegarden.com', hours: 'Daily · 11 AM – 11 PM', note: 'Feedback, complaints, lost items' },
-    { title: 'Careers & HR', phone: '+91 9876543260', email: 'careers@spicegarden.com', hours: 'Mon–Fri · 10 AM – 6 PM', note: 'Chefs, service, management roles' },
-  ]
+  // Real content from backend (2026-07-16 dummy → real refactor).
+  const helpCategoriesQ = useContactHelpCategories()
+  const departmentsQ    = useContactDepartments()
+  const hoursNotesQ     = useContactHoursNotes()
+  const faqsQ           = useContactFaqs()
+  const restaurantHoursQ = useRestaurantHours()
+  const branchesQ        = useCustomerBranches()
+  const brand            = useBrand()
 
-  const SCHEDULE = [
-    { day: 'Monday – Thursday', lunch: '11:00 AM – 3:30 PM', dinner: '6:30 PM – 11:00 PM' },
-    { day: 'Friday', lunch: '11:00 AM – 3:30 PM', dinner: '6:30 PM – 11:30 PM' },
-    { day: 'Saturday', lunch: '11:00 AM – 4:00 PM', dinner: '6:00 PM – 11:30 PM' },
-    { day: 'Sunday', lunch: '10:30 AM – 4:00 PM (Brunch)', dinner: '6:30 PM – 11:00 PM' },
-    { day: 'Public Holidays', lunch: '11:00 AM – 4:00 PM', dinner: '6:30 PM – 11:30 PM' },
-  ]
+  // Visit-Us card — first branch (usually flagship) drives address + city.
+  // Fallback stack: branch address → brand.address → nothing.
+  const firstBranch = branchesQ.data?.[0]
+  const contactBranchName = firstBranch?.branchName ?? null
+  const contactCity = firstBranch?.city ?? null
+  const contactAddress = firstBranch
+    ? [firstBranch.addressLine1, firstBranch.city, firstBranch.pincode].filter(Boolean).join(', ')
+    : brand.address
+  // "Mon–Sun · 11:00 AM – 11:30 PM" style line from today's row when hours exist.
+  const contactHoursLine = (() => {
+    const rows = restaurantHoursQ.data ?? []
+    if (rows.length === 0) return null
+    const openRows = rows.filter((h) => !h.isClosed && h.openTime && h.closeTime)
+    if (openRows.length === 0) return null
+    const sample = openRows[0]!
+    return `Mon–Sun · ${sample.openTime} – ${sample.closeTime}`
+  })()
 
-  const HOURS_NOTES = [
-    { Icon: Clock, title: 'Happy Hour', text: 'Weekdays 5:30 PM – 7:30 PM · 25% off cocktails and small plates at the bar.' },
-    { Icon: Utensils, title: 'Kitchen Close', text: 'Last food order 30 mins before closing. Bar stays open until close.' },
-    { Icon: ChefHat, title: 'Sunday Brunch', text: 'Live jazz + bottomless mimosas at the Powai branch, 11 AM – 3 PM.' },
-    { Icon: Sparkles, title: 'Festive Hours', text: 'Diwali, Christmas & New Year — extended hours + special tasting menu. Book 2 weeks ahead.' },
-  ]
+  const HELP_CATEGORIES = (helpCategoriesQ.data ?? []).map((b) => {
+    const meta = (b.meta as Record<string, unknown> | null) ?? {}
+    return {
+      id: b.id,
+      Icon: resolveContactIcon(b.iconName),
+      title: b.title ?? '',
+      text: b.description ?? '',
+      cta: (typeof meta.cta === 'string' ? meta.cta : '') as string,
+      href: (typeof meta.href === 'string' ? meta.href : '#') as string,
+    }
+  })
 
-  const FAQS = [
-    { q: 'Do I need to reserve, or can I walk in?', a: "Walk-ins are always welcome, but weekend evenings (Fri–Sun after 7:30 PM) usually have a 20–30 minute wait. We recommend reserving online — it takes under a minute and holds your table until 15 minutes past your slot." },
-    { q: 'Is there a dress code?', a: "Smart casual across all branches. We ask that guests avoid beachwear, gym clothes, or overly informal attire in the evenings. Kids are welcome any time in their favourite outfits." },
-    { q: 'Can you accommodate food allergies and dietary needs?', a: "Absolutely. Every dish is flagged for common allergens (nuts, dairy, gluten, seafood). Tell us at booking or on arrival — our chefs will adjust or suggest alternatives. We also have Jain, vegan, and gluten-free variants for most menu items." },
-    { q: 'Do you serve alcohol?', a: "Yes, all three branches are fully licensed. We have a curated wine list (Indian + imported), a full-service bar, and a sommelier at Bandra. Andheri and Powai serve cocktails, wines, and spirits." },
-    { q: 'How do I book a private dining room or event?', a: "Fill in the reservation form above and mention 'Private Dining' in the notes, or email events@spicegarden.com. Our event manager will call within 4 hours to discuss menu, setup, and pricing. Rooms seat 8–40; full-restaurant buyouts also available." },
-    { q: 'What about parking?', a: "Complimentary valet at all three branches. Powai additionally has a free surface lot for 40 cars. Bandra and Andheri branches are also well-connected by metro and local train — see our Locations page for details." },
-    { q: 'Do you deliver?', a: "Yes — via Zomato, Swiggy, and our own website (with a 10% off first-order discount for direct orders). Delivery zone covers most of Mumbai suburbs; check your PIN code at checkout." },
-    { q: 'Can I get a GST invoice for corporate meals?', a: "Yes. Provide your company name and GSTIN at billing or in the booking notes, and we'll issue a compliant invoice immediately. For monthly meal contracts, email corporate@spicegarden.com." },
-  ]
+  const DEPT_LINES = (departmentsQ.data ?? []).map((b) => {
+    const meta = (b.meta as Record<string, unknown> | null) ?? {}
+    return {
+      id: b.id,
+      title: b.title ?? '',
+      phone: (typeof meta.phone === 'string' ? meta.phone : '') as string,
+      email: (typeof meta.email === 'string' ? meta.email : '') as string,
+      hours: b.subtitle ?? '',
+      note: b.description ?? '',
+    }
+  })
+
+  // Weekly Business Hours — from restaurant_hours table (already existed).
+  // Map to { day, lunch, dinner } for the schedule table.
+  const DAY_ORDER = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
+  const SCHEDULE = (restaurantHoursQ.data ?? [])
+    .slice()
+    .sort((a, b) => DAY_ORDER.indexOf((a.dayOfWeek || '').toUpperCase()) -
+                    DAY_ORDER.indexOf((b.dayOfWeek || '').toUpperCase()))
+    .map((h) => ({
+      day: (h.dayOfWeek || '').charAt(0) + (h.dayOfWeek || '').slice(1).toLowerCase(),
+      lunch: h.isClosed ? 'Closed' : (h.openTime && h.closeTime ? `${h.openTime} – ${h.closeTime}` : '—'),
+      dinner: h.isClosed ? 'Closed' : '',
+    }))
+
+  const HOURS_NOTES = (hoursNotesQ.data ?? []).map((b) => ({
+    id: b.id,
+    Icon: resolveContactIcon(b.iconName),
+    title: b.title ?? '',
+    text: b.description ?? '',
+  }))
+
+  const FAQS = (faqsQ.data ?? []).map((b) => ({
+    id: b.id,
+    q: b.title ?? '',
+    a: b.description ?? '',
+  }))
 
   const nextBookingId = history[0]?.id
 
@@ -298,33 +347,43 @@ export function ContactPage() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex flex-col justify-end p-6 text-white">
                   <p className="text-[10px] font-bold tracking-[0.28em] uppercase" style={{ color: BRASS }}>Flagship Branch</p>
-                  <p className="text-2xl mt-1" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>Bandra West</p>
+                  <p className="text-2xl mt-1" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{contactCity ?? contactBranchName ?? brand.restaurantName}</p>
                 </div>
               </div>
 
               <div className="rounded-2xl p-6 sm:p-7 bg-white" style={{ border: `1px solid rgba(200,155,60,0.3)` }}>
                 <p className="text-[10px] font-bold tracking-[0.28em] uppercase mb-4" style={{ color: BRASS }}>Visit Us — Flagship</p>
                 <ul className="space-y-3.5 text-sm">
-                  <li className="flex items-start gap-3">
-                    <MapPin className="size-5 mt-0.5 shrink-0" style={{ color: BRASS }} />
-                    <span className="opacity-80" style={{ color: INK }}>123 Sea Breeze Lane, Bandra West, Mumbai · 400050</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <Phone className="size-5 mt-0.5 shrink-0" style={{ color: BRASS }} />
-                    <a href="tel:+919876543210" className="opacity-80 hover:opacity-100 hover:underline" style={{ color: INK }}>+91 9876543210</a>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <Mail className="size-5 mt-0.5 shrink-0" style={{ color: BRASS }} />
-                    <a href="mailto:hello@spicegarden.com" className="opacity-80 hover:opacity-100 hover:underline" style={{ color: INK }}>hello@spicegarden.com</a>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <MessageCircle className="size-5 mt-0.5 shrink-0" style={{ color: BRASS }} />
-                    <a href="https://wa.me/919876543210" target="_blank" rel="noopener noreferrer" className="opacity-80 hover:opacity-100 hover:underline" style={{ color: INK }}>WhatsApp us — quick replies</a>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <Clock className="size-5 mt-0.5 shrink-0" style={{ color: BRASS }} />
-                    <span className="opacity-80" style={{ color: INK }}>Mon–Sun · 11:00 AM – 11:30 PM</span>
-                  </li>
+                  {contactAddress ? (
+                    <li className="flex items-start gap-3">
+                      <MapPin className="size-5 mt-0.5 shrink-0" style={{ color: BRASS }} />
+                      <span className="opacity-80" style={{ color: INK }}>{contactAddress}</span>
+                    </li>
+                  ) : null}
+                  {brand.phone ? (
+                    <li className="flex items-start gap-3">
+                      <Phone className="size-5 mt-0.5 shrink-0" style={{ color: BRASS }} />
+                      <a href={`tel:${brand.phone}`} className="opacity-80 hover:opacity-100 hover:underline" style={{ color: INK }}>{brand.phone}</a>
+                    </li>
+                  ) : null}
+                  {brand.email ? (
+                    <li className="flex items-start gap-3">
+                      <Mail className="size-5 mt-0.5 shrink-0" style={{ color: BRASS }} />
+                      <a href={`mailto:${brand.email}`} className="opacity-80 hover:opacity-100 hover:underline" style={{ color: INK }}>{brand.email}</a>
+                    </li>
+                  ) : null}
+                  {brand.whatsappNumber ? (
+                    <li className="flex items-start gap-3">
+                      <MessageCircle className="size-5 mt-0.5 shrink-0" style={{ color: BRASS }} />
+                      <a href={`https://wa.me/${brand.whatsappNumber.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="opacity-80 hover:opacity-100 hover:underline" style={{ color: INK }}>WhatsApp us — quick replies</a>
+                    </li>
+                  ) : null}
+                  {contactHoursLine ? (
+                    <li className="flex items-start gap-3">
+                      <Clock className="size-5 mt-0.5 shrink-0" style={{ color: BRASS }} />
+                      <span className="opacity-80" style={{ color: INK }}>{contactHoursLine}</span>
+                    </li>
+                  ) : null}
                 </ul>
 
                 <div className="mt-5 pt-5 border-t" style={{ borderColor: 'rgba(200,155,60,0.25)' }}>
@@ -503,9 +562,9 @@ export function ContactPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {HELP_CATEGORIES.map(({ Icon, title, text, cta, href }, i) => (
+            {HELP_CATEGORIES.map(({ id, Icon, title, text, cta, href }, i) => (
               <motion.a
-                key={title}
+                key={id}
                 href={href}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -545,7 +604,7 @@ export function ContactPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {DEPT_LINES.map((d, i) => (
               <motion.div
-                key={d.title}
+                key={d.id}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -621,9 +680,9 @@ export function ContactPage() {
               </h2>
 
               <div className="space-y-3">
-                {HOURS_NOTES.map(({ Icon, title, text }, i) => (
+                {HOURS_NOTES.map(({ id, Icon, title, text }, i) => (
                   <motion.div
-                    key={title}
+                    key={id}
                     initial={{ opacity: 0, x: 20 }}
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true }}
@@ -665,7 +724,7 @@ export function ContactPage() {
           <ul className="space-y-3">
             {FAQS.map((f, i) => (
               <motion.li
-                key={f.q}
+                key={f.id}
                 initial={{ opacity: 0, y: 12 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -737,23 +796,30 @@ export function ContactPage() {
               </h3>
 
               <div className="grid grid-cols-2 gap-3">
-                {[
-                  { label: 'Instagram', handle: '@spicegarden', href: 'https://instagram.com/spicegarden' },
-                  { label: 'Facebook', handle: 'Spice Garden Mumbai', href: 'https://facebook.com/spicegarden' },
-                  { label: 'WhatsApp', handle: '+91 98765 43210', href: 'https://wa.me/919876543210' },
-                  { label: 'YouTube', handle: '@SpiceGardenTV', href: 'https://youtube.com/@spicegardentv' },
-                ].map((s) => (
-                  <a
-                    key={s.label}
-                    href={s.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="sg-tile p-4 rounded-xl block"
-                  >
-                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-1">{s.label}</p>
-                    <p className="text-sm font-bold truncate" style={{ color: BRASS }}>{s.handle}</p>
-                  </a>
-                ))}
+                {(() => {
+                  const links: { label: string; handle: string; href: string }[] = []
+                  if (brand.socialLinks.instagram) links.push({ label: 'Instagram', handle: brand.socialLinks.instagram.replace(/^https?:\/\/(www\.)?instagram\.com\//i, '@').replace(/\/$/, ''), href: brand.socialLinks.instagram })
+                  if (brand.socialLinks.facebook)  links.push({ label: 'Facebook',  handle: brand.socialLinks.facebook.replace(/^https?:\/\/(www\.)?facebook\.com\//i, '').replace(/\/$/, ''),      href: brand.socialLinks.facebook })
+                  if (brand.socialLinks.whatsapp || brand.whatsappNumber) {
+                    const wa = brand.socialLinks.whatsapp ?? `https://wa.me/${(brand.whatsappNumber ?? '').replace(/\D/g, '')}`
+                    links.push({ label: 'WhatsApp', handle: brand.whatsappNumber ?? 'Chat with us', href: wa })
+                  }
+                  if (brand.socialLinks.youtube)   links.push({ label: 'YouTube',   handle: brand.socialLinks.youtube.replace(/^https?:\/\/(www\.)?youtube\.com\//i, '').replace(/\/$/, ''),        href: brand.socialLinks.youtube })
+                  if (brand.socialLinks.twitter)   links.push({ label: 'Twitter',   handle: brand.socialLinks.twitter.replace(/^https?:\/\/(www\.)?(x|twitter)\.com\//i, '@').replace(/\/$/, ''),   href: brand.socialLinks.twitter })
+                  if (brand.socialLinks.linkedin)  links.push({ label: 'LinkedIn',  handle: brand.socialLinks.linkedin.replace(/^https?:\/\/(www\.)?linkedin\.com\//i, '').replace(/\/$/, ''),      href: brand.socialLinks.linkedin })
+                  return links.map((s) => (
+                    <a
+                      key={s.label}
+                      href={s.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="sg-tile p-4 rounded-xl block"
+                    >
+                      <p className="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-1">{s.label}</p>
+                      <p className="text-sm font-bold truncate" style={{ color: BRASS }}>{s.handle}</p>
+                    </a>
+                  ))
+                })()}
               </div>
             </div>
           </div>
@@ -766,26 +832,30 @@ export function ContactPage() {
 /* ====================================================================== */
 /* 3. ABOUT PAGE & TEAM MEMBERS                                           */
 /* ====================================================================== */
-const TEAM = [
-  { name: 'Chef Aarav Kapoor', role: 'Executive Chef', img: 'https://images.unsplash.com/photo-1583394293214-28ded15ee548?auto=format&fit=crop&w=600&q=80' },
-  { name: 'Riya Mehta', role: 'Sommelier', img: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80' },
-  { name: 'Daniel Pinto', role: 'Maître d\'', img: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=600&q=80' },
-  { name: 'Sneha Iyer', role: 'Pastry Chef', img: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=600&q=80' },
-]
-
 export function AboutPage() {
+  // 2026-07-16: story + values from business_settings (via useBrand),
+  // team from restaurant_content_blocks (section_type=TEAM_MEMBER).
+  const brand = useBrand()
+  const teamQ = useAboutTeam()
+  const team = (teamQ.data ?? []).map((b) => ({
+    id: b.id,
+    name: b.title ?? '',
+    role: b.subtitle ?? '',
+    img: b.imageUrl || b.driveImageUrl || '',
+  }))
+
   return (
     <CustomerLayout>
       <DocumentTitle
-        title="About Spice Garden — Our Story"
-        description="Learn the story behind Spice Garden Steakhouse — our heritage, our chefs, and the philosophy that guides every plate we serve."
+        title={`About ${brand.restaurantName} — Our Story`}
+        description={brand.aboutUs ?? `Learn the story behind ${brand.restaurantName}.`}
       />
       <HeroSection
         bg={HERO_IMAGES.about}
         subtitle="HERITAGE & PASSION"
         titleA="The Story of"
-        titleAccent="Spice Garden"
-        description="Founded on the simple belief that great food brings people together. We have spent over a decade perfecting recipes, sourcing the finest ingredients, and welcoming guests as family."
+        titleAccent={brand.restaurantName}
+        description={brand.aboutUs ?? 'Founded on the simple belief that great food brings people together.'}
       />
       <ScrollReveal as="section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -793,55 +863,48 @@ export function AboutPage() {
           <div className="space-y-5">
             <p className="subtitle">OUR ROOTS</p>
             <div className="c-divider !ml-0" />
-            <h2 className="display text-3xl sm:text-4xl">From a Small Kitchen to a <span>Beloved Steakhouse</span></h2>
-            <p className="text-sm text-[--c-text-soft] leading-relaxed">
-              Spice Garden began in 2012 as a small neighbourhood eatery in Bandra. Word of our slow-cooked butter chicken and char-grilled kebabs travelled fast, and one branch grew to three. We have never compromised on the things that matter — fresh ingredients, classical techniques, and warm, attentive hospitality.
-            </p>
-            <p className="text-sm text-[--c-text-soft] leading-relaxed">
-              Today our kitchens are led by Chef Aarav Kapoor and a team of seasoned cooks who treat every plate as a personal signature. Whether you join us in our dining room or order delivery at home, you are tasting more than a decade of craft.
-            </p>
+            <h2 className="display text-3xl sm:text-4xl">Our <span>Journey</span></h2>
+            {brand.aboutUs ? (
+              <p className="text-sm text-[--c-text-soft] leading-relaxed whitespace-pre-line">
+                {brand.aboutUs}
+              </p>
+            ) : null}
+            {brand.ourMission ? (
+              <p className="text-sm text-[--c-text-soft] leading-relaxed whitespace-pre-line">
+                <b>Our Mission:</b> {brand.ourMission}
+              </p>
+            ) : null}
+            {brand.ourVision ? (
+              <p className="text-sm text-[--c-text-soft] leading-relaxed whitespace-pre-line">
+                <b>Our Vision:</b> {brand.ourVision}
+              </p>
+            ) : null}
           </div>
         </div>
       </ScrollReveal>
 
-      <ScrollReveal as="section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {[
-            { Icon: Leaf, title: 'Honest Ingredients', text: 'Sourced daily from trusted farms, butchers, and spice merchants. Nothing frozen, no shortcuts.' },
-            { Icon: ChefHat, title: 'Classical Craft', text: 'Slow gravies, hand-rolled breads, and recipes refined over a decade by chefs who care.' },
-            { Icon: Users, title: 'Warm Hospitality', text: 'Every guest treated like family. Every visit memorable, whether for two or twenty.' },
-          ].map(({ Icon, title, text }, i) => (
-            <ScrollReveal key={title} delay={i * 0.08} className="c-card p-6 text-center rounded-2xl bg-[--c-bg-elev]">
-              <div className="inline-flex size-14 rounded-full border border-[--c-accent] items-center justify-center gold-text mb-4">
-                <Icon className="size-6" />
-              </div>
-              <h3 className="text-lg font-bold mb-2">{title}</h3>
-              <p className="text-sm text-[--c-text-soft]">{text}</p>
-            </ScrollReveal>
-          ))}
-        </div>
-      </ScrollReveal>
-
-      <ScrollReveal as="section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="text-center mb-10">
-          <p className="subtitle">THE PEOPLE BEHIND THE PLATE</p>
-          <div className="c-divider" />
-          <h2 className="display text-3xl sm:text-4xl">Meet Our <span>Team</span></h2>
-        </div>
-        <ul className="grid grid-cols-2 lg:grid-cols-4 gap-5">
-          {TEAM.map((m, i) => (
-            <ScrollReveal as="li" key={m.name} delay={i * 0.08} className="c-card overflow-hidden rounded-2xl bg-[--c-bg-elev]">
-              <div className="aspect-square overflow-hidden">
-                <img src={m.img} alt={m.name} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
-              </div>
-              <div className="p-4 text-center">
-                <p className="display text-lg font-bold">{m.name}</p>
-                <p className="subtitle text-[9px] mt-1">{m.role}</p>
-              </div>
-            </ScrollReveal>
-          ))}
-        </ul>
-      </ScrollReveal>
+      {team.length > 0 ? (
+        <ScrollReveal as="section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="text-center mb-10">
+            <p className="subtitle">THE PEOPLE BEHIND THE PLATE</p>
+            <div className="c-divider" />
+            <h2 className="display text-3xl sm:text-4xl">Meet Our <span>Team</span></h2>
+          </div>
+          <ul className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+            {team.map((m, i) => (
+              <ScrollReveal as="li" key={m.id} delay={i * 0.08} className="c-card overflow-hidden rounded-2xl bg-[--c-bg-elev]">
+                <div className="aspect-square overflow-hidden">
+                  <img src={m.img} alt={m.name} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
+                </div>
+                <div className="p-4 text-center">
+                  <p className="display text-lg font-bold">{m.name}</p>
+                  <p className="subtitle text-[9px] mt-1">{m.role}</p>
+                </div>
+              </ScrollReveal>
+            ))}
+          </ul>
+        </ScrollReveal>
+      ) : null}
     </CustomerLayout>
   )
 }
@@ -850,18 +913,22 @@ export function AboutPage() {
 /* 4. WHY US PAGE                                                         */
 /* ====================================================================== */
 export function WhyUsPage() {
+  // 2026-07-16: hero + philosophy copy from business_settings via useBrand()
+  // (about_us, our_mission, our_vision). Falls back to safe generic copy
+  // when a tenant hasn't filled a given field, so UI never breaks.
+  const brand = useBrand()
   return (
     <CustomerLayout>
       <DocumentTitle
-        title="Why Choose Us — Spice Garden Steakhouse"
-        description="Heritage recipes, farm-fresh ingredients, and warm hospitality — the Spice Garden promise across all our Mumbai branches."
+        title={`Why Choose Us — ${brand.restaurantName}`}
+        description={brand.ourMission ?? brand.aboutUs ?? undefined}
       />
       <HeroSection
         bg={HERO_IMAGES.whyUs}
         subtitle="GREAT FOOD & FRIENDLY SERVICE"
         titleA="Our Story of"
         titleAccent="Great Taste"
-        description="We use high-quality fresh ingredients, follow strict hygiene standards, and offer warm hospitality to make your visit special."
+        description={brand.ourMission ?? 'We use high-quality fresh ingredients, follow strict hygiene standards, and offer warm hospitality to make your visit special.'}
       />
       <ScrollReveal as="section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
@@ -869,11 +936,20 @@ export function WhyUsPage() {
           <div className="space-y-4">
             <p className="subtitle">OUR PHILOSOPHY</p>
             <h2 className="display text-3xl sm:text-4xl">Crafting Memories <span>One Dish at a Time</span></h2>
-            <p className="text-sm text-[--c-text-soft] leading-relaxed">From a humble single-branch kitchen to a beloved multi-city steakhouse, our promise has stayed the same — fresh ingredients, time-honoured recipes, and warm service.</p>
+            {brand.aboutUs ? (
+              <p className="text-sm text-[--c-text-soft] leading-relaxed whitespace-pre-line">{brand.aboutUs}</p>
+            ) : (
+              <p className="text-sm text-[--c-text-soft] leading-relaxed">From a humble single-branch kitchen to a beloved multi-city steakhouse, our promise has stayed the same — fresh ingredients, time-honoured recipes, and warm service.</p>
+            )}
+            {brand.ourVision ? (
+              <p className="text-sm text-[--c-text-soft] leading-relaxed whitespace-pre-line">
+                <b>Our Vision:</b> {brand.ourVision}
+              </p>
+            ) : null}
             <ul className="space-y-2.5 text-sm font-semibold text-[--c-text-soft]">
-              <li className="flex items-start gap-2.5"><Soup className="size-4 gold-text mt-0.5" /> 200+ recipes refined over a decade</li>
-              <li className="flex items-start gap-2.5"><ChefHat className="size-4 gold-text mt-0.5" /> Award-winning culinary team</li>
-              <li className="flex items-start gap-2.5"><Leaf className="size-4 gold-text mt-0.5" /> 100% farm-fresh, locally-sourced</li>
+              <li className="flex items-start gap-2.5"><Soup className="size-4 gold-text mt-0.5" /> Recipes refined over years of craft</li>
+              <li className="flex items-start gap-2.5"><ChefHat className="size-4 gold-text mt-0.5" /> Passionate culinary team</li>
+              <li className="flex items-start gap-2.5"><Leaf className="size-4 gold-text mt-0.5" /> Farm-fresh, locally-sourced ingredients</li>
             </ul>
           </div>
         </div>
@@ -920,10 +996,18 @@ const GALLERY_PAGE_SIZE = 15
 export function GalleryPage() {
   const [page, setPage] = useState(0)
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null)
-  const totalPages = Math.ceil(GALLERY_EXTENDED.length / GALLERY_PAGE_SIZE)
+
+  // Backend-first: use `useCustomerGallery()` real photos. Fall back to
+  // hardcoded GALLERY_EXTENDED (30 Unsplash URLs) when backend empty so
+  // demo tenants + guest visitors still see a rich grid.
+  const galleryQ = useCustomerGallery()
+  const backendImages = galleryQ.filtered.map((g) => g.imageUrl).filter(Boolean) as string[]
+  const allImages = backendImages.length > 0 ? backendImages : GALLERY_EXTENDED
+
+  const totalPages = Math.ceil(allImages.length / GALLERY_PAGE_SIZE)
   const visibleImages = useMemo(
-    () => GALLERY_EXTENDED.slice(page * GALLERY_PAGE_SIZE, (page + 1) * GALLERY_PAGE_SIZE),
-    [page]
+    () => allImages.slice(page * GALLERY_PAGE_SIZE, (page + 1) * GALLERY_PAGE_SIZE),
+    [page, allImages]
   )
 
   // Scroll to top of grid when page changes
@@ -1182,10 +1266,17 @@ export function GalleryPage() {
 /* 6. SIGNATURE PAGE                                                      */
 /* ====================================================================== */
 export function SignaturePage() {
-  const dishes = useMemo(() => DISHES.filter((d) => d.signature), [])
+  // 2026-07-16: pull real live catalog from backend (tenant-resolved via host)
+  // and filter to owner-flagged `signature` items only. `useCustomerCatalog`
+  // already returns [] for tenants without a menu and seed DISHES in demo
+  // mode, so this stays SaaS-safe.
+  const brand = useBrand()
+  const { dishes, isLoading } = useCustomerCatalog()
+  const signatureDishes = useMemo(() => dishes.filter((d) => d.signature), [dishes])
+
   return (
     <CustomerLayout>
-      <DocumentTitle title="Chef's Signature Dishes — Spice Garden" />
+      <DocumentTitle title={`Chef's Signature Dishes — ${brand.restaurantName}`} />
       <HeroSection
         bg={HERO_IMAGES.signature}
         subtitle="OUR SPECIAL SIGNATURE DISHES"
@@ -1194,15 +1285,27 @@ export function SignaturePage() {
         description="Enjoy our delicious food made by our best chefs to give you a wonderful dining experience."
       />
 
-      {/* Responsive unified grid display */}
       <ScrollReveal as="section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
-        <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-          {dishes.map((d) => (
-            <li key={d.id} className="contents">
-              <DishCard dish={d} />
-            </li>
-          ))}
-        </ul>
+        {isLoading ? (
+          <div className="c-card p-12 text-center rounded-2xl bg-[--c-bg-elev] border border-[--c-border]">
+            <Loader2 className="size-8 gold-text mx-auto mb-3 animate-spin" />
+            <p className="text-sm text-[--c-text-soft]">Loading signature dishes…</p>
+          </div>
+        ) : signatureDishes.length === 0 ? (
+          <div className="c-card p-12 text-center rounded-2xl bg-[--c-bg-elev] border border-[--c-border]">
+            <ChefHat className="size-16 gold-text mx-auto mb-4" />
+            <h3 className="text-xl font-bold mb-2">No signature dishes yet</h3>
+            <p className="text-sm text-[--c-text-soft]">Our chefs are curating something special — check back soon.</p>
+          </div>
+        ) : (
+          <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+            {signatureDishes.map((d) => (
+              <li key={d.id} className="contents">
+                <DishCard dish={d} />
+              </li>
+            ))}
+          </ul>
+        )}
       </ScrollReveal>
     </CustomerLayout>
   )
@@ -1211,8 +1314,23 @@ export function SignaturePage() {
 /* ====================================================================== */
 /* 7. GENERAL MY ORDERS LIST PAGE                                         */
 /* ====================================================================== */
+function statusColorClasses(status: string): string {
+  const s = status.toUpperCase()
+  if (s === 'DELIVERED' || s === 'COMPLETED') return '!text-green-400 !border-green-500/35 bg-green-500/5'
+  if (s === 'CANCELLED' || s === 'REJECTED' || s === 'FAILED') return '!text-red-400 !border-red-500/35 bg-red-500/5'
+  if (s === 'OUT_FOR_DELIVERY' || s.includes('OUT')) return '!text-blue-300 !border-blue-500/35 bg-blue-500/5'
+  return '!text-amber-300 !border-amber-500/35 bg-amber-500/5'
+}
+
+function statusLabel(status: string): string {
+  const s = status.toUpperCase().replace(/_/g, ' ')
+  return s.charAt(0) + s.slice(1).toLowerCase()
+}
+
 export function MyOrdersPage() {
   const navigate = useNavigate()
+  const isSignedIn = typeof window !== 'undefined' && Boolean(tokens.getCustomer())
+  const backendOrdersQ = useCustomerOrders()
   const [localQueue, setLocalQueue] = useState<any[]>(() => {
     if (typeof window === 'undefined') return []
     try {
@@ -1231,6 +1349,13 @@ export function MyOrdersPage() {
     return () => window.removeEventListener('storage', onStorage)
   }, [])
 
+  const backendOrders = backendOrdersQ.data ?? []
+  const isBackendLoading = isSignedIn && backendOrdersQ.isLoading
+  // Show pending-sync (offline) items on top; backend orders below.
+  const pendingSyncOrders = localQueue.filter((o) => o.status !== 'synced')
+
+  const hasAnyOrder = backendOrders.length > 0 || pendingSyncOrders.length > 0
+
   return (
     <CustomerLayout>
       <DocumentTitle title="My Orders — Spice Garden" />
@@ -1239,38 +1364,74 @@ export function MyOrdersPage() {
         <div className="c-divider !ml-0" />
         <h1 className="display text-3xl sm:text-4xl mb-8">My <span>Orders</span></h1>
 
-        {localQueue.length === 0 ? (
+        {isBackendLoading ? (
+          <div className="c-card p-12 text-center rounded-2xl bg-[--c-bg-elev] border border-[--c-border]">
+            <Loader2 className="size-8 gold-text mx-auto mb-3 animate-spin" />
+            <p className="text-sm text-[--c-text-soft]">Loading your orders…</p>
+          </div>
+        ) : !hasAnyOrder ? (
           <div className="c-card p-12 text-center rounded-2xl bg-[--c-bg-elev] border border-[--c-border]">
             <Soup className="size-16 gold-text mx-auto mb-4" />
             <h3 className="text-xl font-bold mb-2">No orders placed yet</h3>
-            <p className="text-sm text-[--c-text-soft] mb-6">When you place an order it will appear in your account history list.</p>
+            <p className="text-sm text-[--c-text-soft] mb-6">
+              {isSignedIn
+                ? 'When you place an order it will appear in your account history list.'
+                : 'Sign in to see your order history across devices.'}
+            </p>
             <button className="c-button-primary px-8 rounded-full cursor-pointer" onClick={() => navigate('/menu')}>
               BROWSE MENU
             </button>
           </div>
         ) : (
           <ul className="space-y-3.5">
-            {localQueue.map((o) => (
-              <li key={o.id} className="c-card p-5 flex items-center justify-between gap-4 rounded-2xl bg-[--c-bg-elev] border border-[--c-border]">
+            {/* Pending-sync (offline) orders first */}
+            {pendingSyncOrders.map((o) => (
+              <li key={`local-${o.id}`} className="c-card p-5 flex items-center justify-between gap-4 rounded-2xl bg-[--c-bg-elev] border border-[--c-border]">
                 <div className="min-w-0">
-                  <p className="font-mono font-bold text-sm tracking-wider">{o.serverOrderId ? `#${o.serverOrderId}` : o.id}</p>
+                  <p className="font-mono font-bold text-sm tracking-wider">{o.id}</p>
                   <p className="text-xs text-[--c-text-muted] mt-1 font-medium">
                     {new Date(o.placedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} · {o.items?.length || 0} items · {String(o.paymentMethod).toUpperCase()}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className={cn(
-                    'c-tag shrink-0 !py-1 !px-2 rounded-lg font-bold text-[10px]',
-                    o.status === 'synced' ? '!text-green-400 !border-green-500/35 bg-green-500/5' : '!text-amber-300 !border-amber-500/35 bg-amber-500/5',
-                  )}>
-                    {o.status === 'synced' ? 'Confirmed' : 'Pending sync'}
+                  <span className="c-tag shrink-0 !py-1 !px-2 rounded-lg font-bold text-[10px] !text-amber-300 !border-amber-500/35 bg-amber-500/5">
+                    Pending sync
                   </span>
                   <p className="font-mono gold-text font-bold text-base shrink-0">₹{o.total?.toLocaleString('en-IN')}</p>
                 </div>
               </li>
             ))}
+            {/* Backend orders (real order history) */}
+            {backendOrders.map((o) => (
+              <li
+                key={`backend-${o.id}`}
+                className="c-card p-5 flex items-center justify-between gap-4 rounded-2xl bg-[--c-bg-elev] border border-[--c-border] hover:border-[--c-accent] transition-colors cursor-pointer"
+                onClick={() => navigate(`/orders/${o.id}`)}
+              >
+                <div className="min-w-0">
+                  <p className="font-mono font-bold text-sm tracking-wider">{o.orderNumber ? `#${o.orderNumber}` : `#${o.id}`}</p>
+                  <p className="text-xs text-[--c-text-muted] mt-1 font-medium">
+                    {o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : '—'}
+                    {o.itemCount != null ? ` · ${o.itemCount} items` : ''}
+                    {o.paymentMethod ? ` · ${o.paymentMethod}` : ''}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className={cn('c-tag shrink-0 !py-1 !px-2 rounded-lg font-bold text-[10px]', statusColorClasses(o.status))}>
+                    {statusLabel(o.status)}
+                  </span>
+                  <p className="font-mono gold-text font-bold text-base shrink-0">₹{o.totalAmount.toLocaleString('en-IN')}</p>
+                </div>
+              </li>
+            ))}
           </ul>
         )}
+
+        {isSignedIn && backendOrdersQ.isError ? (
+          <p className="text-xs text-red-400 text-center mt-4">
+            Couldn't reach the server. Showing offline-queued orders only.
+          </p>
+        ) : null}
       </section>
     </CustomerLayout>
   )

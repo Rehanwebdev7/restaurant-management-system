@@ -6,10 +6,25 @@ import java.time.*;
 import java.math.BigDecimal;
 import jakarta.validation.constraints.Digits;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.databind.JsonNode;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
+/**
+ * Restaurant / branch operational profile record.
+ *
+ * As of 2026-07-16 schema refactor: this table holds ONLY operational
+ * back-office data (address+geo, licence docs, timezone/currency, booking
+ * policy, alternate phone). All branding / legal / contact identity fields
+ * (colors, logo, business name, GST, phone, social) live in
+ * `business_settings` as the sole source of truth. See
+ * `AdmBusinessSettingService` + `CustBrandingController` for the customer-
+ * facing storefront path.
+ *
+ * Historical duplicate columns removed in Phase 3:
+ *   restaurant_name, gst_number, gst_url, drive_gst_url,
+ *   logo_url, drive_logo_url, fevicon_url, drive_fevicon_url,
+ *   website, phone, primarys, secondary, tertiary, font_colour, font_name,
+ *   pncode, social_media_details.
+ * DB columns dropped in Phase 4 migration after observation window.
+ */
 @Entity
 @Data
 @AllArgsConstructor
@@ -24,22 +39,11 @@ public class UsersProfileEntity {
 
 	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "restaurant_id")
-//    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler", "userId", "password", "dateOfBirth", "photoUrl",
 			"updatedAt", "isDeleted", "isActive", "createdAt", "parentId" })
 	private UsersEntity restaurantId;
 
-	@Column(name = "restaurant_name")
-	private String restaurantName;
-
-	@Column(name = "gst_number")
-	private String gstNumber;
-
-	@Column(name = "gst_url")
-	private String gstUrl;
-
-	@Column(name = "drive_gst_url")
-	private String driveGstUrl;
+	// ---------- LICENCE / DOCUMENTS (unique to operational profile) ----------
 
 	@Column(name = "licence_url")
 	private String licenceUrl;
@@ -47,18 +51,22 @@ public class UsersProfileEntity {
 	@Column(name = "drive_licence_url")
 	private String driveLicenceUrl;
 
+	@Column(name = "other_doc_url")
+	private String otherDocUrl;
+
+	@Column(name = "drive_other_doc_url")
+	private String driveOtherDocUrl;
+
+	// ---------- ADDRESS (structured) ----------
+
 	@Column(name = "address")
 	private String address;
 
-//    @Column(name = "city")
-//    private String city;
 	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "city_id")
 	@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 	private CitiesEntity cityId;
 
-//    @Column(name = "state")
-//    private String state;
 	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "state_id")
 	@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
@@ -72,13 +80,15 @@ public class UsersProfileEntity {
 	@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 	private PincodesEntity pincodeId;
 
+	// ---------- GEO (delivery zone geofence) ----------
+
 	@Column(name = "latitude")
-//    @Digits(integer = 38, fraction = 2)
 	private Double latitude;
 
 	@Column(name = "longitude")
-//    @Digits(integer = 38, fraction = 2)
 	private Double longitude;
+
+	// ---------- LOCALE (used by orders + bookings) ----------
 
 	@Column(name = "timezone")
 	private String timezone;
@@ -86,53 +96,18 @@ public class UsersProfileEntity {
 	@Column(name = "currency_code")
 	private String currencyCode;
 
-	@Column(name = "logo_url")
-	private String logoUrl;
-
-	@Column(name = "drive_logo_url")
-	private String driveLogoUrl;
-
-	@Column(name = "fevicon_url")
-	private String feviconUrl;
-
-	@Column(name = "drive_fevicon_url")
-	private String driveFeviconUrl;
-
-	@Column(name = "website")
-	private String website;
-
-	@Column(name = "phone")
-	private String phone;
+	// ---------- CONTACT BACKUP ----------
 
 	@Column(name = "alternate_phone")
 	private String alternatePhone;
 
-	@Column(name = "secondary")
-	private String secondary;
-
-	@Column(name = "tertiary")
-	private String tertiary;
-
-	@Column(name = "font_colour")
-	private String fontColour;
-
-	@Column(name = "font_name")
-	private String fontName;
-
-	@Column(name = "other_doc_url")
-	private String otherDocUrl;
-
-	@Column(name = "drive_other_doc_url")
-	private String driveOtherDocUrl;
-
-//    @Column(name = "opening_time")
-//    private LocalTime openingTime;
-//
-////    @Column(name = "closing_time")
-//    private LocalTime closingTime;
+	// ---------- INTERNAL / MISC ----------
 
 	@Column(name = "description")
 	private String description;
+
+	@Column(name = "screen")
+	private String screen;
 
 	@Column(name = "is_active")
 	private Boolean isActive;
@@ -143,14 +118,7 @@ public class UsersProfileEntity {
 	@Column(name = "updated_at")
 	private LocalDateTime updatedAt;
 
-	@Column(name = "primarys")
-	private String primarys;
-	
-	@Column(name = "screen")
-	private String screen;
-	
-	@Column(name = "pncode")
-	private String pncode;
+	// ---------- BOOKING POLICY (table reservation config) ----------
 
 	@Column(name = "booking_buffer_minutes")
 	private String bookingBufferMinutes;
@@ -164,19 +132,11 @@ public class UsersProfileEntity {
 	@Column(name = "booking_payment_amount")
 	@Digits(integer = 38, fraction = 2)
 	private BigDecimal bookingPaymentAmount;
-		
-	@JdbcTypeCode(SqlTypes.JSON)
-	@Column(name = "social_media_details", columnDefinition = "json")
-	private JsonNode socialMediaDetails;
 
 	@PrePersist
 	protected void onCreate() {
 		if (this.isActive == null)
 			this.isActive = true;
-//        if (this.latitude == null)
-//            this.latitude = BigDecimal.valueOf(0.00);
-//        if (this.longitude == null)
-//            this.longitude = BigDecimal.valueOf(0.00);
 		if (this.createdAt == null)
 			this.createdAt = LocalDateTime.now();
 		if (this.updatedAt == null)

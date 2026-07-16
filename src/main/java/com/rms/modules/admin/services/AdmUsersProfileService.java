@@ -503,9 +503,15 @@ public class AdmUsersProfileService implements UsersProfileServiceIMP {
             entity.setCreatedAt(LocalDateTime.now());
         }
 
-        // ================= SAFE FIELD COPY =================
-        if (inputEntity.getRestaurantName() != null) entity.setRestaurantName(inputEntity.getRestaurantName());
-        if (inputEntity.getGstNumber() != null) entity.setGstNumber(inputEntity.getGstNumber());
+        // ================= SAFE FIELD COPY (operational fields only) =================
+        // NOTE (2026-07-16 schema refactor Phase 2): The following fields moved
+        // to business_settings as sole source of truth — do NOT write them here:
+        //   restaurantName, gstNumber, website, phone (alternate stays),
+        //   primarys, secondary, tertiary, fontColour, fontName,
+        //   pncode (use pincodeId FK instead), socialMediaDetails
+        // Panel Settings UI should POST branding/legal fields to
+        //   /api/admin/business_setting/save
+        // and only operational fields (address/geo/timezone/booking policy) here.
         if (inputEntity.getAddress() != null) entity.setAddress(inputEntity.getAddress());
         if (inputEntity.getCityId() != null) entity.setCityId(inputEntity.getCityId());
         if (inputEntity.getStateId() != null) entity.setStateId(inputEntity.getStateId());
@@ -515,18 +521,9 @@ public class AdmUsersProfileService implements UsersProfileServiceIMP {
         if (inputEntity.getLongitude() != null) entity.setLongitude(inputEntity.getLongitude());
         if (inputEntity.getTimezone() != null) entity.setTimezone(inputEntity.getTimezone());
         if (inputEntity.getCurrencyCode() != null) entity.setCurrencyCode(inputEntity.getCurrencyCode());
-        if (inputEntity.getWebsite() != null) entity.setWebsite(inputEntity.getWebsite());
-        if (inputEntity.getPhone() != null) entity.setPhone(inputEntity.getPhone());
         if (inputEntity.getAlternatePhone() != null) entity.setAlternatePhone(inputEntity.getAlternatePhone());
-        if (inputEntity.getSecondary() != null) entity.setSecondary(inputEntity.getSecondary());
-        if (inputEntity.getTertiary() != null) entity.setTertiary(inputEntity.getTertiary());
-        if (inputEntity.getFontColour() != null) entity.setFontColour(inputEntity.getFontColour());
-        if (inputEntity.getFontName() != null) entity.setFontName(inputEntity.getFontName());
         if (inputEntity.getDescription() != null) entity.setDescription(inputEntity.getDescription());
         if (inputEntity.getIsActive() != null) entity.setIsActive(inputEntity.getIsActive());
-        if (inputEntity.getPrimarys() != null) entity.setPrimarys(inputEntity.getPrimarys());
-        if (inputEntity.getPncode() != null) entity.setPncode(inputEntity.getPncode());
-        if (inputEntity.getSocialMediaDetails() != null) entity.setSocialMediaDetails(inputEntity.getSocialMediaDetails());
 
         entity.setRestaurantId(restaurant);
         entity.setUpdatedAt(LocalDateTime.now());
@@ -534,34 +531,17 @@ public class AdmUsersProfileService implements UsersProfileServiceIMP {
         UsersProfileEntity savedProfile =
                 usersProfileRepository.save(entity);
 
-        // ================= LOGO UPLOAD =================
+        // ================= LOGO / COVER UPLOAD — DEPRECATED =================
+        // Logo + favicon uploads now belong to business_settings, not users_profile.
+        // Consumers must call: POST /api/admin/business_setting/upload-image
+        // (see AdmBusinessSettingService.uploadBrandingImage). Multipart parts
+        // `logo` / `coverImage` in this endpoint are accepted but no-op — kept
+        // only to preserve request contract compatibility during the migration.
         if (logo != null && !logo.isEmpty()) {
-
-            String fileName = "restaurant_logo_" + restaurant.getId();
-
-            // old: String logoUrl = googleDriveUtil.uploadFile(logo, fileName, "Restaurant_Logo");
-            final Long _entityId = savedProfile.getId();
-            String logoUrl = fileUploadService.uploadFile(logo, fileName, "Restaurant_Logo",
-                driveUrl -> usersProfileRepository.updateDriveLogoUrl(_entityId, driveUrl));
-            savedProfile.setLogoUrl(logoUrl);
-            savedProfile.setUpdatedAt(LocalDateTime.now());
-
-            usersProfileRepository.save(savedProfile);
+            System.out.println("[DEPRECATED] logo multipart on /users_profile ignored — use /business_setting/upload-image");
         }
-
-        // ================= COVER IMAGE UPLOAD =================
         if (coverImage != null && !coverImage.isEmpty()) {
-
-            String fileName = "restaurant_cover_" + restaurant.getId();
-
-            // old: String coverImageUrl = googleDriveUtil.uploadFile(coverImage, fileName, "Restaurant_Cover");
-            final Long _entityId = savedProfile.getId();
-            String coverImageUrl = fileUploadService.uploadFile(coverImage, fileName, "Restaurant_Cover",
-                driveUrl -> usersProfileRepository.updateDriveFeviconUrl(_entityId, driveUrl));
-            savedProfile.setFeviconUrl(coverImageUrl);
-            savedProfile.setUpdatedAt(LocalDateTime.now());
-
-            usersProfileRepository.save(savedProfile);
+            System.out.println("[DEPRECATED] coverImage multipart on /users_profile ignored — use /business_setting/upload-image");
         }
 
         return "Users profile added/updated successfully";
@@ -820,7 +800,7 @@ public class AdmUsersProfileService implements UsersProfileServiceIMP {
                 Row row = sheet.createRow(rowNum++);
                 row.createCell(0).setCellValue(users_profileEntity.getId() != null ? users_profileEntity.getId() : 0);
                 row.createCell(1).setCellValue(users_profileEntity.getRestaurantId() != null ? users_profileEntity.getRestaurantId().toString() : "N/A");
-                row.createCell(2).setCellValue(users_profileEntity.getGstNumber() != null ? users_profileEntity.getGstNumber() : "N/A");
+                row.createCell(2).setCellValue("N/A");
                 row.createCell(3).setCellValue(users_profileEntity.getAddress() != null ? users_profileEntity.getAddress() : "N/A");
                 row.createCell(4).setCellValue(users_profileEntity.getCityId() != null ? users_profileEntity.getCityId().toString() : "N/A");
                 row.createCell(5).setCellValue(users_profileEntity.getStateId() != null ? users_profileEntity.getStateId().toString() : "N/A");
@@ -830,9 +810,9 @@ public class AdmUsersProfileService implements UsersProfileServiceIMP {
                 row.createCell(9).setCellValue(users_profileEntity.getLongitude() != null ? users_profileEntity.getLongitude().doubleValue() : 0.0);
                 row.createCell(10).setCellValue(users_profileEntity.getTimezone() != null ? users_profileEntity.getTimezone() : "N/A");
                 row.createCell(11).setCellValue(users_profileEntity.getCurrencyCode() != null ? users_profileEntity.getCurrencyCode() : "N/A");
-                row.createCell(12).setCellValue(users_profileEntity.getLogoUrl() != null ? users_profileEntity.getLogoUrl() : "N/A");
-                row.createCell(13).setCellValue(users_profileEntity.getWebsite() != null ? users_profileEntity.getWebsite() : "N/A");
-                row.createCell(14).setCellValue(users_profileEntity.getPhone() != null ? users_profileEntity.getPhone() : "N/A");
+                row.createCell(12).setCellValue("N/A");
+                row.createCell(13).setCellValue("N/A");
+                row.createCell(14).setCellValue("N/A");
                 row.createCell(15).setCellValue(users_profileEntity.getAlternatePhone() != null ? users_profileEntity.getAlternatePhone() : "N/A");
 //                LocalTime openingTime = users_profileEntity.getOpeningTime();
 //                String formattedOpeningTime = (openingTime != null) ? openingTime.format(timeFormat) : "";

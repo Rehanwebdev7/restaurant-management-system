@@ -2,13 +2,22 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import {
-  MapPin, Plus, Home, Briefcase, Trash2, Star, Edit3, Loader2, Camera, User, Mail, Smartphone
+  MapPin, Plus, Home, Briefcase, Trash2, Star, Edit3, Loader2, Camera, User, Mail, Smartphone,
+  Wallet, Gift, Share2, Copy, Check, ArrowUpRight, ArrowDownLeft, TrendingUp, Users as UsersIcon,
 } from 'lucide-react'
 import CustomerLayout from '@/features/customer/CustomerLayout'
 import { toast } from '@/lib/toast'
 import { tokens } from '@/lib/auth/tokens'
 import { DocumentTitle } from '@/lib/seo/document-title'
 import { useBrand } from '@/components/providers/BrandProvider'
+import {
+  useWalletBalance,
+  useWalletTransactions,
+  useReferralCode,
+  useReferralStats,
+  useReferralUsers,
+  useApplyReferralCode,
+} from '@/api/queries/customer'
 import {
   fetchCustomerAddresses,
   addCustomerAddress,
@@ -121,11 +130,15 @@ function LabelIcon({ label }: { label: Address['label'] }) {
 
 export function ProfilePage() {
   const brand = useBrand()
-  const [activeTab, setActiveTab] = useState<'info' | 'addresses'>(() => {
+  const [activeTab, setActiveTab] = useState<'info' | 'addresses' | 'wallet' | 'referral'>(() => {
     if (typeof window !== 'undefined') {
       const search = window.location.search
       const params = new URLSearchParams(search)
-      return params.get('tab') === 'addresses' || window.location.pathname.includes('/addresses') ? 'addresses' : 'info'
+      const tabParam = params.get('tab')
+      if (tabParam === 'addresses' || window.location.pathname.includes('/addresses')) return 'addresses'
+      if (tabParam === 'wallet') return 'wallet'
+      if (tabParam === 'referral') return 'referral'
+      return 'info'
     }
     return 'info'
   })
@@ -326,29 +339,26 @@ export function ProfilePage() {
         <h1 className="display text-3xl sm:text-4xl mb-8">My <span>Account</span></h1>
 
         {/* Tab Controls */}
-        <div className="flex gap-2 border-b border-[--c-border] pb-px mb-8">
-          <button
-            onClick={() => setActiveTab('info')}
-            className={cn(
-              'px-6 py-2.5 text-sm font-semibold border-b-2 tracking-wider transition-all cursor-pointer',
-              activeTab === 'info'
-                ? 'border-[--c-accent] gold-text'
-                : 'border-transparent text-[--c-text-soft] hover:text-[--c-text]'
-            )}
-          >
-            PROFILE INFO
-          </button>
-          <button
-            onClick={() => setActiveTab('addresses')}
-            className={cn(
-              'px-6 py-2.5 text-sm font-semibold border-b-2 tracking-wider transition-all cursor-pointer',
-              activeTab === 'addresses'
-                ? 'border-[--c-accent] gold-text'
-                : 'border-transparent text-[--c-text-soft] hover:text-[--c-text]'
-            )}
-          >
-            SAVED ADDRESSES
-          </button>
+        <div className="flex gap-1 sm:gap-2 border-b border-[--c-border] pb-px mb-8 overflow-x-auto scrollbar-hide">
+          {[
+            { key: 'info' as const, label: 'PROFILE INFO' },
+            { key: 'addresses' as const, label: 'ADDRESSES' },
+            { key: 'wallet' as const, label: 'WALLET' },
+            { key: 'referral' as const, label: 'REFERRAL' },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={cn(
+                'px-4 sm:px-6 py-2.5 text-xs sm:text-sm font-semibold border-b-2 tracking-wider transition-all cursor-pointer whitespace-nowrap',
+                activeTab === tab.key
+                  ? 'border-[--c-accent] gold-text'
+                  : 'border-transparent text-[--c-text-soft] hover:text-[--c-text]',
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
         {/* Tab Content Panels */}
@@ -445,7 +455,8 @@ export function ProfilePage() {
                 </button>
               </div>
             </motion.div>
-          ) : (
+          ) : null}
+          {activeTab === 'addresses' ? (
             <motion.div
               key="addresses"
               initial={{ opacity: 0, y: 15 }}
@@ -633,7 +644,29 @@ export function ProfilePage() {
                 </ul>
               )}
             </motion.div>
-          )}
+          ) : null}
+          {activeTab === 'wallet' ? (
+            <motion.div
+              key="wallet"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.25 }}
+            >
+              <WalletTab />
+            </motion.div>
+          ) : null}
+          {activeTab === 'referral' ? (
+            <motion.div
+              key="referral"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.25 }}
+            >
+              <ReferralTab />
+            </motion.div>
+          ) : null}
         </AnimatePresence>
       </section>
 
@@ -648,6 +681,320 @@ export function ProfilePage() {
         onCropComplete={handleCropDone}
       />
     </CustomerLayout>
+  )
+}
+
+/* ==================================================================
+ * WalletTab — Batch 2 wire-up
+ * Shows balance card + transaction history. Pay-with-wallet at
+ * checkout is deferred (needs `paymentMethod: 'WALLET'` UI in
+ * CheckoutPage — future addition, contract already supports it).
+ * ================================================================== */
+function WalletTab() {
+  const balanceQ = useWalletBalance()
+  const txQ = useWalletTransactions()
+  const isSignedIn = Boolean(tokens.getCustomer())
+
+  if (!isSignedIn) {
+    return (
+      <div className="c-card p-10 text-center rounded-2xl bg-[--c-bg-elev] border border-[--c-border]">
+        <Wallet className="size-12 gold-text mx-auto mb-3" />
+        <p className="text-sm font-bold mb-1">Sign in to view your wallet</p>
+        <p className="text-xs text-[--c-text-soft]">Earn cashback on every order + refunds land here instantly.</p>
+      </div>
+    )
+  }
+
+  const balance = balanceQ.data?.balance ?? 0
+  const currency = balanceQ.data?.currency ?? 'INR'
+  const pending = balanceQ.data?.pendingWithdrawal ?? 0
+  const txs = txQ.data ?? []
+
+  return (
+    <div className="space-y-6">
+      {/* Balance hero card */}
+      <div
+        className="c-card p-6 sm:p-8 rounded-2xl border border-[--c-accent]/40 relative overflow-hidden"
+        style={{ background: 'linear-gradient(135deg, rgba(var(--c-accent-rgb), 0.12) 0%, rgba(var(--c-accent-rgb), 0.04) 100%)' }}
+      >
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <p className="subtitle text-[10px]">CURRENT BALANCE</p>
+            <p className="display text-4xl sm:text-5xl gold-text font-bold mt-2 font-mono">
+              {balanceQ.isLoading ? <Loader2 className="size-8 animate-spin inline" /> : `₹${balance.toLocaleString('en-IN')}`}
+            </p>
+            {currency !== 'INR' ? (
+              <p className="text-xs text-[--c-text-muted] mt-1">{currency}</p>
+            ) : null}
+          </div>
+          <div
+            className="inline-flex size-14 rounded-full items-center justify-center shrink-0"
+            style={{ background: 'rgba(var(--c-accent-rgb), 0.15)', border: '1.5px solid var(--c-accent)' }}
+          >
+            <Wallet className="size-6 gold-text" />
+          </div>
+        </div>
+        {pending > 0 ? (
+          <p className="text-xs text-[--c-text-soft] font-medium">
+            <span className="opacity-70">Pending withdrawal:</span>{' '}
+            <span className="gold-text font-bold">₹{pending.toLocaleString('en-IN')}</span>
+          </p>
+        ) : null}
+        {balanceQ.isError ? (
+          <p className="text-xs text-red-400 mt-2">Couldn't load balance — try refreshing.</p>
+        ) : null}
+      </div>
+
+      {/* Transactions list */}
+      <div className="c-card rounded-2xl bg-[--c-bg-elev] border border-[--c-border] overflow-hidden">
+        <div className="p-5 border-b border-[--c-border]">
+          <p className="subtitle text-[10px]">RECENT ACTIVITY</p>
+          <h3 className="display text-lg font-bold mt-1">Transactions</h3>
+        </div>
+        {txQ.isLoading ? (
+          <div className="p-8 text-center">
+            <Loader2 className="size-6 animate-spin mx-auto opacity-60" />
+          </div>
+        ) : txs.length === 0 ? (
+          <div className="p-8 text-center">
+            <p className="text-sm text-[--c-text-soft]">No wallet activity yet.</p>
+            <p className="text-xs text-[--c-text-muted] mt-1">Cashback and refunds show up here.</p>
+          </div>
+        ) : (
+          <ul className="divide-y divide-[--c-border]">
+            {txs.slice(0, 20).map((t) => {
+              const isCredit = t.type.toUpperCase().includes('CREDIT') || t.type.toUpperCase() === 'REFUND'
+              return (
+                <li key={t.id} className="p-4 flex items-center gap-3">
+                  <div
+                    className={cn(
+                      'shrink-0 size-10 rounded-full inline-flex items-center justify-center',
+                      isCredit ? 'text-green-400 bg-green-500/10' : 'text-red-400 bg-red-500/10',
+                    )}
+                  >
+                    {isCredit ? <ArrowDownLeft className="size-4" /> : <ArrowUpRight className="size-4" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold truncate">{t.description ?? t.type}</p>
+                    <p className="text-[10px] text-[--c-text-muted] mt-0.5">
+                      {t.createdAt ? new Date(t.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : '—'}
+                      {t.status ? ` · ${t.status}` : ''}
+                    </p>
+                  </div>
+                  <p className={cn('font-mono font-bold text-sm shrink-0', isCredit ? 'text-green-400' : 'text-red-400')}>
+                    {isCredit ? '+' : '−'} ₹{t.amount.toLocaleString('en-IN')}
+                  </p>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </div>
+
+      <p className="text-[10px] text-[--c-text-muted] text-center px-4">
+        To withdraw funds to your bank, add bank details from settings. Withdrawals process in 3–5 business days.
+      </p>
+    </div>
+  )
+}
+
+/* ==================================================================
+ * ReferralTab — Batch 2 wire-up
+ * Share code + stats + list of friends who joined via your code.
+ * ================================================================== */
+function ReferralTab() {
+  const codeQ = useReferralCode()
+  const statsQ = useReferralStats()
+  const usersQ = useReferralUsers()
+  const applyMut = useApplyReferralCode()
+  const [copied, setCopied] = useState(false)
+  const [applyInput, setApplyInput] = useState('')
+  const isSignedIn = Boolean(tokens.getCustomer())
+
+  if (!isSignedIn) {
+    return (
+      <div className="c-card p-10 text-center rounded-2xl bg-[--c-bg-elev] border border-[--c-border]">
+        <Gift className="size-12 gold-text mx-auto mb-3" />
+        <p className="text-sm font-bold mb-1">Sign in to unlock referrals</p>
+        <p className="text-xs text-[--c-text-soft]">Invite friends, earn wallet cashback every time they order.</p>
+      </div>
+    )
+  }
+
+  const code = codeQ.data?.code ?? '—'
+  const shareUrl = codeQ.data?.shareUrl ?? (typeof window !== 'undefined' ? `${window.location.origin}/?ref=${code}` : '')
+  const shareMessage = codeQ.data?.message ?? `Try ${document.title.split('—')[1]?.trim() ?? 'this restaurant'} — use my code ${code} for a treat on your first order!`
+  const stats = statsQ.data
+  const users = usersQ.data ?? []
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(code)
+      setCopied(true)
+      toast.success('Code copied')
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      toast.warning('Copy failed — try manually')
+    }
+  }
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Join me here', text: shareMessage, url: shareUrl })
+      } catch { /* user cancelled */ }
+    } else {
+      const wa = `https://wa.me/?text=${encodeURIComponent(`${shareMessage} ${shareUrl}`)}`
+      window.open(wa, '_blank', 'noopener,noreferrer')
+    }
+  }
+
+  const handleApply = () => {
+    const trimmed = applyInput.trim().toUpperCase()
+    if (!trimmed) {
+      toast.warning('Enter a friend\'s code')
+      return
+    }
+    applyMut.mutate(trimmed, {
+      onSuccess: (res) => {
+        if (res.ok) {
+          toast.success(res.data.message ?? 'Referral applied — cashback added to your wallet')
+          setApplyInput('')
+        } else {
+          toast.warning(res.message)
+        }
+      },
+      onError: () => toast.warning('Could not apply referral code'),
+    })
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Share code hero card */}
+      <div
+        className="c-card p-6 sm:p-8 rounded-2xl border border-[--c-accent]/40 relative overflow-hidden"
+        style={{ background: 'linear-gradient(135deg, rgba(var(--c-accent-rgb), 0.12) 0%, rgba(var(--c-accent-rgb), 0.04) 100%)' }}
+      >
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <p className="subtitle text-[10px]">YOUR REFERRAL CODE</p>
+            <p className="display text-3xl sm:text-4xl gold-text font-bold mt-2 font-mono tracking-widest">
+              {codeQ.isLoading ? <Loader2 className="size-6 animate-spin inline" /> : code}
+            </p>
+            <p className="text-xs text-[--c-text-soft] mt-2">Share with friends. They get a treat, you get cashback.</p>
+          </div>
+          <div
+            className="inline-flex size-14 rounded-full items-center justify-center shrink-0"
+            style={{ background: 'rgba(var(--c-accent-rgb), 0.15)', border: '1.5px solid var(--c-accent)' }}
+          >
+            <Gift className="size-6 gold-text" />
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button
+            className="c-button-outline flex-1 !py-2.5 rounded-full inline-flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer"
+            onClick={handleCopy}
+            disabled={codeQ.isLoading}
+          >
+            {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+            {copied ? 'Copied' : 'Copy Code'}
+          </button>
+          <button
+            className="c-button-primary flex-1 !py-2.5 rounded-full inline-flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer"
+            onClick={handleShare}
+            disabled={codeQ.isLoading}
+          >
+            <Share2 className="size-4" /> Share
+          </button>
+        </div>
+      </div>
+
+      {/* Stats grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="c-card p-4 rounded-xl bg-[--c-bg-elev] border border-[--c-border] text-center">
+          <UsersIcon className="size-5 mx-auto mb-2 gold-text" />
+          <p className="display text-2xl gold-text font-bold font-mono">
+            {statsQ.isLoading ? '—' : stats?.totalReferrals ?? 0}
+          </p>
+          <p className="text-[10px] uppercase tracking-widest text-[--c-text-soft] mt-1 font-semibold">Total</p>
+        </div>
+        <div className="c-card p-4 rounded-xl bg-[--c-bg-elev] border border-[--c-border] text-center">
+          <Check className="size-5 mx-auto mb-2 text-green-400" />
+          <p className="display text-2xl text-green-400 font-bold font-mono">
+            {statsQ.isLoading ? '—' : stats?.successfulReferrals ?? 0}
+          </p>
+          <p className="text-[10px] uppercase tracking-widest text-[--c-text-soft] mt-1 font-semibold">Successful</p>
+        </div>
+        <div className="c-card p-4 rounded-xl bg-[--c-bg-elev] border border-[--c-border] text-center col-span-2 sm:col-span-1">
+          <TrendingUp className="size-5 mx-auto mb-2 gold-text" />
+          <p className="display text-2xl gold-text font-bold font-mono">
+            {statsQ.isLoading ? '—' : `₹${(stats?.totalEarned ?? 0).toLocaleString('en-IN')}`}
+          </p>
+          <p className="text-[10px] uppercase tracking-widest text-[--c-text-soft] mt-1 font-semibold">Earned</p>
+        </div>
+      </div>
+
+      {/* Apply someone else's code */}
+      <div className="c-card p-5 rounded-2xl bg-[--c-bg-elev] border border-[--c-border]">
+        <p className="subtitle text-[10px]">GOT A CODE?</p>
+        <p className="text-sm font-bold mt-1 mb-3">Apply your friend's referral code</p>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Enter code"
+            className="c-input flex-1 uppercase tracking-widest text-sm font-mono"
+            value={applyInput}
+            onChange={(e) => setApplyInput(e.target.value.toUpperCase())}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleApply() } }}
+          />
+          <button
+            className="c-button-primary !py-2 px-5 rounded-full text-xs font-bold uppercase tracking-widest cursor-pointer disabled:opacity-60"
+            onClick={handleApply}
+            disabled={applyMut.isPending || !applyInput.trim()}
+          >
+            {applyMut.isPending ? <Loader2 className="size-3.5 animate-spin" /> : 'Apply'}
+          </button>
+        </div>
+      </div>
+
+      {/* Referred users list */}
+      <div className="c-card rounded-2xl bg-[--c-bg-elev] border border-[--c-border] overflow-hidden">
+        <div className="p-5 border-b border-[--c-border]">
+          <p className="subtitle text-[10px]">FRIENDS WHO JOINED</p>
+          <h3 className="display text-lg font-bold mt-1">Your Referrals</h3>
+        </div>
+        {usersQ.isLoading ? (
+          <div className="p-8 text-center">
+            <Loader2 className="size-6 animate-spin mx-auto opacity-60" />
+          </div>
+        ) : users.length === 0 ? (
+          <div className="p-8 text-center">
+            <p className="text-sm text-[--c-text-soft]">No one has used your code yet.</p>
+            <p className="text-xs text-[--c-text-muted] mt-1">Share it to start earning.</p>
+          </div>
+        ) : (
+          <ul className="divide-y divide-[--c-border]">
+            {users.map((u) => (
+              <li key={u.id} className="p-4 flex items-center gap-3">
+                <div className="shrink-0 size-10 rounded-full inline-flex items-center justify-center bg-[--c-border] gold-text">
+                  <User className="size-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold truncate">{u.name ?? 'New friend'}</p>
+                  <p className="text-[10px] text-[--c-text-muted] mt-0.5">
+                    {u.joinedAt ? new Date(u.joinedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : ''}
+                    {u.status ? ` · ${u.status}` : ''}
+                  </p>
+                </div>
+                {u.earnedAmount ? (
+                  <p className="text-xs font-bold gold-text shrink-0">+ ₹{u.earnedAmount.toLocaleString('en-IN')}</p>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
   )
 }
 

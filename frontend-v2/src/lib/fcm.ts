@@ -108,11 +108,17 @@ function detectPlatform(): 'web' | 'android' | 'ios' {
 async function registerFcmToken(token: string): Promise<void> {
   const cached = (() => { try { return localStorage.getItem(TOKEN_CACHE_KEY) } catch { return null } })()
   if (cached === token) return
-  try {
-    await apiClient.post('/api/auth/register-fcm-token', { token, platform: detectPlatform() })
+  const platform = detectPlatform()
+  // Fan out to both the legacy panel endpoint AND the new customer-scoped
+  // endpoint (Batch 5 add). Whichever token the request interceptor attaches
+  // will decide which succeeds — the other will 401 silently.
+  const results = await Promise.allSettled([
+    apiClient.post('/api/auth/register-fcm-token', { token, platform }),
+    apiClient.post('/api/customer/device_token/register', { fcmToken: token, platform }),
+  ])
+  const anyOk = results.some((r) => r.status === 'fulfilled')
+  if (anyOk) {
     try { localStorage.setItem(TOKEN_CACHE_KEY, token) } catch { /* private mode */ }
-  } catch {
-    // backend unreachable — silently ignore so login is never blocked.
   }
 }
 

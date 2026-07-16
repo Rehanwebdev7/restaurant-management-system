@@ -1,7 +1,7 @@
 import { Suspense, useMemo, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MapPin, ChevronRight, Lock, Home, Briefcase, Plus, AlertTriangle } from 'lucide-react'
+import { MapPin, ChevronRight, Lock, Home, Briefcase, Plus, AlertTriangle, Tag, X, Check, Loader2 } from 'lucide-react'
 import CustomerLayout from '@/features/customer/CustomerLayout'
 import { formatPrice } from '@/features/customer/format'
 import { useBrand } from '@/components/providers/BrandProvider'
@@ -21,13 +21,19 @@ import {
   enqueueOrder as enqueueOfflineApiOrder,
   useOfflineQueueStatus
 } from '@/lib/offline-queue'
-import { usePlaceCustomerOrder } from '@/api/queries/customer'
+import {
+  usePlaceCustomerOrder, useAvailableCoupons, useApplyCoupon,
+  useRestaurantSections, useDiningTables,
+  useCreateStripeIntent, useConfirmStripePayment,
+  useCreatePayPalOrder, useCapturePayPalOrder,
+} from '@/api/queries/customer'
+import type { AppliedCoupon, CustomerCoupon } from '@/api/services/customer'
 import { StripePaymentElement } from '@/components/ui/stripe-payment-element'
 import { PayPalCheckoutButton } from '@/components/ui/paypal-checkout-button'
 import '@/styles/customer.css'
 
 type PaymentMethod = 'card' | 'paypal' | 'cod'
-type OrderType = 'DELIVERY' | 'TAKEAWAY'
+type OrderType = 'DELIVERY' | 'TAKEAWAY' | 'DINING'
 
 interface Address {
   id: number
@@ -49,6 +55,11 @@ export function CheckoutPage() {
   const placeOrder = usePlaceCustomerOrder()
   const [method, setMethod] = useState<PaymentMethod>('card')
   const [orderType, setOrderType] = useState<OrderType>('DELIVERY')
+  // Dine-in state (only relevant when orderType === 'DINING')
+  const [selectedSectionId, setSelectedSectionId] = useState<number | null>(null)
+  const [selectedTableId, setSelectedTableId] = useState<number | null>(null)
+  const sectionsQ = useRestaurantSections()
+  const tablesQ = useDiningTables()
   const offlineStatus = useOfflineQueueStatus()
 
   // Auth check
@@ -117,16 +128,89 @@ export function CheckoutPage() {
       .catch(() => {})
   }, [isSignedIn])
 
-  const total = useMemo(() => {
-    const subtotal = items.reduce((acc, l) => {
-      const d = catalog.dishes.find((x) => x.id === l.id) ?? DISHES.find((x) => x.id === l.id)
-      return d ? acc + d.price * l.qty : acc
-    }, 0)
-    const gst = Math.round(subtotal * 0.05)
-    return subtotal + gst
-  }, [items, catalog.dishes])
+  const subtotal = useMemo(() => items.reduce((acc, l) => {
+    const d = catalog.dishes.find((x) => x.id === l.id) ?? DISHES.find((x) => x.id === l.id)
+    return d ? acc + d.price * l.qty : acc
+  }, 0), [items, catalog.dishes])
+  const gst = useMemo(() => Math.round(subtotal * 0.05), [subtotal])
+  const preCouponTotal = subtotal + gst
 
-  const stripeClientSecret = '' // Stripe server client secret fallback
+  // Coupon state + hooks
+  const [couponInput, setCouponInput] = useState('')
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null)
+  const [showCouponsModal, setShowCouponsModal] = useState(false)
+  const availableCouponsQ = useAvailableCoupons(
+    { branchId, orderAmount: preCouponTotal, orderType },
+    isSignedIn && preCouponTotal > 0,
+  )
+  const applyCouponMut = useApplyCoupon()
+
+  const discount = appliedCoupon?.discountAmount ?? 0
+  const total = Math.max(0, preCouponTotal - discount)
+
+  const handleApplyCoupon = (code: string) => {
+    const trimmed = code.trim().toUpperCase()
+    if (!trimmed) {
+      toast.warning('Enter a coupon code')
+      return
+    }
+    if (!isSignedIn) {
+      toast.warning('Please sign in to apply a coupon')
+      return
+    }
+    if (preCouponTotal <= 0) {
+      toast.warning('Add items to your cart first')
+      return
+    }
+    applyCouponMut.mutate(
+      { code: trimmed, orderAmount: preCouponTotal, branchId, orderType },
+      {
+        onSuccess: (res) => {
+          if (res.ok) {
+            setAppliedCoupon(res.data)
+            setCouponInput(trimmed)
+            setShowCouponsModal(false)
+            toast.success(res.data.message ?? `Coupon applied — ₹${res.data.discountAmount} off`)
+          } else {
+            toast.warning(res.message)
+          }
+        },
+        onError: () => toast.warning('Could not apply coupon'),
+      },
+    )
+  }
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null)
+    setCouponInput('')
+    toast.info('Coupon removed')
+  }
+
+  // Payment gateway server hooks (Batch 4 wire-up)
+  const createStripeIntentMut = useCreateStripeIntent()
+  const confirmStripeMut = useConfirmStripePayment()
+  // createPayPalOrder is reserved for a future server-first PayPal flow;
+  // current client SDK creates orders client-side and we only capture server-side.
+  void useCreatePayPalOrder
+  const capturePayPalMut = useCapturePayPalOrder()
+  const [stripeClientSecret, setStripeClientSecret] = useState('')
+
+  // Lazy-fetch Stripe client secret when user picks card method + has items.
+  useEffect(() => {
+    if (method !== 'card' || total <= 0 || stripeClientSecret) return
+    let cancelled = false
+    createStripeIntentMut.mutate(
+      { amount: total, currency: 'INR' },
+      {
+        onSuccess: (res) => {
+          if (cancelled) return
+          if (res.ok) setStripeClientSecret(res.data.clientSecret)
+        },
+      },
+    )
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [method, total])
 
   const handleAddAddress = async () => {
     if (!newAddress.line1.trim() || !newAddress.pincode.trim() || !/^\d{6}$/.test(newAddress.pincode)) {
@@ -202,6 +286,17 @@ export function CheckoutPage() {
     const apiMethod: 'STRIPE' | 'PAYPAL' | 'CASH' =
       paymentMethod === 'card' ? 'STRIPE' : paymentMethod === 'paypal' ? 'PAYPAL' : 'CASH'
       
+    // NOTE (backend gap 2026-07-16): CustOrdersController.addCustomerOrder
+    // currently does NOT read `couponCode` — it recomputes totalAmount from
+    // subtotal + tax and ignores frontend discount. `/api/customer/coupon/apply`
+    // has already returned + we recorded appliedCoupon in UI, but until backend
+    // wires couponCode into order creation, the persisted order total will
+    // ignore the discount. Sending couponCode anyway so backend can honor it
+    // when the integration lands.
+    const diningInstructions = orderType === 'DINING'
+      ? `Dine-in${selectedSectionId ? ` · Section ${selectedSectionId}` : ''}${selectedTableId ? ` · Table ${selectedTableId}` : ''}`
+      : ''
+
     const apiPayload = {
       branchId,
       orderType: orderType,
@@ -209,7 +304,13 @@ export function CheckoutPage() {
       customerName: userName,
       customerPhone: userMobile,
       paymentMethod: apiMethod,
-      deliveryInstructions: orderType === 'DELIVERY' ? formattedInstructions : 'Takeaway Order',
+      deliveryInstructions:
+        orderType === 'DELIVERY' ? formattedInstructions :
+        orderType === 'DINING' ? diningInstructions :
+        'Takeaway Order',
+      ...(orderType === 'DINING' && selectedSectionId ? { sectionId: selectedSectionId } : {}),
+      ...(orderType === 'DINING' && selectedTableId ? { tableId: selectedTableId } : {}),
+      ...(appliedCoupon ? { couponCode: appliedCoupon.code, discountAmount: appliedCoupon.discountAmount } : {}),
     }
 
     if (typeof navigator !== 'undefined' && navigator.onLine === false) {
@@ -356,6 +457,18 @@ export function CheckoutPage() {
                 onClick={() => setOrderType('TAKEAWAY')}
               >
                 Self Takeaway
+              </button>
+              <button
+                type="button"
+                className={cn(
+                  'flex-1 py-3 text-xs font-bold tracking-widest uppercase rounded-xl transition-all cursor-pointer',
+                  orderType === 'DINING'
+                    ? 'bg-[--c-accent] text-black shadow-md'
+                    : 'text-[--c-text-soft] hover:text-white hover:bg-white/5'
+                )}
+                onClick={() => setOrderType('DINING')}
+              >
+                Dine-In
               </button>
             </div>
 
@@ -508,6 +621,72 @@ export function CheckoutPage() {
               </div>
             )}
 
+            {orderType === 'DINING' && (
+              <div className="backdrop-blur-lg bg-neutral-900/25 border border-white/10 rounded-2xl p-6 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-xl bg-[--c-accent]/10 text-[--c-accent] shrink-0">
+                    <Home className="size-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm uppercase tracking-wider text-white">Dine-In Table</h3>
+                    <p className="text-xs text-[--c-text-soft] mt-1">Pick your section + table. Waiter will confirm on arrival.</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-[--c-text-muted] mb-1 block">Section</label>
+                    <select
+                      className="c-input w-full"
+                      value={selectedSectionId ?? ''}
+                      onChange={(e) => {
+                        const v = e.target.value ? Number(e.target.value) : null
+                        setSelectedSectionId(v)
+                        setSelectedTableId(null)  // reset table when section changes
+                      }}
+                      disabled={sectionsQ.isLoading}
+                    >
+                      <option value="">{sectionsQ.isLoading ? 'Loading…' : 'Any section'}</option>
+                      {(sectionsQ.data ?? []).map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name}{s.capacity ? ` · ${s.capacity} seats` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-[--c-text-muted] mb-1 block">Table</label>
+                    <select
+                      className="c-input w-full"
+                      value={selectedTableId ?? ''}
+                      onChange={(e) => setSelectedTableId(e.target.value ? Number(e.target.value) : null)}
+                      disabled={tablesQ.isLoading}
+                    >
+                      <option value="">
+                        {tablesQ.isLoading
+                          ? 'Loading…'
+                          : selectedSectionId
+                            ? 'Pick a table'
+                            : 'Any available'}
+                      </option>
+                      {(tablesQ.data ?? [])
+                        .filter((t) => !selectedSectionId || t.sectionId === selectedSectionId)
+                        .filter((t) => t.isAvailable !== false)
+                        .map((t) => (
+                          <option key={t.id} value={t.id}>
+                            Table {t.tableNumber}{t.capacity ? ` · ${t.capacity} seats` : ''}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                </div>
+
+                <p className="text-[10px] text-[--c-text-muted] italic">
+                  If your section/table is busy on arrival, our host will seat you at the nearest available option.
+                </p>
+              </div>
+            )}
+
             {/* Address Selection Modal / Drawer */}
             <AnimatePresence>
               {showAddressModal && (
@@ -630,7 +809,12 @@ export function CheckoutPage() {
                         clientSecret={stripeClientSecret}
                         amount={total}
                         currency="INR"
-                        onSuccess={(pi) => finishOrder(`Order placed · ${pi.id}`)}
+                        onSuccess={async (pi) => {
+                          // Server-side confirm-payment: records the payment
+                          // against the customer's account before order create.
+                          await confirmStripeMut.mutateAsync({ paymentIntentId: pi.id })
+                          finishOrder(`Order placed · ${pi.id}`)
+                        }}
                         onError={(msg) => toast.error(msg)}
                       />
                     </Suspense>
@@ -650,7 +834,13 @@ export function CheckoutPage() {
                       <PayPalCheckoutButton
                         amount={total}
                         currency="INR"
-                        onSuccess={(orderId) => finishOrder(`Order placed · PayPal ${orderId}`)}
+                        onSuccess={async (orderId) => {
+                          // Server-side capture: transfers funds from
+                          // PayPal into our merchant account + records
+                          // the payment against the order.
+                          await capturePayPalMut.mutateAsync({ paypalOrderId: orderId })
+                          finishOrder(`Order placed · PayPal ${orderId}`)
+                        }}
                         onError={(msg) => toast.error(msg)}
                         disabled={total <= 0 || isPlaceDisabled}
                       />
@@ -705,21 +895,85 @@ export function CheckoutPage() {
                 })}
               </div>
 
+              {/* Coupon input row */}
+              <div className="border-t border-[--c-border] pt-3.5">
+                {appliedCoupon ? (
+                  <div
+                    className="flex items-center justify-between p-3 rounded-lg mb-2"
+                    style={{ background: 'rgba(var(--c-accent-rgb), 0.10)', border: '1px solid var(--c-accent)' }}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Check className="size-4 shrink-0" style={{ color: 'var(--c-accent)' }} />
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold truncate" style={{ color: 'var(--c-accent)' }}>
+                          {appliedCoupon.code} applied
+                        </p>
+                        <p className="text-[10px] text-[--c-text-muted]">
+                          ₹{appliedCoupon.discountAmount.toLocaleString('en-IN')} off
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      className="p-1.5 rounded hover:bg-[--c-bg-elev-2]"
+                      onClick={handleRemoveCoupon}
+                      aria-label="Remove coupon"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2 items-stretch">
+                    <div className="relative flex-1">
+                      <Tag className="absolute left-3 top-1/2 -translate-y-1/2 size-4 opacity-50" />
+                      <input
+                        type="text"
+                        placeholder="Have a coupon?"
+                        className="c-input w-full pl-10 pr-3 py-2 text-xs uppercase tracking-wider"
+                        value={couponInput}
+                        onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            handleApplyCoupon(couponInput)
+                          }
+                        }}
+                      />
+                    </div>
+                    <button
+                      className="c-button-outline px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg cursor-pointer disabled:opacity-60"
+                      onClick={() => handleApplyCoupon(couponInput)}
+                      disabled={applyCouponMut.isPending || !couponInput.trim()}
+                    >
+                      {applyCouponMut.isPending ? <Loader2 className="size-3.5 animate-spin" /> : 'Apply'}
+                    </button>
+                  </div>
+                )}
+                {!appliedCoupon && isSignedIn ? (
+                  <button
+                    className="text-[10px] font-bold uppercase tracking-widest mt-2 hover:underline"
+                    style={{ color: 'var(--c-accent)' }}
+                    onClick={() => setShowCouponsModal(true)}
+                  >
+                    See available offers →
+                  </button>
+                ) : null}
+              </div>
+
               <div className="border-t border-[--c-border] pt-3.5 space-y-2.5 text-xs font-semibold text-[--c-text-soft]">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
-                  <span className="font-mono">{formatPrice(items.reduce((acc, l) => {
-                    const d = catalog.dishes.find((x) => x.id === l.id) ?? DISHES.find((x) => x.id === l.id)
-                    return d ? acc + d.price * l.qty : acc
-                  }, 0))}</span>
+                  <span className="font-mono">{formatPrice(subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Tax & GST (5%)</span>
-                  <span className="font-mono">{formatPrice(Math.round(items.reduce((acc, l) => {
-                    const d = catalog.dishes.find((x) => x.id === l.id) ?? DISHES.find((x) => x.id === l.id)
-                    return d ? acc + d.price * l.qty : acc
-                  }, 0) * 0.05))}</span>
+                  <span className="font-mono">{formatPrice(gst)}</span>
                 </div>
+                {appliedCoupon ? (
+                  <div className="flex justify-between" style={{ color: 'var(--c-accent)' }}>
+                    <span>Discount ({appliedCoupon.code})</span>
+                    <span className="font-mono">− {formatPrice(discount)}</span>
+                  </div>
+                ) : null}
                 <div className="border-t border-[--c-border] pt-3 flex justify-between text-sm font-bold text-[--c-text]">
                   <span>Total Amount</span>
                   <span className="font-mono gold-text text-base">{formatPrice(total)}</span>
@@ -734,6 +988,116 @@ export function CheckoutPage() {
           </div>
         </div>
       </section>
+
+      {/* Available offers modal */}
+      <AnimatePresence>
+        {showCouponsModal ? (
+          <motion.div
+            className="fixed inset-0 z-[75] flex items-center justify-center p-4 sm:p-6"
+            role="dialog"
+            aria-label="Available offers"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <motion.div
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+              onClick={() => setShowCouponsModal(false)}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            />
+            <motion.div
+              className="relative w-full max-w-md c-card rounded-2xl border border-[--c-border] overflow-hidden max-h-[85vh] flex flex-col"
+              initial={{ y: 20, scale: 0.97, opacity: 0 }}
+              animate={{ y: 0, scale: 1, opacity: 1 }}
+              exit={{ y: 20, scale: 0.98, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 280, damping: 26 }}
+              style={{ background: 'var(--c-bg-elev)' }}
+            >
+              <div className="flex items-center justify-between p-4 border-b border-[--c-border]">
+                <div>
+                  <p className="subtitle text-[10px]">AVAILABLE OFFERS</p>
+                  <p className="text-sm font-bold mt-0.5">Pick a coupon to apply</p>
+                </div>
+                <button
+                  className="p-1.5 rounded hover:bg-[--c-bg-elev-2]"
+                  onClick={() => setShowCouponsModal(false)}
+                  aria-label="Close offers"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4">
+                {availableCouponsQ.isLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="size-5 animate-spin opacity-60" />
+                  </div>
+                ) : (() => {
+                  const data = availableCouponsQ.data
+                  const all: CustomerCoupon[] = [
+                    ...(data?.suggested ?? []),
+                    ...(data?.firstOrder ?? []),
+                    ...(data?.global ?? []),
+                  ]
+                  if (all.length === 0) {
+                    return (
+                      <div className="text-center py-10">
+                        <Tag className="size-10 mx-auto mb-3 opacity-30" />
+                        <p className="text-sm font-semibold">No offers available right now</p>
+                        <p className="text-xs text-[--c-text-muted] mt-1">
+                          Check back soon — new coupons drop weekly.
+                        </p>
+                      </div>
+                    )
+                  }
+                  return (
+                    <ul className="space-y-2">
+                      {all.map((c) => (
+                        <li
+                          key={`${c.bucket}-${c.id}`}
+                          className="p-4 rounded-xl border border-[--c-border] flex items-center gap-3 transition-colors hover:border-[--c-accent]"
+                        >
+                          <div
+                            className="shrink-0 size-11 rounded-full inline-flex items-center justify-center"
+                            style={{ background: 'rgba(var(--c-accent-rgb), 0.15)', color: 'var(--c-accent)' }}
+                          >
+                            <Tag className="size-5" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold font-mono" style={{ color: 'var(--c-accent)' }}>{c.code}</p>
+                            {c.title ? (
+                              <p className="text-xs font-semibold truncate">{c.title}</p>
+                            ) : null}
+                            {c.description ? (
+                              <p className="text-[10px] text-[--c-text-muted] mt-0.5 leading-relaxed line-clamp-2">
+                                {c.description}
+                              </p>
+                            ) : null}
+                            {c.minOrderAmount ? (
+                              <p className="text-[10px] text-[--c-text-muted] mt-1">
+                                Min order ₹{c.minOrderAmount.toLocaleString('en-IN')}
+                              </p>
+                            ) : null}
+                          </div>
+                          <button
+                            className="c-button-outline px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-full shrink-0"
+                            onClick={() => handleApplyCoupon(c.code)}
+                            disabled={applyCouponMut.isPending}
+                          >
+                            {applyCouponMut.isPending ? <Loader2 className="size-3 animate-spin" /> : 'Apply'}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )
+                })()}
+              </div>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </CustomerLayout>
   )
 }

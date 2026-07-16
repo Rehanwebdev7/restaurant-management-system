@@ -114,6 +114,15 @@ public class CustRestaurantBranchController {
                                     : null);
                             row.put("latitude", meta.getLatitude());
                             row.put("longitude", meta.getLongitude());
+                            // Rich per-branch metadata for LocationsPage cards
+                            // (2026-07-16 widen — un-hardcode BRANCHES const).
+                            row.put("specialty", meta.getSpecialty());
+                            row.put("seating", meta.getSeating());
+                            row.put("bestFor", meta.getBestFor());
+                            row.put("features", meta.getFeatures());
+                            row.put("chefNote", meta.getChefNote());
+                            row.put("photoUrl", meta.getPhotoUrl());
+                            row.put("drivePhotoUrl", meta.getDrivePhotoUrl());
                         }
                         return row;
                     })
