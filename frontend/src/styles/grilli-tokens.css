@@ -1,0 +1,543 @@
+/* =============================================================
+   Grilli-style design tokens (main branch customer UI only)
+   ------------------------------------------------------------
+   Applies to: frontend/src/pages/modules/Customer/*
+   Do NOT import in admin/superadmin/staff/branch pages.
+   ============================================================= */
+
+:root {
+  /* ---- Surfaces (smoky, layered) ------------------------- */
+  --grilli-surface-void:      #0A0908;                 /* page bg */
+  --grilli-surface-raised:    #14110F;                 /* cards, modals */
+  --grilli-surface-elev:      #1A1613;                 /* nav, tooltips */
+  --grilli-surface-line:      #1F1C18;                 /* dividers, borders */
+  --grilli-overlay-hush:      rgba(0, 0, 0, 0.85);
+  --grilli-overlay-veil:      rgba(0, 0, 0, 0.55);
+
+  /* ---- Accent (single warm gold, our tone) --------------- */
+  --grilli-gold:              #D4A857;                 /* primary accent */
+  --grilli-gold-soft:         #E8CFA0;                 /* hover / highlight */
+  --grilli-gold-deep:         #A88338;                 /* pressed / border */
+  --grilli-gold-hairline:     rgba(212, 168, 87, 0.35);
+  --grilli-gold-glow:         rgba(212, 168, 87, 0.15);
+
+  /* ---- Text scale ---------------------------------------- */
+  --grilli-text-ivory:        #F5EFE6;                 /* primary */
+  --grilli-text-mist:         #A69889;                 /* secondary */
+  --grilli-text-shadow:       #5E574F;                 /* tertiary */
+  --grilli-text-inverse:      #0A0908;                 /* on gold */
+
+  /* ---- Typography ---------------------------------------- */
+  --grilli-font-display:      'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --grilli-font-body:         'Inter', system-ui, -apple-system, sans-serif;
+  --grilli-track-tight:       -0.01em;
+  --grilli-track-normal:      0;
+  --grilli-track-wide:        0.15em;
+  --grilli-track-wider:       0.28em;
+  --grilli-track-widest:      0.4em;
+  --grilli-lh-tight:          1.1;
+  --grilli-lh-body:           1.6;
+
+  /* ---- Rhythm & sizing ----------------------------------- */
+  --grilli-section-y:         clamp(48px, 8vw, 96px);
+  --grilli-section-inner-y:   clamp(24px, 4vw, 48px);
+  --grilli-container:         1280px;
+  --grilli-container-narrow:  960px;
+  --grilli-gutter:            clamp(16px, 3vw, 32px);
+
+  /* ---- Radii (sharp by default) -------------------------- */
+  --grilli-radius-0:          0;
+  --grilli-radius-input:      2px;
+  --grilli-radius-pill:       999px;
+
+  /* ---- Motion -------------------------------------------- */
+  --grilli-ease-luxe:         cubic-bezier(0.2, 0.7, 0.2, 1);
+  --grilli-ease-shine:        cubic-bezier(0.4, 0, 0.2, 1);
+  --grilli-dur-fast:          200ms;
+  --grilli-dur-med:           400ms;
+  --grilli-dur-slow:          800ms;
+  --grilli-dur-hero:          1200ms;
+
+  /* ---- Elevation (mostly flat, subtle) ------------------- */
+  --grilli-shadow-card:       0 8px 32px rgba(0, 0, 0, 0.4);
+  --grilli-shadow-lift:       0 16px 48px rgba(0, 0, 0, 0.55);
+  --grilli-shadow-glow:       0 0 24px var(--grilli-gold-glow);
+}
+
+/* =============================================================
+   Base scaffolding (scoped to .grilli-scope so it never leaks
+   into admin pages that may import unrelated styles)
+   ============================================================= */
+
+.grilli-scope {
+  background: var(--grilli-surface-void);
+  color: var(--grilli-text-ivory);
+  font-family: var(--grilli-font-body);
+  font-weight: 400;
+  line-height: var(--grilli-lh-body);
+  letter-spacing: var(--grilli-track-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.grilli-scope ::selection {
+  background: var(--grilli-gold);
+  color: var(--grilli-text-inverse);
+}
+
+/* =============================================================
+   Layout primitives
+   ============================================================= */
+
+.grilli-section {
+  padding-top: var(--grilli-section-y);
+  padding-bottom: var(--grilli-section-y);
+  position: relative;
+}
+
+.grilli-container {
+  max-width: var(--grilli-container);
+  margin: 0 auto;
+  padding-left: var(--grilli-gutter);
+  padding-right: var(--grilli-gutter);
+}
+
+.grilli-container-narrow {
+  max-width: var(--grilli-container-narrow);
+  margin: 0 auto;
+  padding-left: var(--grilli-gutter);
+  padding-right: var(--grilli-gutter);
+}
+
+/* =============================================================
+   Typography primitives
+   ============================================================= */
+
+.grilli-heading {
+  font-family: var(--grilli-font-display);
+  font-weight: 400;
+  color: var(--grilli-text-ivory);
+  line-height: var(--grilli-lh-tight);
+  letter-spacing: var(--grilli-track-tight);
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.grilli-heading-xl {
+  font-size: clamp(2.5rem, 6vw, 5.5rem);
+}
+
+.grilli-heading-lg {
+  font-size: clamp(2rem, 4vw, 3.5rem);
+}
+
+.grilli-heading-md {
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
+}
+
+.grilli-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--grilli-font-body);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--grilli-gold);
+  letter-spacing: var(--grilli-track-widest);
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.grilli-eyebrow::before,
+.grilli-eyebrow::after {
+  content: '';
+  display: inline-block;
+  width: 24px;
+  height: 1px;
+  background: var(--grilli-gold-hairline);
+}
+
+.grilli-body {
+  font-family: var(--grilli-font-body);
+  color: var(--grilli-text-mist);
+  font-size: 1rem;
+  line-height: var(--grilli-lh-body);
+}
+
+.grilli-body-lg {
+  font-size: 1.125rem;
+}
+
+.grilli-body-sm {
+  font-size: 0.875rem;
+}
+
+/* =============================================================
+   Ornaments (Unicode-only, no new PNG assets per plan)
+   ============================================================= */
+
+.grilli-ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  color: var(--grilli-gold);
+  font-size: 1rem;
+  letter-spacing: 0.4em;
+  margin: 1.5rem 0;
+}
+
+.grilli-ornament::before,
+.grilli-ornament::after {
+  content: '';
+  flex: 0 1 60px;
+  height: 1px;
+  background: var(--grilli-gold-hairline);
+}
+
+.grilli-ornament-mark {
+  display: inline-block;
+  color: var(--grilli-gold);
+  font-size: 0.75rem;
+  letter-spacing: 0.5em;
+}
+
+.grilli-stars {
+  color: var(--grilli-gold);
+  letter-spacing: 0.3em;
+  font-size: 0.875rem;
+  display: inline-block;
+}
+
+/* =============================================================
+   Buttons (outline default, shine sweep on hover)
+   ============================================================= */
+
+.grilli-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.9rem 2rem;
+  font-family: var(--grilli-font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: var(--grilli-track-wider);
+  text-transform: uppercase;
+  text-decoration: none;
+  border: 1px solid var(--grilli-gold);
+  color: var(--grilli-gold);
+  background: transparent;
+  border-radius: var(--grilli-radius-0);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: color var(--grilli-dur-med) var(--grilli-ease-luxe);
+  isolation: isolate;
+}
+
+.grilli-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    transparent 20%,
+    var(--grilli-gold) 50%,
+    transparent 80%
+  );
+  transform: translateX(-100%) skewX(-20deg);
+  transition: transform var(--grilli-dur-slow) var(--grilli-ease-shine);
+  z-index: -1;
+}
+
+.grilli-btn:hover {
+  color: var(--grilli-text-inverse);
+}
+
+.grilli-btn:hover::before {
+  transform: translateX(100%) skewX(-20deg);
+}
+
+.grilli-btn-solid {
+  background: var(--grilli-gold);
+  color: var(--grilli-text-inverse);
+}
+
+.grilli-btn-solid:hover {
+  background: var(--grilli-gold-soft);
+  color: var(--grilli-text-inverse);
+}
+
+.grilli-btn-ghost {
+  border-color: var(--grilli-gold-hairline);
+  color: var(--grilli-text-ivory);
+}
+
+.grilli-btn-ghost:hover {
+  border-color: var(--grilli-gold);
+  color: var(--grilli-gold);
+}
+
+/* Circular icon button (nav wishlist / location / theme / login) */
+.grilli-btn-circle {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border-radius: var(--grilli-radius-pill);
+  border: 1px solid var(--grilli-gold-hairline);
+  color: var(--grilli-gold);
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: color var(--grilli-dur-med) var(--grilli-ease-luxe),
+              border-color var(--grilli-dur-med) var(--grilli-ease-luxe);
+}
+
+.grilli-btn-circle::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0;
+  background: var(--grilli-gold);
+  transition: height var(--grilli-dur-med) var(--grilli-ease-luxe);
+  z-index: -1;
+}
+
+.grilli-btn-circle:hover {
+  color: var(--grilli-text-inverse);
+  border-color: var(--grilli-gold);
+}
+
+.grilli-btn-circle:hover::before {
+  height: 100%;
+}
+
+/* =============================================================
+   Link underline reveal (Grilli scaleX pattern)
+   ============================================================= */
+
+.grilli-link {
+  color: var(--grilli-text-ivory);
+  text-decoration: none;
+  position: relative;
+  padding-bottom: 4px;
+  letter-spacing: var(--grilli-track-wider);
+  text-transform: uppercase;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: color var(--grilli-dur-med) var(--grilli-ease-luxe);
+}
+
+.grilli-link::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--grilli-gold);
+  transform: scaleX(0);
+  transform-origin: right center;
+  transition: transform var(--grilli-dur-med) var(--grilli-ease-luxe);
+}
+
+.grilli-link:hover,
+.grilli-link.is-active {
+  color: var(--grilli-gold);
+}
+
+.grilli-link:hover::before,
+.grilli-link.is-active::before {
+  transform: scaleX(1);
+  transform-origin: left center;
+}
+
+/* =============================================================
+   Cards (sharp corners, dark, shine sweep on image)
+   ============================================================= */
+
+.grilli-card {
+  background: var(--grilli-surface-raised);
+  border: 1px solid var(--grilli-surface-line);
+  border-radius: var(--grilli-radius-0);
+  overflow: hidden;
+  position: relative;
+  transition: border-color var(--grilli-dur-med) var(--grilli-ease-luxe),
+              transform var(--grilli-dur-med) var(--grilli-ease-luxe);
+}
+
+.grilli-card:hover {
+  border-color: var(--grilli-gold-hairline);
+  transform: translateY(-4px);
+}
+
+.grilli-card-media {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+}
+
+.grilli-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--grilli-dur-slow) var(--grilli-ease-luxe);
+}
+
+.grilli-card:hover .grilli-card-media img {
+  transform: scale(1.06);
+}
+
+.grilli-card-media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 70%
+  );
+  transform: translateX(-100%);
+  transition: transform var(--grilli-dur-slow) var(--grilli-ease-shine);
+  pointer-events: none;
+}
+
+.grilli-card:hover .grilli-card-media::after {
+  transform: translateX(100%);
+}
+
+.grilli-card-body {
+  padding: 1.5rem;
+}
+
+/* =============================================================
+   Form fields (dark, gold hairline focus)
+   ============================================================= */
+
+.grilli-input,
+.grilli-select,
+.grilli-textarea {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  background: var(--grilli-surface-raised);
+  border: 1px solid var(--grilli-surface-line);
+  border-radius: var(--grilli-radius-input);
+  color: var(--grilli-text-ivory);
+  font-family: var(--grilli-font-body);
+  font-size: 0.9375rem;
+  letter-spacing: var(--grilli-track-tight);
+  transition: border-color var(--grilli-dur-med) var(--grilli-ease-luxe),
+              background var(--grilli-dur-med) var(--grilli-ease-luxe);
+  appearance: none;
+}
+
+.grilli-input::placeholder,
+.grilli-textarea::placeholder {
+  color: var(--grilli-text-shadow);
+  letter-spacing: var(--grilli-track-tight);
+}
+
+.grilli-input:focus,
+.grilli-select:focus,
+.grilli-textarea:focus {
+  outline: none;
+  border-color: var(--grilli-gold);
+  background: var(--grilli-surface-void);
+}
+
+.grilli-label {
+  display: block;
+  font-family: var(--grilli-font-body);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--grilli-text-mist);
+  letter-spacing: var(--grilli-track-widest);
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+/* =============================================================
+   Custom scrollbar (gold thumb on dark)
+   ============================================================= */
+
+.grilli-scope::-webkit-scrollbar,
+body:has(.grilli-scope)::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.grilli-scope::-webkit-scrollbar-track,
+body:has(.grilli-scope)::-webkit-scrollbar-track {
+  background: var(--grilli-surface-void);
+}
+
+.grilli-scope::-webkit-scrollbar-thumb,
+body:has(.grilli-scope)::-webkit-scrollbar-thumb {
+  background: var(--grilli-gold-deep);
+  border-radius: var(--grilli-radius-pill);
+}
+
+.grilli-scope::-webkit-scrollbar-thumb:hover,
+body:has(.grilli-scope)::-webkit-scrollbar-thumb:hover {
+  background: var(--grilli-gold);
+}
+
+/* =============================================================
+   Hero utility (dark image overlay + centered content)
+   ============================================================= */
+
+.grilli-hero {
+  position: relative;
+  min-height: 88vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--grilli-text-ivory);
+  overflow: hidden;
+}
+
+.grilli-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    var(--grilli-overlay-hush) 0%,
+    var(--grilli-overlay-veil) 60%,
+    transparent 100%
+  );
+  z-index: 1;
+}
+
+.grilli-hero-content {
+  position: relative;
+  z-index: 2;
+  padding: var(--grilli-gutter);
+  max-width: var(--grilli-container-narrow);
+}
+
+/* =============================================================
+   Utility: fade-in on enter (used on hero + section reveal)
+   ============================================================= */
+
+@keyframes grilliFadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.grilli-fade-in {
+  animation: grilliFadeUp var(--grilli-dur-hero) var(--grilli-ease-luxe) both;
+}
+
+.grilli-fade-in-delay-1 { animation-delay: 150ms; }
+.grilli-fade-in-delay-2 { animation-delay: 300ms; }
+.grilli-fade-in-delay-3 { animation-delay: 450ms; }
