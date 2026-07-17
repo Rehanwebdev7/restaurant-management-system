@@ -1,6 +1,8 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
-import { Plus, ShieldCheck, X, Bell, Building2 } from 'lucide-react'
+import { Plus, ShieldCheck, X, Bell, Building2, Search } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
 import { PageHeader } from '@/components/ui/page-header'
 import { DataTable } from '@/components/ui/data-table'
 import { Badge } from '@/components/ui/badge'
@@ -19,7 +21,10 @@ import {
   useSuperadminNotifications,
   useUpdateUserApproval,
   useSuperadminUsers,
+  useGrantSubscriptionGrace,
 } from '@/api/queries/superadmin'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
 import type {
   SuperadminBranch,
   SuperadminSubscription,
@@ -191,15 +196,43 @@ export function SubscriptionPlans() {
 
 /* ---------- Subscriptions ---------- */
 
+const SUBSCRIPTION_FILTERS: Array<{ key: string; label: string; match: (s: string) => boolean }> = [
+  { key: 'all',       label: 'All',        match: () => true },
+  { key: 'active',    label: 'Active',     match: (s) => s === 'active' },
+  { key: 'expired',   label: 'Expired',    match: (s) => s === 'expired' || s === 'past_due' || s === 'pastdue' },
+  { key: 'cancelled', label: 'Cancelled',  match: (s) => s === 'cancelled' || s === 'rejected' },
+  { key: 'grace',     label: 'Grace',      match: (s) => s === 'grace' },
+]
+
 export function Subscriptions() {
   const query = useSuperadminSubscriptions()
-  const rows: SuperadminSubscription[] = query.data ?? []
+  const raw: SuperadminSubscription[] = query.data ?? []
+  const [filter, setFilter] = useState('all')
+  const [detail, setDetail] = useState<SuperadminSubscription | null>(null)
+  const [graceOpen, setGraceOpen] = useState(false)
+  const [graceDays, setGraceDays] = useState<number>(7)
+  const [graceNotes, setGraceNotes] = useState('')
+  const grant = useGrantSubscriptionGrace()
+
+  const rows = useMemo(() => {
+    const cfg = SUBSCRIPTION_FILTERS.find((f) => f.key === filter)!
+    return raw.filter((r) => cfg.match(String(r.status ?? '').toLowerCase()))
+  }, [raw, filter])
+
+  const counts = useMemo(() => {
+    const c: Record<string, number> = {}
+    for (const f of SUBSCRIPTION_FILTERS) {
+      c[f.key] = raw.filter((r) => f.match(String(r.status ?? '').toLowerCase())).length
+    }
+    return c
+  }, [raw])
 
   const columns = useMemo<ColumnDef<SuperadminSubscription>[]>(() => [
     {
       id: 'tenant',
       header: 'Tenant',
       accessorFn: (r) => r.user?.name ?? '—',
+      cell: ({ row }) => <span className="font-medium">{row.original.user?.name ?? '—'}</span>,
     },
     {
       id: 'plan',
@@ -222,13 +255,28 @@ export function Subscriptions() {
       accessorKey: 'status',
       header: 'Status',
       cell: ({ row }) => {
-        const s = row.original.status?.toLowerCase()
+        const s = String(row.original.status ?? '').toLowerCase()
         if (s === 'active') return <Badge variant="success">Active</Badge>
-        if (s === 'past_due' || s === 'pastdue' || s === 'grace') return <Badge variant="destructive">Past due</Badge>
+        if (s === 'grace') return <Badge variant="warning">Grace</Badge>
+        if (s === 'past_due' || s === 'pastdue' || s === 'expired') return <Badge variant="destructive">Expired</Badge>
+        if (s === 'cancelled') return <Badge variant="destructive">Cancelled</Badge>
         return <Badge variant="secondary">{row.original.status ?? '—'}</Badge>
       },
     },
   ], [])
+
+  const openGrace = () => { setGraceDays(7); setGraceNotes(''); setGraceOpen(true) }
+
+  const submitGrace = async () => {
+    if (!detail?.subscriptionId || graceDays <= 0) { toast.warning('Enter valid grace days'); return }
+    const res = await grant.mutateAsync({ id: detail.subscriptionId, days: graceDays, notes: graceNotes || undefined })
+    if (res.ok) {
+      toast.success(`Granted ${graceDays} days grace`)
+      setGraceOpen(false); setDetail(null)
+    } else {
+      toast.error(res.message)
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -237,6 +285,30 @@ export function Subscriptions() {
         description="Active and overdue subscriptions across tenants."
         breadcrumbs={crumb('Subscriptions')}
       />
+
+      {/* Filter pills */}
+      <Card>
+        <CardContent className="pt-4 pb-3">
+          <div className="flex flex-wrap gap-1">
+            {SUBSCRIPTION_FILTERS.map((f) => (
+              <button
+                key={f.key}
+                type="button"
+                onClick={() => setFilter(f.key)}
+                className={cn(
+                  'px-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wider transition-colors',
+                  filter === f.key
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                )}
+              >
+                {f.label} <span className="opacity-70 ml-1">({counts[f.key] ?? 0})</span>
+              </button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
       <DataTable
         data={rows}
         columns={columns}
@@ -244,28 +316,127 @@ export function Subscriptions() {
         searchPlaceholder="Search by tenant or plan…"
         emptyTitle="No subscriptions"
         emptyDescription={query.isError ? 'Backend returned an error.' : 'Subscriptions will appear here once tenants subscribe.'}
+        onRowClick={(row) => setDetail(row)}
       />
+
+      {/* Detail dialog */}
+      <Dialog open={detail != null} onOpenChange={(o) => !o && setDetail(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{detail?.user?.name ?? 'Subscription'}</DialogTitle>
+            <DialogDescription>
+              #{detail?.subscriptionId} · {detail?.plan?.planName ?? '—'}
+            </DialogDescription>
+          </DialogHeader>
+          {detail ? (
+            <div className="space-y-2 text-sm max-h-[55vh] overflow-y-auto themed-scrollbar pr-1">
+              <DetailRow label="Tenant"       value={detail.user?.name ?? '—'} />
+              <DetailRow label="Email"        value={detail.user?.email ?? '—'} />
+              <DetailRow label="Mobile"       value={detail.user?.mobile ?? '—'} />
+              <DetailRow label="Plan"         value={detail.plan?.planName ?? '—'} />
+              <DetailRow label="Amount Paid"  value={`₹${Number(detail.amountPaid ?? 0).toLocaleString('en-IN')}`} />
+              <DetailRow label="Discount"     value={`₹${Number(detail.discountAmount ?? 0).toLocaleString('en-IN')}`} />
+              <DetailRow label="Start"        value={detail.startDate ?? '—'} />
+              <DetailRow label="End"          value={detail.endDate ?? '—'} />
+              <DetailRow label="Grace ends"   value={detail.graceEndDate ?? '—'} />
+              <DetailRow label="Status"       value={detail.status ?? '—'} />
+              <DetailRow label="Coupon"       value={detail.couponCode ?? '—'} />
+              <DetailRow label="Reference"    value={detail.paymentReference ?? '—'} />
+              {detail.notes ? <DetailRow label="Notes" value={detail.notes} /> : null}
+            </div>
+          ) : null}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setDetail(null)}>Close</Button>
+            <Button onClick={openGrace} disabled={detail == null}>
+              <ShieldCheck className="size-4" /> Grant Grace
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Grant grace dialog */}
+      <Dialog open={graceOpen} onOpenChange={(o) => !o && setGraceOpen(false)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Grant Grace Period</DialogTitle>
+            <DialogDescription>
+              Extend {detail?.user?.name ?? 'this subscription'} for a defined number of days.
+              This calls <code className="text-[10px]">/api/admin/subscriptions/{`{id}`}/grant-grace</code>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label>Grace Days <span className="text-destructive">*</span></Label>
+              <input
+                type="number"
+                min={1}
+                value={graceDays}
+                onChange={(e) => setGraceDays(Number(e.target.value) || 0)}
+                className="w-full h-11 rounded-md border border-input bg-background px-3 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Notes (optional)</Label>
+              <textarea
+                value={graceNotes}
+                onChange={(e) => setGraceNotes(e.target.value)}
+                placeholder="Reason for grace period…"
+                className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setGraceOpen(false)} disabled={grant.isPending}>Cancel</Button>
+            <Button onClick={submitGrace} disabled={grant.isPending || graceDays <= 0}>
+              {grant.isPending ? 'Granting…' : `Grant ${graceDays} days`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-start justify-between gap-3 border-b border-border/60 pb-2 last:border-0">
+      <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground min-w-[110px]">{label}</span>
+      <span className="text-right break-words">{value}</span>
     </div>
   )
 }
 
 /* ---------- User approvals ---------- */
 
+const APPROVAL_TABS: Array<{ key: 'PENDING' | 'APPROVED' | 'REJECTED'; label: string }> = [
+  { key: 'PENDING',  label: 'Pending'  },
+  { key: 'APPROVED', label: 'Approved' },
+  { key: 'REJECTED', label: 'Rejected' },
+]
+
 export function UserApprovals() {
-  const query = useSuperadminUserApprovals('PENDING')
+  const [status, setStatus] = useState<'PENDING' | 'APPROVED' | 'REJECTED'>('PENDING')
+  const [query, setQuery] = useState('')
+  const listQ = useSuperadminUserApprovals(status)
   const update = useUpdateUserApproval()
-  const rows: SuperadminUserApproval[] = query.data ?? []
+  const raw: SuperadminUserApproval[] = listQ.data ?? []
+  const rows = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return raw
+    return raw.filter((a) =>
+      (a.name ?? '').toLowerCase().includes(q) ||
+      (a.email ?? '').toLowerCase().includes(q) ||
+      (a.mobile ?? '').includes(q),
+    )
+  }, [raw, query])
 
   const handle = (id: number, approvalStatus: 'APPROVED' | 'REJECTED') => {
     update.mutate(
       { id, approvalStatus },
       {
         onSuccess: (res) => {
-          if (res.ok) {
-            toast.success(approvalStatus === 'APPROVED' ? 'Approved' : 'Rejected')
-          } else {
-            toast.error(res.message)
-          }
+          if (res.ok) toast.success(approvalStatus === 'APPROVED' ? 'Approved' : 'Rejected')
+          else toast.error(res.message)
         },
         onError: (err) => toast.error(err instanceof Error ? err.message : 'Action failed'),
       }
@@ -276,11 +447,43 @@ export function UserApprovals() {
     <div className="space-y-6">
       <PageHeader
         title="User Approvals"
-        description="Pending registrations awaiting review."
+        description="Review pending signups, edit details, and approve access from one place."
         breadcrumbs={crumb('Approvals')}
       />
 
-      {query.isLoading ? (
+      {/* Toolbar — tabs + search */}
+      <Card>
+        <CardContent className="pt-4 pb-3 flex flex-col md:flex-row items-stretch md:items-center gap-3">
+          <div className="flex flex-wrap gap-1">
+            {APPROVAL_TABS.map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => setStatus(t.key)}
+                className={cn(
+                  'px-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wider transition-colors',
+                  status === t.key
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                )}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <div className="relative flex-1 max-w-md md:ml-auto">
+            <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <Input
+              placeholder="Search by name, email, mobile…"
+              className="pl-9"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {listQ.isLoading ? (
         <ul className="space-y-2">
           {Array.from({ length: 3 }).map((_, i) => (
             <li key={i}><Card><CardContent className="pt-6"><div className="skeleton-shimmer h-10 rounded" /></CardContent></Card></li>
@@ -291,8 +494,8 @@ export function UserApprovals() {
           <CardContent className="pt-6">
             <EmptyState
               icon={<ShieldCheck className="size-6" />}
-              title="No pending approvals"
-              description={query.isError ? 'Backend returned an error.' : 'All caught up — new registrations will appear here.'}
+              title={query ? 'No matching users' : `No ${status.toLowerCase()} approvals`}
+              description={query ? 'Try adjusting your search.' : (listQ.isError ? 'Backend returned an error.' : 'All caught up — new items will appear here.')}
             />
           </CardContent>
         </Card>
@@ -308,16 +511,20 @@ export function UserApprovals() {
                       {(a.role ?? 'User')} · {a.mobile ?? '—'}{a.createdAt ? ` · ${a.createdAt.slice(0, 10)}` : ''}
                     </p>
                   </div>
-                  <Button
-                    variant="ghost"
-                    onClick={() => handle(a.id, 'REJECTED')}
-                    disabled={update.isPending}
-                  >
-                    <X className="size-4" /> Reject
-                  </Button>
-                  <Button onClick={() => handle(a.id, 'APPROVED')} disabled={update.isPending}>
-                    <ShieldCheck className="size-4" /> Approve
-                  </Button>
+                  {status === 'PENDING' ? (
+                    <>
+                      <Button variant="ghost" onClick={() => handle(a.id, 'REJECTED')} disabled={update.isPending}>
+                        <X className="size-4" /> Reject
+                      </Button>
+                      <Button onClick={() => handle(a.id, 'APPROVED')} disabled={update.isPending}>
+                        <ShieldCheck className="size-4" /> Approve
+                      </Button>
+                    </>
+                  ) : status === 'APPROVED' ? (
+                    <Badge variant="success">Approved</Badge>
+                  ) : (
+                    <Badge variant="destructive">Rejected</Badge>
+                  )}
                 </CardContent>
               </Card>
             </li>

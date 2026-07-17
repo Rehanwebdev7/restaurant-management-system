@@ -291,3 +291,260 @@ export async function updateUserApproval(
     return { ok: false, message: mutationError(err) }
   }
 }
+
+export async function impersonateUser(id: number): Promise<MutationResult<{ token?: string; name?: string; email?: string }>> {
+  try {
+    const r = await apiClient.post(`/api/admin/users/${id}/impersonate`, {})
+    return { ok: true, data: unwrap(r, 'data.data') ?? {} }
+  } catch (err) {
+    return { ok: false, message: mutationError(err) }
+  }
+}
+
+export async function grantSubscriptionGrace(id: number, body: { days: number; notes?: string }): Promise<MutationResult<string>> {
+  try {
+    const r = await apiClient.post(`/api/admin/subscriptions/${id}/grant-grace`, body)
+    return { ok: true, data: unwrap<string>(r, 'data.data') ?? 'Grace granted' }
+  } catch (err) {
+    return { ok: false, message: mutationError(err) }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ * GENERIC CRUD FACTORY (2026-07-16 evening)
+ *
+ * Almost every admin controller follows the same convention:
+ *   GET  {base}/all           → list T[]
+ *   GET  {base}/{id}          → get T
+ *   POST {base}/add           → create (body: T)
+ *   PUT  {base}/update        → update (body: T with id)
+ *   DELETE {base}/{id}        → delete
+ *
+ * Building a generic factory here saves ~50 near-identical wrapper
+ * functions across 14 new resources.
+ * ═══════════════════════════════════════════════════════════════════ */
+
+export interface CrudService<T, TCreate = Partial<T>, TUpdate = Partial<T>> {
+  list: () => Promise<T[]>
+  get: (id: number) => Promise<T | null>
+  create: (body: TCreate) => Promise<MutationResult<T>>
+  update: (body: TUpdate & { id?: number }) => Promise<MutationResult<T>>
+  remove: (id: number) => Promise<MutationResult<void>>
+}
+
+export function makeCrudService<T, TCreate = Partial<T>, TUpdate = Partial<T>>(
+  basePath: string,
+  opts: { listPath?: string; addPath?: string; updatePath?: string } = {},
+): CrudService<T, TCreate, TUpdate> {
+  const listPath   = opts.listPath   ?? '/all'
+  const addPath    = opts.addPath    ?? '/add'
+  const updatePath = opts.updatePath ?? '/update'
+  return {
+    list: () => safeGetList<T>(`${basePath}${listPath}`),
+    get:  (id) => safeGet<T>(`${basePath}/${id}`),
+    create: async (body) => {
+      try {
+        const r = await apiClient.post(`${basePath}${addPath}`, body)
+        return { ok: true, data: (unwrap(r, 'data.data') as T) ?? ({} as T) }
+      } catch (err) { return { ok: false, message: mutationError(err) } }
+    },
+    update: async (body) => {
+      try {
+        const r = await apiClient.put(`${basePath}${updatePath}`, body)
+        return { ok: true, data: (unwrap(r, 'data.data') as T) ?? ({} as T) }
+      } catch (err) { return { ok: false, message: mutationError(err) } }
+    },
+    remove: async (id) => {
+      try {
+        await apiClient.delete(`${basePath}/${id}`)
+        return { ok: true, data: undefined }
+      } catch (err) { return { ok: false, message: mutationError(err) } }
+    },
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ * 14 NEW RESOURCE SERVICES (all admin endpoints already exist)
+ * ═══════════════════════════════════════════════════════════════════ */
+
+// Loose types — real backend shapes vary; pages read the fields they need.
+export type AdminEntity = Record<string, unknown> & { id?: number }
+
+export const menuCategoryService     = makeCrudService<AdminEntity>('/api/admin/menu_category')
+export const menuSubcategoryService  = makeCrudService<AdminEntity>('/api/admin/menu_subcategory')
+export const sectionService          = makeCrudService<AdminEntity>('/api/admin/section')
+export const diningTablesService     = makeCrudService<AdminEntity>('/api/admin/dining_tables')
+export const addonsService           = makeCrudService<AdminEntity>('/api/admin/addons')
+export const addonsItemsService      = makeCrudService<AdminEntity>('/api/admin/addons_items')
+export const menuItemsService        = makeCrudService<AdminEntity>('/api/admin/menu_items')
+export const menuItemAddonsService   = makeCrudService<AdminEntity>('/api/admin/menu_item_addons')
+export const deliveryZonesService    = makeCrudService<AdminEntity>('/api/admin/delivery_zones')
+export const ordersService           = makeCrudService<AdminEntity>('/api/admin/orders')
+export const orderItemsService       = makeCrudService<AdminEntity>('/api/admin/order_items')
+export const orderPaymentsService    = makeCrudService<AdminEntity>('/api/admin/order_payments')
+export const businessSettingService  = makeCrudService<AdminEntity>('/api/admin/business_setting')
+export const paymentGatewayService   = makeCrudService<AdminEntity>('/api/admin/payment_gateway')
+export const statesService           = makeCrudService<AdminEntity>('/api/admin/states')
+export const citiesService           = makeCrudService<AdminEntity>('/api/admin/cities')
+export const restaurantBranchService = makeCrudService<AdminEntity>('/api/admin/restaurant_branch')
+
+// API Logs — list only (backend has getAll, no CRUD)
+export const fetchApiLogs = () => safeGetList<AdminEntity>('/api/admin/api_logs/getAll')
+
+// Users filtered by role (Kitchen/Delivery/Cashier tabs). Backend supports ?roleId= param.
+export const fetchUsersByRole = (role: string) =>
+  safeGet<SuperadminUser[]>(`/api/superadmin/users/filter`, { role }).then((r) => r ?? [])
+
+/* ═══════════════════════════════════════════════════════════════════
+ * User Tree + Detail + Create endpoints (Phase C 2026-07-16 evening)
+ *
+ * Backend response fields are snake_case (user_id, full_name, etc.);
+ * these interfaces + normalisers convert to camelCase for React.
+ * Backend controller: SuperadminUserDirectoryController.java
+ * ═══════════════════════════════════════════════════════════════════ */
+
+export interface RestaurantTreeNode {
+  userId: number
+  fullName: string
+  email: string | null
+  mobile: string | null
+  approvalStatus: string | null
+  isActive: boolean
+  createdAt: string | null
+  branchCount: number
+  kitchenCount: number
+  deliveryCount: number
+  cashierCount: number
+}
+
+export interface TreeChildNode {
+  userId: number
+  fullName: string
+  role: string
+  roleId?: number
+  mobile: string | null
+  email: string | null
+  isActive: boolean
+}
+
+export interface RestaurantDetailNode {
+  userId: number
+  fullName: string
+  email: string | null
+  mobile: string | null
+  role: string
+  city: string | null
+  state: string | null
+  pincode: string | null
+  gstNumber: string | null
+  approvalStatus: string | null
+  isActive: boolean
+  createdAt: string | null
+  restaurant: TreeChildNode[]
+  branch: TreeChildNode[]
+  kitchen: TreeChildNode[]
+  delivery: TreeChildNode[]
+  cashier: TreeChildNode[]
+}
+
+/** snake_case → camelCase for tree/parent row. */
+function normalizeTreeNode(raw: Record<string, unknown>): RestaurantTreeNode {
+  return {
+    userId: Number(raw.user_id ?? raw.userId ?? 0),
+    fullName: String(raw.full_name ?? raw.fullName ?? ''),
+    email: (raw.email as string) ?? null,
+    mobile: (raw.mobile as string) ?? (raw.mobile_number as string) ?? null,
+    approvalStatus: (raw.approval_status as string) ?? (raw.approvalStatus as string) ?? null,
+    isActive: raw.is_active === true || raw.is_active === 1 || raw.isActive === true,
+    createdAt: (raw.created_at as string) ?? (raw.createdAt as string) ?? null,
+    branchCount: Number(raw.branch_count ?? raw.branchCount ?? 0),
+    kitchenCount: Number(raw.kitchen_count ?? raw.kitchenCount ?? 0),
+    deliveryCount: Number(raw.delivery_count ?? raw.deliveryCount ?? 0),
+    cashierCount: Number(raw.cashier_count ?? raw.cashierCount ?? 0),
+  }
+}
+
+function normalizeChild(raw: Record<string, unknown>): TreeChildNode {
+  const status = raw.status
+  return {
+    userId: Number(raw.user_id ?? raw.userId ?? 0),
+    fullName: String(raw.full_name ?? raw.fullName ?? ''),
+    role: String(raw.role ?? ''),
+    roleId: raw.role_id != null ? Number(raw.role_id) : (raw.roleId != null ? Number(raw.roleId) : undefined),
+    mobile: (raw.mobile_number as string) ?? (raw.mobile as string) ?? null,
+    email: (raw.email as string) ?? null,
+    isActive: status === 1 || status === true || status === '1' || raw.is_active === true,
+  }
+}
+
+export const fetchRestaurantTree = async (): Promise<RestaurantTreeNode[]> => {
+  const raw = await safeGetList<Record<string, unknown>>('/api/admin/users/tree')
+  return raw.map(normalizeTreeNode)
+}
+
+export const fetchRestaurantChildren = async (adminId: number): Promise<TreeChildNode[]> => {
+  const raw = await safeGetList<Record<string, unknown>>(`/api/admin/users/tree/${adminId}`)
+  return raw.map(normalizeChild)
+}
+
+export const fetchRestaurantDetail = async (id: number): Promise<RestaurantDetailNode | null> => {
+  const raw = await safeGet<Record<string, unknown>>(`/api/admin/users/${id}/detail`)
+  if (!raw) return null
+  return {
+    userId: Number(raw.user_id ?? raw.userId ?? 0),
+    fullName: String(raw.full_name ?? raw.fullName ?? ''),
+    email: (raw.email as string) ?? null,
+    mobile: (raw.mobile as string) ?? null,
+    role: String(raw.role ?? ''),
+    city: (raw.city as string) ?? null,
+    state: (raw.state as string) ?? null,
+    pincode: (raw.pincode as string) ?? null,
+    gstNumber: (raw.gst_number as string) ?? (raw.gstNumber as string) ?? null,
+    approvalStatus: (raw.approval_status as string) ?? null,
+    isActive: raw.is_active === true || raw.isActive === true,
+    createdAt: (raw.created_at as string) ?? null,
+    restaurant: ((raw.restaurant as Record<string, unknown>[]) ?? []).map(normalizeChild),
+    branch:     ((raw.branch     as Record<string, unknown>[]) ?? []).map(normalizeChild),
+    kitchen:    ((raw.kitchen    as Record<string, unknown>[]) ?? []).map(normalizeChild),
+    delivery:   ((raw.delivery   as Record<string, unknown>[]) ?? []).map(normalizeChild),
+    cashier:    ((raw.cashier    as Record<string, unknown>[]) ?? []).map(normalizeChild),
+  }
+}
+
+export interface CreateUserBody {
+  name: string
+  mobile: string
+  email?: string
+  password: string
+  role: 'restaurant' | 'branch' | 'kitchen' | 'delivery' | 'cashier'
+  parentId?: number | null
+  isActive?: boolean
+  approvalStatus?: 'APPROVED' | 'PENDING' | 'REJECTED'
+  gstNumber?: string
+  city?: string
+  state?: string
+  pincode?: string
+}
+
+export async function createUser(body: CreateUserBody): Promise<MutationResult<{ id?: number }>> {
+  try {
+    const payload: Record<string, unknown> = {
+      name: body.name,
+      mobile: body.mobile,
+      email: body.email ?? null,
+      password: body.password,
+      role: body.role,
+      isActive: body.isActive ?? true,
+      approvalStatus: body.approvalStatus ?? 'APPROVED',
+    }
+    if (body.parentId != null) payload.parentId = { id: body.parentId }
+    if (body.gstNumber) payload.gstNumber = body.gstNumber
+    if (body.city)      payload.city = body.city
+    if (body.state)     payload.state = body.state
+    if (body.pincode)   payload.pincode = body.pincode
+    const r = await apiClient.post('/api/admin/users/add', payload)
+    return { ok: true, data: (unwrap(r, 'data.data') as { id?: number }) ?? {} }
+  } catch (err) {
+    return { ok: false, message: mutationError(err) }
+  }
+}

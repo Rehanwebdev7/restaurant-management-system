@@ -55,6 +55,27 @@ const BranchDashboard = lazy(() => import('@/features/branch/BranchDashboard'))
 const SuperadminDashboard = lazy(() => import('@/features/superadmin/SuperadminDashboard'))
 const SuperadminAuditLog = lazy(() => import('@/features/superadmin/AuditLog'))
 
+// 2026-07-16 evening: 15 new superadmin pages (full sidebar parity with reference).
+const SuperadminBranches           = lazy(() => import('@/features/superadmin/SuperadminBranches'))
+const SuperadminKitchenStaff       = lazy(() => import('@/features/superadmin/SuperadminKitchenStaff'))
+const SuperadminDeliveryStaff      = lazy(() => import('@/features/superadmin/SuperadminDeliveryStaff'))
+const SuperadminCashierStaff       = lazy(() => import('@/features/superadmin/SuperadminCashierStaff'))
+const SuperadminMenuCategories     = lazy(() => import('@/features/superadmin/SuperadminMenuCategories'))
+const SuperadminMenuSubcategories  = lazy(() => import('@/features/superadmin/SuperadminMenuSubcategories'))
+const SuperadminSections           = lazy(() => import('@/features/superadmin/SuperadminSections'))
+const SuperadminDiningTables       = lazy(() => import('@/features/superadmin/SuperadminDiningTables'))
+const SuperadminAddons             = lazy(() => import('@/features/superadmin/SuperadminAddons'))
+const SuperadminMenuItems          = lazy(() => import('@/features/superadmin/SuperadminMenuItems'))
+const SuperadminDeliveryZones      = lazy(() => import('@/features/superadmin/SuperadminDeliveryZones'))
+const SuperadminOrders             = lazy(() => import('@/features/superadmin/SuperadminOrders'))
+const SuperadminBusinessSettings   = lazy(() => import('@/features/superadmin/SuperadminBusinessSettings'))
+const SuperadminPaymentGateways    = lazy(() => import('@/features/superadmin/SuperadminPaymentGateways'))
+const SuperadminApiLogs            = lazy(() => import('@/features/superadmin/SuperadminApiLogs'))
+const SuperadminStates             = lazy(() => import('@/features/superadmin/SuperadminStates'))
+const SuperadminCities             = lazy(() => import('@/features/superadmin/SuperadminCities'))
+const SuperadminRestaurantsList    = lazy(() => import('@/features/superadmin/SuperadminRestaurantsList'))
+const SuperadminUserDirectory      = lazy(() => import('@/features/superadmin/SuperadminUserDirectory'))
+
 /**
  * Suspense wrapper helpers — each route group picks its own branded loader so
  * the customer site never flashes a panel-style spinner and vice versa.
@@ -202,18 +223,50 @@ export function AppRouter() {
             <Route path="/branch" element={<Navigate to="/branch/dashboard" replace />} />
           </Route>
 
-          {/* Superadmin panel — Phase 4e */}
+          {/* Superadmin panel — Phase 4e + 2026-07-16 evening full sidebar parity */}
           <Route element={<AuthGuard><PanelShell role="superadmin" /></AuthGuard>}>
             <Route path="/superadmin/dashboard" element={<SuperadminDashboard />} />
-            <Route path="/superadmin/restaurants" element={<SuperadminPages.Restaurants />} />
-            <Route path="/superadmin/users" element={<SuperadminPages.Users />} />
+
+            {/* User Management */}
+            <Route path="/superadmin/restaurants" element={<SuperadminRestaurantsList />} />
+            <Route path="/superadmin/users" element={<SuperadminUserDirectory />} />
+            <Route path="/superadmin/user-approvals" element={<SuperadminPages.Approvals />} />
+            <Route path="/superadmin/branches" element={<SuperadminBranches />} />
+            <Route path="/superadmin/kitchen-staff" element={<SuperadminKitchenStaff />} />
+            <Route path="/superadmin/delivery-staff" element={<SuperadminDeliveryStaff />} />
+            <Route path="/superadmin/cashier-staff" element={<SuperadminCashierStaff />} />
+
+            {/* Menu Management */}
+            <Route path="/superadmin/menu-categories" element={<SuperadminMenuCategories />} />
+            <Route path="/superadmin/menu-subcategories" element={<SuperadminMenuSubcategories />} />
+            <Route path="/superadmin/sections" element={<SuperadminSections />} />
+            <Route path="/superadmin/dining-tables" element={<SuperadminDiningTables />} />
+            <Route path="/superadmin/addons" element={<SuperadminAddons />} />
+            <Route path="/superadmin/menu-items" element={<SuperadminMenuItems />} />
+            <Route path="/superadmin/menu-items/bulk" element={<SuperadminMenuItems />} />
+            <Route path="/superadmin/delivery-zones" element={<SuperadminDeliveryZones />} />
+
+            {/* Orders — one component, 5 URLs via :filter param */}
+            <Route path="/superadmin/orders" element={<Navigate to="/superadmin/orders/all" replace />} />
+            <Route path="/superadmin/orders/:filter" element={<SuperadminOrders />} />
+
+            {/* Billing */}
             <Route path="/superadmin/subscription-plans" element={<SuperadminPages.Plans />} />
             <Route path="/superadmin/subscriptions" element={<SuperadminPages.Subscriptions />} />
-            <Route path="/superadmin/user-approvals" element={<SuperadminPages.Approvals />} />
+
+            {/* Notifications + System */}
             <Route path="/superadmin/notifications" element={<SuperadminPages.Notifications />} />
             <Route path="/superadmin/audit-log" element={<SuperadminAuditLog />} />
             <Route path="/superadmin/reports" element={<SuperadminPages.Reports />} />
+
+            {/* Settings — cluster of sub-pages */}
             <Route path="/superadmin/settings" element={<SuperadminPages.Settings />} />
+            <Route path="/superadmin/business-settings" element={<SuperadminBusinessSettings />} />
+            <Route path="/superadmin/payment-gateways" element={<SuperadminPaymentGateways />} />
+            <Route path="/superadmin/api-logs" element={<SuperadminApiLogs />} />
+            <Route path="/superadmin/states" element={<SuperadminStates />} />
+            <Route path="/superadmin/cities" element={<SuperadminCities />} />
+
             <Route path="/superadmin" element={<Navigate to="/superadmin/dashboard" replace />} />
           </Route>
 

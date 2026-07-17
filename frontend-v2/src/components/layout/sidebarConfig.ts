@@ -16,6 +16,7 @@ import {
   ShieldAlert,
   Bell,
   Tags,
+  CreditCard,
   QrCode,
   Split,
   Layers,
@@ -74,38 +75,129 @@ export interface NavSection {
 }
 
 export const sidebarConfig: Record<Role, NavSection[]> = {
+  // 2026-07-16 evening: full sidebar parity with reference — 24 items across
+  // 6 groups. Every leaf backed by real admin/superadmin endpoint. Mirrored
+  // in `admin` block below.
   superadmin: [
     {
+      title: 'Menu',
       items: [
         { to: '/superadmin/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },
-        { to: '/superadmin/restaurants', label: 'Restaurants', icon: Building2 },
-        { to: '/superadmin/users', label: 'Users', icon: Users },
-        { to: '/superadmin/subscription-plans', label: 'Plans', icon: Tags },
-        { to: '/superadmin/subscriptions', label: 'Subscriptions', icon: Receipt },
-        { to: '/superadmin/user-approvals', label: 'Approvals', icon: ShieldCheck },
+        {
+          label: 'User Management', icon: Users,
+          children: [
+            { to: '/superadmin/user-approvals',   label: 'User Approvals',  icon: ShieldCheck },
+            { to: '/superadmin/users',            label: 'User Directory',  icon: Users },
+            { to: '/superadmin/restaurants',      label: 'All Restaurants', icon: Building2 },
+            { to: '/superadmin/branches',         label: 'Branches',        icon: Building2 },
+            { to: '/superadmin/kitchen-staff',    label: 'Kitchen',         icon: ChefHat },
+            { to: '/superadmin/delivery-staff',   label: 'Delivery',        icon: Bike },
+            { to: '/superadmin/cashier-staff',    label: 'Cashier',         icon: Wallet },
+          ],
+        },
+        {
+          label: 'Menu Management', icon: ShoppingBag,
+          children: [
+            { to: '/superadmin/menu-categories',    label: 'Categories',     icon: Tags },
+            { to: '/superadmin/menu-subcategories', label: 'Subcategories',  icon: Tags },
+            { to: '/superadmin/sections',           label: 'Sections',       icon: Layers },
+            { to: '/superadmin/dining-tables',      label: 'Dining Tables',  icon: QrCode },
+            { to: '/superadmin/addons',             label: 'Addons',         icon: ListPlus },
+            { to: '/superadmin/menu-items',         label: 'Menu Items',     icon: ShoppingBag, exact: true },
+            { to: '/superadmin/menu-items/bulk',    label: 'Bulk Update',    icon: ListPlus,    exact: true },
+            { to: '/superadmin/delivery-zones',     label: 'Delivery Zones', icon: MapIcon },
+          ],
+        },
+        {
+          label: 'Orders', icon: ClipboardList,
+          children: [
+            { to: '/superadmin/orders/all',         label: 'All Orders',  icon: ClipboardList, exact: true },
+            { to: '/superadmin/orders/new',         label: 'New Orders',  icon: ClipboardList, exact: true },
+            { to: '/superadmin/orders/preparing',   label: 'Preparing',   icon: ClipboardList, exact: true },
+            { to: '/superadmin/orders/delivered',   label: 'Delivered',   icon: ClipboardList, exact: true },
+            { to: '/superadmin/orders/cancelled',   label: 'Cancelled',   icon: ClipboardList, exact: true },
+          ],
+        },
+        {
+          label: 'Billing', icon: CreditCard,
+          children: [
+            { to: '/superadmin/subscription-plans', label: 'Subscription Plans', icon: Tags },
+            { to: '/superadmin/subscriptions',      label: 'Subscriptions',      icon: Receipt },
+          ],
+        },
         { to: '/superadmin/notifications', label: 'Notifications', icon: Bell },
-        { to: '/superadmin/audit-log', label: 'Audit Log', icon: ListChecks },
-        { to: '/superadmin/reports', label: 'Reports', icon: BarChart3 },
-        { to: '/superadmin/settings', label: 'Settings', icon: Settings },
+        {
+          label: 'Settings', icon: Settings,
+          children: [
+            { to: '/superadmin/business-settings', label: 'Business Settings', icon: Settings },
+            { to: '/superadmin/payment-gateways',  label: 'Payment Gateway',   icon: CreditCard },
+            { to: '/superadmin/api-logs',          label: 'API Logs',          icon: FileText },
+            { to: '/superadmin/states',            label: 'State',             icon: MapIcon },
+            { to: '/superadmin/cities',            label: 'City',              icon: MapIcon },
+          ],
+        },
       ],
     },
   ],
-  // LEGACY: `AdminRoutes.js` merges admin + superadmin into one platform panel.
-  // This config mirrors the superadmin sidebar so `userType: 'admin'` sees the
-  // same UI when they happen to hit an /admin/* link before the redirect kicks in.
+  // LEGACY mirror of superadmin so /admin/* users see the same panel.
   admin: [
     {
+      title: 'Menu',
       items: [
         { to: '/superadmin/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },
-        { to: '/superadmin/restaurants', label: 'Restaurants', icon: Building2 },
-        { to: '/superadmin/users', label: 'Users', icon: Users },
-        { to: '/superadmin/subscription-plans', label: 'Plans', icon: Tags },
-        { to: '/superadmin/subscriptions', label: 'Subscriptions', icon: Receipt },
-        { to: '/superadmin/user-approvals', label: 'Approvals', icon: ShieldCheck },
+        {
+          label: 'User Management', icon: Users,
+          children: [
+            { to: '/superadmin/user-approvals',   label: 'User Approvals',  icon: ShieldCheck },
+            { to: '/superadmin/users',            label: 'User Directory',  icon: Users },
+            { to: '/superadmin/restaurants',      label: 'All Restaurants', icon: Building2 },
+            { to: '/superadmin/branches',         label: 'Branches',        icon: Building2 },
+            { to: '/superadmin/kitchen-staff',    label: 'Kitchen',         icon: ChefHat },
+            { to: '/superadmin/delivery-staff',   label: 'Delivery',        icon: Bike },
+            { to: '/superadmin/cashier-staff',    label: 'Cashier',         icon: Wallet },
+          ],
+        },
+        {
+          label: 'Menu Management', icon: ShoppingBag,
+          children: [
+            { to: '/superadmin/menu-categories',    label: 'Categories',     icon: Tags },
+            { to: '/superadmin/menu-subcategories', label: 'Subcategories',  icon: Tags },
+            { to: '/superadmin/sections',           label: 'Sections',       icon: Layers },
+            { to: '/superadmin/dining-tables',      label: 'Dining Tables',  icon: QrCode },
+            { to: '/superadmin/addons',             label: 'Addons',         icon: ListPlus },
+            { to: '/superadmin/menu-items',         label: 'Menu Items',     icon: ShoppingBag, exact: true },
+            { to: '/superadmin/menu-items/bulk',    label: 'Bulk Update',    icon: ListPlus,    exact: true },
+            { to: '/superadmin/delivery-zones',     label: 'Delivery Zones', icon: MapIcon },
+          ],
+        },
+        {
+          label: 'Orders', icon: ClipboardList,
+          children: [
+            { to: '/superadmin/orders/all',         label: 'All Orders',  icon: ClipboardList, exact: true },
+            { to: '/superadmin/orders/new',         label: 'New Orders',  icon: ClipboardList, exact: true },
+            { to: '/superadmin/orders/preparing',   label: 'Preparing',   icon: ClipboardList, exact: true },
+            { to: '/superadmin/orders/delivered',   label: 'Delivered',   icon: ClipboardList, exact: true },
+            { to: '/superadmin/orders/cancelled',   label: 'Cancelled',   icon: ClipboardList, exact: true },
+          ],
+        },
+        {
+          label: 'Billing', icon: CreditCard,
+          children: [
+            { to: '/superadmin/subscription-plans', label: 'Subscription Plans', icon: Tags },
+            { to: '/superadmin/subscriptions',      label: 'Subscriptions',      icon: Receipt },
+          ],
+        },
         { to: '/superadmin/notifications', label: 'Notifications', icon: Bell },
-        { to: '/superadmin/audit-log', label: 'Audit Log', icon: ListChecks },
-        { to: '/superadmin/reports', label: 'Reports', icon: BarChart3 },
-        { to: '/superadmin/settings', label: 'Settings', icon: Settings },
+        {
+          label: 'Settings', icon: Settings,
+          children: [
+            { to: '/superadmin/business-settings', label: 'Business Settings', icon: Settings },
+            { to: '/superadmin/payment-gateways',  label: 'Payment Gateway',   icon: CreditCard },
+            { to: '/superadmin/api-logs',          label: 'API Logs',          icon: FileText },
+            { to: '/superadmin/states',            label: 'State',             icon: MapIcon },
+            { to: '/superadmin/cities',            label: 'City',              icon: MapIcon },
+          ],
+        },
       ],
     },
   ],
