@@ -1,0 +1,2 @@
+import{u as e}from"./framer-wMAN8Ixe.js";import{t}from"./RoleFilteredStaff-CjcycRzl.js";var n=e();function r(){return(0,n.jsx)(t,{title:`Cashier Staff`,role:`cashier`})}export{r as default};
+//# sourceMappingURL=SuperadminCashierStaff-BbMWWe9J.js.map

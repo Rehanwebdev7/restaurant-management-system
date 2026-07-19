@@ -9,6 +9,8 @@ import apiClient from '../../../api/apiClient';
 import { toast } from 'react-toastify';
 import { server_api } from '../../../utils/constants';
 import '../../../styles/HomePage.css';
+import '../../../styles/grilli-tokens.css';
+import '../../../styles/HomePage.grilli.css';
 
 const CUSTOMER_CART_KEY = 'customer_cart';
 const CUSTOMER_WISHLIST_KEY = 'customer_wishlist';
@@ -120,6 +122,7 @@ const CustomerLanding = () => {
   const isWhyUsPage = currentPath === '/why-us';
   const isGalleryPage = currentPath === '/gallery';
   const isContactPage = currentPath === '/contact';
+  const isLocationPage = currentPath === '/location';
 
   // Dynamic Hero content config
   const getHeroContent = () => {
@@ -330,6 +333,7 @@ const CustomerLanding = () => {
   });
   const [showWishlist, setShowWishlist] = useState(false);
   const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 768);
+  const [nonVegOnly, setNonVegOnly] = useState(false);
   const [vegOnly, setVegOnly] = useState(() => {
     const savedVegOnly = localStorage.getItem('vegOnly');
     return savedVegOnly === 'true';
@@ -401,10 +405,27 @@ const CustomerLanding = () => {
     'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1600&q=80', // Gourmet Plating Chef
   ];
 
+  // Menu-page hero: food-close-ups (different vibe from landing steakhouse shots)
+  const [activeMenuHeroSlide, setActiveMenuHeroSlide] = useState(0);
+  const menuHeroImages = [
+    'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1600&q=80', // Colorful salad bowl top-down
+    'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=1600&q=80', // Pizza close-up
+    'https://images.unsplash.com/photo-1565958011703-44f9829ba187?auto=format&fit=crop&w=1600&q=80', // Burger overhead
+    'https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?auto=format&fit=crop&w=1600&q=80', // Pasta plating
+    'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?auto=format&fit=crop&w=1600&q=80', // Pancakes / desserts
+  ];
+
   useEffect(() => {
     const timer = setInterval(() => {
       setActiveHeroSlide((prev) => (prev + 1) % heroSlideImages.length);
     }, 5500);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveMenuHeroSlide((prev) => (prev + 1) % menuHeroImages.length);
+    }, 4500);
     return () => clearInterval(timer);
   }, []);
 
@@ -1524,6 +1545,11 @@ const CustomerLanding = () => {
       filtered = filtered.filter(item => item.isVeg === true);
     }
 
+    // Apply non-veg only filter on client side
+    if (nonVegOnly) {
+      filtered = filtered.filter(item => item.isVeg === false);
+    }
+
     return filtered;
   };
 
@@ -2619,6 +2645,12 @@ const CustomerLanding = () => {
     } else if (target === 'gallery') {
       navigate('/gallery');
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (target === 'location') {
+      navigate('/location');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (target === 'contact') {
+      navigate('/contact');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -2646,7 +2678,7 @@ const CustomerLanding = () => {
         }
       `}</style>
 
-      <div className={`landing-container ${themeMode === 'light' ? 'light-mode' : 'dark-mode'}`}>
+      <div className={`landing-container dark-mode grilli-scope`}>
         {/* Mobile Menu Overlay */}
         <div
           className={`mobile-menu-overlay ${showMobileMenu ? 'active' : ''}`}
@@ -2880,8 +2912,9 @@ const CustomerLanding = () => {
           <nav className="desktop-nav-links">
             <span onClick={() => handleNavClick('home')}>HOME</span>
             <span onClick={() => handleNavClick('menus')}>MENUS</span>
-            <span onClick={() => handleNavClick('order')}>ORDER</span>
             <span onClick={() => handleNavClick('gallery')}>GALLERY</span>
+            <span onClick={() => handleNavClick('location')}>LOCATION</span>
+            <span onClick={() => handleNavClick('contact')}>CONTACT</span>
           </nav>
 
           {/* Mobile Logo */}
@@ -3192,26 +3225,744 @@ const CustomerLanding = () => {
         </section>
         )}
 
+        {/* Menu-page Hero — food close-ups, shorter, rounded, categories overlap */}
+        {isMenuPage && (
+          <section className="menu-hero" id="menu-hero">
+            <div className="menu-hero-slideshow" aria-hidden="true">
+              {menuHeroImages.map((imgUrl, index) => (
+                <div
+                  key={index}
+                  className={`menu-hero-slide ${index === activeMenuHeroSlide ? 'active' : ''}`}
+                  style={{ backgroundImage: `url(${imgUrl})` }}
+                ></div>
+              ))}
+              <div className="menu-hero-veil"></div>
+              {/* Gold vignette top */}
+              <div className="menu-hero-vignette-top" aria-hidden="true"></div>
+            </div>
+
+            <div className="menu-hero-content">
+              <span className="menu-hero-eyebrow animate-fade-in-up">— OUR MENU —</span>
+              <h1 className="menu-hero-title animate-fade-in-up" style={{ animationDelay: '0.15s' }}>
+                Discover <span className="mh-accent">Every Flavor</span>
+              </h1>
+              <p className="menu-hero-lede animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                Handpicked dishes crafted with premium ingredients — from smoky grills to sweet endings.
+              </p>
+              <div className="menu-hero-dots" aria-hidden="true">
+                {menuHeroImages.map((_, i) => (
+                  <span
+                    key={i}
+                    className={`mh-dot ${i === activeMenuHeroSlide ? 'active' : ''}`}
+                    onClick={() => setActiveMenuHeroSlide(i)}
+                  ></span>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Location Page — Grilli-styled visit-us section */}
+        {isLocationPage && (
+          <>
+            <section className="info-hero" id="location-hero">
+              <div
+                className="info-hero-bg"
+                style={{
+                  backgroundImage:
+                    "url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=2000&q=85')"
+                }}
+                aria-hidden="true"
+              />
+              <div className="info-hero-veil" aria-hidden="true" />
+              <div className="info-hero-content">
+                <span className="info-hero-eyebrow animate-fade-in-up">— FIND US —</span>
+                <h1 className="info-hero-title animate-fade-in-up" style={{ animationDelay: '0.15s' }}>
+                  Our <span className="ih-accent">Location</span>
+                </h1>
+                <p className="info-hero-lede animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                  Come dine with us. Reserve a table or drop by — we'd love to host you.
+                </p>
+              </div>
+            </section>
+
+            <section className="location-info-section">
+              <div className="location-info-grid">
+                <div className="location-info-card animate-fade-in-up">
+                  <div className="location-info-icon"><i className="bi bi-geo-alt-fill"></i></div>
+                  <h3 className="location-info-title">Visit Us</h3>
+                  <p className="location-info-body">{contactAddress || 'Restaurant address not configured'}</p>
+                  {contactAddress && (
+                    <a
+                      className="location-info-link"
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contactAddress)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      OPEN IN MAPS →
+                    </a>
+                  )}
+                </div>
+
+                <div className="location-info-card animate-fade-in-up" style={{ animationDelay: '0.15s' }}>
+                  <div className="location-info-icon"><i className="bi bi-clock-fill"></i></div>
+                  <h3 className="location-info-title">Opening Hours</h3>
+                  <p className="location-info-body">
+                    Mon – Fri &nbsp;·&nbsp; 12:00 PM – 11:00 PM<br />
+                    Sat – Sun &nbsp;·&nbsp; 11:00 AM – Midnight
+                  </p>
+                </div>
+
+                <div className="location-info-card animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                  <div className="location-info-icon"><i className="bi bi-telephone-fill"></i></div>
+                  <h3 className="location-info-title">Get in Touch</h3>
+                  {contactPhone && <p className="location-info-body">{contactPhone}</p>}
+                  {contactEmail && <p className="location-info-body">{contactEmail}</p>}
+                  <button className="location-info-link btn-plain" onClick={() => navigate('/contact')}>
+                    CONTACT US →
+                  </button>
+                </div>
+              </div>
+
+              {contactAddress && (
+                <div className="location-map-wrap animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+                  <iframe
+                    title="Restaurant location map"
+                    src={`https://www.google.com/maps?q=${encodeURIComponent(contactAddress)}&output=embed`}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                </div>
+              )}
+            </section>
+          </>
+        )}
+
+        {/* Contact Page — Grilli-styled contact form + info */}
+        {isContactPage && (
+          <>
+            <section className="info-hero" id="contact-hero">
+              <div
+                className="info-hero-bg"
+                style={{
+                  backgroundImage:
+                    "url('https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=2000&q=85')"
+                }}
+                aria-hidden="true"
+              />
+              <div className="info-hero-veil" aria-hidden="true" />
+              <div className="info-hero-content">
+                <span className="info-hero-eyebrow animate-fade-in-up">— GET IN TOUCH —</span>
+                <h1 className="info-hero-title animate-fade-in-up" style={{ animationDelay: '0.15s' }}>
+                  Contact <span className="ih-accent">Us</span>
+                </h1>
+                <p className="info-hero-lede animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                  Reservations, inquiries, private events — we're here to help.
+                </p>
+              </div>
+            </section>
+
+            <section className="contact-info-section">
+              <div className="contact-info-panel">
+                <div className="contact-info-row animate-fade-in-up">
+                  <div className="contact-row-icon"><i className="bi bi-geo-alt-fill"></i></div>
+                  <div className="contact-row-body">
+                    <span className="contact-row-label">ADDRESS</span>
+                    <p>{contactAddress || 'Address not configured'}</p>
+                  </div>
+                </div>
+                {contactPhone && (
+                  <div className="contact-info-row animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+                    <div className="contact-row-icon"><i className="bi bi-telephone-fill"></i></div>
+                    <div className="contact-row-body">
+                      <span className="contact-row-label">PHONE</span>
+                      <p><a href={`tel:${contactPhone}`}>{contactPhone}</a></p>
+                    </div>
+                  </div>
+                )}
+                {contactEmail && (
+                  <div className="contact-info-row animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                    <div className="contact-row-icon"><i className="bi bi-envelope-fill"></i></div>
+                    <div className="contact-row-body">
+                      <span className="contact-row-label">EMAIL</span>
+                      <p><a href={`mailto:${contactEmail}`}>{contactEmail}</a></p>
+                    </div>
+                  </div>
+                )}
+                <div className="contact-info-row animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                  <div className="contact-row-icon"><i className="bi bi-clock-fill"></i></div>
+                  <div className="contact-row-body">
+                    <span className="contact-row-label">HOURS</span>
+                    <p>Mon–Fri &nbsp;·&nbsp; 12 PM – 11 PM</p>
+                    <p>Sat–Sun &nbsp;·&nbsp; 11 AM – Midnight</p>
+                  </div>
+                </div>
+
+                <div className="contact-cta-row animate-fade-in-up" style={{ animationDelay: '0.45s' }}>
+                  <button className="btn-grilli-outline" onClick={() => navigate('/menu')}>
+                    BROWSE MENU
+                  </button>
+                  <button className="btn-grilli-solid" onClick={() => navigate('/location')}>
+                    FIND US
+                  </button>
+                </div>
+              </div>
+            </section>
+          </>
+        )}
+
         {/* Heritage & Category Grid Section */}
         {isLandingPage && (
           <>
-            {/* Our Heritage Section */}
-            <section className="heritage-section" id="heritage-section">
-              <div className="heritage-container">
-                <div className="heritage-left animate-fade-in-up">
-                  <span className="heritage-tag">OUR STORY</span>
-                  <h2 className="heritage-heading">A PREMIUM STEAKHOUSE</h2>
-                  <p className="heritage-text">
-                    Our Steakhouse brings you the classic New York style steak experience under strict Kosher supervision. For over a decade, we have been serving the finest quality food and providing excellent service to our community.
+            {/* Our Heritage Section — Grilli-style 3-image showcase */}
+            <section className="heritage-section heritage-showcase-section" id="heritage-section">
+              <div className="heritage-container heritage-container-showcase">
+                <div className="heritage-showcase-header animate-fade-in-up">
+                  <span className="heritage-tag heritage-tag-center">FLAVORS FOR ROYALTY</span>
+                  <h2 className="heritage-heading heritage-heading-showcase">We Offer Top Notch</h2>
+                  <p className="heritage-text heritage-showcase-lede">
+                    Every plate is a chapter in our story of craft — sourced with care, cooked with patience, and served with the warmth of true hospitality.
                   </p>
+                </div>
+
+                <div className="heritage-showcase-grid">
+                  <article
+                    className="heritage-showcase-card animate-fade-in-up"
+                    style={{ animationDelay: '0.15s' }}
+                    onClick={() => navigate('/menu')}
+                    role="link"
+                    tabIndex={0}
+                  >
+                    <div className="heritage-showcase-media">
+                      <div className="heritage-img-frame">
+                        <img
+                          src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=85"
+                          alt="Signature Cuts"
+                          loading="lazy"
+                        />
+                      </div>
+                    </div>
+                    <div className="heritage-showcase-body">
+                      <h3 className="heritage-showcase-name">Signature Cuts</h3>
+                      <span className="heritage-view-menu">VIEW MENU</span>
+                    </div>
+                  </article>
+
+                  <article
+                    className="heritage-showcase-card animate-fade-in-up heritage-showcase-card--center"
+                    style={{ animationDelay: '0.3s' }}
+                    onClick={() => navigate('/signature')}
+                    role="link"
+                    tabIndex={0}
+                  >
+                    <div className="heritage-showcase-media">
+                      <div className="heritage-img-frame">
+                        <img
+                          src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=900&q=85"
+                          alt="Chef's Specials"
+                          loading="lazy"
+                        />
+                      </div>
+                    </div>
+                    <div className="heritage-showcase-body">
+                      <h3 className="heritage-showcase-name">Chef&apos;s Specials</h3>
+                      <span className="heritage-view-menu">VIEW MENU</span>
+                    </div>
+                  </article>
+
+                  <article
+                    className="heritage-showcase-card animate-fade-in-up"
+                    style={{ animationDelay: '0.45s' }}
+                    onClick={() => navigate('/menu')}
+                    role="link"
+                    tabIndex={0}
+                  >
+                    <div className="heritage-showcase-media">
+                      <div className="heritage-img-frame">
+                        <img
+                          src="https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=900&q=85"
+                          alt="Sweet Endings"
+                          loading="lazy"
+                        />
+                      </div>
+                    </div>
+                    <div className="heritage-showcase-body">
+                      <h3 className="heritage-showcase-name">Sweet Endings</h3>
+                      <span className="heritage-view-menu">VIEW MENU</span>
+                    </div>
+                  </article>
+                </div>
+
+                <div className="heritage-showcase-cta animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
                   <button className="btn-heritage-more" onClick={() => navigate('/about')}>
                     READ OUR STORY
                   </button>
                 </div>
-                <div className="heritage-right animate-fade-in-up">
-                  <div className="heritage-img-frame">
-                    <img src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1000&q=80" alt="Restaurant Interior" />
+              </div>
+            </section>
+
+            {/* Our Story Section — Grilli-style overlap layout */}
+            <section className="story-section" id="story-section">
+              <div className="story-container">
+                <div className="story-left animate-fade-in-up">
+                  <span className="story-eyebrow">OUR STORY</span>
+                  <h2 className="story-title">
+                    Every Flavor <br />
+                    <em>Tells a Story</em>
+                  </h2>
+                  <p className="story-body">
+                    Born from a love of craft and community, our kitchen has been
+                    plating memories for years. We source with intention, cook with
+                    patience, and serve with the warmth of an evening spent with
+                    family — every dish that leaves the pass carries a story worth savoring.
+                  </p>
+
+                  {/* Stats row */}
+                  <div className="story-stats">
+                    <div className="story-stat" style={{ animationDelay: '0.4s' }}>
+                      <strong className="story-stat-value">10<span>+</span></strong>
+                      <span className="story-stat-label">Years of<br/>Excellence</span>
+                    </div>
+                    <div className="story-stat" style={{ animationDelay: '0.5s' }}>
+                      <strong className="story-stat-value">50<span>+</span></strong>
+                      <span className="story-stat-label">Signature<br/>Dishes</span>
+                    </div>
+                    <div className="story-stat" style={{ animationDelay: '0.6s' }}>
+                      <strong className="story-stat-value">200<span>+</span></strong>
+                      <span className="story-stat-label">Guests<br/>Daily</span>
+                    </div>
                   </div>
+
+                  {/* Feature bullets */}
+                  <ul className="story-features">
+                    <li style={{ animationDelay: '0.7s' }}>
+                      <i className="bi bi-check2-circle"></i>
+                      <span>Farm-fresh ingredients sourced daily from local growers</span>
+                    </li>
+                    <li style={{ animationDelay: '0.8s' }}>
+                      <i className="bi bi-check2-circle"></i>
+                      <span>Award-winning chef with over 15 years of culinary craft</span>
+                    </li>
+                    <li style={{ animationDelay: '0.9s' }}>
+                      <i className="bi bi-check2-circle"></i>
+                      <span>Warm, cozy ambience — candlelit tables &amp; live acoustic evenings</span>
+                    </li>
+                  </ul>
+
+                  <div className="story-contact">
+                    <h4 className="story-contact-label">Book Through Call</h4>
+                    <a
+                      href="tel:+919999999999"
+                      className="story-phone"
+                    >
+                      +91 (999) 999&nbsp;9999
+                    </a>
+                  </div>
+                  <button
+                    type="button"
+                    className="story-cta btn-heritage-more"
+                    onClick={() => navigate('/about')}
+                  >
+                    READ MORE
+                  </button>
+
+                  {/* Herbs / garlic / spices decorative flourish — bigger Grilli-style */}
+                  <div className="story-decoration" aria-hidden="true">
+                    <svg viewBox="0 0 220 160" width="220" height="160">
+                      {/* Basil leaves cluster (top-left) */}
+                      <g>
+                        <path
+                          d="M28,20 Q10,32 14,58 Q28,68 44,58 Q54,44 48,26 Q40,16 28,20 Z"
+                          fill="#4E7A3A"
+                          opacity="0.85"
+                        />
+                        <path
+                          d="M28,24 Q22,42 30,58"
+                          fill="none"
+                          stroke="#2E4A22"
+                          strokeWidth="0.7"
+                          opacity="0.6"
+                        />
+                        <path
+                          d="M56,32 Q42,42 46,64 Q60,72 74,60 Q80,46 70,34 Q64,28 56,32 Z"
+                          fill="#5C8E44"
+                          opacity="0.9"
+                        />
+                        <path
+                          d="M56,36 Q54,50 60,64"
+                          fill="none"
+                          stroke="#2E4A22"
+                          strokeWidth="0.6"
+                          opacity="0.6"
+                        />
+                      </g>
+
+                      {/* Garlic bulbs (middle) */}
+                      <g>
+                        <ellipse cx="52" cy="90" rx="14" ry="18" fill="#F5EFE0" opacity="0.9" />
+                        <ellipse cx="52" cy="90" rx="14" ry="18" fill="url(#garlicShade)" opacity="0.6" />
+                        <path
+                          d="M52,72 Q54,68 52,66 Q50,68 52,72"
+                          fill="#8B6E4E"
+                          opacity="0.8"
+                        />
+                        <path
+                          d="M46,80 Q50,86 46,100 M58,80 Q54,86 58,100 M52,74 L52,106"
+                          stroke="#D4B896"
+                          strokeWidth="0.6"
+                          fill="none"
+                          opacity="0.5"
+                        />
+
+                        <ellipse cx="76" cy="98" rx="11" ry="14" fill="#F5EFE0" opacity="0.85" />
+                        <ellipse cx="76" cy="98" rx="11" ry="14" fill="url(#garlicShade)" opacity="0.6" />
+                        <path
+                          d="M76,84 Q78,80 76,78 Q74,80 76,84"
+                          fill="#8B6E4E"
+                          opacity="0.8"
+                        />
+                        <path
+                          d="M72,90 L72,110 M80,90 L80,110 M76,86 L76,112"
+                          stroke="#D4B896"
+                          strokeWidth="0.5"
+                          fill="none"
+                          opacity="0.5"
+                        />
+                      </g>
+
+                      {/* Peppercorn / spice dots (scattered along baseline) */}
+                      <g>
+                        <circle cx="18" cy="132" r="4" fill="#D4A857" opacity="0.65" />
+                        <circle cx="34" cy="138" r="3.5" fill="#B8853A" opacity="0.7" />
+                        <circle cx="48" cy="132" r="3" fill="#D4A857" opacity="0.6" />
+                        <circle cx="62" cy="140" r="4" fill="#B8853A" opacity="0.65" />
+                        <circle cx="78" cy="134" r="3.5" fill="#D4A857" opacity="0.7" />
+                        <circle cx="96" cy="138" r="3" fill="#B8853A" opacity="0.6" />
+                        <circle cx="112" cy="132" r="4" fill="#D4A857" opacity="0.65" />
+                        <circle cx="128" cy="140" r="3.5" fill="#B8853A" opacity="0.7" />
+                        <circle cx="146" cy="134" r="3" fill="#D4A857" opacity="0.6" />
+                        <circle cx="164" cy="138" r="4" fill="#B8853A" opacity="0.65" />
+                        <circle cx="182" cy="132" r="3.5" fill="#D4A857" opacity="0.7" />
+                        <circle cx="200" cy="138" r="3" fill="#B8853A" opacity="0.6" />
+                      </g>
+
+                      {/* Gradient defs */}
+                      <defs>
+                        <radialGradient id="garlicShade" cx="0.5" cy="0.35" r="0.75">
+                          <stop offset="0" stopColor="#FFFFFF" stopOpacity="0" />
+                          <stop offset="1" stopColor="#8B6E4E" stopOpacity="0.5" />
+                        </radialGradient>
+                      </defs>
+                    </svg>
+                  </div>
+                </div>
+
+                <div
+                  className="story-right animate-fade-in-up"
+                  style={{ animationDelay: '0.25s' }}
+                >
+                  {/* Big animated slideshow — 4 restaurant images crossfading */}
+                  <div className="story-slideshow">
+                    <div className="story-slideshow-frame">
+                      <img
+                        className="story-slide story-slide--1"
+                        src="https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=1600&q=85"
+                        alt="Warm dining room"
+                        loading="lazy"
+                      />
+                      <img
+                        className="story-slide story-slide--2"
+                        src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1600&q=85"
+                        alt="Bar and lounge"
+                        loading="lazy"
+                      />
+                      <img
+                        className="story-slide story-slide--3"
+                        src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1600&q=85"
+                        alt="Elegant evening"
+                        loading="lazy"
+                      />
+                      <img
+                        className="story-slide story-slide--4"
+                        src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1600&q=85"
+                        alt="Signature plating"
+                        loading="lazy"
+                      />
+
+                      {/* Herringbone strips overlay */}
+                      <span className="story-slideshow-hb story-slideshow-hb--top" aria-hidden="true" />
+                      <span className="story-slideshow-hb story-slideshow-hb--bottom" aria-hidden="true" />
+
+                      {/* Slide progress indicators (thin gold dashes) */}
+                      <div className="story-slideshow-dots" aria-hidden="true">
+                        <span className="story-slideshow-dot" />
+                        <span className="story-slideshow-dot" />
+                        <span className="story-slideshow-dot" />
+                        <span className="story-slideshow-dot" />
+                      </div>
+                    </div>
+
+                    {/* SINCE badge floats over top-right of slideshow */}
+                    <div className="story-badge" aria-hidden="true">
+                      <svg viewBox="0 0 140 140" width="140" height="140">
+                        <defs>
+                          <path
+                            id="storyBadgeArc"
+                            d="M 70 70 m -55 0 a 55 55 0 1 1 110 0 a 55 55 0 1 1 -110 0"
+                            fill="none"
+                          />
+                        </defs>
+                        <circle cx="70" cy="70" r="66" fill="#0A0908" stroke="#D4A857" strokeWidth="1" />
+                        <circle cx="70" cy="70" r="47" fill="none" stroke="#D4A857" strokeWidth="0.6" opacity="0.5" />
+                        <text fill="#D4A857" fontSize="7.2" letterSpacing="2.4" fontFamily="Inter, sans-serif" fontWeight="500">
+                          <textPath href="#storyBadgeArc" startOffset="0">
+                            QUALITY FOOD · FRESH INGREDIENTS · WARM SERVICE ·
+                          </textPath>
+                        </text>
+                        <text x="70" y="63" textAnchor="middle" fill="#D4A857" fontSize="8" letterSpacing="4" fontFamily="Inter, sans-serif" fontWeight="600">
+                          SINCE
+                        </text>
+                        <line x1="52" y1="70" x2="88" y2="70" stroke="#D4A857" strokeWidth="0.6" />
+                        <text x="70" y="90" textAnchor="middle" fill="#D4A857" fontSize="22" fontFamily="Cormorant Garamond, serif" fontWeight="500">
+                          2015
+                        </text>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Tonight's Special — 2-column: dish image | content */}
+            <section className="signature-dish-section signature-dish-split" id="signature-dish">
+              <div className="signature-dish-inner">
+                {/* LEFT: dish image with animations */}
+                <div className="signature-dish-media animate-fade-in-up">
+                  <div className="signature-dish-media-frame">
+                    <img
+                      src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1200&q=85"
+                      alt="Slow-Braised Short Rib"
+                      loading="lazy"
+                    />
+                    <div className="signature-dish-shine" aria-hidden="true" />
+                  </div>
+                  {/* Floating gold price badge */}
+                  <div className="signature-dish-price-badge" aria-hidden="true">
+                    <span className="sdpb-currency">$</span>
+                    <span className="sdpb-amount">34</span>
+                  </div>
+                  {/* Decorative ring */}
+                  <div className="signature-dish-ring signature-dish-ring--a" aria-hidden="true" />
+                  <div className="signature-dish-ring signature-dish-ring--b" aria-hidden="true" />
+                </div>
+
+                {/* RIGHT: content */}
+                <div className="signature-dish-content signature-dish-content--split">
+                  <span className="signature-dish-eyebrow animate-fade-in-up">
+                    TONIGHT&apos;S SPECIAL
+                  </span>
+                  <h2
+                    className="signature-dish-name animate-fade-in-up"
+                    style={{ animationDelay: '0.15s' }}
+                  >
+                    Slow-Braised <em>Short Rib</em>
+                  </h2>
+                  <div className="signature-dish-divider" aria-hidden="true">
+                    <span className="sdd-line"></span>
+                    <span className="sdd-diamond">◈</span>
+                    <span className="sdd-line"></span>
+                  </div>
+                  <p
+                    className="signature-dish-desc animate-fade-in-up"
+                    style={{ animationDelay: '0.35s' }}
+                  >
+                    Locally-sourced beef short rib, braised for eight hours in our
+                    house red-wine reduction with rosemary and thyme. Served over
+                    creamy garlic polenta with roasted heirloom vegetables and a
+                    drizzle of aged balsamic.
+                  </p>
+
+                  <div
+                    className="signature-dish-meta animate-fade-in-up"
+                    style={{ animationDelay: '0.45s' }}
+                  >
+                    <span className="signature-dish-meta-item">
+                      <i className="bi bi-clock-history"></i>
+                      <span>8 hrs slow-braised</span>
+                    </span>
+                    <span className="signature-dish-meta-item">
+                      <i className="bi bi-stars"></i>
+                      <span>Chef&apos;s Pick</span>
+                    </span>
+                    <span className="signature-dish-meta-item">
+                      <i className="bi bi-award"></i>
+                      <span>Award Winner</span>
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="signature-dish-cta btn-heritage-more animate-fade-in-up"
+                    style={{ animationDelay: '0.55s' }}
+                    onClick={() => navigate('/menu')}
+                  >
+                    Order Now
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            {/* Delicious Menu — Grilli-style 2-column menu list */}
+            <section className="delicious-menu-section" id="delicious-menu">
+              <div className="delicious-menu-bg-pattern" aria-hidden="true" />
+
+              {/* Floating gold particle field (replaces old rotating plates) */}
+              <div className="grilli-particles" aria-hidden="true">
+                <span className="grilli-particle" style={{ left: '8%',  animationDelay: '0s',    animationDuration: '14s' }} />
+                <span className="grilli-particle" style={{ left: '18%', animationDelay: '2.5s',  animationDuration: '18s' }} />
+                <span className="grilli-particle" style={{ left: '28%', animationDelay: '5s',    animationDuration: '16s' }} />
+                <span className="grilli-particle" style={{ left: '38%', animationDelay: '1s',    animationDuration: '20s' }} />
+                <span className="grilli-particle" style={{ left: '48%', animationDelay: '7s',    animationDuration: '15s' }} />
+                <span className="grilli-particle" style={{ left: '58%', animationDelay: '3.5s',  animationDuration: '19s' }} />
+                <span className="grilli-particle" style={{ left: '68%', animationDelay: '6s',    animationDuration: '17s' }} />
+                <span className="grilli-particle" style={{ left: '78%', animationDelay: '4s',    animationDuration: '13s' }} />
+                <span className="grilli-particle" style={{ left: '88%', animationDelay: '8s',    animationDuration: '21s' }} />
+                <span className="grilli-particle grilli-particle--big" style={{ left: '15%', animationDelay: '9s',  animationDuration: '24s' }} />
+                <span className="grilli-particle grilli-particle--big" style={{ left: '65%', animationDelay: '11s', animationDuration: '22s' }} />
+                <span className="grilli-particle grilli-particle--big" style={{ left: '85%', animationDelay: '13s', animationDuration: '26s' }} />
+              </div>
+
+              <div className="delicious-menu-container">
+                <div className="delicious-menu-header animate-fade-in-up">
+                  <span className="delicious-menu-eyebrow">SPECIAL SELECTION</span>
+                  <h2 className="delicious-menu-title">Delicious Menu</h2>
+                </div>
+
+                <div className="delicious-menu-grid">
+                  {/* Left column */}
+                  <div className="delicious-menu-column">
+                    {[
+                      {
+                        img: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=400&q=85',
+                        name: 'Signature Ribeye',
+                        badge: 'SIGNATURE',
+                        price: '$45',
+                        desc: '16oz aged prime cut, grilled over open flame with rosemary butter, served with roasted garlic potatoes.',
+                      },
+                      {
+                        img: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=400&q=85',
+                        name: 'Herb-Crusted Lamb',
+                        badge: null,
+                        price: '$38',
+                        desc: 'Marinated in mint and thyme, served with fresh mint chutney and roasted heirloom vegetables.',
+                      },
+                      {
+                        img: 'https://images.unsplash.com/photo-1476124369491-e7addf5db371?auto=format&fit=crop&w=400&q=85',
+                        name: 'Truffle Risotto',
+                        badge: 'VEG',
+                        price: '$32',
+                        desc: 'Arborio rice slow-cooked with black truffle shavings and 24-month aged parmesan.',
+                      },
+                    ].map((item, i) => (
+                      <article
+                        key={item.name}
+                        className="delicious-menu-item animate-fade-in-up"
+                        style={{ animationDelay: `${0.15 + i * 0.1}s` }}
+                        onClick={() => navigate('/menu')}
+                        role="link"
+                        tabIndex={0}
+                      >
+                        <div className="delicious-menu-item-img">
+                          <img src={item.img} alt={item.name} loading="lazy" />
+                        </div>
+                        <div className="delicious-menu-item-body">
+                          <div className="delicious-menu-item-head">
+                            <h3 className="delicious-menu-item-name">{item.name}</h3>
+                            {item.badge && (
+                              <span className="delicious-menu-item-badge">{item.badge}</span>
+                            )}
+                            <span className="delicious-menu-item-hairline" aria-hidden="true" />
+                            <span className="delicious-menu-item-price">{item.price}</span>
+                          </div>
+                          <p className="delicious-menu-item-desc">{item.desc}</p>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+
+                  {/* Vertical divider */}
+                  <div className="delicious-menu-divider" aria-hidden="true" />
+
+                  {/* Right column */}
+                  <div className="delicious-menu-column">
+                    {[
+                      {
+                        img: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?auto=format&fit=crop&w=400&q=85',
+                        name: 'Butter Chicken',
+                        badge: "CHEF'S PICK",
+                        price: '$28',
+                        desc: 'Tandoor-roasted chicken in creamy tomato-butter sauce with fresh naan and basmati rice.',
+                      },
+                      {
+                        img: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&w=400&q=85',
+                        name: 'Grilled Salmon',
+                        badge: null,
+                        price: '$34',
+                        desc: 'Wild-caught Atlantic salmon glazed with honey-mustard, served over quinoa pilaf and asparagus.',
+                      },
+                      {
+                        img: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?auto=format&fit=crop&w=400&q=85',
+                        name: 'Chocolate Fondant',
+                        badge: 'NEW',
+                        price: '$16',
+                        desc: 'Warm molten chocolate cake with vanilla bean ice cream and fresh berry compote.',
+                      },
+                    ].map((item, i) => (
+                      <article
+                        key={item.name}
+                        className="delicious-menu-item animate-fade-in-up"
+                        style={{ animationDelay: `${0.2 + i * 0.1}s` }}
+                        onClick={() => navigate('/menu')}
+                        role="link"
+                        tabIndex={0}
+                      >
+                        <div className="delicious-menu-item-img">
+                          <img src={item.img} alt={item.name} loading="lazy" />
+                        </div>
+                        <div className="delicious-menu-item-body">
+                          <div className="delicious-menu-item-head">
+                            <h3 className="delicious-menu-item-name">{item.name}</h3>
+                            {item.badge && (
+                              <span className="delicious-menu-item-badge">{item.badge}</span>
+                            )}
+                            <span className="delicious-menu-item-hairline" aria-hidden="true" />
+                            <span className="delicious-menu-item-price">{item.price}</span>
+                          </div>
+                          <p className="delicious-menu-item-desc">{item.desc}</p>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </div>
+
+                <div
+                  className="delicious-menu-footnote animate-fade-in-up"
+                  style={{ animationDelay: '0.7s' }}
+                >
+                  During winter, dinner is only from <strong>7:00 pm</strong> to <strong>9:00 pm</strong>
+                </div>
+
+                <div
+                  className="delicious-menu-cta animate-fade-in-up"
+                  style={{ animationDelay: '0.8s' }}
+                >
+                  <button
+                    type="button"
+                    className="btn-heritage-more"
+                    onClick={() => navigate('/menu')}
+                  >
+                    View Full Menu
+                  </button>
                 </div>
               </div>
             </section>
@@ -3254,99 +4005,78 @@ const CustomerLanding = () => {
               </div>
             </section>
 
-            {/* Portrait Category Grid */}
-            <section className="categories-grid-section">
-              <div className="section-header text-center">
-                <span className="section-subheading">OUR MENUS</span>
-                <h2 className="section-title">Explore Our Menus</h2>
-              </div>
-              <div className="categories-grid-container">
-                {categories.length > 0 ? (
-                  categories.slice(0, 4).map((cat) => {
-                    const bgImg = getCategoryBgImage(cat.name);
-                    return (
-                      <div key={cat.id} className="category-portrait-card" onClick={() => handlePortraitCategoryClick(cat)}>
-                        <div className="portrait-card-bg" style={{ backgroundImage: `url(${bgImg})` }}></div>
-                        <div className="portrait-card-content">
-                          <h3>{cat.name.toUpperCase()}</h3>
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  // Fallbacks if categories are not loaded yet or empty
-                  ['Starters', 'Main Course', 'Beverages', 'Desserts'].map((fallbackName, idx) => {
-                    const fallbackBgs = [
-                      'https://images.unsplash.com/photo-1543353071-10c8ba85a904?auto=format&fit=crop&w=600&q=80',
-                      'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80',
-                      'https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=600&q=80',
-                      'https://images.unsplash.com/photo-1551024506-0bccd828d307?auto=format&fit=crop&w=600&q=80'
-                    ];
-                    return (
-                      <div key={idx} className="category-portrait-card" onClick={() => {
-                        const matched = categories.find(c => c.name.toLowerCase().includes(fallbackName.toLowerCase()));
-                        if (matched) {
-                          handlePortraitCategoryClick(matched);
-                        } else {
-                          navigate('/menu');
-                        }
-                      }}>
-                        <div className="portrait-card-bg" style={{ backgroundImage: `url(${fallbackBgs[idx]})` }}></div>
-                        <div className="portrait-card-content">
-                          <h3>{fallbackName.toUpperCase()}</h3>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </section>
           </>
         )}
 
         {isMenuPage && (
           <>
-        {/* Categories */}
+        {/* Categories — overlap menu hero bottom */}
         <section className="categories-section motion-reveal" id="menu-section" data-motion-observe="categories">
-          {/* Desktop Search & Filter in Menu Section */}
-          <div className="menu-section-search-filter desktop-only">
-            <div className="menu-search-wrapper">
-              <i className="bi bi-search"></i>
-              <input
-                type="text"
-                placeholder="Search for dishes, cuisines..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              {searchTerm && (
-                <button className="clear-search-btn" onClick={() => setSearchTerm('')}>
-                  <i className="bi bi-x-lg"></i>
-                </button>
-              )}
-            </div>
-            <div className="menu-veg-toggle">
-              <span className={`veg-label ${vegOnly ? 'active' : ''}`}>
-                <span className="veg-dot"></span>
-                Veg Mode
-              </span>
-              <label className="veg-toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={vegOnly}
-                  onChange={() => {
-                    const newValue = !vegOnly;
-                    setVegOnly(newValue);
-                    localStorage.setItem('vegOnly', newValue.toString());
-                  }}
-                />
-                <span className="veg-toggle-slider">
-                  <span className="toggle-text">{vegOnly ? 'ON' : 'OFF'}</span>
-                </span>
-              </label>
-            </div>
-          </div>
-
           <div className="categories-container">
+            {/* Search + Diet pill on one row */}
+            <div className="menu-controls-row">
+              <div className="menu-search-wrapper">
+                <i className="bi bi-search"></i>
+                <input
+                  type="text"
+                  placeholder="Search for dishes, cuisines..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                {searchTerm && (
+                  <button className="clear-search-btn" onClick={() => setSearchTerm('')}>
+                    <i className="bi bi-x-lg"></i>
+                  </button>
+                )}
+              </div>
+
+              {/* Diet Filter Pill: ALL | VEG | NON-VEG */}
+              <div className="diet-filter-pill" role="tablist" aria-label="Diet filter">
+              <button
+                type="button"
+                role="tab"
+                className={`diet-pill-tab ${(!vegOnly && !nonVegOnly) ? 'active' : ''}`}
+                aria-selected={!vegOnly && !nonVegOnly}
+                onClick={() => {
+                  setVegOnly(false);
+                  setNonVegOnly(false);
+                  localStorage.setItem('vegOnly', 'false');
+                }}
+              >
+                <i className="bi bi-egg-fried"></i>
+                <span>ALL</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                className={`diet-pill-tab veg ${vegOnly ? 'active' : ''}`}
+                aria-selected={vegOnly}
+                onClick={() => {
+                  setVegOnly(true);
+                  setNonVegOnly(false);
+                  localStorage.setItem('vegOnly', 'true');
+                }}
+              >
+                <span className="diet-dot veg-dot-mark" aria-hidden="true"></span>
+                <span>VEG</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                className={`diet-pill-tab nonveg ${nonVegOnly ? 'active' : ''}`}
+                aria-selected={nonVegOnly}
+                onClick={() => {
+                  setVegOnly(false);
+                  setNonVegOnly(true);
+                  localStorage.setItem('vegOnly', 'false');
+                }}
+              >
+                <span className="diet-dot nonveg-dot-mark" aria-hidden="true"></span>
+                <span>NON-VEG</span>
+              </button>
+              </div>
+            </div>
+
             <div className="categories-scroll" ref={categoryScrollRef}>
               {categoriesLoading ? (
                 // Loading skeleton
@@ -3358,33 +4088,6 @@ const CustomerLanding = () => {
                 ))
               ) : categories.length > 0 ? (
                 <>
-                  {/* All Category Chip - styled like subcategory chip */}
-                  <span
-                    className={`subcategory-chip category-all-chip ${selectedCategory?.id === 'all' ? 'active' : ''}`}
-                    onClick={() => handleCategoryClick(ALL_CATEGORY)}
-                  >
-                    All
-                  </span>
-                  {/* Recommended Category Card */}
-                  <div
-                    className={`category-card ${selectedCategory?.id === 'recommended' ? 'active' : ''}`}
-                    data-motion-observe="category-card"
-                    onClick={() => handleCategoryClick(RECOMMENDED_CATEGORY)}
-                  >
-                    <div className="category-icon-emoji">⭐</div>
-                    <div className="category-name">Recommended</div>
-                  </div>
-                  {/* Frequently Category Card - Only show when customer is logged in */}
-                  {isCustomerLoggedIn && (
-                    <div
-                      className={`category-card ${selectedCategory?.id === 'frequently' ? 'active' : ''}`}
-                      data-motion-observe="category-card"
-                      onClick={() => handleCategoryClick(FREQUENTLY_CATEGORY)}
-                    >
-                      <div className="category-icon-emoji">🔁</div>
-                      <div className="category-name">Order Again</div>
-                    </div>
-                  )}
                   {categories.map(category => {
                     console.log('Category row:', category, 'Icon URL:', category.icon);
                     return (
@@ -3629,33 +4332,254 @@ const CustomerLanding = () => {
           </>
         )}
 
-        {/* Unrivaled Atmosphere Section */}
+        {/* Our Strength / Why Choose Us — Grilli-style 4-icon section */}
         {isLandingPage && (
-          <section className="atmosphere-section" id="atmosphere-section">
-            <div className="atmosphere-container">
-              <div className="atmosphere-left">
-                <div className="overlapping-images animate-fade-in-up">
-                  <img className="atmos-img img-1" src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80" alt="Restaurant Interior" />
-                  <img className="atmos-img img-2" src="https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=600&q=80" alt="Cocktails" />
-                  <img className="atmos-img img-3" src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80" alt="Fine Dining" />
-                </div>
+          <section className="our-strength-section" id="our-strength">
+            {/* Bottom-left botanical decorative flourish */}
+            <div className="our-strength-decoration" aria-hidden="true">
+              <svg viewBox="0 0 180 140" width="180" height="140">
+                {/* Small dark bowl with peppercorn/spice dots */}
+                <ellipse cx="45" cy="105" rx="30" ry="14" fill="#0f0c08" stroke="#3a2f22" strokeWidth="1" />
+                <ellipse cx="45" cy="98" rx="30" ry="7" fill="#1a1410" opacity="0.9" />
+                <circle cx="34" cy="94" r="2.5" fill="#8B6E4E" opacity="0.85" />
+                <circle cx="42" cy="93" r="2" fill="#A88338" opacity="0.85" />
+                <circle cx="50" cy="94" r="2.5" fill="#8B6E4E" opacity="0.85" />
+                <circle cx="58" cy="93" r="2" fill="#A88338" opacity="0.8" />
+                <circle cx="38" cy="98" r="2" fill="#8B6E4E" opacity="0.7" />
+                <circle cx="52" cy="98" r="2" fill="#A88338" opacity="0.7" />
+                {/* Scattered peppercorn dots outside bowl */}
+                <circle cx="88" cy="118" r="3" fill="#8B6E4E" opacity="0.75" />
+                <circle cx="100" cy="122" r="2.5" fill="#A88338" opacity="0.7" />
+                <circle cx="115" cy="118" r="3" fill="#8B6E4E" opacity="0.75" />
+                <circle cx="128" cy="125" r="2.5" fill="#A88338" opacity="0.7" />
+                <circle cx="20" cy="128" r="3" fill="#8B6E4E" opacity="0.7" />
+                <circle cx="8" cy="122" r="2.5" fill="#A88338" opacity="0.7" />
+              </svg>
+            </div>
+
+            <div className="our-strength-container">
+              <div className="our-strength-header animate-fade-in-up">
+                <span className="our-strength-eyebrow">WHY CHOOSE US</span>
+                <h2 className="our-strength-title">Our Strength</h2>
               </div>
-              <div className="atmosphere-right animate-fade-in-up">
-                <span className="atmos-tag">DINING EXPERIENCE</span>
-                <h2 className="atmos-heading">UNRIVALED ATMOSPHERE</h2>
-                <p className="atmos-text">
-                  Enjoy an elegant and vibrant atmosphere, soft music, eclectic wines, and handcrafted cocktails. We are committed to delivering an unforgettable Kosher dining experience.
+
+              <div className="our-strength-grid">
+                {[
+                  {
+                    icon: (
+                      <svg viewBox="0 0 64 64" width="52" height="52" fill="none" stroke="#D4A857" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12,42 Q16,26 32,24 Q48,26 52,42 Z" />
+                        <path d="M32,24 L32,14 M28,14 L36,14" />
+                        <path d="M20,42 L20,32 M28,42 L28,30 M36,42 L36,30 M44,42 L44,32" />
+                        <path d="M8,46 L56,46" />
+                        <ellipse cx="22" cy="22" rx="4" ry="6" transform="rotate(-25 22 22)" fill="#D4A857" opacity="0.15" />
+                        <path d="M18,20 Q22,16 26,20 Q22,26 18,20" />
+                      </svg>
+                    ),
+                    title: 'Hygienic Food',
+                    body: 'Farm-fresh ingredients washed, checked, and stored with strict hygiene standards every single day.'
+                  },
+                  {
+                    icon: (
+                      <svg viewBox="0 0 64 64" width="52" height="52" fill="none" stroke="#D4A857" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18,52 L18,32 L46,32 L46,52" />
+                        <line x1="14" y1="52" x2="50" y2="52" />
+                        <line x1="22" y1="52" x2="22" y2="58" />
+                        <line x1="42" y1="52" x2="42" y2="58" />
+                        <path d="M28,32 L28,22 Q32,18 36,22 L36,32" />
+                        <circle cx="32" cy="14" r="3" fill="#D4A857" opacity="0.25" />
+                        <path d="M26,14 Q32,8 38,14" />
+                        <line x1="24" y1="38" x2="40" y2="38" />
+                        <line x1="24" y1="44" x2="40" y2="44" />
+                      </svg>
+                    ),
+                    title: 'Fresh Environment',
+                    body: 'Warm candlelit tables, curated music, live plants — a room designed for an unhurried evening.'
+                  },
+                  {
+                    icon: (
+                      <svg viewBox="0 0 64 64" width="52" height="52" fill="none" stroke="#D4A857" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M22,30 Q22,18 32,18 Q42,18 42,30" />
+                        <path d="M18,30 Q14,26 18,22 Q22,22 22,26" />
+                        <path d="M46,30 Q50,26 46,22 Q42,22 42,26" />
+                        <rect x="20" y="30" width="24" height="4" />
+                        <path d="M20,34 L20,52 L44,52 L44,34" />
+                        <line x1="26" y1="40" x2="26" y2="48" />
+                        <line x1="32" y1="40" x2="32" y2="48" />
+                        <line x1="38" y1="40" x2="38" y2="48" />
+                      </svg>
+                    ),
+                    title: 'Skilled Chefs',
+                    body: 'Award-winning kitchen team with over 15 years of craft, trained in classic and modern techniques.'
+                  },
+                  {
+                    icon: (
+                      <svg viewBox="0 0 64 64" width="52" height="52" fill="none" stroke="#D4A857" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M14,52 L28,20 L44,52 Z" />
+                        <path d="M28,20 L44,52" fill="#D4A857" opacity="0.08" />
+                        <line x1="20" y1="42" x2="38" y2="42" />
+                        <line x1="24" y1="34" x2="34" y2="34" />
+                        <path d="M46,14 L48,10 M50,14 L54,12 M52,20 L58,20 M50,26 L54,28" />
+                        <circle cx="46" cy="14" r="1.5" fill="#D4A857" />
+                        <circle cx="52" cy="20" r="1.5" fill="#D4A857" />
+                        <path d="M46,24 L48,26 L44,28 Z" fill="#D4A857" opacity="0.4" />
+                        <path d="M10,20 L14,22 L10,24 Z" fill="#D4A857" opacity="0.4" />
+                      </svg>
+                    ),
+                    title: 'Event & Party',
+                    body: 'Private dining, birthdays, corporate evenings — bespoke tasting menus for every occasion.'
+                  }
+                ].map((item, i) => (
+                  <article
+                    key={item.title}
+                    className="our-strength-card animate-fade-in-up"
+                    style={{ animationDelay: `${0.15 + i * 0.12}s` }}
+                  >
+                    <div className="our-strength-icon">{item.icon}</div>
+                    <h3 className="our-strength-card-title">{item.title}</h3>
+                    <p className="our-strength-card-body">{item.body}</p>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Online Reservation Section — Grilli-style (LANDING ONLY) */}
+        {isLandingPage && (
+          <section className="online-reservation-section" id="online-reservation">
+            <div
+              className="online-reservation-bg"
+              style={{
+                backgroundImage:
+                  "url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=2000&q=85')"
+              }}
+              aria-hidden="true"
+            />
+            <div className="online-reservation-veil" aria-hidden="true" />
+
+            <div className="online-reservation-container">
+              {/* LEFT: form panel */}
+              <div className="online-reservation-form-panel animate-fade-in-up">
+                <span className="online-reservation-eyebrow">RESERVATION</span>
+                <h2 className="online-reservation-title">Online Reservation</h2>
+                <p className="online-reservation-sub">
+                  Booking request <a href="tel:+919999999999" className="online-reservation-phone-inline">+91 999-999-9999</a> or fill out the order form
                 </p>
-                <div className="atmos-badge-container">
-                  <div className="atmos-badge">
-                    <span className="badge-letter">L</span>
-                    <span className="badge-sub">B</span>
+
+                <form onSubmit={handleReservationSubmit} className="online-reservation-form">
+                  <div className="online-reservation-row">
+                    <div className="online-reservation-field">
+                      <input
+                        type="text"
+                        placeholder="Your Name"
+                        value={reservation.name}
+                        onChange={(e) => setReservation({ ...reservation, name: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="online-reservation-field">
+                      <input
+                        type="tel"
+                        placeholder="Phone Number"
+                        value={reservation.phone}
+                        onChange={(e) => setReservation({ ...reservation, phone: e.target.value })}
+                        required
+                      />
+                    </div>
                   </div>
-                </div>
-                <button className="btn-atmos-more" onClick={() => navigate('/gallery')}>
-                  DISCOVER MORE
-                </button>
+
+                  <div className="online-reservation-row online-reservation-row--three">
+                    <div className="online-reservation-field online-reservation-field--select">
+                      <i className="bi bi-person-fill online-reservation-field-icon"></i>
+                      <select
+                        value={reservation.guests}
+                        onChange={(e) => setReservation({ ...reservation, guests: parseInt(e.target.value, 10) })}
+                      >
+                        <option value="1">1 Person</option>
+                        <option value="2">2 Persons</option>
+                        <option value="3">3 Persons</option>
+                        <option value="4">4 Persons</option>
+                        <option value="5">5 Persons</option>
+                        <option value="6">6+ Persons</option>
+                      </select>
+                    </div>
+                    <div className="online-reservation-field online-reservation-field--icon-input">
+                      <i className="bi bi-calendar-event online-reservation-field-icon"></i>
+                      <input
+                        type="date"
+                        value={reservation.date}
+                        onChange={(e) => setReservation({ ...reservation, date: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="online-reservation-field online-reservation-field--icon-input">
+                      <i className="bi bi-clock online-reservation-field-icon"></i>
+                      <input
+                        type="time"
+                        value={reservation.time}
+                        onChange={(e) => setReservation({ ...reservation, time: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="online-reservation-field">
+                    <textarea
+                      rows="4"
+                      placeholder="Message"
+                      value={reservation.notes}
+                      onChange={(e) => setReservation({ ...reservation, notes: e.target.value })}
+                    ></textarea>
+                  </div>
+
+                  <button type="submit" className="online-reservation-submit">
+                    BOOK A TABLE
+                  </button>
+                </form>
               </div>
+
+              {/* RIGHT: contact info panel */}
+              <aside
+                className="online-reservation-contact-panel animate-fade-in-up"
+                style={{ animationDelay: '0.2s' }}
+              >
+                <h3 className="online-reservation-contact-title">Contact Us</h3>
+
+                <div className="online-reservation-contact-block">
+                  <h4 className="online-reservation-contact-label">Booking Request</h4>
+                  <a href="tel:+919999999999" className="online-reservation-contact-phone">
+                    +91 999-999-9999
+                  </a>
+                </div>
+
+                <div className="online-reservation-contact-sep" aria-hidden="true">◇</div>
+
+                <div className="online-reservation-contact-block">
+                  <h4 className="online-reservation-contact-label">Location</h4>
+                  <p className="online-reservation-contact-text">
+                    Spice Garden Steakhouse,<br />
+                    123 Fine Dining Ave,<br />
+                    Delicious City, IN&nbsp;110001
+                  </p>
+                </div>
+
+                <div className="online-reservation-contact-block">
+                  <h4 className="online-reservation-contact-label">Lunch Time</h4>
+                  <p className="online-reservation-contact-text">
+                    Monday to Sunday<br />
+                    11:00 am – 2:30 pm
+                  </p>
+                </div>
+
+                <div className="online-reservation-contact-block">
+                  <h4 className="online-reservation-contact-label">Dinner Time</h4>
+                  <p className="online-reservation-contact-text">
+                    Monday to Sunday<br />
+                    5:00 pm – 10:00 pm
+                  </p>
+                </div>
+              </aside>
             </div>
           </section>
         )}
@@ -4083,72 +5007,102 @@ const CustomerLanding = () => {
 
 
 
-        {/* Bottom Reservation Bar */}
-        <div className="bottom-reservation-bar" id="reservation-section">
-          <div className="res-bar-left animate-fade-in-up">
-            <h3>MAKE A RESERVATION</h3>
-          </div>
-          <div className="res-bar-center animate-fade-in-up">
-            <button className="btn-res-now" onClick={() => navigate('/contact')}>
-              RESERVE NOW
-            </button>
-          </div>
-          <div className="res-bar-right animate-fade-in-up">
-            <span>{contactPhone}</span>
-            <span className="divider">|</span>
-            <span>{contactEmail}</span>
-          </div>
-        </div>
+        {/* Grilli-style Footer (replaces old restaurant-details-footer + bottom-footer) */}
+        <footer className="grilli-footer">
+          <div
+            className="grilli-footer-bg"
+            style={{
+              backgroundImage:
+                "url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=2400&q=85')"
+            }}
+            aria-hidden="true"
+          />
+          <div className="grilli-footer-veil" aria-hidden="true" />
 
-        {/* Detailed Info Footer */}
-        <footer className="restaurant-details-footer">
-          <div className="footer-details-grid">
-            {/* Col 1: Address & Reservation */}
-            <div className="footer-details-col animate-fade-in-up">
-              <div className="footer-details-section">
-                <h4>ADDRESS</h4>
-                <p>{contactAddress}</p>
-                <a href={`https://maps.google.com/?q=${encodeURIComponent(contactAddress)}`} target="_blank" rel="noopener noreferrer" className="btn-directions">
-                  DIRECTIONS
-                </a>
-              </div>
-              <div className="footer-details-section mt-4">
-                <h4>RESERVATION</h4>
-                <p>Call: {contactPhone}<br />Email: {contactEmail}</p>
-              </div>
-            </div>
+          <div className="grilli-footer-inner">
+            {/* LEFT: Vertical nav links */}
+            <nav className="grilli-footer-nav grilli-footer-nav--left">
+              <button type="button" onClick={() => navigate('/home')}>HOME</button>
+              <button type="button" onClick={() => navigate('/menu')}>MENUS</button>
+              <button type="button" onClick={() => navigate('/about')}>ABOUT US</button>
+              <button type="button" onClick={() => navigate('/signature')}>OUR CHEFS</button>
+              <button type="button" onClick={() => navigate('/contact')}>CONTACT</button>
+            </nav>
 
-            {/* Col 2: Hours */}
-            <div className="footer-details-col animate-fade-in-up">
-              <div className="footer-details-section">
-                <h4>HOURS</h4>
-                <p>
-                  {renderHoursList()}
+            {/* CENTER: Highlighted card */}
+            <div className="grilli-footer-card">
+              <div className="grilli-footer-card-inner">
+                <div className="grilli-footer-logo">
+                  {logoUrl ? (
+                    <img src={logoUrl} alt={restaurantName || 'Restaurant'} />
+                  ) : (
+                    <div className="grilli-footer-logo-fallback">
+                      <i className="bi bi-award"></i>
+                      <span>{(restaurantName || 'Restaurant').toUpperCase()}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="grilli-footer-details">
+                  {contactAddress && <p>{contactAddress}</p>}
+                  {contactEmail && (
+                    <p><a href={`mailto:${contactEmail}`}>{contactEmail}</a></p>
+                  )}
+                  {contactPhone && (
+                    <p>Booking Request : <a href={`tel:${contactPhone}`}>{contactPhone}</a></p>
+                  )}
+                  <p>Open : 09:00 am – 10:00 pm</p>
+                </div>
+
+                <div className="grilli-footer-ornament" aria-hidden="true">
+                  <span>◆</span><span>◆</span><span>◆</span>
+                </div>
+
+                <h3 className="grilli-footer-newsletter-title">Get News &amp; Offers</h3>
+                <p className="grilli-footer-newsletter-sub">
+                  Subscribe us &amp; Get <strong>25% Off.</strong>
                 </p>
+
+                <form
+                  className="grilli-footer-newsletter-form"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    toast.success('Subscribed! Check your email for the offer.');
+                    e.currentTarget.reset();
+                  }}
+                >
+                  <label className="grilli-footer-newsletter-input">
+                    <i className="bi bi-envelope"></i>
+                    <input type="email" placeholder="Your email" required />
+                  </label>
+                  <button type="submit" className="grilli-footer-newsletter-submit">
+                    SUBSCRIBE
+                  </button>
+                </form>
               </div>
             </div>
 
-            {/* Col 3: Dining Options */}
-            <div className="footer-details-col animate-fade-in-up">
-              <div className="footer-details-section">
-                <h4>DINING OPTIONS</h4>
-                <ul className="footer-bullet-list">
-                  {renderDiningSections()}
-                </ul>
-              </div>
-            </div>
+            {/* RIGHT: Vertical social/external links */}
+            <nav className="grilli-footer-nav grilli-footer-nav--right">
+              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">FACEBOOK</a>
+              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">INSTAGRAM</a>
+              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer">TWITTER</a>
+              <a href="https://youtube.com" target="_blank" rel="noopener noreferrer">YOUTUBE</a>
+              <a
+                href={`https://maps.google.com/?q=${encodeURIComponent(contactAddress || restaurantName || 'Restaurant')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                GOOGLE MAP
+              </a>
+            </nav>
           </div>
-        </footer>
 
-        {/* Bottom Footer */}
-        <footer className="restaurant-bottom-footer">
-          <div className="bottom-footer-content">
-            <p>&copy; {new Date().getFullYear()} {restaurantName}. All rights reserved.</p>
-            <div className="bottom-footer-socials">
-              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer"><i className="bi bi-facebook"></i></a>
-              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer"><i className="bi bi-instagram"></i></a>
-              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer"><i className="bi bi-twitter-x"></i></a>
-            </div>
+          <div className="grilli-footer-bottom">
+            <p>
+              &copy; {new Date().getFullYear()} {restaurantName || 'Spice Garden Steakhouse'}.
+              All rights reserved.
+            </p>
           </div>
         </footer>
 

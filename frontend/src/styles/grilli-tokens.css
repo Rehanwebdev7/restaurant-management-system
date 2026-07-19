@@ -39,7 +39,7 @@
   --grilli-lh-body:           1.6;
 
   /* ---- Rhythm & sizing ----------------------------------- */
-  --grilli-section-y:         clamp(48px, 8vw, 96px);
+  --grilli-section-y:         clamp(28px, 4.5vw, 56px);
   --grilli-section-inner-y:   clamp(24px, 4vw, 48px);
   --grilli-container:         1280px;
   --grilli-container-narrow:  960px;

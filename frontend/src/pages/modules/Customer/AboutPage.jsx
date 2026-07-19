@@ -1,15 +1,14 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCurrentTheme } from '../../../services/themeService';
+import '../../../styles/grilli-tokens.css';
 
 const AboutPage = () => {
   const navigate = useNavigate();
   const theme = getCurrentTheme();
   const primaryColor = theme.primary || '#b48a1d';
 
-  const [themeMode, setThemeMode] = React.useState(() => {
-    return localStorage.getItem('customerThemeMode') || 'dark';
-  });
+  const [themeMode, setThemeMode] = React.useState('dark');
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -28,7 +27,7 @@ const AboutPage = () => {
   const headerTextColor = isDark ? '#f4efe6' : '#1c1917';
 
   return (
-    <div className="info-page">
+    <div className="info-page grilli-scope">
       <style>{`
         @keyframes fadeInUp {
           from {

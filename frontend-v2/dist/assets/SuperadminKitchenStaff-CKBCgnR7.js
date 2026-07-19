@@ -1,0 +1,2 @@
+import{u as e}from"./framer-wMAN8Ixe.js";import{t}from"./RoleFilteredStaff-CjcycRzl.js";var n=e();function r(){return(0,n.jsx)(t,{title:`Kitchen Staff`,role:`kitchen`})}export{r as default};
+//# sourceMappingURL=SuperadminKitchenStaff-CKBCgnR7.js.map

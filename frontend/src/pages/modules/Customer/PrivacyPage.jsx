@@ -1,11 +1,12 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCurrentTheme } from '../../../services/themeService';
+import '../../../styles/grilli-tokens.css';
 
 const PrivacyPage = () => {
   const navigate = useNavigate();
   const theme = getCurrentTheme();
-  const primaryColor = theme.primary || '#667eea';
+  const primaryColor = theme.primary || '#D4A857';
   // Contact Info from theme
   const contactAddress = theme.address || '';
   const contactPhone = theme.phone || '';
@@ -16,7 +17,7 @@ const PrivacyPage = () => {
   }, []);
 
   return (
-    <div className="info-page">
+    <div className="info-page grilli-scope">
       <style>{`
         .info-page {
           min-height: 100vh;

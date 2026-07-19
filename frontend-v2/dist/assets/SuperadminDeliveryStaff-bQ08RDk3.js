@@ -1,0 +1,2 @@
+import{u as e}from"./framer-wMAN8Ixe.js";import{t}from"./RoleFilteredStaff-CjcycRzl.js";var n=e();function r(){return(0,n.jsx)(t,{title:`Delivery Partners`,role:`delivery`})}export{r as default};
+//# sourceMappingURL=SuperadminDeliveryStaff-bQ08RDk3.js.map

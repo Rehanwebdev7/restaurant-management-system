@@ -43,7 +43,7 @@ const LoginRoutes = () => {
                 <Route
                     path="/"
                     element={
-                        <Login />
+                        <CustomerLanding />
                     }
                 />
                 <Route
@@ -132,6 +132,12 @@ const LoginRoutes = () => {
                 />
                 <Route
                     path="/location"
+                    element={
+                        <CustomerLanding />
+                    }
+                />
+                <Route
+                    path="/location-picker"
                     element={
                         <LocationPage />
                     }
