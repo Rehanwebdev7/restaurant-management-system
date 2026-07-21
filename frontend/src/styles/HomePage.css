@@ -6671,6 +6671,119 @@
   margin: 0 auto;
 }
 
+.gallery-hero-slider {
+  position: relative;
+  width: 100vw;
+  min-height: calc(100vh - 92px);
+  margin: 0 0 72px;
+  margin-left: calc(50% - 50vw);
+  overflow: hidden;
+  border-bottom: 1px solid rgba(211, 164, 58, 0.45);
+  isolation: isolate;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gallery-hero-slide,
+.gallery-hero-shade {
+  position: absolute;
+  inset: 0;
+}
+
+.gallery-hero-slide {
+  background-position: center;
+  background-size: cover;
+  opacity: 0;
+  transform: scale(1.08);
+  transition: opacity 1s ease, transform 6s ease;
+  z-index: 0;
+}
+
+.gallery-hero-slide.active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.gallery-hero-shade {
+  background: linear-gradient(90deg, rgba(7, 7, 7, 0.9) 0%, rgba(7, 7, 7, 0.52) 46%, rgba(7, 7, 7, 0.18) 100%), linear-gradient(0deg, rgba(7, 7, 7, 0.58), transparent 48%);
+  z-index: 1;
+}
+
+.gallery-hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 610px;
+  text-align: center;
+  padding: 105px 64px 80px;
+  animation: galleryHeroIn 0.8s ease both;
+}
+
+.gallery-hero-content h1 {
+  margin: 15px 0 12px;
+  color: #f8f0e3;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(2.7rem, 6vw, 5rem);
+  font-weight: 500;
+  line-height: 0.95;
+}
+
+.gallery-hero-content p {
+  max-width: 440px;
+  margin-left: auto;
+  margin-right: auto;
+  color: rgba(248, 240, 227, 0.78);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.gallery-hero-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  padding: 13px 20px;
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  background: rgba(211, 164, 58, 0.12);
+  color: #f5d27b;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  transition: background 0.3s ease, transform 0.3s ease;
+}
+
+.gallery-hero-action:hover { background: var(--accent); color: #15110a; transform: translateY(-3px); }
+
+.gallery-hero-controls {
+  position: absolute;
+  right: 30px;
+  bottom: 28px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  z-index: 3;
+}
+
+.gallery-hero-controls > button {
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(245, 210, 123, 0.7);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.32);
+  color: #f5d27b;
+  transition: background 0.25s ease, transform 0.25s ease;
+}
+
+.gallery-hero-controls > button:hover { background: var(--accent); color: #15110a; transform: scale(1.08); }
+.gallery-hero-dots { display: flex; gap: 7px; }
+.gallery-hero-dots button { width: 7px; height: 7px; padding: 0; border: 0; border-radius: 50%; background: rgba(255,255,255,0.45); transition: width 0.3s ease, background 0.3s ease; }
+.gallery-hero-dots button.active { width: 25px; border-radius: 5px; background: var(--accent); }
+
+@keyframes galleryHeroIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+
 .gallery-masonry {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -6742,6 +6855,35 @@
 
 .gallery-item:hover .gallery-overlay span {
   transform: translateY(0);
+}
+
+.gallery-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 42px;
+}
+
+.gallery-pagination button {
+  min-width: 38px;
+  height: 38px;
+  padding: 0 11px;
+  border: 1px solid rgba(211, 164, 58, 0.35);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--font-color);
+  transition: all 0.25s ease;
+}
+
+.gallery-pagination button:hover:not(:disabled), .gallery-pagination button.active { border-color: var(--accent); background: var(--accent); color: #161108; transform: translateY(-2px); }
+.gallery-pagination button:disabled { cursor: not-allowed; opacity: 0.35; }
+
+@media (max-width: 600px) {
+  .restaurant-gallery { padding: 30px 18px; }
+  .gallery-hero-slider { min-height: calc(100vh - 74px); margin-bottom: 52px; }
+  .gallery-hero-content { padding: 80px 28px 100px; }
+  .gallery-hero-controls { right: 18px; bottom: 20px; }
 }
 
 /* ---- Customer Testimonials Section ---- */

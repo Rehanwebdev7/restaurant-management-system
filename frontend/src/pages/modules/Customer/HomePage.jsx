@@ -49,6 +49,22 @@ const DEFAULT_GALLERY_IMAGES = [
     description: 'Signature food moments',
     image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80',
   },
+  { id: 'default-gallery-5', title: 'Chef at Work', description: 'Crafted with passion', image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1600&q=80' },
+  { id: 'default-gallery-6', title: 'Private Dining', description: 'An intimate evening', image: 'https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=800&q=80' },
+  { id: 'default-gallery-7', title: 'Fresh Ingredients', description: 'The finest flavours', image: 'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=800&q=80' },
+  { id: 'default-gallery-8', title: 'Signature Pasta', description: 'Made fresh daily', image: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=800&q=80' },
+  { id: 'default-gallery-9', title: 'Golden Hour', description: 'Dine in the glow', image: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=800&q=80' },
+  { id: 'default-gallery-10', title: 'Dessert Table', description: 'Sweet finishing touches', image: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?auto=format&fit=crop&w=800&q=80' },
+  { id: 'default-gallery-11', title: 'Cocktail Hour', description: 'Raise a glass', image: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=800&q=80' },
+  { id: 'default-gallery-12', title: 'Warm Welcome', description: 'Where every table tells a story', image: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=800&q=80' },
+  { id: 'default-gallery-13', title: 'Artisan Bread', description: 'Baked in-house', image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80' },
+  { id: 'default-gallery-14', title: 'Garden Fresh', description: 'Seasonal and vibrant', image: 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=800&q=80' },
+  { id: 'default-gallery-15', title: 'The Bar', description: 'Classic pours, modern spirit', image: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=800&q=80' },
+  { id: 'default-gallery-16', title: 'Table for Two', description: 'Make it a memorable night', image: 'https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=800&q=80' },
+  { id: 'default-gallery-17', title: 'Flame & Flavour', description: 'Straight from the grill', image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80' },
+  { id: 'default-gallery-18', title: 'Sunday Brunch', description: 'Slow mornings, great food', image: 'https://images.unsplash.com/photo-1533088328742-97c0f9f4c8b8?auto=format&fit=crop&w=800&q=80' },
+  { id: 'default-gallery-19', title: 'Celebrations', description: 'Moments worth gathering for', image: 'https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?auto=format&fit=crop&w=800&q=80' },
+  { id: 'default-gallery-20', title: 'A Taste of Luxury', description: 'Every detail matters', image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800&q=80' },
 ];
 
 const resolveImageUrl = (url) => {
@@ -395,6 +411,9 @@ const CustomerLanding = () => {
   const [slidersLoading, setSlidersLoading] = useState(true);
   const [galleryItems, setGalleryItems] = useState([]);
   const [galleryLoading, setGalleryLoading] = useState(true);
+  const [activeGalleryHero, setActiveGalleryHero] = useState(0);
+  const [galleryPage, setGalleryPage] = useState(1);
+  const galleryPageSize = 20;
 
   // Premium Hero Slideshow States
   const [activeHeroSlide, setActiveHeroSlide] = useState(0);
@@ -415,6 +434,34 @@ const CustomerLanding = () => {
     'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?auto=format&fit=crop&w=1600&q=80', // Pancakes / desserts
   ];
 
+  const signatureDishes = [
+    {
+      image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1200&q=85',
+      name: 'Slow-Braised', accent: 'Short Rib', price: '34',
+      description: 'Locally-sourced beef short rib, braised for eight hours in our house red-wine reduction with rosemary and thyme. Served over creamy garlic polenta with roasted heirloom vegetables and a drizzle of aged balsamic.',
+      time: '8 hrs slow-braised', tag: "Chef's Pick"
+    },
+    {
+      image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1200&q=85',
+      name: 'Herb-Crusted', accent: 'Chef’s Catch', price: '29',
+      description: 'A beautifully plated catch of the day with garden herbs, lemon beurre blanc and seasonal vegetables, finished with a touch of smoked sea salt.',
+      time: 'Fresh catch today', tag: "Chef's Pick"
+    },
+    {
+      image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=85',
+      name: 'The Garden', accent: 'Harvest Plate', price: '24',
+      description: 'A colourful celebration of seasonal produce, roasted gently and paired with whipped feta, toasted grains and our signature garden dressing.',
+      time: 'Seasonal ingredients', tag: 'Vegetarian'
+    },
+    {
+      image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=1200&q=85',
+      name: 'Fire-Roasted', accent: 'Truffle Pizza', price: '26',
+      description: 'Hand-stretched dough, wild mushrooms, fresh mozzarella and shaved truffle, finished in our stone oven for a crisp, smoky edge.',
+      time: 'Stone-oven baked', tag: 'Guest Favourite'
+    },
+  ];
+  const [activeSignatureDish, setActiveSignatureDish] = useState(0);
+
   useEffect(() => {
     const timer = setInterval(() => {
       setActiveHeroSlide((prev) => (prev + 1) % heroSlideImages.length);
@@ -424,10 +471,29 @@ const CustomerLanding = () => {
 
   useEffect(() => {
     const timer = setInterval(() => {
+      setActiveSignatureDish((prev) => (prev + 1) % signatureDishes.length);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
       setActiveMenuHeroSlide((prev) => (prev + 1) % menuHeroImages.length);
     }, 4500);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveGalleryHero((prev) => (prev + 1) % 5);
+    }, 5200);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    setGalleryPage(1);
+    setActiveGalleryHero(0);
+  }, [galleryItems.length]);
 
   // Customer login state
   const [isCustomerLoggedIn, setIsCustomerLoggedIn] = useState(false);
@@ -2668,6 +2734,15 @@ const CustomerLanding = () => {
     }, 200);
   };
 
+  const gallerySourceItems = galleryItems.length > 0 ? galleryItems : DEFAULT_GALLERY_IMAGES;
+  const galleryHeroItems = gallerySourceItems.slice(0, 5);
+  const galleryTotalPages = Math.max(1, Math.ceil(gallerySourceItems.length / galleryPageSize));
+  const galleryPageItems = gallerySourceItems.slice(
+    (galleryPage - 1) * galleryPageSize,
+    galleryPage * galleryPageSize
+  );
+  const currentGalleryHero = galleryHeroItems[activeGalleryHero % galleryHeroItems.length] || DEFAULT_GALLERY_IMAGES[0];
+
   return (
     <>
       <style>{`
@@ -2678,7 +2753,7 @@ const CustomerLanding = () => {
         }
       `}</style>
 
-      <div className={`landing-container dark-mode grilli-scope`}>
+      <div className={`landing-container ${themeMode === 'light' ? 'light-mode' : 'dark-mode'} grilli-scope`}>
         {/* Mobile Menu Overlay */}
         <div
           className={`mobile-menu-overlay ${showMobileMenu ? 'active' : ''}`}
@@ -3324,16 +3399,45 @@ const CustomerLanding = () => {
                 </div>
               </div>
 
-              {contactAddress && (
-                <div className="location-map-wrap animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-                  <iframe
-                    title="Restaurant location map"
-                    src={`https://www.google.com/maps?q=${encodeURIComponent(contactAddress)}&output=embed`}
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                  />
+              <div className="location-details-layout">
+                <div className="location-details-panel animate-fade-in-up" style={{ animationDelay: '0.35s' }}>
+                  <span className="section-subheading">THE SPICE GARDEN EXPERIENCE</span>
+                  <h2 className="location-details-heading">A table worth<br /><em>travelling for.</em></h2>
+                  <p className="location-details-copy">
+                    Settle into our warm dining room for fire-kissed flavours, thoughtful service and an evening made to linger over.
+                  </p>
+                  <div className="location-perks">
+                    <div><i className="bi bi-check2-circle" /><span>Valet parking available</span></div>
+                    <div><i className="bi bi-check2-circle" /><span>Private dining for celebrations</span></div>
+                    <div><i className="bi bi-check2-circle" /><span>Wheelchair accessible entrance</span></div>
+                    <div><i className="bi bi-check2-circle" /><span>Walk-ins welcome every day</span></div>
+                  </div>
+                  <button className="location-reserve-btn" onClick={() => navigate('/contact')}>
+                    RESERVE YOUR TABLE <i className="bi bi-arrow-right" />
+                  </button>
                 </div>
-              )}
+
+                {contactAddress && (
+                  <div className="location-map-wrap animate-fade-in-up" style={{ animationDelay: '0.45s' }}>
+                    <div className="location-map-label"><i className="bi bi-pin-map-fill" /> FIND US HERE</div>
+                    <iframe
+                      title="Restaurant location map"
+                      src={`https://www.google.com/maps?q=${encodeURIComponent(contactAddress)}&output=embed`}
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                    />
+                    <a className="location-map-footer" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contactAddress)}`} target="_blank" rel="noopener noreferrer">
+                      GET DIRECTIONS <i className="bi bi-arrow-up-right" />
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              <div className="location-bottom-note">
+                <i className="bi bi-stars" />
+                <span>Good food tastes better when shared. We look forward to welcoming you.</span>
+                <i className="bi bi-stars" />
+              </div>
             </section>
           </>
         )}
@@ -3736,12 +3840,16 @@ const CustomerLanding = () => {
             {/* Tonight's Special — 2-column: dish image | content */}
             <section className="signature-dish-section signature-dish-split" id="signature-dish">
               <div className="signature-dish-inner">
+                {(() => {
+                  const dish = signatureDishes[activeSignatureDish];
+                  return (<>
                 {/* LEFT: dish image with animations */}
                 <div className="signature-dish-media animate-fade-in-up">
                   <div className="signature-dish-media-frame">
                     <img
-                      src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1200&q=85"
-                      alt="Slow-Braised Short Rib"
+                      key={dish.image}
+                      src={dish.image}
+                      alt={`${dish.name} ${dish.accent}`}
                       loading="lazy"
                     />
                     <div className="signature-dish-shine" aria-hidden="true" />
@@ -3749,7 +3857,7 @@ const CustomerLanding = () => {
                   {/* Floating gold price badge */}
                   <div className="signature-dish-price-badge" aria-hidden="true">
                     <span className="sdpb-currency">$</span>
-                    <span className="sdpb-amount">34</span>
+                    <span className="sdpb-amount">{dish.price}</span>
                   </div>
                   {/* Decorative ring */}
                   <div className="signature-dish-ring signature-dish-ring--a" aria-hidden="true" />
@@ -3765,7 +3873,7 @@ const CustomerLanding = () => {
                     className="signature-dish-name animate-fade-in-up"
                     style={{ animationDelay: '0.15s' }}
                   >
-                    Slow-Braised <em>Short Rib</em>
+                    {dish.name} <em>{dish.accent}</em>
                   </h2>
                   <div className="signature-dish-divider" aria-hidden="true">
                     <span className="sdd-line"></span>
@@ -3776,10 +3884,7 @@ const CustomerLanding = () => {
                     className="signature-dish-desc animate-fade-in-up"
                     style={{ animationDelay: '0.35s' }}
                   >
-                    Locally-sourced beef short rib, braised for eight hours in our
-                    house red-wine reduction with rosemary and thyme. Served over
-                    creamy garlic polenta with roasted heirloom vegetables and a
-                    drizzle of aged balsamic.
+                    {dish.description}
                   </p>
 
                   <div
@@ -3788,11 +3893,11 @@ const CustomerLanding = () => {
                   >
                     <span className="signature-dish-meta-item">
                       <i className="bi bi-clock-history"></i>
-                      <span>8 hrs slow-braised</span>
+                      <span>{dish.time}</span>
                     </span>
                     <span className="signature-dish-meta-item">
                       <i className="bi bi-stars"></i>
-                      <span>Chef&apos;s Pick</span>
+                      <span>{dish.tag}</span>
                     </span>
                     <span className="signature-dish-meta-item">
                       <i className="bi bi-award"></i>
@@ -3808,7 +3913,19 @@ const CustomerLanding = () => {
                   >
                     Order Now
                   </button>
+                  <div className="signature-dish-dots" aria-label="Choose tonight's special">
+                    {signatureDishes.map((item, index) => (
+                      <button
+                        key={item.image}
+                        className={index === activeSignatureDish ? 'active' : ''}
+                        aria-label={`Show ${item.name} ${item.accent}`}
+                        onClick={() => setActiveSignatureDish(index)}
+                      />
+                    ))}
+                  </div>
                 </div>
+                  </>);
+                })()}
               </div>
             </section>
 
@@ -4462,7 +4579,18 @@ const CustomerLanding = () => {
               {/* LEFT: form panel */}
               <div className="online-reservation-form-panel animate-fade-in-up">
                 <span className="online-reservation-eyebrow">RESERVATION</span>
-                <h2 className="online-reservation-title">Online Reservation</h2>
+                <h2
+                  className="online-reservation-title"
+                  style={{
+                    color: '#2b241b',
+                    WebkitTextFillColor: '#2b241b',
+                    background: 'transparent',
+                    opacity: 1,
+                    visibility: 'visible'
+                  }}
+                >
+                  Online Reservation
+                </h2>
                 <p className="online-reservation-sub">
                   Booking request <a href="tel:+919999999999" className="online-reservation-phone-inline">+91 999-999-9999</a> or fill out the order form
                 </p>
@@ -4779,14 +4907,44 @@ const CustomerLanding = () => {
         {/* Restaurant Gallery Section */}
         {isGalleryPage && (
           <section className="restaurant-gallery animate-fade-in-up motion-reveal" id="gallery" data-motion-observe="gallery">
+            <div className="gallery-hero-slider">
+              {galleryHeroItems.map((item, index) => {
+                const heroImage = resolveImageUrl(item.imageUrl || item.driveImageUrl || item.image);
+                return (
+                  <div
+                    className={`gallery-hero-slide ${index === activeGalleryHero % galleryHeroItems.length ? 'active' : ''}`}
+                    key={item.id || `gallery-hero-${index}`}
+                    style={{ backgroundImage: `url(${heroImage})` }}
+                  />
+                );
+              })}
+              <div className="gallery-hero-shade" />
+              <div className="gallery-hero-content">
+                <span className="section-subheading">A TASTE OF THE EXPERIENCE</span>
+                <h1>{currentGalleryHero.title || 'Moments Around the Table'}</h1>
+                <p>{currentGalleryHero.description || 'Discover the flavours, people and spaces behind every memorable meal.'}</p>
+                <button className="gallery-hero-action" onClick={() => document.getElementById('gallery-grid')?.scrollIntoView({ behavior: 'smooth' })}>
+                  Explore Our Gallery <i className="bi bi-arrow-down" />
+                </button>
+              </div>
+              <div className="gallery-hero-controls">
+                <button aria-label="Previous gallery slide" onClick={() => setActiveGalleryHero((prev) => (prev - 1 + galleryHeroItems.length) % galleryHeroItems.length)}><i className="bi bi-arrow-left" /></button>
+                <div className="gallery-hero-dots">
+                  {galleryHeroItems.map((item, index) => (
+                    <button key={item.id || index} className={index === activeGalleryHero % galleryHeroItems.length ? 'active' : ''} aria-label={`Show slide ${index + 1}`} onClick={() => setActiveGalleryHero(index)} />
+                  ))}
+                </div>
+                <button aria-label="Next gallery slide" onClick={() => setActiveGalleryHero((prev) => (prev + 1) % galleryHeroItems.length)}><i className="bi bi-arrow-right" /></button>
+              </div>
+            </div>
             <div className="section-header text-center">
               <span className="section-subheading">
                 {galleryLoading ? 'LOADING PHOTOS' : 'OUR GALLERY'}
               </span>
               <h2 className="section-title">Our Dining Area</h2>
             </div>
-            <div className="gallery-masonry">
-              {(galleryItems.length > 0 ? galleryItems : DEFAULT_GALLERY_IMAGES).map((item, index) => {
+            <div className="gallery-masonry" id="gallery-grid">
+              {galleryPageItems.map((item, index) => {
                 const gallerySize = index % 3 === 0 ? 'size-large' : 'size-tall';
                 const imageUrl = resolveImageUrl(item.imageUrl || item.driveImageUrl || item.image);
                 const label = item.title || item.category || 'Gallery';
@@ -4807,6 +4965,15 @@ const CustomerLanding = () => {
                 );
               })}
             </div>
+            {galleryTotalPages > 1 && (
+              <div className="gallery-pagination" aria-label="Gallery pagination">
+                <button disabled={galleryPage === 1} onClick={() => setGalleryPage((page) => Math.max(1, page - 1))} aria-label="Previous page"><i className="bi bi-chevron-left" /></button>
+                {Array.from({ length: galleryTotalPages }, (_, index) => index + 1).map((page) => (
+                  <button key={page} className={page === galleryPage ? 'active' : ''} onClick={() => { setGalleryPage(page); document.getElementById('gallery-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}>{page}</button>
+                ))}
+                <button disabled={galleryPage === galleryTotalPages} onClick={() => setGalleryPage((page) => Math.min(galleryTotalPages, page + 1))} aria-label="Next page"><i className="bi bi-chevron-right" /></button>
+              </div>
+            )}
           </section>
         )}
 
@@ -5034,7 +5201,14 @@ const CustomerLanding = () => {
               <div className="grilli-footer-card-inner">
                 <div className="grilli-footer-logo">
                   {logoUrl ? (
-                    <img src={logoUrl} alt={restaurantName || 'Restaurant'} />
+                    <img
+                      src={logoUrl}
+                      alt={restaurantName || 'Restaurant'}
+                      onError={(event) => {
+                        event.currentTarget.onerror = null;
+                        event.currentTarget.src = '/app-favicon.svg';
+                      }}
+                    />
                   ) : (
                     <div className="grilli-footer-logo-fallback">
                       <i className="bi bi-award"></i>

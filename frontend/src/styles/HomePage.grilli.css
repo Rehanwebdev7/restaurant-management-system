@@ -7900,8 +7900,8 @@ body:has(.grilli-scope)::before {
 
 /* Map */
 .grilli-scope .location-map-wrap {
-  max-width: 1240px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
   border-radius: 10px;
   overflow: hidden;
   border: 1px solid var(--grilli-gold-hairline);
@@ -7910,11 +7910,88 @@ body:has(.grilli-scope)::before {
 
 .grilli-scope .location-map-wrap iframe {
   width: 100%;
-  height: 420px;
+  height: 300px;
   border: none;
   display: block;
   filter: grayscale(0.3) brightness(0.85);
   transition: filter 0.5s var(--grilli-ease-luxe);
+}
+
+/* Expanded location page details */
+.grilli-scope .location-details-layout {
+  max-width: 1240px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.85fr);
+  gap: clamp(1.25rem, 3vw, 3.5rem);
+  align-items: stretch;
+}
+
+.grilli-scope .location-details-panel {
+  padding: clamp(1.5rem, 4vw, 3.25rem) 0;
+}
+
+.grilli-scope .location-details-heading {
+  margin: 0.9rem 0 1rem;
+  color: var(--grilli-text-ivory);
+  font-family: var(--grilli-font-display);
+  font-size: clamp(2.6rem, 5vw, 4.6rem);
+  font-weight: 400;
+  line-height: 0.95;
+}
+
+.grilli-scope .location-details-heading em { color: var(--grilli-gold); font-style: italic; }
+.grilli-scope .location-details-copy { max-width: 570px; color: var(--grilli-text-mist); font-size: 1rem; line-height: 1.8; }
+
+.grilli-scope .location-perks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem 1.5rem;
+  max-width: 600px;
+  margin: 1.6rem 0;
+  padding: 1.2rem 0;
+  border-top: 1px solid var(--grilli-gold-hairline);
+  border-bottom: 1px solid var(--grilli-gold-hairline);
+}
+
+.grilli-scope .location-perks div { display: flex; align-items: center; gap: 0.65rem; color: var(--grilli-text-mist); font-size: 0.82rem; }
+.grilli-scope .location-perks i { color: var(--grilli-gold); font-size: 1rem; }
+
+.grilli-scope .location-reserve-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.9rem 1.25rem;
+  border: 1px solid var(--grilli-gold);
+  background: var(--grilli-gold);
+  color: var(--grilli-surface-void);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  transition: all 0.3s ease;
+}
+
+.grilli-scope .location-reserve-btn:hover { background: var(--grilli-gold-soft); transform: translateY(-2px); }
+
+.grilli-scope .location-map-wrap { align-self: center; position: relative; }
+.grilli-scope .location-map-label { padding: 0.8rem 1rem; color: var(--grilli-gold); background: var(--grilli-surface-raised); font-size: 0.67rem; font-weight: 700; letter-spacing: 0.22em; }
+.grilli-scope .location-map-label i { margin-right: 0.5rem; }
+.grilli-scope .location-map-footer { display: flex; justify-content: space-between; align-items: center; padding: 0.85rem 1rem; color: var(--grilli-gold); background: var(--grilli-surface-raised); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.18em; text-decoration: none; }
+.grilli-scope .location-map-footer:hover { color: var(--grilli-gold-soft); }
+
+.grilli-scope .location-bottom-note { display: flex; justify-content: center; align-items: center; gap: 1rem; margin: 4rem auto 0; color: var(--grilli-gold); font-family: var(--grilli-font-display); font-size: 1.3rem; font-style: italic; text-align: center; }
+.grilli-scope .location-bottom-note span { color: var(--grilli-text-mist); }
+
+@media (max-width: 800px) {
+  .grilli-scope .location-details-layout { grid-template-columns: 1fr; }
+  .grilli-scope .location-details-panel { padding-top: 0; }
+  .grilli-scope .location-map-wrap iframe { height: 260px; }
+}
+
+@media (max-width: 520px) {
+  .grilli-scope .location-perks { grid-template-columns: 1fr; }
+  .grilli-scope .location-bottom-note { gap: 0.5rem; font-size: 1.05rem; }
+  .grilli-scope .location-bottom-note > i { display: none; }
 }
 
 .grilli-scope .location-map-wrap:hover iframe {
@@ -8791,7 +8868,8 @@ body:has(.grilli-scope)::before {
   max-width: 480px;
   margin: 0 auto;
   width: 100%;
-  animation: sd-float 6s ease-in-out infinite;
+  /* Keep the reveal animation and the slow floating animation together. */
+  animation: sd-float 6s ease-in-out infinite, fadeInUp 0.8s var(--grilli-ease-luxe) both;
 }
 
 @keyframes sd-float {
@@ -9049,6 +9127,30 @@ body:has(.grilli-scope)::before {
   box-shadow: 0 10px 26px rgba(212, 168, 87, 0.35);
 }
 
+.grilli-scope .signature-dish-dots {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 1.5rem;
+}
+
+.grilli-scope .signature-dish-dots button {
+  width: 24px;
+  height: 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: rgba(212, 168, 87, 0.3);
+  cursor: pointer;
+  transition: all 0.4s var(--grilli-ease-luxe);
+}
+
+.grilli-scope .signature-dish-dots button.active {
+  width: 42px;
+  background: var(--grilli-gold);
+  box-shadow: 0 0 12px rgba(212, 168, 87, 0.55);
+}
+
 /* Mobile: stack */
 @media (max-width: 820px) {
   .grilli-scope .signature-dish-inner {
@@ -9069,9 +9171,254 @@ body:has(.grilli-scope)::before {
   .grilli-scope .signature-dish-content--split .signature-dish-meta {
     justify-content: center;
   }
+  .grilli-scope .signature-dish-dots { justify-content: center; }
 }
 
 
 /* =============================================================
    END OF PHASE 20
    ============================================================= */
+
+/* =============================================================
+   WARM LIGHT MODE — keeps the same luxury Grilli personality
+   ============================================================= */
+.landing-container.light-mode.grilli-scope {
+  --grilli-surface-void: #f7f3eb;
+  --grilli-surface-raised: #fffdf8;
+  --grilli-surface-elev: #ffffff;
+  --grilli-surface-line: #e4d9c5;
+  --grilli-overlay-hush: rgba(255, 250, 240, 0.88);
+  --grilli-overlay-veil: rgba(255, 250, 240, 0.56);
+  --grilli-gold: #a8791f;
+  --grilli-gold-soft: #c3943b;
+  --grilli-gold-deep: #795717;
+  --grilli-gold-hairline: rgba(168, 121, 31, 0.28);
+  --grilli-gold-glow: rgba(168, 121, 31, 0.14);
+  --grilli-text-ivory: #2b241b;
+  --grilli-text-mist: #665b4e;
+  --grilli-text-shadow: #978b7d;
+  --grilli-text-inverse: #fffaf0;
+  --grilli-shadow-card: 0 8px 32px rgba(102, 78, 36, 0.10);
+  --grilli-shadow-lift: 0 16px 48px rgba(102, 78, 36, 0.15);
+  background: var(--grilli-surface-void);
+  color: var(--grilli-text-ivory);
+}
+
+.landing-container.light-mode.grilli-scope::before {
+  opacity: 0.35;
+  background-image: radial-gradient(circle, rgba(168, 121, 31, 0.10) 1px, transparent 1px) !important;
+}
+
+.landing-container.light-mode.grilli-scope .landing-header {
+  background: rgba(247, 243, 235, 0.90) !important;
+  backdrop-filter: blur(16px);
+}
+
+.landing-container.light-mode.grilli-scope .logo-main,
+.landing-container.light-mode.grilli-scope .logo-sub,
+.landing-container.light-mode.grilli-scope .desktop-nav-links span,
+.landing-container.light-mode.grilli-scope .header-branch-current,
+.landing-container.light-mode.grilli-scope .landing-header .icon-btn,
+.landing-container.light-mode.grilli-scope .landing-header .header-icon-btn {
+  color: var(--grilli-text-ivory) !important;
+}
+
+.landing-container.light-mode.grilli-scope .logo-main { text-shadow: none; }
+.landing-container.light-mode.grilli-scope .desktop-nav-links span:hover { color: var(--grilli-gold) !important; }
+
+/* Keep photography rich while changing the surrounding page to ivory. */
+.landing-container.light-mode.grilli-scope .hero-bg-overlay,
+.landing-container.light-mode.grilli-scope .menu-hero-veil,
+.landing-container.light-mode.grilli-scope .info-hero-veil {
+  background: linear-gradient(to top, rgba(10, 9, 8, 0.82) 0%, rgba(10, 9, 8, 0.42) 58%, rgba(10, 9, 8, 0.20) 100%) !important;
+}
+
+.landing-container.light-mode.grilli-scope .hero-content,
+.landing-container.light-mode.grilli-scope .menu-hero-content,
+.landing-container.light-mode.grilli-scope .info-hero-content { text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55); }
+
+/* Hero copy must stay ivory over the food photography in light mode. */
+.landing-container.light-mode.grilli-scope .hero-title,
+.landing-container.light-mode.grilli-scope .hero-title span,
+.landing-container.light-mode.grilli-scope .hero-description { color: #fffaf0 !important; -webkit-text-fill-color: #fffaf0 !important; text-shadow: 0 3px 18px rgba(0, 0, 0, 0.72) !important; }
+.landing-container.light-mode.grilli-scope .hero-subtitle-tag { color: #e8cfa0 !important; }
+.landing-container.light-mode.grilli-scope .hero-actions button,
+.landing-container.light-mode.grilli-scope .hero-actions a { color: #f0d68f !important; border-color: #d4a857 !important; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6); }
+
+.landing-container.light-mode.grilli-scope .hero-subtitle-tag,
+.landing-container.light-mode.grilli-scope .hero-eyebrow,
+.landing-container.light-mode.grilli-scope .menu-hero-eyebrow,
+.landing-container.light-mode.grilli-scope .info-hero-eyebrow { color: var(--grilli-gold) !important; }
+
+.landing-container.light-mode.grilli-scope .categories-container,
+.landing-container.light-mode.grilli-scope .filtered-item-card,
+.landing-container.light-mode.grilli-scope .food-card,
+.landing-container.light-mode.grilli-scope .feature-card,
+.landing-container.light-mode.grilli-scope .contact-info-panel,
+.landing-container.light-mode.grilli-scope .location-info-card {
+  background: var(--grilli-surface-raised) !important;
+  border-color: var(--grilli-gold-hairline) !important;
+  box-shadow: var(--grilli-shadow-card);
+}
+
+.landing-container.light-mode.grilli-scope .signature-dish-content,
+.landing-container.light-mode.grilli-scope .signature-dish-content--split {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Clean, high-contrast value cards — no grey wash over the copy. */
+.landing-container.light-mode.grilli-scope .feature-card {
+  background: #fffdf8 !important;
+  border: 1px solid rgba(168, 121, 31, 0.24) !important;
+  color: #2b241b !important;
+  opacity: 1 !important;
+  filter: none !important;
+  box-shadow: 0 12px 30px rgba(102, 78, 36, 0.08) !important;
+}
+.landing-container.light-mode.grilli-scope .feature-card h3 { color: #2b241b !important; -webkit-text-fill-color: #2b241b !important; }
+.landing-container.light-mode.grilli-scope .feature-card p { color: #665b4e !important; }
+.landing-container.light-mode.grilli-scope .feature-icon { background: rgba(168, 121, 31, 0.10) !important; color: #a8791f !important; }
+
+/* Our Strength uses a separate card system from the generic feature cards. */
+.landing-container.light-mode.grilli-scope .our-strength-section { background: #f7f3eb !important; }
+.landing-container.light-mode.grilli-scope .our-strength-card { background: #fffdf8 !important; border-color: rgba(168, 121, 31, 0.22) !important; box-shadow: 0 12px 30px rgba(102, 78, 36, 0.08); }
+.landing-container.light-mode.grilli-scope .our-strength-card:hover { background: #ffffff !important; }
+.landing-container.light-mode.grilli-scope .our-strength-card-title { color: #2b241b !important; -webkit-text-fill-color: #2b241b !important; }
+.landing-container.light-mode.grilli-scope .our-strength-card-body { color: #665b4e !important; }
+.landing-container.light-mode.grilli-scope .our-strength-icon svg { stroke: #a8791f; }
+
+/* Reservation form remains a deliberate dark editorial panel, with ivory copy. */
+.landing-container.light-mode.grilli-scope .online-reservation-form-panel,
+.landing-container.light-mode.grilli-scope .online-reservation-contact-panel,
+.landing-container.light-mode.grilli-scope .reservation-container {
+  color: #f5efe6 !important;
+}
+.landing-container.light-mode.grilli-scope .online-reservation-form-panel h1,
+.landing-container.light-mode.grilli-scope .online-reservation-form-panel h2,
+.landing-container.light-mode.grilli-scope .online-reservation-form-panel h3,
+.landing-container.light-mode.grilli-scope .online-reservation-contact-title,
+.landing-container.light-mode.grilli-scope .reservation-container h1,
+.landing-container.light-mode.grilli-scope .reservation-container h2 { color: #f5efe6 !important; -webkit-text-fill-color: #f5efe6 !important; }
+.landing-container.light-mode.grilli-scope .online-reservation-form-panel p,
+.landing-container.light-mode.grilli-scope .online-reservation-contact-text,
+.landing-container.light-mode.grilli-scope .online-reservation-contact-label,
+.landing-container.light-mode.grilli-scope .reservation-container label { color: #d7cabb !important; }
+.landing-container.light-mode.grilli-scope .online-reservation-form-panel input,
+.landing-container.light-mode.grilli-scope .online-reservation-form-panel select,
+.landing-container.light-mode.grilli-scope .online-reservation-form-panel textarea { color: #2b241b !important; background: #fffaf1 !important; }
+
+/* Light-mode footer: the base, card and typography all follow the ivory theme. */
+.landing-container.light-mode.grilli-scope .grilli-footer { background: #f7f3eb !important; }
+.landing-container.light-mode.grilli-scope .grilli-footer-veil { background: linear-gradient(to bottom, rgba(247, 243, 235, 0.30), rgba(247, 243, 235, 0.54)) !important; }
+.landing-container.light-mode.grilli-scope .grilli-footer-nav button,
+.landing-container.light-mode.grilli-scope .grilli-footer-details,
+.landing-container.light-mode.grilli-scope .grilli-footer-details a,
+.landing-container.light-mode.grilli-scope .grilli-footer-newsletter-title,
+.landing-container.light-mode.grilli-scope .grilli-footer-newsletter-sub,
+.landing-container.light-mode.grilli-scope .grilli-footer-bottom { color: #2b241b !important; -webkit-text-fill-color: #2b241b !important; }
+.landing-container.light-mode.grilli-scope .grilli-footer-card-inner { background: rgba(244, 235, 220, 0.96) !important; box-shadow: 0 16px 42px rgba(102, 78, 36, 0.16); }
+.landing-container.light-mode.grilli-scope .grilli-footer-newsletter-input { background: #fffaf1 !important; }
+.landing-container.light-mode.grilli-scope .grilli-footer-newsletter-input input { color: #2b241b !important; }
+.landing-container.light-mode.grilli-scope .grilli-footer-newsletter-input input::placeholder { color: #978b7d !important; }
+.landing-container.light-mode.grilli-scope .grilli-footer-bottom { background: rgba(247, 243, 235, 0.90) !important; border-color: var(--grilli-gold-hairline); }
+.landing-container.light-mode.grilli-scope .grilli-footer-nav button,
+.landing-container.light-mode.grilli-scope .grilli-footer-nav a {
+  display: inline-flex;
+  width: max-content;
+  align-items: center;
+  color: #765313 !important;
+  -webkit-text-fill-color: #765313 !important;
+  font-weight: 800 !important;
+  text-shadow: none;
+  padding: 0.42rem 0.7rem !important;
+  border: 1px solid rgba(168, 121, 31, 0.26) !important;
+  background: rgba(255, 250, 241, 0.58) !important;
+  box-shadow: 0 3px 12px rgba(102, 78, 36, 0.08);
+}
+.landing-container.light-mode.grilli-scope .grilli-footer-nav button:hover,
+.landing-container.light-mode.grilli-scope .grilli-footer-nav a:hover {
+  color: #fffaf0 !important;
+  -webkit-text-fill-color: #fffaf0 !important;
+  background: #a8791f !important;
+  border-color: #a8791f !important;
+  transform: translateY(-2px);
+}
+
+/* Reservation section — convert the inherited dark editorial panels to light mode. */
+.landing-container.light-mode.grilli-scope .online-reservation-section { background: #e8ddcc !important; }
+.landing-container.light-mode.grilli-scope .online-reservation-veil { background: linear-gradient(to bottom, rgba(232, 221, 204, 0.26), rgba(232, 221, 204, 0.48)) !important; }
+.landing-container.light-mode.grilli-scope .online-reservation-form-panel { background: rgba(248, 240, 227, 0.92) !important; border-color: rgba(168, 121, 31, 0.30) !important; }
+.landing-container.light-mode.grilli-scope .online-reservation-contact-panel { background: rgba(239, 228, 210, 0.96) !important; border-color: rgba(168, 121, 31, 0.30) !important; }
+.landing-container.light-mode.grilli-scope .online-reservation-title,
+.landing-container.light-mode.grilli-scope .online-reservation-contact-title { color: #2b241b !important; -webkit-text-fill-color: #2b241b !important; }
+.landing-container.light-mode.grilli-scope .online-reservation-form-panel .online-reservation-title {
+  color: #2b241b !important;
+  -webkit-text-fill-color: #2b241b !important;
+  background: transparent !important;
+  background-image: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+.landing-container.light-mode.grilli-scope .online-reservation-sub,
+.landing-container.light-mode.grilli-scope .online-reservation-contact-text,
+.landing-container.light-mode.grilli-scope .online-reservation-contact-label { color: #665b4e !important; }
+.landing-container.light-mode.grilli-scope .online-reservation-field input,
+.landing-container.light-mode.grilli-scope .online-reservation-field select,
+.landing-container.light-mode.grilli-scope .online-reservation-field textarea { background: #fffaf1 !important; border-color: rgba(121, 87, 23, 0.20) !important; color: #2b241b !important; }
+.landing-container.light-mode.grilli-scope .online-reservation-field input::placeholder,
+.landing-container.light-mode.grilli-scope .online-reservation-field textarea::placeholder { color: #978b7d !important; }
+.landing-container.light-mode.grilli-scope .online-reservation-field input:focus,
+.landing-container.light-mode.grilli-scope .online-reservation-field select:focus,
+.landing-container.light-mode.grilli-scope .online-reservation-field textarea:focus { background: #ffffff !important; }
+.landing-container.light-mode.grilli-scope .online-reservation-contact-panel::before { opacity: 0.35; }
+.landing-container.light-mode.grilli-scope .online-reservation-title,
+.landing-container.light-mode.grilli-scope .online-reservation-sub,
+.landing-container.light-mode.grilli-scope .online-reservation-contact-title,
+.landing-container.light-mode.grilli-scope .online-reservation-contact-block { opacity: 1 !important; transform: none !important; }
+.landing-container.light-mode.grilli-scope .online-reservation-title,
+.landing-container.light-mode.grilli-scope .online-reservation-contact-title { color: #2b241b !important; -webkit-text-fill-color: #2b241b !important; }
+.landing-container.light-mode.grilli-scope .online-reservation-sub { color: #665b4e !important; -webkit-text-fill-color: #665b4e !important; }
+.landing-container.light-mode.grilli-scope .online-reservation-title {
+  display: block !important;
+  position: relative !important;
+  z-index: 4 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: transparent !important;
+  background-image: none !important;
+  background-clip: border-box !important;
+  -webkit-background-clip: border-box !important;
+  text-shadow: none !important;
+  margin: 0 0 1rem !important;
+}
+
+.landing-container.light-mode.grilli-scope .online-reservation-field--icon-input input,
+.landing-container.light-mode.grilli-scope .online-reservation-field--select select {
+  color-scheme: light;
+  min-height: 54px;
+}
+
+.landing-container.light-mode.grilli-scope .signature-dish-section.signature-dish-split,
+.landing-container.light-mode.grilli-scope .location-info-section,
+.landing-container.light-mode.grilli-scope .contact-info-section,
+.landing-container.light-mode.grilli-scope .delicious-menu-section,
+.landing-container.light-mode.grilli-scope .restaurant-gallery,
+.landing-container.light-mode.grilli-scope .testimonials-section {
+  background: var(--grilli-surface-void) !important;
+}
+
+.landing-container.light-mode.grilli-scope .signature-dish-split::before { background: radial-gradient(ellipse at center, rgba(168, 121, 31, 0.10) 0%, transparent 68%); }
+.landing-container.light-mode.grilli-scope .signature-dish-media-frame { box-shadow: 0 20px 50px rgba(77, 54, 20, 0.20), 0 0 0 12px rgba(255, 253, 248, 0.78), 0 0 0 13px var(--grilli-gold-hairline), 0 0 60px rgba(168, 121, 31, 0.16); }
+.landing-container.light-mode.grilli-scope .signature-dish-media-frame img { filter: saturate(1.06) contrast(1.02); }
+
+.landing-container.light-mode.grilli-scope .gallery-hero-shade { background: linear-gradient(90deg, rgba(25, 19, 11, 0.70), rgba(25, 19, 11, 0.20) 70%), linear-gradient(0deg, rgba(25, 19, 11, 0.45), transparent 55%); }
+.landing-container.light-mode.grilli-scope .gallery-pagination button,
+.landing-container.light-mode.grilli-scope .gallery-hero-controls > button { background: rgba(255, 253, 248, 0.76); color: var(--grilli-gold-deep); }
+
+.landing-container.light-mode.grilli-scope .main-footer { background: #2b241b !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-container.light-mode.grilli-scope * { animation-duration: 0.001ms !important; }
+}
