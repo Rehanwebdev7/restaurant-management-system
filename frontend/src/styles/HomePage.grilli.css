@@ -63,7 +63,9 @@
   backdrop-filter: none !important;
   border-bottom: 1px solid var(--grilli-gold-hairline) !important;
   box-shadow: none !important;
-  padding: 1.1rem 0 !important;
+  padding: 1.1rem clamp(20px, 3vw, 40px) !important;
+  padding-left: max(clamp(20px, 3vw, 40px), env(safe-area-inset-left)) !important;
+  padding-right: max(clamp(20px, 3vw, 40px), env(safe-area-inset-right)) !important;
 }
 
 .grilli-scope .landing-header * {
@@ -1239,16 +1241,16 @@ body:has(.grilli-scope) ::-webkit-scrollbar-thumb:hover {
 }
 
 .grilli-scope .cart-float-cta {
-  color: var(--grilli-gold) !important;
+  color: var(--grilli-text-inverse) !important;
   font-family: var(--grilli-font-body) !important;
-  font-size: 0.75rem !important;
-  font-weight: 600 !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
   letter-spacing: var(--grilli-track-wider) !important;
   text-transform: uppercase !important;
 }
 
-.grilli-scope .cart-float-cta::after {
-  color: var(--grilli-gold) !important;
+.grilli-scope .cart-float-cta i {
+  color: var(--grilli-text-inverse) !important;
 }
 
 
@@ -1502,6 +1504,21 @@ body:has(.grilli-scope) ::-webkit-scrollbar-thumb:hover {
   letter-spacing: var(--grilli-track-wider) !important;
   text-transform: uppercase !important;
   margin: 0 !important;
+}
+
+/* Checkout form section headings (Customer Details, Order Type, etc.)
+   — override the generic h4 display-font rule so form section labels
+   stay compact and match the input labels instead of dominating. */
+.grilli-scope .payment-section-title,
+.grilli-scope .payment-section h4 {
+  font-family: var(--grilli-font-body) !important;
+  color: var(--grilli-gold) !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  letter-spacing: var(--grilli-track-wider) !important;
+  text-transform: uppercase !important;
+  line-height: 1.2 !important;
+  margin: 0 0 0.5rem !important;
 }
 
 .grilli-scope .checkout-summary-item {
@@ -6766,19 +6783,26 @@ body:has(.grilli-scope)::before {
 }
 
 .grilli-scope .categories-container {
-  max-width: var(--grilli-container);
+  max-width: min(1720px, 100%);
   margin: 0 auto;
-  padding: 0 var(--grilli-gutter);
+  padding: 0 clamp(16px, 2.5vw, 40px);
 }
 
 .grilli-scope .categories-scroll {
   display: flex !important;
-  gap: clamp(1rem, 2.5vw, 2.25rem) !important;
+  gap: clamp(0.75rem, 1.8vw, 1.75rem) !important;
   overflow-x: auto;
   scrollbar-width: none;
   padding: 12px 4px 20px !important;
-  justify-content: flex-start;
+  justify-content: center;
   align-items: flex-start;
+  flex-wrap: nowrap;
+}
+
+@media (max-width: 900px) {
+  .grilli-scope .categories-scroll {
+    justify-content: flex-start;
+  }
 }
 
 .grilli-scope .categories-scroll::-webkit-scrollbar { display: none; }
@@ -6859,14 +6883,20 @@ body:has(.grilli-scope)::before {
   font-family: var(--grilli-font-body) !important;
   font-size: 0.6875rem !important;
   font-weight: 600 !important;
-  letter-spacing: 0.28em !important;
+  letter-spacing: 0.14em !important;
   color: var(--grilli-text-mist) !important;
   text-transform: uppercase !important;
   text-align: center !important;
-  white-space: nowrap !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  line-height: 1.25 !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
   overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  max-width: 108px !important;
+  min-height: 2.5em !important;
+  max-width: 120px !important;
   transition: color 0.35s var(--grilli-ease-luxe);
   padding: 0 !important;
   margin: 0 !important;
@@ -9421,4 +9451,163 @@ body:has(.grilli-scope)::before {
 
 @media (prefers-reduced-motion: reduce) {
   .landing-container.light-mode.grilli-scope * { animation-duration: 0.001ms !important; }
+}
+
+/* =============================================================
+   MENU CATEGORY SECTION — user-requested compact + edge-to-edge
+   Overrides earlier cascaded rules (7521, 7529, 8467, 8503, 8736)
+   ============================================================= */
+
+/* Outer section: kill horizontal gutter so the card touches viewport edges */
+.grilli-scope .categories-section {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* The visible cream/dark card: stretch full-width, tighten padding */
+.grilli-scope .categories-container {
+  max-width: 100% !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: clamp(18px, 2vw, 28px) clamp(20px, 2.5vw, 40px) clamp(16px, 2vw, 24px) !important;
+  border-radius: 0 !important;
+}
+
+/* Category circle — smaller footprint */
+.grilli-scope .categories-scroll .category-card,
+.grilli-scope .categories-scroll .subcategory-chip.category-all-chip {
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+  gap: 0.5rem !important;
+}
+
+.grilli-scope .categories-scroll .category-card::before,
+.grilli-scope .categories-scroll .subcategory-chip.category-all-chip::before {
+  width: 78px !important;
+  height: 78px !important;
+}
+
+.grilli-scope .categories-scroll .category-card .category-icon,
+.grilli-scope .categories-scroll .category-card .category-icon-emoji {
+  top: 5px !important;
+  width: 68px !important;
+  height: 68px !important;
+}
+
+.grilli-scope .categories-scroll .category-card .category-name {
+  font-size: 0.66rem !important;
+  letter-spacing: 0.1em !important;
+  max-width: 100px !important;
+  min-height: 2.4em !important;
+}
+
+/* Tighter gap between circles now that they're smaller */
+.grilli-scope .categories-scroll {
+  gap: clamp(0.6rem, 1.4vw, 1.4rem) !important;
+  padding: 8px 0 12px !important;
+}
+
+/* =============================================================
+   MENU SEARCH INPUT — premium refinement
+   Deeper surface + stronger border + tighter proportions
+   Cap search width so ALL/VEG/NON-VEG pill breathes
+   ============================================================= */
+
+.grilli-scope .menu-controls-row {
+  padding: 0 !important;
+  gap: clamp(0.75rem, 1.5vw, 1.5rem) !important;
+}
+
+.grilli-scope .menu-controls-row .menu-search-wrapper {
+  flex: 1 1 auto !important;
+  max-width: 720px !important;
+  min-width: 240px !important;
+  height: 48px !important;
+  padding: 0 20px !important;
+  background: rgba(0, 0, 0, 0.28) !important;
+  border: 1px solid var(--grilli-gold) !important;
+  border-radius: 4px !important;
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.3),
+    0 1px 0 rgba(255, 255, 255, 0.03) !important;
+  transition: border-color 0.3s var(--grilli-ease-luxe),
+              box-shadow 0.3s var(--grilli-ease-luxe) !important;
+}
+
+/* Light-mode variant — cream surface with deeper gold border */
+.landing-container.light-mode.grilli-scope .menu-controls-row .menu-search-wrapper {
+  background: rgba(255, 253, 248, 0.92) !important;
+  border-color: var(--grilli-gold-deep, #a8791f) !important;
+  box-shadow:
+    inset 0 1px 2px rgba(77, 54, 20, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.5) !important;
+}
+
+.grilli-scope .menu-controls-row .menu-search-wrapper:focus-within {
+  border-color: var(--grilli-gold) !important;
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.3),
+    0 0 0 3px rgba(212, 168, 87, 0.18) !important;
+}
+
+.landing-container.light-mode.grilli-scope .menu-controls-row .menu-search-wrapper:focus-within {
+  border-color: var(--grilli-gold-deep, #a8791f) !important;
+  box-shadow:
+    inset 0 1px 2px rgba(77, 54, 20, 0.08),
+    0 0 0 3px rgba(168, 121, 31, 0.18) !important;
+}
+
+.grilli-scope .menu-controls-row .menu-search-wrapper i {
+  color: var(--grilli-gold) !important;
+  font-size: 1rem !important;
+  margin-right: 4px !important;
+}
+
+.landing-container.light-mode.grilli-scope .menu-controls-row .menu-search-wrapper i {
+  color: var(--grilli-gold-deep, #a8791f) !important;
+}
+
+.grilli-scope .menu-controls-row .menu-search-wrapper input {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  color: var(--grilli-text-ivory) !important;
+  font-family: var(--grilli-font-body) !important;
+  font-size: 0.9rem !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.02em !important;
+  padding: 0 12px !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.landing-container.light-mode.grilli-scope .menu-controls-row .menu-search-wrapper input {
+  color: var(--grilli-ink, #241a0d) !important;
+}
+
+.grilli-scope .menu-controls-row .menu-search-wrapper input::placeholder {
+  color: var(--grilli-text-shadow, rgba(240, 227, 200, 0.45)) !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.02em !important;
+}
+
+.landing-container.light-mode.grilli-scope .menu-controls-row .menu-search-wrapper input::placeholder {
+  color: rgba(77, 54, 20, 0.5) !important;
+}
+
+/* Clear (X) button inside search */
+.grilli-scope .menu-controls-row .menu-search-wrapper .clear-search-btn {
+  background: transparent !important;
+  border: none !important;
+  color: var(--grilli-text-mist) !important;
+  cursor: pointer !important;
+  padding: 4px !important;
+  display: flex !important;
+  align-items: center !important;
+  transition: color 0.2s ease !important;
+}
+
+.grilli-scope .menu-controls-row .menu-search-wrapper .clear-search-btn:hover {
+  color: var(--grilli-gold) !important;
 }

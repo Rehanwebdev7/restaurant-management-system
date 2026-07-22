@@ -415,14 +415,35 @@ const CustomerLanding = () => {
   const [galleryPage, setGalleryPage] = useState(1);
   const galleryPageSize = 20;
 
-  // Premium Hero Slideshow States
+  // Premium Hero Slideshow States — image + matching copy per slide
   const [activeHeroSlide, setActiveHeroSlide] = useState(0);
-  const heroSlideImages = [
-    'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1600&q=80', // Premium Steakhouse Fine Dining
-    'https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=1600&q=80', // Cozy Patios & Cocktails
-    'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1600&q=80', // Culinary Seafood Spread
-    'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1600&q=80', // Gourmet Plating Chef
+  const heroSlides = [
+    {
+      image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1600&q=80',
+      tagline: 'PREMIUM STEAKHOUSE',
+      title: 'PREMIER KOSHER DINING EXPERIENCE',
+      description: 'GREAT FOOD. FINE DRINKS. EXCELLENT SERVICE.',
+    },
+    {
+      image: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=1600&q=80',
+      tagline: 'HAND-CRAFTED COCKTAILS',
+      title: 'EVENINGS WORTH REMEMBERING',
+      description: 'GOLDEN LIGHT. WARM PATIOS. CRAFTED SIPS.',
+    },
+    {
+      image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1600&q=80',
+      tagline: 'FROM THE COAST',
+      title: 'SEA-FRESH, TABLE-READY',
+      description: 'DAILY CATCH. DELICATE PLATING. HONEST FLAVOR.',
+    },
+    {
+      image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1600&q=80',
+      tagline: 'CHEF SIGNATURES',
+      title: 'A STORY ON EVERY PLATE',
+      description: 'SLOW-COOKED. HAND-FINISHED. UNFORGETTABLE.',
+    },
   ];
+  const heroSlideImages = heroSlides.map(s => s.image);
 
   // Menu-page hero: food-close-ups (different vibe from landing steakhouse shots)
   const [activeMenuHeroSlide, setActiveMenuHeroSlide] = useState(0);
@@ -465,7 +486,7 @@ const CustomerLanding = () => {
   useEffect(() => {
     const timer = setInterval(() => {
       setActiveHeroSlide((prev) => (prev + 1) % heroSlideImages.length);
-    }, 5500);
+    }, 7000);
     return () => clearInterval(timer);
   }, []);
 
@@ -3260,30 +3281,44 @@ const CustomerLanding = () => {
         {/* Luxury Hero Section */}
         {isLandingPage && (
           <section className="luxury-hero motion-hero" id="home">
-          {/* Animated Slideshow Container */}
+          {/* Animated Slideshow Container — img tags for reliable caching + no inline-style thrash */}
           <div className="hero-slideshow">
-            {heroSlideImages.map((imgUrl, index) => (
-              <div
-                key={index}
+            {heroSlides.map((slide, index) => (
+              <img
+                key={slide.image}
+                src={slide.image}
+                alt=""
+                aria-hidden="true"
+                decoding="async"
                 className={`hero-slide ${index === activeHeroSlide ? 'active' : ''}`}
-                style={{ backgroundImage: `url(${imgUrl})` }}
-              ></div>
+                draggable={false}
+              />
             ))}
           </div>
 
           <div className="hero-bg-overlay"></div>
           <div className="hero-content motion-hero-content">
-            <span className="hero-tagline animate-fade-in-up">PREMIUM STEAKHOUSE</span>
-            <h1 className="hero-title animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-              PREMIER KOSHER DINING EXPERIENCE
+            {/* Intro animation runs once on mount; per-slide text swaps via
+                CSS-only crossfade below (no remount, no blink) */}
+            <span className="hero-tagline animate-fade-in-up">
+              <span key={`tag-${activeHeroSlide}`} className="hero-text-fade">
+                {heroSlides[activeHeroSlide].tagline}
+              </span>
+            </span>
+            <h1 className="hero-title animate-fade-in-up" style={{ animationDelay: '0.15s' }}>
+              <span key={`title-${activeHeroSlide}`} className="hero-text-fade">
+                {heroSlides[activeHeroSlide].title}
+              </span>
             </h1>
-            <div className="hero-stars animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+            <div className="hero-stars animate-fade-in-up" style={{ animationDelay: '0.25s' }}>
               ★ ★ ★ ★ ★
             </div>
-            <p className="hero-description animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-              GREAT FOOD. FINE DRINKS. EXCELLENT SERVICE.
+            <p className="hero-description animate-fade-in-up" style={{ animationDelay: '0.35s' }}>
+              <span key={`desc-${activeHeroSlide}`} className="hero-text-fade">
+                {heroSlides[activeHeroSlide].description}
+              </span>
             </p>
-            <div className="hero-actions animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+            <div className="hero-actions animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
               <button className="btn-explore-menu" onClick={() => handleNavClick('menus')}>
                 VIEW OUR MENU
               </button>
@@ -4329,7 +4364,7 @@ const CustomerLanding = () => {
               <>
                 <div className="filtered-items-grid">
                   {filteredItems.map((item) => (
-                    <div key={item.id} className={`filtered-item-card motion-card ${!item.isAvailable ? 'unavailable' : ''}`} data-motion-observe="filtered-item" onClick={() => item.isAvailable && openAddonModal(item)}>
+                    <div key={item.id} className={`filtered-item-card motion-card ${!item.isAvailable ? 'unavailable' : ''}`} data-motion-observe="filtered-item">
                       <div className="filtered-item-image">
                         <img src={item.image} alt={item.name} className="filtered-item-img" onError={handleImageError} />
                         {getItemQuantity(item.id) > 0 ? (
@@ -5564,7 +5599,7 @@ const CustomerLanding = () => {
                             <div className="checkout-summary-qty">
                               <button type="button" onClick={() => removeFromCart(itemKey)}>−</button>
                               <span>{item.quantity}</span>
-                              <button type="button" onClick={() => openAddonModal(item)}>+</button>
+                              <button type="button" onClick={() => addToCart(item)}>+</button>
                             </div>
                           </div>
                         </div>
