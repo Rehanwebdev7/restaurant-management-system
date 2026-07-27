@@ -8,7 +8,7 @@ const AboutPage = () => {
   const theme = getCurrentTheme();
   const primaryColor = theme.primary || '#b48a1d';
 
-  const [themeMode, setThemeMode] = React.useState('dark');
+  const [themeMode, setThemeMode] = React.useState('light');
 
   useEffect(() => {
     window.scrollTo(0, 0);

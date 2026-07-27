@@ -1,0 +1,193 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Replace hardcoded dark color values in `:root` with dynamic `var()` references": [
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784752122466
+      },
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784752139964
+      },
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784752777657
+      }
+    ],
+    "2.1 Modify `applyThemeToCSS()` in `frontend/src/services/themeService.js`": [
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784752122950
+      },
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784752141457
+      },
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784752778485
+      }
+    ],
+    "3.1 Strip dark mode state and toggle from `frontend/src/pages/modules/Customer/HomePage.jsx`": [
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784752123200
+      },
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784752141723
+      },
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784752779673
+      }
+    ],
+    "4.1 Remove dark mode from `frontend/src/pages/modules/Customer/AboutPage.jsx`": [
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784752123449
+      },
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784752791670
+      },
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784753438902
+      }
+    ],
+    "4.2 Remove dark mode from `frontend/src/pages/modules/Customer/OrdersPage.jsx`": [
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784752123702
+      },
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784752791807
+      },
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784753439455
+      }
+    ],
+    "4.3 Remove dark mode from `frontend/src/pages/modules/Customer/ProfilePage.jsx`": [
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784752123950
+      },
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784752792001
+      },
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784753440429
+      }
+    ],
+    "4.4 Remove dark mode from `frontend/src/pages/modules/Customer/AddressesPage.jsx`": [
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784752124312
+      },
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784752792288
+      },
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784753441400
+      }
+    ],
+    "5.1 Delete the WARM LIGHT MODE section from `frontend/src/styles/HomePage.grilli.css`": [
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784752124600
+      },
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784752792460
+      },
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784753442254
+      }
+    ],
+    "6. Final checkpoint": [
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784752124850
+      },
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784753453311
+      },
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784753841364
+      }
+    ],
+    "1. Update color token values in grilli-tokens.css": [
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784752777916
+      }
+    ],
+    "2. Update ThemeService to use backgroundColor directly": [
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784752778662
+      }
+    ],
+    "3. Remove dark mode from HomePage.jsx": [
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784752779823
+      }
+    ],
+    "4. Remove dark mode from other customer pages": [
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784753441529
+      }
+    ],
+    "5. Remove redundant WARM LIGHT MODE section from HomePage.grilli.css": [
+      {
+        "executionId": "a5a38d4d-9bc0-4277-b302-0281a458c688",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784753442380
+      }
+    ]
+  }
+}

@@ -1,0 +1,234 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Rewrite `frontend/src/styles/grilli-tokens.css` to replace all hardcoded dark surface colors and gold accents with CSS variable references from ThemeService": [
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784748250844
+      },
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784748269928
+      },
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784748579473
+      }
+    ],
+    "2.1 Create `frontend/src/styles/customer-theme.css` as the replacement for `HomePage.grilli.css` and `premium-redesign.css`": [
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784748251002
+      },
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784748596237
+      },
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784749924944
+      }
+    ],
+    "2.2 Delete `frontend/src/styles/HomePage.grilli.css` and `frontend/src/styles/premium-redesign.css`": [
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784748251130
+      },
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784749935419
+      },
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784750518136
+      }
+    ],
+    "3.1 Remove inline `<style>` block from HomePage.jsx that overrides CSS variables with hardcoded dark values": [
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784748251253
+      },
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784748597337
+      },
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784749925974
+      }
+    ],
+    "3.2 Remove themeMode state and dark/light mode logic from HomePage.jsx": [
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784748251391
+      },
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784748600540
+      },
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784749926855
+      }
+    ],
+    "3.3 Update imports in HomePage.jsx": [
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784748251650
+      },
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784748616340
+      },
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784749927541
+      }
+    ],
+    "4.1 Update AboutPage.jsx, ContactPage.jsx, LocationPage.jsx, and other customer pages to remove dark mode references": [
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784748251786
+      },
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784749936587
+      },
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784750518782
+      }
+    ],
+    "5.1 Modify `applyThemeToCSS` in `frontend/src/services/themeService.js` to use restaurant's backgroundColor directly when available": [
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784748251916
+      },
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784748271678
+      },
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784748579813
+      }
+    ],
+    "6.1 Remove hardcoded dark color values from `frontend/src/styles/HomePage.css` root variables": [
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784748252048
+      },
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784748271793
+      },
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784748580735
+      }
+    ],
+    "7. Checkpoint - Verify visual rendering": [
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784748252196
+      },
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784750557183
+      },
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784750784273
+      }
+    ],
+    "9. Final checkpoint": [
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784748252475
+      },
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784750792089
+      },
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784750798776
+      }
+    ],
+    "1. Rewrite design tokens for light mode": [
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784748579898
+      }
+    ],
+    "5. Update ThemeService for backgroundColor handling": [
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784748580097
+      }
+    ],
+    "6. Update HomePage.css root variables": [
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784748580966
+      }
+    ],
+    "3. Update HomePage.jsx component": [
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784749927928
+      }
+    ],
+    "2. Create new customer theme stylesheet": [
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784750518424
+      }
+    ],
+    "4. Update other customer pages": [
+      {
+        "executionId": "9f5389a1-fbea-4cea-a25a-6297ca655f62",
+        "chatSessionId": "sess_6cc5ed87-369c-41d5-bd44-61029ae424f7",
+        "timestamp": 1784750518982
+      }
+    ]
+  }
+}

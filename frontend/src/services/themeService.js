@@ -398,31 +398,23 @@ export const applyThemeToCSS = (theme) => {
     root.style.setProperty('--theme-font-color', theme.fontColor);
     root.style.setProperty('--theme-font-color-rgb', hexToRgb(theme.fontColor));
   }
-  // Compute tinted backgrounds — always driven by primary color so the
-  // whole UI gets a visible wash of the primary hue.
-  if (primary) {
+  // Compute page background
+  if (theme.backgroundColor && theme.backgroundColor.trim()) {
+    root.style.setProperty('--theme-background', theme.backgroundColor);
+    root.style.setProperty('--page-bg', theme.backgroundColor);
+  } else if (primary) {
     const _p  = primary.replace('#', '');
     const _pr = parseInt(_p.substring(0, 2), 16);
     const _pg = parseInt(_p.substring(2, 4), 16);
     const _pb = parseInt(_p.substring(4, 6), 16);
     const toHex = (c) => Math.min(255, Math.max(0, Math.round(c))).toString(16).padStart(2, '0');
-
-    // Light-mode tinted bg: blend primary at 8% over #f8fafc (248, 250, 252)
     const lightBg = '#' + [
-      248 * 0.92 + _pr * 0.08,
-      250 * 0.92 + _pg * 0.08,
-      252 * 0.92 + _pb * 0.08,
+      250 * 0.88 + _pr * 0.12,
+      249 * 0.88 + _pg * 0.12,
+      247 * 0.88 + _pb * 0.12,
     ].map(toHex).join('');
     root.style.setProperty('--theme-background', lightBg);
     root.style.setProperty('--page-bg', lightBg);
-
-    // Dark-mode tinted bg: blend primary at 10% over #0e0e16 (14, 14, 22)
-    const darkBg = '#' + [
-      14 * 0.90 + _pr * 0.10,
-      14 * 0.90 + _pg * 0.10,
-      22 * 0.90 + _pb * 0.10,
-    ].map(toHex).join('');
-    root.style.setProperty('--theme-background-dark', darkBg);
   }
   if (theme.headerColor) {
     root.style.setProperty('--theme-header-color', theme.headerColor);

@@ -12,7 +12,6 @@ import SignupBusinessDetails from "../pages/auth/signup/SignupBusinessDetails";
 import SignupBusinessDocuments from "../pages/auth/signup/SignupBusinessDocuments";
 import SignupSuccess from "../pages/auth/signup/SignupSuccess";
 import CustomerLanding from "../pages/modules/Customer/HomePage";
-import AboutPage from "../pages/modules/Customer/AboutPage";
 import TermsPage from "../pages/modules/Customer/TermsPage";
 import PrivacyPage from "../pages/modules/Customer/PrivacyPage";
 import RefundPage from "../pages/modules/Customer/RefundPage";
@@ -85,7 +84,7 @@ const LoginRoutes = () => {
                 <Route
                     path="/about"
                     element={
-                        <AboutPage />
+                        <CustomerLanding />
                     }
                 />
                 <Route

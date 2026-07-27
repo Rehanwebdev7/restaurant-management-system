@@ -90,12 +90,15 @@ public class AdmBusinessSettingService {
         }
 
         // Map fields from request body
-        if (body.containsKey("domainUrl")) entity.setDomainUrl((String) body.get("domainUrl"));
+        if (body.containsKey("domainUrl") && body.get("domainUrl") != null && !((String) body.get("domainUrl")).isBlank()) {
+            entity.setDomainUrl((String) body.get("domainUrl"));
+        }
         if (body.containsKey("themeMode")) entity.setThemeMode((String) body.get("themeMode"));
         if (body.containsKey("primaryColor")) entity.setPrimaryColor((String) body.get("primaryColor"));
         if (body.containsKey("secondaryColor")) entity.setSecondaryColor((String) body.get("secondaryColor"));
         if (body.containsKey("tertiaryColor")) entity.setTertiaryColor((String) body.get("tertiaryColor"));
         if (body.containsKey("fontColor")) entity.setFontColor((String) body.get("fontColor"));
+        if (body.containsKey("backgroundColor")) entity.setBackgroundColor((String) body.get("backgroundColor"));
         if (body.containsKey("fontName")) entity.setFontName((String) body.get("fontName"));
         if (body.containsKey("logoUrl")) entity.setLogoUrl((String) body.get("logoUrl"));
         if (body.containsKey("faviconUrl")) entity.setFaviconUrl((String) body.get("faviconUrl"));

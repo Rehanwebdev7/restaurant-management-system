@@ -13,8 +13,6 @@ const getSystemPreference = () => {
 export const DarkModeProvider = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('dark-mode');
-    // If user has previously set a preference, use that
-    // Otherwise, default to light mode (false)
     if (saved !== null) {
       return saved === 'true';
     }

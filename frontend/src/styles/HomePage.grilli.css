@@ -878,7 +878,7 @@ body:has(.grilli-scope) ::-webkit-scrollbar-thumb:hover {
 }
 
 .grilli-scope .food-heart {
-  background: rgba(10, 9, 8, 0.75) !important;
+  background: var(--grilli-surface-raised) !important;
   backdrop-filter: blur(6px) !important;
   border: 1px solid var(--grilli-gold-hairline) !important;
   color: var(--grilli-text-ivory) !important;
@@ -5587,7 +5587,7 @@ body:has(.grilli-scope)::before {
 .grilli-scope .online-reservation-veil {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(10,9,8,0.55) 0%, rgba(10,9,8,0.75) 100%);
+  background: linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.55) 100%);
   z-index: 1;
 }
 
@@ -5614,7 +5614,7 @@ body:has(.grilli-scope)::before {
 /* ---- LEFT: form panel (dark tinted) ---------------------- */
 
 .grilli-scope .online-reservation-form-panel {
-  background: rgba(10, 9, 8, 0.92);
+  background: var(--grilli-surface-raised);
   padding: clamp(2rem, 5vw, 4rem) clamp(1.5rem, 4vw, 3.5rem);
   text-align: center;
   border-right: 1px solid var(--grilli-gold-hairline);
@@ -5717,7 +5717,7 @@ body:has(.grilli-scope)::before {
 .grilli-scope .online-reservation-field textarea {
   width: 100%;
   padding: 0.95rem 1rem;
-  background: rgba(20, 17, 15, 0.7);
+  background: var(--grilli-surface-raised);
   border: 1px solid var(--grilli-surface-line);
   border-radius: 2px;
   color: var(--grilli-text-ivory);
@@ -5741,7 +5741,7 @@ body:has(.grilli-scope)::before {
 .grilli-scope .online-reservation-field textarea:focus {
   outline: none;
   border-color: var(--grilli-gold);
-  background: rgba(10, 9, 8, 0.9);
+  background: var(--grilli-surface-raised);
   box-shadow: 0 0 0 1px var(--grilli-gold-hairline);
 }
 
@@ -5834,7 +5834,7 @@ body:has(.grilli-scope)::before {
 /* ---- RIGHT: Contact Us panel with weave bg pattern -------- */
 
 .grilli-scope .online-reservation-contact-panel {
-  background: rgba(10, 9, 8, 0.94);
+  background: var(--grilli-surface-raised);
   padding: clamp(2rem, 5vw, 4rem) clamp(1.5rem, 4vw, 3rem);
   text-align: center;
   position: relative;
@@ -5967,7 +5967,7 @@ body:has(.grilli-scope)::before {
   background-position: center;
   background-repeat: no-repeat;
   z-index: 0;
-  animation: footerKenBurns 40s var(--grilli-ease-luxe) infinite alternate;
+  display: none !important; animation: footerKenBurns 40s var(--grilli-ease-luxe) infinite alternate;
 }
 
 @keyframes footerKenBurns {
@@ -5979,9 +5979,10 @@ body:has(.grilli-scope)::before {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse at center, rgba(10, 9, 8, 0.55) 0%, rgba(10, 9, 8, 0.88) 70%),
-    linear-gradient(to bottom, rgba(10, 9, 8, 0.6) 0%, rgba(10, 9, 8, 0.85) 100%);
+    radial-gradient(ellipse at center, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.6) 70%),
+    linear-gradient(to bottom, var(--grilli-surface-raised) 0%, var(--grilli-surface-raised) 100%);
   z-index: 1;
+  display: none !important;
 }
 
 .grilli-scope .grilli-footer-inner {
@@ -6112,7 +6113,7 @@ body:has(.grilli-scope)::before {
 .grilli-scope .grilli-footer-card-inner {
   position: relative;
   z-index: 1;
-  background: rgba(10, 9, 8, 0.9);
+  background: var(--grilli-surface-raised);
   padding: clamp(2rem, 4vw, 3rem) clamp(1.5rem, 3vw, 2.5rem);
   text-align: center;
 }
@@ -6243,7 +6244,7 @@ body:has(.grilli-scope)::before {
   display: flex;
   align-items: center;
   padding: 0 1rem;
-  background: rgba(20, 17, 15, 0.7);
+  background: var(--grilli-surface-raised);
 }
 
 .grilli-scope .grilli-footer-newsletter-input i {
@@ -6321,7 +6322,7 @@ body:has(.grilli-scope)::before {
   font-size: 0.75rem;
   letter-spacing: var(--grilli-track-wider);
   text-transform: uppercase;
-  background: rgba(10, 9, 8, 0.6);
+  background: var(--grilli-surface-raised);
 }
 
 .grilli-scope .grilli-footer-bottom p {
@@ -6621,7 +6622,7 @@ body:has(.grilli-scope)::before {
 /* ---- Individual card --------------------------------------- */
 
 .grilli-scope .our-strength-card {
-  background: rgba(15, 12, 8, 0.6);
+  background: var(--grilli-surface-raised);
   border: 1px solid var(--grilli-surface-line);
   padding: clamp(2rem, 3vw, 2.75rem) clamp(1.25rem, 2vw, 2rem);
   text-align: center;
@@ -6647,7 +6648,7 @@ body:has(.grilli-scope)::before {
 .grilli-scope .our-strength-card:hover {
   border-color: var(--grilli-gold-hairline);
   transform: translateY(-6px);
-  background: rgba(20, 17, 15, 0.75);
+  background: var(--grilli-surface-raised);
 }
 
 .grilli-scope .our-strength-card:hover::before {
@@ -7062,7 +7063,7 @@ body:has(.grilli-scope)::before {
   border-radius: 50% !important;
   overflow: hidden !important;
   border: 3px solid var(--grilli-gold) !important;
-  box-shadow: 0 10px 28px rgba(0,0,0,0.7), 0 0 0 6px rgba(20, 17, 15, 0.9) !important;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.7), 0 0 0 6px rgba(0,0,0,0.15) !important;
   transition: transform 0.5s var(--grilli-ease-luxe) !important;
   background: var(--grilli-surface-line) !important;
   z-index: 2;
@@ -7432,8 +7433,8 @@ body:has(.grilli-scope)::before {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse at 50% 40%, rgba(10, 9, 8, 0.35) 0%, rgba(10, 9, 8, 0.8) 90%),
-    linear-gradient(to bottom, rgba(10, 9, 8, 0.55) 0%, rgba(10, 9, 8, 0.65) 60%, rgba(10, 9, 8, 0.95) 100%);
+    radial-gradient(ellipse at 50% 40%, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.55) 90%),
+    linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.45) 60%, rgba(0,0,0,0.7) 100%);
   z-index: 1;
   pointer-events: none;
 }
@@ -7529,7 +7530,7 @@ body:has(.grilli-scope)::before {
 }
 
 .grilli-scope .categories-container {
-  background: rgba(10, 9, 8, 0.85);
+  background: var(--grilli-surface-raised);
   backdrop-filter: blur(10px);
   border: 1px solid var(--grilli-gold-hairline);
   border-radius: clamp(14px, 2vw, 22px);
@@ -7625,13 +7626,13 @@ body:has(.grilli-scope)::before {
   0%, 100% {
     box-shadow:
       0 10px 28px rgba(0,0,0,0.7),
-      0 0 0 6px rgba(20, 17, 15, 0.9),
+      0 0 0 6px rgba(0,0,0,0.15),
       0 0 0 12px rgba(212, 168, 87, 0);
   }
   50% {
     box-shadow:
       0 12px 32px rgba(0,0,0,0.75),
-      0 0 0 6px rgba(20, 17, 15, 0.9),
+      0 0 0 6px rgba(0,0,0,0.15),
       0 0 0 12px rgba(212, 168, 87, 0.08);
   }
 }
@@ -7694,7 +7695,7 @@ body:has(.grilli-scope)::before {
   animation: none;
   box-shadow:
     0 16px 36px rgba(0,0,0,0.8),
-    0 0 0 6px rgba(20, 17, 15, 0.9),
+    0 0 0 6px rgba(0,0,0,0.15),
     0 0 0 14px rgba(212, 168, 87, 0.22) !important;
 }
 
@@ -7784,8 +7785,8 @@ body:has(.grilli-scope)::before {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse at 50% 40%, rgba(10, 9, 8, 0.4) 0%, rgba(10, 9, 8, 0.85) 90%),
-    linear-gradient(to bottom, rgba(10, 9, 8, 0.55) 0%, rgba(10, 9, 8, 0.65) 60%, rgba(10, 9, 8, 0.95) 100%);
+    radial-gradient(ellipse at 50% 40%, rgba(0,0,0,0.25) 0%, var(--grilli-surface-raised) 90%),
+    linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.45) 60%, rgba(0,0,0,0.7) 100%);
   z-index: 1;
 }
 
@@ -8470,7 +8471,7 @@ body:has(.grilli-scope)::before {
   border: none !important;
   box-shadow:
     0 18px 44px rgba(0,0,0,0.55) !important;
-  background: rgba(10, 9, 8, 0.75) !important;
+  background: var(--grilli-surface-raised) !important;
 }
 
 .grilli-scope .categories-container::before,
@@ -8916,7 +8917,7 @@ body:has(.grilli-scope)::before {
   border: 3px solid var(--grilli-gold);
   box-shadow:
     0 20px 50px rgba(0,0,0,0.7),
-    0 0 0 12px rgba(20, 17, 15, 0.6),
+    0 0 0 12px rgba(0,0,0,0.1),
     0 0 0 13px var(--grilli-gold-hairline),
     0 0 60px rgba(212, 168, 87, 0.25);
   z-index: 2;
@@ -8989,7 +8990,7 @@ body:has(.grilli-scope)::before {
     0 8px 24px rgba(0,0,0,0.65),
     inset 0 2px 0 rgba(255,255,255,0.35),
     inset 0 -2px 0 rgba(0,0,0,0.25),
-    0 0 0 3px rgba(20, 17, 15, 0.7),
+    0 0 0 3px var(--grilli-surface-raised),
     0 0 0 4px var(--grilli-gold-hairline);
   animation: sd-badge-spin 1s var(--grilli-ease-luxe) 0.6s both, sd-badge-bob 4s ease-in-out 1.6s infinite;
   transform-origin: center;
@@ -9210,404 +9211,3128 @@ body:has(.grilli-scope)::before {
    ============================================================= */
 
 /* =============================================================
-   WARM LIGHT MODE — keeps the same luxury Grilli personality
+   VISIBILITY & CONTRAST FIXES
    ============================================================= */
-.landing-container.light-mode.grilli-scope {
-  --grilli-surface-void: #f7f3eb;
-  --grilli-surface-raised: #fffdf8;
-  --grilli-surface-elev: #ffffff;
-  --grilli-surface-line: #e4d9c5;
-  --grilli-overlay-hush: rgba(255, 250, 240, 0.88);
-  --grilli-overlay-veil: rgba(255, 250, 240, 0.56);
-  --grilli-gold: #a8791f;
-  --grilli-gold-soft: #c3943b;
-  --grilli-gold-deep: #795717;
-  --grilli-gold-hairline: rgba(168, 121, 31, 0.28);
-  --grilli-gold-glow: rgba(168, 121, 31, 0.14);
-  --grilli-text-ivory: #2b241b;
-  --grilli-text-mist: #665b4e;
-  --grilli-text-shadow: #978b7d;
-  --grilli-text-inverse: #fffaf0;
-  --grilli-shadow-card: 0 8px 32px rgba(102, 78, 36, 0.10);
-  --grilli-shadow-lift: 0 16px 48px rgba(102, 78, 36, 0.15);
-  background: var(--grilli-surface-void);
-  color: var(--grilli-text-ivory);
-}
 
-.landing-container.light-mode.grilli-scope::before {
-  opacity: 0.35;
-  background-image: radial-gradient(circle, rgba(168, 121, 31, 0.10) 1px, transparent 1px) !important;
-}
-
-.landing-container.light-mode.grilli-scope .landing-header {
-  background: rgba(247, 243, 235, 0.90) !important;
-  backdrop-filter: blur(16px);
-}
-
-.landing-container.light-mode.grilli-scope .logo-main,
-.landing-container.light-mode.grilli-scope .logo-sub,
-.landing-container.light-mode.grilli-scope .desktop-nav-links span,
-.landing-container.light-mode.grilli-scope .header-branch-current,
-.landing-container.light-mode.grilli-scope .landing-header .icon-btn,
-.landing-container.light-mode.grilli-scope .landing-header .header-icon-btn {
+/* Force header nav links to be visible, dark, and bold */
+.grilli-scope .landing-header .desktop-nav-links,
+.grilli-scope .landing-header .desktop-nav-links span,
+.grilli-scope .landing-header .desktop-nav-links a,
+.grilli-scope .landing-header nav,
+.grilli-scope .landing-header nav a,
+.grilli-scope .landing-header nav span {
   color: var(--grilli-text-ivory) !important;
-}
-
-.landing-container.light-mode.grilli-scope .logo-main { text-shadow: none; }
-.landing-container.light-mode.grilli-scope .desktop-nav-links span:hover { color: var(--grilli-gold) !important; }
-
-/* Keep photography rich while changing the surrounding page to ivory. */
-.landing-container.light-mode.grilli-scope .hero-bg-overlay,
-.landing-container.light-mode.grilli-scope .menu-hero-veil,
-.landing-container.light-mode.grilli-scope .info-hero-veil {
-  background: linear-gradient(to top, rgba(10, 9, 8, 0.82) 0%, rgba(10, 9, 8, 0.42) 58%, rgba(10, 9, 8, 0.20) 100%) !important;
-}
-
-.landing-container.light-mode.grilli-scope .hero-content,
-.landing-container.light-mode.grilli-scope .menu-hero-content,
-.landing-container.light-mode.grilli-scope .info-hero-content { text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55); }
-
-/* Hero copy must stay ivory over the food photography in light mode. */
-.landing-container.light-mode.grilli-scope .hero-title,
-.landing-container.light-mode.grilli-scope .hero-title span,
-.landing-container.light-mode.grilli-scope .hero-description { color: #fffaf0 !important; -webkit-text-fill-color: #fffaf0 !important; text-shadow: 0 3px 18px rgba(0, 0, 0, 0.72) !important; }
-.landing-container.light-mode.grilli-scope .hero-subtitle-tag { color: #e8cfa0 !important; }
-.landing-container.light-mode.grilli-scope .hero-actions button,
-.landing-container.light-mode.grilli-scope .hero-actions a { color: #f0d68f !important; border-color: #d4a857 !important; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6); }
-
-.landing-container.light-mode.grilli-scope .hero-subtitle-tag,
-.landing-container.light-mode.grilli-scope .hero-eyebrow,
-.landing-container.light-mode.grilli-scope .menu-hero-eyebrow,
-.landing-container.light-mode.grilli-scope .info-hero-eyebrow { color: var(--grilli-gold) !important; }
-
-.landing-container.light-mode.grilli-scope .categories-container,
-.landing-container.light-mode.grilli-scope .filtered-item-card,
-.landing-container.light-mode.grilli-scope .food-card,
-.landing-container.light-mode.grilli-scope .feature-card,
-.landing-container.light-mode.grilli-scope .contact-info-panel,
-.landing-container.light-mode.grilli-scope .location-info-card {
-  background: var(--grilli-surface-raised) !important;
-  border-color: var(--grilli-gold-hairline) !important;
-  box-shadow: var(--grilli-shadow-card);
-}
-
-.landing-container.light-mode.grilli-scope .signature-dish-content,
-.landing-container.light-mode.grilli-scope .signature-dish-content--split {
-  background: transparent !important;
-  border: 0 !important;
-  box-shadow: none !important;
-}
-
-/* Clean, high-contrast value cards — no grey wash over the copy. */
-.landing-container.light-mode.grilli-scope .feature-card {
-  background: #fffdf8 !important;
-  border: 1px solid rgba(168, 121, 31, 0.24) !important;
-  color: #2b241b !important;
-  opacity: 1 !important;
-  filter: none !important;
-  box-shadow: 0 12px 30px rgba(102, 78, 36, 0.08) !important;
-}
-.landing-container.light-mode.grilli-scope .feature-card h3 { color: #2b241b !important; -webkit-text-fill-color: #2b241b !important; }
-.landing-container.light-mode.grilli-scope .feature-card p { color: #665b4e !important; }
-.landing-container.light-mode.grilli-scope .feature-icon { background: rgba(168, 121, 31, 0.10) !important; color: #a8791f !important; }
-
-/* Our Strength uses a separate card system from the generic feature cards. */
-.landing-container.light-mode.grilli-scope .our-strength-section { background: #f7f3eb !important; }
-.landing-container.light-mode.grilli-scope .our-strength-card { background: #fffdf8 !important; border-color: rgba(168, 121, 31, 0.22) !important; box-shadow: 0 12px 30px rgba(102, 78, 36, 0.08); }
-.landing-container.light-mode.grilli-scope .our-strength-card:hover { background: #ffffff !important; }
-.landing-container.light-mode.grilli-scope .our-strength-card-title { color: #2b241b !important; -webkit-text-fill-color: #2b241b !important; }
-.landing-container.light-mode.grilli-scope .our-strength-card-body { color: #665b4e !important; }
-.landing-container.light-mode.grilli-scope .our-strength-icon svg { stroke: #a8791f; }
-
-/* Reservation form remains a deliberate dark editorial panel, with ivory copy. */
-.landing-container.light-mode.grilli-scope .online-reservation-form-panel,
-.landing-container.light-mode.grilli-scope .online-reservation-contact-panel,
-.landing-container.light-mode.grilli-scope .reservation-container {
-  color: #f5efe6 !important;
-}
-.landing-container.light-mode.grilli-scope .online-reservation-form-panel h1,
-.landing-container.light-mode.grilli-scope .online-reservation-form-panel h2,
-.landing-container.light-mode.grilli-scope .online-reservation-form-panel h3,
-.landing-container.light-mode.grilli-scope .online-reservation-contact-title,
-.landing-container.light-mode.grilli-scope .reservation-container h1,
-.landing-container.light-mode.grilli-scope .reservation-container h2 { color: #f5efe6 !important; -webkit-text-fill-color: #f5efe6 !important; }
-.landing-container.light-mode.grilli-scope .online-reservation-form-panel p,
-.landing-container.light-mode.grilli-scope .online-reservation-contact-text,
-.landing-container.light-mode.grilli-scope .online-reservation-contact-label,
-.landing-container.light-mode.grilli-scope .reservation-container label { color: #d7cabb !important; }
-.landing-container.light-mode.grilli-scope .online-reservation-form-panel input,
-.landing-container.light-mode.grilli-scope .online-reservation-form-panel select,
-.landing-container.light-mode.grilli-scope .online-reservation-form-panel textarea { color: #2b241b !important; background: #fffaf1 !important; }
-
-/* Light-mode footer: the base, card and typography all follow the ivory theme. */
-.landing-container.light-mode.grilli-scope .grilli-footer { background: #f7f3eb !important; }
-.landing-container.light-mode.grilli-scope .grilli-footer-veil { background: linear-gradient(to bottom, rgba(247, 243, 235, 0.30), rgba(247, 243, 235, 0.54)) !important; }
-.landing-container.light-mode.grilli-scope .grilli-footer-nav button,
-.landing-container.light-mode.grilli-scope .grilli-footer-details,
-.landing-container.light-mode.grilli-scope .grilli-footer-details a,
-.landing-container.light-mode.grilli-scope .grilli-footer-newsletter-title,
-.landing-container.light-mode.grilli-scope .grilli-footer-newsletter-sub,
-.landing-container.light-mode.grilli-scope .grilli-footer-bottom { color: #2b241b !important; -webkit-text-fill-color: #2b241b !important; }
-.landing-container.light-mode.grilli-scope .grilli-footer-card-inner { background: rgba(244, 235, 220, 0.96) !important; box-shadow: 0 16px 42px rgba(102, 78, 36, 0.16); }
-.landing-container.light-mode.grilli-scope .grilli-footer-newsletter-input { background: #fffaf1 !important; }
-.landing-container.light-mode.grilli-scope .grilli-footer-newsletter-input input { color: #2b241b !important; }
-.landing-container.light-mode.grilli-scope .grilli-footer-newsletter-input input::placeholder { color: #978b7d !important; }
-.landing-container.light-mode.grilli-scope .grilli-footer-bottom { background: rgba(247, 243, 235, 0.90) !important; border-color: var(--grilli-gold-hairline); }
-.landing-container.light-mode.grilli-scope .grilli-footer-nav button,
-.landing-container.light-mode.grilli-scope .grilli-footer-nav a {
-  display: inline-flex;
-  width: max-content;
-  align-items: center;
-  color: #765313 !important;
-  -webkit-text-fill-color: #765313 !important;
-  font-weight: 800 !important;
-  text-shadow: none;
-  padding: 0.42rem 0.7rem !important;
-  border: 1px solid rgba(168, 121, 31, 0.26) !important;
-  background: rgba(255, 250, 241, 0.58) !important;
-  box-shadow: 0 3px 12px rgba(102, 78, 36, 0.08);
-}
-.landing-container.light-mode.grilli-scope .grilli-footer-nav button:hover,
-.landing-container.light-mode.grilli-scope .grilli-footer-nav a:hover {
-  color: #fffaf0 !important;
-  -webkit-text-fill-color: #fffaf0 !important;
-  background: #a8791f !important;
-  border-color: #a8791f !important;
-  transform: translateY(-2px);
-}
-
-/* Reservation section — convert the inherited dark editorial panels to light mode. */
-.landing-container.light-mode.grilli-scope .online-reservation-section { background: #e8ddcc !important; }
-.landing-container.light-mode.grilli-scope .online-reservation-veil { background: linear-gradient(to bottom, rgba(232, 221, 204, 0.26), rgba(232, 221, 204, 0.48)) !important; }
-.landing-container.light-mode.grilli-scope .online-reservation-form-panel { background: rgba(248, 240, 227, 0.92) !important; border-color: rgba(168, 121, 31, 0.30) !important; }
-.landing-container.light-mode.grilli-scope .online-reservation-contact-panel { background: rgba(239, 228, 210, 0.96) !important; border-color: rgba(168, 121, 31, 0.30) !important; }
-.landing-container.light-mode.grilli-scope .online-reservation-title,
-.landing-container.light-mode.grilli-scope .online-reservation-contact-title { color: #2b241b !important; -webkit-text-fill-color: #2b241b !important; }
-.landing-container.light-mode.grilli-scope .online-reservation-form-panel .online-reservation-title {
-  color: #2b241b !important;
-  -webkit-text-fill-color: #2b241b !important;
-  background: transparent !important;
-  background-image: none !important;
   opacity: 1 !important;
   visibility: visible !important;
-}
-.landing-container.light-mode.grilli-scope .online-reservation-sub,
-.landing-container.light-mode.grilli-scope .online-reservation-contact-text,
-.landing-container.light-mode.grilli-scope .online-reservation-contact-label { color: #665b4e !important; }
-.landing-container.light-mode.grilli-scope .online-reservation-field input,
-.landing-container.light-mode.grilli-scope .online-reservation-field select,
-.landing-container.light-mode.grilli-scope .online-reservation-field textarea { background: #fffaf1 !important; border-color: rgba(121, 87, 23, 0.20) !important; color: #2b241b !important; }
-.landing-container.light-mode.grilli-scope .online-reservation-field input::placeholder,
-.landing-container.light-mode.grilli-scope .online-reservation-field textarea::placeholder { color: #978b7d !important; }
-.landing-container.light-mode.grilli-scope .online-reservation-field input:focus,
-.landing-container.light-mode.grilli-scope .online-reservation-field select:focus,
-.landing-container.light-mode.grilli-scope .online-reservation-field textarea:focus { background: #ffffff !important; }
-.landing-container.light-mode.grilli-scope .online-reservation-contact-panel::before { opacity: 0.35; }
-.landing-container.light-mode.grilli-scope .online-reservation-title,
-.landing-container.light-mode.grilli-scope .online-reservation-sub,
-.landing-container.light-mode.grilli-scope .online-reservation-contact-title,
-.landing-container.light-mode.grilli-scope .online-reservation-contact-block { opacity: 1 !important; transform: none !important; }
-.landing-container.light-mode.grilli-scope .online-reservation-title,
-.landing-container.light-mode.grilli-scope .online-reservation-contact-title { color: #2b241b !important; -webkit-text-fill-color: #2b241b !important; }
-.landing-container.light-mode.grilli-scope .online-reservation-sub { color: #665b4e !important; -webkit-text-fill-color: #665b4e !important; }
-.landing-container.light-mode.grilli-scope .online-reservation-title {
-  display: block !important;
-  position: relative !important;
-  z-index: 4 !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  background: transparent !important;
-  background-image: none !important;
-  background-clip: border-box !important;
-  -webkit-background-clip: border-box !important;
-  text-shadow: none !important;
-  margin: 0 0 1rem !important;
+  display: inline-flex !important;
+  font-weight: 700 !important;
+  font-size: 0.9rem !important;
 }
 
-.landing-container.light-mode.grilli-scope .online-reservation-field--icon-input input,
-.landing-container.light-mode.grilli-scope .online-reservation-field--select select {
-  color-scheme: light;
-  min-height: 54px;
+/* Hide dark mode toggle button completely */
+.grilli-scope .landing-header .btn-icon-only,
+.grilli-scope .landing-header button[class*="theme"],
+.grilli-scope .landing-header .btn-theme-toggle {
+  display: none !important;
 }
 
-.landing-container.light-mode.grilli-scope .signature-dish-section.signature-dish-split,
-.landing-container.light-mode.grilli-scope .location-info-section,
-.landing-container.light-mode.grilli-scope .contact-info-section,
-.landing-container.light-mode.grilli-scope .delicious-menu-section,
-.landing-container.light-mode.grilli-scope .restaurant-gallery,
-.landing-container.light-mode.grilli-scope .testimonials-section {
-  background: var(--grilli-surface-void) !important;
+/* Hero text — must be WHITE, BOLD, with strong shadow for readability */
+.grilli-scope .hero-title,
+.grilli-scope .hero-title span {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font-weight: 600 !important;
+  text-shadow: 0 4px 30px rgba(0,0,0,0.9), 0 2px 8px rgba(0,0,0,0.8) !important;
 }
 
-.landing-container.light-mode.grilli-scope .signature-dish-split::before { background: radial-gradient(ellipse at center, rgba(168, 121, 31, 0.10) 0%, transparent 68%); }
-.landing-container.light-mode.grilli-scope .signature-dish-media-frame { box-shadow: 0 20px 50px rgba(77, 54, 20, 0.20), 0 0 0 12px rgba(255, 253, 248, 0.78), 0 0 0 13px var(--grilli-gold-hairline), 0 0 60px rgba(168, 121, 31, 0.16); }
-.landing-container.light-mode.grilli-scope .signature-dish-media-frame img { filter: saturate(1.06) contrast(1.02); }
+.grilli-scope .hero-subtitle-tag,
+.grilli-scope .hero-eyebrow,
+.grilli-scope .hero-tagline {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.8) !important;
+}
 
-.landing-container.light-mode.grilli-scope .gallery-hero-shade { background: linear-gradient(90deg, rgba(25, 19, 11, 0.70), rgba(25, 19, 11, 0.20) 70%), linear-gradient(0deg, rgba(25, 19, 11, 0.45), transparent 55%); }
-.landing-container.light-mode.grilli-scope .gallery-pagination button,
-.landing-container.light-mode.grilli-scope .gallery-hero-controls > button { background: rgba(255, 253, 248, 0.76); color: var(--grilli-gold-deep); }
+.grilli-scope .hero-description {
+  color: #ffffff !important;
+  font-weight: 500 !important;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.7) !important;
+  opacity: 0.95 !important;
+}
 
-.landing-container.light-mode.grilli-scope .main-footer { background: #2b241b !important; }
+/* Hero CTA button — solid, visible, bold */
+.grilli-scope .hero-actions button,
+.grilli-scope .hero-actions a {
+  color: #ffffff !important;
+  border-color: #ffffff !important;
+  font-weight: 700 !important;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.5) !important;
+}
 
-@media (prefers-reduced-motion: reduce) {
-  .landing-container.light-mode.grilli-scope * { animation-duration: 0.001ms !important; }
+/* Stars in hero */
+.grilli-scope .hero-content::after {
+  color: #ffffff !important;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.6) !important;
+}
+
+/* All section headings — bold and clearly visible */
+.grilli-scope h1,
+.grilli-scope h2,
+.grilli-scope h3 {
+  font-weight: 600 !important;
+}
+
+/* No blur anywhere — remove any filter:blur from text */
+.grilli-scope * {
+  filter: none;
 }
 
 /* =============================================================
-   MENU CATEGORY SECTION — user-requested compact + edge-to-edge
-   Overrides earlier cascaded rules (7521, 7529, 8467, 8503, 8736)
+   ADDITIONAL VISIBILITY FIXES + ANIMATIONS
    ============================================================= */
 
-/* Outer section: kill horizontal gutter so the card touches viewport edges */
-.grilli-scope .categories-section {
-  padding-left: 0 !important;
-  padding-right: 0 !important;
+/* Menu section title "Delicious Menu" — must be dark */
+.grilli-scope .delicious-menu-title,
+.grilli-scope .delicious-menu-eyebrow {
+  color: var(--grilli-text-ivory) !important;
+  -webkit-text-fill-color: var(--grilli-text-ivory) !important;
 }
 
-/* The visible cream/dark card: stretch full-width, tighten padding */
-.grilli-scope .categories-container {
-  max-width: 100% !important;
-  width: 100% !important;
-  margin: 0 !important;
-  padding: clamp(18px, 2vw, 28px) clamp(20px, 2.5vw, 40px) clamp(16px, 2vw, 24px) !important;
+/* Menu item names — MUST be visible (dark color) */
+.grilli-scope .delicious-menu-item-name {
+  color: var(--grilli-text-ivory) !important;
+  -webkit-text-fill-color: var(--grilli-text-ivory) !important;
+  font-weight: 500 !important;
+}
+
+/* Signature dish section — title visible */
+.grilli-scope .signature-dish-content--split .signature-dish-name,
+.grilli-scope .signature-dish-name {
+  color: var(--grilli-text-ivory) !important;
+  -webkit-text-fill-color: var(--grilli-text-ivory) !important;
+  font-weight: 500 !important;
+}
+
+/* All section titles must be visible */
+.grilli-scope .our-strength-title,
+.grilli-scope .online-reservation-title,
+.grilli-scope .online-reservation-contact-title,
+.grilli-scope .grilli-section-title,
+.grilli-scope .section-title,
+.grilli-scope .story-title,
+.grilli-scope .heritage-heading-showcase {
+  color: var(--grilli-text-ivory) !important;
+  -webkit-text-fill-color: var(--grilli-text-ivory) !important;
+}
+
+/* Contact panel text — readable */
+.grilli-scope .online-reservation-contact-label,
+.grilli-scope .online-reservation-contact-text {
+  color: var(--grilli-text-ivory) !important;
+}
+
+/* Hide the dark mode button (black square) */
+.grilli-scope .landing-header .btn-icon-only[style*="background"],
+.grilli-scope .landing-header button:has(i.bi-moon),
+.grilli-scope .landing-header button:has(i.bi-sun) {
+  display: none !important;
+}
+
+/* Also target any button with dark/solid background in header that isn't location/login */
+.grilli-scope .landing-header button {
+  background: transparent !important;
+}
+.grilli-scope .landing-header .reserve-btn {
+  background: transparent !important;
+  border: 2px solid var(--grilli-gold) !important;
+}
+
+/* ---- BACKGROUND ANIMATION for restaurant website ---- */
+/* Subtle floating particles/sparkles in the page background */
+.grilli-scope.landing-container {
+  position: relative;
+}
+
+.grilli-scope.landing-container::after {
+  content: '' !important;
+  display: block !important;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(circle 1.5px at 15% 25%, rgba(212, 168, 87, 0.3) 0, transparent 100%),
+    radial-gradient(circle 1px at 35% 60%, rgba(212, 168, 87, 0.2) 0, transparent 100%),
+    radial-gradient(circle 2px at 55% 15%, rgba(212, 168, 87, 0.25) 0, transparent 100%),
+    radial-gradient(circle 1px at 75% 45%, rgba(212, 168, 87, 0.2) 0, transparent 100%),
+    radial-gradient(circle 1.5px at 90% 80%, rgba(212, 168, 87, 0.3) 0, transparent 100%),
+    radial-gradient(circle 1px at 5% 90%, rgba(212, 168, 87, 0.15) 0, transparent 100%);
+  animation: bgParticleFloat 30s ease-in-out infinite;
+}
+
+@keyframes bgParticleFloat {
+  0%, 100% {
+    background-position: 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%;
+  }
+  25% {
+    background-position: 2% -3%, -2% 4%, 3% -2%, -3% 2%, 2% -4%, -2% 3%;
+  }
+  50% {
+    background-position: -3% 4%, 3% -3%, -2% 5%, 4% -3%, -3% 3%, 3% -2%;
+  }
+  75% {
+    background-position: 4% -2%, -3% 3%, 4% -4%, -2% 4%, 3% -2%, -3% 4%;
+  }
+}
+
+/* Signature dish image placeholder — show a gradient when no image */
+.grilli-scope .signature-dish-media-frame {
+  background: linear-gradient(135deg, var(--grilli-surface-void) 0%, var(--grilli-gold-glow) 50%, var(--grilli-surface-void) 100%) !important;
+}
+
+/* ---- TEXT ANIMATION for hero section ---- */
+.grilli-scope .hero-title {
+  animation: heroTextGlow 3s ease-in-out infinite alternate !important;
+}
+
+@keyframes heroTextGlow {
+  0% {
+    text-shadow: 0 4px 30px rgba(0,0,0,0.9), 0 2px 8px rgba(0,0,0,0.8);
+  }
+  100% {
+    text-shadow: 0 4px 30px rgba(0,0,0,0.9), 0 2px 8px rgba(0,0,0,0.8), 0 0 40px rgba(212, 168, 87, 0.3);
+  }
+}
+
+/* Section headings get a subtle fade-in animation */
+.grilli-scope .section-title,
+.grilli-scope .grilli-section-title,
+.grilli-scope .delicious-menu-title,
+.grilli-scope .our-strength-title,
+.grilli-scope .heritage-heading-showcase,
+.grilli-scope .story-title {
+  animation: sectionTitleReveal 1s ease-out both;
+}
+
+@keyframes sectionTitleReveal {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+    letter-spacing: 0.1em;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    letter-spacing: -0.01em;
+  }
+}
+
+/* =============================================================
+   PREMIUM STYLING — Footer, Our Strength, Services
+   ============================================================= */
+
+/* ---- FOOTER: Add gradient background + better styling ---- */
+.grilli-scope .grilli-footer {
+  background: linear-gradient(180deg, var(--grilli-surface-void) 0%, #f0ede6 50%, var(--grilli-surface-void) 100%) !important;
+  border-top: 2px solid var(--grilli-gold) !important;
+  padding-top: 2rem !important;
+}
+
+.grilli-scope .grilli-footer-card-inner {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08) !important;
+  border: 1px solid var(--grilli-surface-line) !important;
+  border-radius: 8px !important;
+}
+
+.grilli-scope .grilli-footer-nav a,
+.grilli-scope .grilli-footer-nav button {
+  font-weight: 700 !important;
+  font-size: 0.8rem !important;
+  padding: 8px 12px !important;
+  border-radius: 4px !important;
+  transition: all 0.3s ease !important;
+}
+
+.grilli-scope .grilli-footer-nav a:hover,
+.grilli-scope .grilli-footer-nav button:hover {
+  background: var(--grilli-gold) !important;
+  color: #ffffff !important;
+  transform: translateY(-2px) !important;
+}
+
+.grilli-scope .grilli-footer-newsletter-submit {
+  border-radius: 4px !important;
+  font-size: 0.8rem !important;
+}
+
+/* Footer entrance animation */
+.grilli-scope .grilli-footer-inner {
+  animation: footerSlideUp 0.8s ease-out both;
+}
+
+@keyframes footerSlideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- OUR STRENGTH CARDS: Premium with gradient border + animation ---- */
+.grilli-scope .our-strength-card {
+  background: #ffffff !important;
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06) !important;
+  padding: 2.5rem 1.5rem !important;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Gold gradient top border accent */
+.grilli-scope .our-strength-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--grilli-gold), var(--grilli-gold-soft), var(--grilli-gold));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.grilli-scope .our-strength-card:hover::after {
+  transform: scaleX(1);
+}
+
+.grilli-scope .our-strength-card:hover {
+  transform: translateY(-8px) !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12), 0 0 0 1px var(--grilli-gold-hairline) !important;
+}
+
+/* Icon styling - bigger, colored background */
+.grilli-scope .our-strength-icon {
+  width: 72px !important;
+  height: 72px !important;
+  background: linear-gradient(135deg, rgba(212, 168, 87, 0.1), rgba(212, 168, 87, 0.05)) !important;
+  border-radius: 16px !important;
+  border: 1px solid var(--grilli-gold-hairline) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 auto 1.5rem !important;
+  transition: all 0.4s ease !important;
+}
+
+.grilli-scope .our-strength-card:hover .our-strength-icon {
+  background: var(--grilli-gold) !important;
+  transform: scale(1.1) rotate(-5deg) !important;
+  box-shadow: 0 8px 24px rgba(212, 168, 87, 0.3) !important;
+}
+
+.grilli-scope .our-strength-card:hover .our-strength-icon svg {
+  filter: brightness(10) !important;
+}
+
+/* Card title on hover - gold */
+.grilli-scope .our-strength-card-title {
+  font-size: 1.25rem !important;
+  font-weight: 600 !important;
+  margin-bottom: 0.75rem !important;
+  transition: color 0.3s ease !important;
+}
+
+/* Card entrance animation */
+.grilli-scope .our-strength-card:nth-child(1) { animation: cardPopIn 0.6s ease both 0.1s; }
+.grilli-scope .our-strength-card:nth-child(2) { animation: cardPopIn 0.6s ease both 0.2s; }
+.grilli-scope .our-strength-card:nth-child(3) { animation: cardPopIn 0.6s ease both 0.3s; }
+.grilli-scope .our-strength-card:nth-child(4) { animation: cardPopIn 0.6s ease both 0.4s; }
+
+@keyframes cardPopIn {
+  from { opacity: 0; transform: translateY(30px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ---- OUR SERVICES CARDS: Same premium treatment ---- */
+.grilli-scope .service-card-lux {
+  background: #ffffff !important;
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06) !important;
+  padding: 2.5rem 1.5rem !important;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Gold gradient left border accent */
+.grilli-scope .service-card-lux::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--grilli-gold), var(--grilli-gold-soft), var(--grilli-gold));
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 0 !important;
 }
 
-/* Category circle — smaller footprint */
-.grilli-scope .categories-scroll .category-card,
-.grilli-scope .categories-scroll .subcategory-chip.category-all-chip {
-  width: 100px !important;
-  min-width: 100px !important;
-  max-width: 100px !important;
-  gap: 0.5rem !important;
+.grilli-scope .service-card-lux:hover::after {
+  transform: scaleY(1);
 }
 
-.grilli-scope .categories-scroll .category-card::before,
-.grilli-scope .categories-scroll .subcategory-chip.category-all-chip::before {
-  width: 78px !important;
-  height: 78px !important;
+.grilli-scope .service-card-lux:hover {
+  transform: translateY(-8px) !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12), 0 0 0 1px var(--grilli-gold-hairline) !important;
 }
 
-.grilli-scope .categories-scroll .category-card .category-icon,
-.grilli-scope .categories-scroll .category-card .category-icon-emoji {
-  top: 5px !important;
-  width: 68px !important;
-  height: 68px !important;
+/* Service icon - bigger with colored bg */
+.grilli-scope .service-icon-wrapper {
+  width: 72px !important;
+  height: 72px !important;
+  background: linear-gradient(135deg, rgba(212, 168, 87, 0.1), rgba(212, 168, 87, 0.05)) !important;
+  border: 1px solid var(--grilli-gold-hairline) !important;
+  border-radius: 16px !important;
+  transition: all 0.4s ease !important;
 }
 
-.grilli-scope .categories-scroll .category-card .category-name {
-  font-size: 0.66rem !important;
-  letter-spacing: 0.1em !important;
-  max-width: 100px !important;
-  min-height: 2.4em !important;
+.grilli-scope .service-card-lux:hover .service-icon-wrapper {
+  background: var(--grilli-gold) !important;
+  transform: scale(1.1) rotate(-5deg) !important;
+  box-shadow: 0 8px 24px rgba(212, 168, 87, 0.3) !important;
+  border-color: var(--grilli-gold) !important;
 }
 
-/* Tighter gap between circles now that they're smaller */
-.grilli-scope .categories-scroll {
-  gap: clamp(0.6rem, 1.4vw, 1.4rem) !important;
-  padding: 8px 0 12px !important;
+/* Service card entrance */
+.grilli-scope .service-card-lux:nth-child(1) { animation: cardPopIn 0.6s ease both 0.1s; }
+.grilli-scope .service-card-lux:nth-child(2) { animation: cardPopIn 0.6s ease both 0.2s; }
+.grilli-scope .service-card-lux:nth-child(3) { animation: cardPopIn 0.6s ease both 0.3s; }
+.grilli-scope .service-card-lux:nth-child(4) { animation: cardPopIn 0.6s ease both 0.4s; }
+
+/* Service card title bolder */
+.grilli-scope .service-card-lux h3 {
+  font-size: 1.25rem !important;
+  font-weight: 600 !important;
+}
+
+/* ---- Section titles: bigger + animated underline ---- */
+.grilli-scope .our-strength-title,
+.grilli-scope .section-title {
+  position: relative;
+  display: inline-block;
+}
+
+/* ---- "Our Strength" section: light gradient bg ---- */
+.grilli-scope .our-strength-section {
+  background: linear-gradient(180deg, #f8f6f2 0%, var(--grilli-surface-void) 100%) !important;
+}
+
+/* ---- Services section: same treatment ---- */
+.grilli-scope .services-section {
+  background: var(--grilli-surface-void) !important;
 }
 
 /* =============================================================
-   MENU SEARCH INPUT — premium refinement
-   Deeper surface + stronger border + tighter proportions
-   Cap search width so ALL/VEG/NON-VEG pill breathes
+   LOCATION PAGE — Text Visibility & Styling Fix
    ============================================================= */
 
-.grilli-scope .menu-controls-row {
-  padding: 0 !important;
-  gap: clamp(0.75rem, 1.5vw, 1.5rem) !important;
-}
-
-.grilli-scope .menu-controls-row .menu-search-wrapper {
-  flex: 1 1 auto !important;
-  max-width: 720px !important;
-  min-width: 240px !important;
-  height: 48px !important;
-  padding: 0 20px !important;
-  background: rgba(0, 0, 0, 0.28) !important;
-  border: 1px solid var(--grilli-gold) !important;
-  border-radius: 4px !important;
-  box-shadow:
-    inset 0 1px 3px rgba(0, 0, 0, 0.3),
-    0 1px 0 rgba(255, 255, 255, 0.03) !important;
-  transition: border-color 0.3s var(--grilli-ease-luxe),
-              box-shadow 0.3s var(--grilli-ease-luxe) !important;
-}
-
-/* Light-mode variant — cream surface with deeper gold border */
-.landing-container.light-mode.grilli-scope .menu-controls-row .menu-search-wrapper {
-  background: rgba(255, 253, 248, 0.92) !important;
-  border-color: var(--grilli-gold-deep, #a8791f) !important;
-  box-shadow:
-    inset 0 1px 2px rgba(77, 54, 20, 0.08),
-    0 1px 0 rgba(255, 255, 255, 0.5) !important;
-}
-
-.grilli-scope .menu-controls-row .menu-search-wrapper:focus-within {
-  border-color: var(--grilli-gold) !important;
-  box-shadow:
-    inset 0 1px 3px rgba(0, 0, 0, 0.3),
-    0 0 0 3px rgba(212, 168, 87, 0.18) !important;
-}
-
-.landing-container.light-mode.grilli-scope .menu-controls-row .menu-search-wrapper:focus-within {
-  border-color: var(--grilli-gold-deep, #a8791f) !important;
-  box-shadow:
-    inset 0 1px 2px rgba(77, 54, 20, 0.08),
-    0 0 0 3px rgba(168, 121, 31, 0.18) !important;
-}
-
-.grilli-scope .menu-controls-row .menu-search-wrapper i {
-  color: var(--grilli-gold) !important;
-  font-size: 1rem !important;
-  margin-right: 4px !important;
-}
-
-.landing-container.light-mode.grilli-scope .menu-controls-row .menu-search-wrapper i {
-  color: var(--grilli-gold-deep, #a8791f) !important;
-}
-
-.grilli-scope .menu-controls-row .menu-search-wrapper input {
-  background: transparent !important;
-  border: none !important;
-  outline: none !important;
+/* Location card titles — MUST be visible, bold, dark */
+.grilli-scope .location-info-card .location-info-title {
   color: var(--grilli-text-ivory) !important;
-  font-family: var(--grilli-font-body) !important;
-  font-size: 0.9rem !important;
+  -webkit-text-fill-color: var(--grilli-text-ivory) !important;
+  font-weight: 700 !important;
+  font-size: 1.3rem !important;
+}
+
+/* Location card body text — clearly readable */
+.grilli-scope .location-info-card .location-info-body,
+.grilli-scope .location-info-card p {
+  color: var(--grilli-text-ivory) !important;
   font-weight: 500 !important;
-  letter-spacing: 0.02em !important;
-  padding: 0 12px !important;
-  width: 100% !important;
-  height: 100% !important;
+  font-size: 0.95rem !important;
 }
 
-.landing-container.light-mode.grilli-scope .menu-controls-row .menu-search-wrapper input {
-  color: var(--grilli-ink, #241a0d) !important;
+/* Location details heading "A TABLE WORTH" — dark, bold, no blur */
+.grilli-scope .location-details-heading {
+  color: var(--grilli-text-ivory) !important;
+  -webkit-text-fill-color: var(--grilli-text-ivory) !important;
+  font-weight: 600 !important;
+  opacity: 1 !important;
 }
 
-.grilli-scope .menu-controls-row .menu-search-wrapper input::placeholder {
-  color: var(--grilli-text-shadow, rgba(240, 227, 200, 0.45)) !important;
+.grilli-scope .location-details-heading em {
+  color: var(--grilli-gold) !important;
+  -webkit-text-fill-color: var(--grilli-gold) !important;
+}
+
+/* Location copy text */
+.grilli-scope .location-details-copy {
+  color: var(--grilli-text-ivory) !important;
   font-weight: 400 !important;
+  opacity: 1 !important;
+}
+
+/* Location perks items — visible */
+.grilli-scope .location-perks div {
+  color: var(--grilli-text-ivory) !important;
+  font-weight: 500 !important;
+}
+
+/* Location info cards — add shadow + better styling */
+.grilli-scope .location-info-card {
+  background: #ffffff !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06) !important;
+  border: 1px solid var(--grilli-surface-line) !important;
+  transition: all 0.4s ease !important;
+}
+
+.grilli-scope .location-info-card:hover {
+  transform: translateY(-6px) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1) !important;
+  border-color: var(--grilli-gold) !important;
+}
+
+/* Location links — gold, bold */
+.grilli-scope .location-info-link {
+  color: var(--grilli-gold) !important;
+  font-weight: 700 !important;
+  font-size: 0.8rem !important;
+}
+
+/* Map section heading "FIND US HERE" */
+.grilli-scope .location-map-label {
+  color: var(--grilli-gold) !important;
+  font-weight: 700 !important;
+  font-size: 0.8rem !important;
+}
+
+/* "THE SPICE GARDEN EXPERIENCE" eyebrow */
+.grilli-scope .location-details-panel .grilli-section-eyebrow,
+.grilli-scope .location-details-panel [class*="eyebrow"] {
+  color: var(--grilli-gold) !important;
+  font-weight: 700 !important;
+}
+
+/* Reserve button on location page */
+.grilli-scope .location-reserve-btn {
+  background: var(--grilli-gold) !important;
+  color: #ffffff !important;
+  border-radius: 6px !important;
+  font-weight: 700 !important;
+  padding: 14px 28px !important;
+  transition: all 0.3s ease !important;
+}
+
+.grilli-scope .location-reserve-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(212, 168, 87, 0.3) !important;
+}
+
+
+/* =============================================================
+   GALLERY PAGINATION — Premium Styling
+   ============================================================= */
+
+.grilli-scope .gallery-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 3rem;
+  padding: 1rem 0;
+}
+
+.grilli-scope .gallery-pagination button {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--grilli-surface-line) !important;
+  background: var(--grilli-surface-raised) !important;
+  color: var(--grilli-text-ivory) !important;
+  border-radius: 8px !important;
+  font-family: var(--grilli-font-body) !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease !important;
+}
+
+.grilli-scope .gallery-pagination button:hover:not(:disabled) {
+  background: var(--grilli-gold) !important;
+  color: #ffffff !important;
+  border-color: var(--grilli-gold) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(212, 168, 87, 0.3);
+}
+
+.grilli-scope .gallery-pagination button.active {
+  background: var(--grilli-gold) !important;
+  color: #ffffff !important;
+  border-color: var(--grilli-gold) !important;
+  box-shadow: 0 4px 16px rgba(212, 168, 87, 0.3);
+  transform: scale(1.05);
+}
+
+.grilli-scope .gallery-pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Gallery hero controls — prettier arrows */
+.grilli-scope .gallery-hero-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.grilli-scope .gallery-hero-controls > button {
+  width: 44px;
+  height: 44px;
+  border-radius: 50% !important;
+  background: var(--grilli-surface-raised) !important;
+  border: 1px solid var(--grilli-surface-line) !important;
+  color: var(--grilli-text-ivory) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease !important;
+  cursor: pointer;
+}
+
+.grilli-scope .gallery-hero-controls > button:hover {
+  background: var(--grilli-gold) !important;
+  color: #ffffff !important;
+  border-color: var(--grilli-gold) !important;
+  transform: scale(1.1);
+}
+
+/* Gallery hero dots */
+.grilli-scope .gallery-hero-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.grilli-scope .gallery-hero-dots button {
+  width: 8px;
+  height: 8px;
+  border-radius: 50% !important;
+  background: var(--grilli-surface-line) !important;
+  border: none !important;
+  padding: 0 !important;
+  transition: all 0.3s ease !important;
+  cursor: pointer;
+}
+
+.grilli-scope .gallery-hero-dots button.active {
+  background: var(--grilli-gold) !important;
+  width: 24px !important;
+  border-radius: 10px !important;
+}
+
+
+/* =============================================================
+   HERO SLIDER TITLE — MUST BE VISIBLE
+   ============================================================= */
+
+/* The main big title in hero slider */
+.grilli-scope .hero-title {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font-size: clamp(3rem, 8vw, 6.5rem) !important;
+  font-weight: 500 !important;
+  text-shadow: 0 4px 40px rgba(0,0,0,0.9), 0 2px 12px rgba(0,0,0,0.8), 0 0 60px rgba(0,0,0,0.5) !important;
+  line-height: 1.05 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+  position: relative;
+  z-index: 10;
+  animation: heroTitleSlideIn 1s cubic-bezier(0.4, 0, 0.2, 1) both !important;
+}
+
+.grilli-scope .hero-title span {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  text-shadow: inherit !important;
+  opacity: 1 !important;
+}
+
+/* Hero subtitle/eyebrow */
+.grilli-scope .hero-subtitle-tag,
+.grilli-scope .hero-eyebrow,
+.grilli-scope .hero-tagline {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font-size: 0.9rem !important;
+  font-weight: 600 !important;
+  text-shadow: 0 2px 16px rgba(0,0,0,0.9) !important;
+  opacity: 1 !important;
+  letter-spacing: 0.4em !important;
+}
+
+/* Hero description */
+.grilli-scope .hero-description {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font-size: 1rem !important;
+  font-weight: 500 !important;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.8) !important;
+  opacity: 1 !important;
+  letter-spacing: 0.2em !important;
+}
+
+/* Hero CTA button — white with animation */
+.grilli-scope .hero-actions button,
+.grilli-scope .hero-actions a {
+  color: #ffffff !important;
+  border: 2px solid #ffffff !important;
+  background: rgba(255,255,255,0.1) !important;
+  backdrop-filter: blur(4px) !important;
+  font-weight: 700 !important;
+  font-size: 0.85rem !important;
+  padding: 14px 32px !important;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.5) !important;
+  transition: all 0.3s ease !important;
+}
+
+.grilli-scope .hero-actions button:hover,
+.grilli-scope .hero-actions a:hover {
+  background: #ffffff !important;
+  color: var(--grilli-text-ivory) !important;
+  text-shadow: none !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(255,255,255,0.2) !important;
+}
+
+/* Stars */
+.grilli-scope .hero-content::after {
+  color: #ffffff !important;
+  font-size: 0.9rem !important;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.7) !important;
+  opacity: 1 !important;
+}
+
+/* Hero title slide-in animation */
+@keyframes heroTitleSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Stronger dark overlay on hero for text readability */
+.grilli-scope .hero-bg-overlay {
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.4) 0%,
+    rgba(0, 0, 0, 0.3) 30%,
+    rgba(0, 0, 0, 0.5) 60%,
+    rgba(0, 0, 0, 0.7) 100%
+  ) !important;
+}
+
+
+/* =============================================================
+   ALTERNATING SECTION BACKGROUNDS — 2 Shade Premium Look
+   ============================================================= */
+
+/* Even sections get the alternate (warm cream) background */
+.grilli-scope .signature-dish-section {
+  background: var(--grilli-surface-alt) !important;
+}
+
+.grilli-scope .our-strength-section {
+  background: var(--grilli-surface-alt) !important;
+}
+
+.grilli-scope .testimonials-section {
+  background: var(--grilli-surface-alt) !important;
+}
+
+.grilli-scope .delicious-menu-section {
+  background: var(--grilli-surface-alt) !important;
+}
+
+.grilli-scope .online-reservation-section {
+  background: var(--grilli-surface-alt) !important;
+}
+
+/* Odd sections stay white/default */
+.grilli-scope .heritage-showcase-section {
+  background: var(--grilli-surface-raised) !important;
+}
+
+.grilli-scope .story-section {
+  background: var(--grilli-surface-raised) !important;
+}
+
+.grilli-scope .services-section {
+  background: var(--grilli-surface-raised) !important;
+}
+
+.grilli-scope .dining-showcase-section {
+  background: var(--grilli-surface-raised) !important;
+}
+
+.grilli-scope .chef-spotlight-section {
+  background: var(--grilli-surface-raised) !important;
+}
+
+.grilli-scope .why-us-cta-section {
+  background: var(--grilli-surface-raised) !important;
+}
+
+
+/* =============================================================
+   ABOUT PAGE — Hero Slider
+   ============================================================= */
+.grilli-scope .about-hero-slider {
+  position: relative;
+  width: 100%;
+  height: 70vh;
+  min-height: 450px;
+  max-height: 700px;
+  overflow: hidden;
+}
+
+.grilli-scope .about-hero-slider .hero-slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+
+.grilli-scope .about-hero-slider .hero-slide.active {
+  opacity: 1;
+}
+
+/* =============================================================
+   ABOUT PAGE — Team Grid
+   ============================================================= */
+.grilli-scope .about-team-section {
+  padding: 4rem clamp(20px, 5vw, 80px);
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.grilli-scope .about-team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+}
+
+.grilli-scope .about-team-card {
+  background: var(--grilli-surface-raised);
+  border: 1px solid var(--grilli-surface-line);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.grilli-scope .about-team-card img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 1rem;
+  border: 2px solid var(--grilli-gold-hairline);
+}
+
+/* =============================================================
+   ABOUT PAGE — Timeline
+   ============================================================= */
+.grilli-scope .about-timeline-section {
+  padding: 4rem clamp(20px, 5vw, 80px);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.grilli-scope .about-timeline-item {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+  padding: 1.5rem 0;
+  border-bottom: 1px solid var(--grilli-surface-line);
+}
+
+.grilli-scope .about-timeline-item:last-child {
+  border-bottom: none;
+}
+
+.grilli-scope .about-timeline-year {
+  font-family: var(--grilli-font-display);
+  font-size: 1.5rem;
+  color: var(--grilli-gold);
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+/* =============================================================
+   ABOUT PAGE — Awards
+   ============================================================= */
+.grilli-scope .about-awards-section {
+  padding: 4rem clamp(20px, 5vw, 80px);
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.grilli-scope .about-awards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.grilli-scope .about-award-card {
+  background: var(--grilli-surface-raised);
+  border: 1px solid var(--grilli-surface-line);
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+}
+
+.grilli-scope .about-award-card .award-icon {
+  width: 56px;
+  height: 56px;
+  background: var(--grilli-gold-glow);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  color: var(--grilli-gold);
+  font-size: 1.5rem;
+}
+
+/* =============================================================
+   ABOUT PAGE — Values
+   ============================================================= */
+.grilli-scope .about-values-section {
+  padding: 4rem clamp(20px, 5vw, 80px);
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.grilli-scope .about-values-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.grilli-scope .about-value-card {
+  background: var(--grilli-surface-raised);
+  border: 1px solid var(--grilli-surface-line);
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+}
+
+.grilli-scope .about-value-card .value-icon {
+  width: 56px;
+  height: 56px;
+  background: var(--grilli-gold-glow);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  color: var(--grilli-gold);
+  font-size: 1.5rem;
+}
+
+/* =============================================================
+   ABOUT PAGE — Mobile Responsive (768px)
+   ============================================================= */
+@media (max-width: 768px) {
+  .grilli-scope .about-hero-slider {
+    height: 50vh;
+    min-height: 350px;
+  }
+
+  .grilli-scope .about-team-grid,
+  .grilli-scope .about-awards-grid,
+  .grilli-scope .about-values-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .grilli-scope .about-timeline-item {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .grilli-scope .about-timeline-year {
+    min-width: unset;
+  }
+}
+
+/* =============================================================
+   ABOUT + LOCATION + CONTACT — VISIBILITY & CONTRAST FIXES
+   ============================================================= */
+
+/* Force all content headings to be dark on white/light backgrounds */
+.grilli-scope .about-team-section h2,
+.grilli-scope .about-team-section h4,
+.grilli-scope .about-timeline-section h2,
+.grilli-scope .about-timeline-section h4,
+.grilli-scope .about-awards-section h2,
+.grilli-scope .about-awards-section h4,
+.grilli-scope .about-values-section h2,
+.grilli-scope .about-values-section h4,
+.grilli-scope .contact-info-section h2,
+.grilli-scope .contact-info-section h3,
+.grilli-scope .location-info-section h2,
+.grilli-scope .location-info-section h3,
+.grilli-scope .location-info-card h3,
+.grilli-scope .location-details-heading {
+  color: #1e293b !important;
+  -webkit-text-fill-color: #1e293b !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Section descriptions / subtitle text — dark gray */
+.grilli-scope .about-team-section p,
+.grilli-scope .about-timeline-section p,
+.grilli-scope .about-awards-section p,
+.grilli-scope .about-values-section p,
+.grilli-scope .contact-info-section p,
+.grilli-scope .location-info-section p,
+.grilli-scope .location-info-card p,
+.grilli-scope .location-details-copy,
+.grilli-scope .location-perks span {
+  color: #475569 !important;
+  -webkit-text-fill-color: #475569 !important;
+}
+
+/* About page cards — stronger border and subtle shadow for depth */
+.grilli-scope .about-team-card,
+.grilli-scope .about-award-card,
+.grilli-scope .about-value-card {
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06) !important;
+  transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+.grilli-scope .about-team-card:hover,
+.grilli-scope .about-award-card:hover,
+.grilli-scope .about-value-card:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* About page section alternating backgrounds for visual separation */
+.grilli-scope .about-team-section {
+  background: #f8f6f2 !important;
+}
+
+.grilli-scope .about-awards-section {
+  background: #f8f6f2 !important;
+}
+
+/* Timeline year accent — keep gold but make it bold */
+.grilli-scope .about-timeline-year {
+  color: #D4A857 !important;
+  -webkit-text-fill-color: #D4A857 !important;
+  font-weight: 700 !important;
+}
+
+/* Info-hero veil fix — make it a proper dark overlay, not white-fading */
+.grilli-scope .info-hero-veil {
+  background:
+    linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.55) 50%, rgba(0,0,0,0.75) 100%) !important;
+}
+
+/* Info-hero text — force WHITE on dark overlay for readability */
+.grilli-scope .info-hero-title {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  text-shadow: 0 3px 24px rgba(0,0,0,0.7) !important;
+}
+
+.grilli-scope .info-hero-title .ih-accent {
+  color: #D4A857 !important;
+  -webkit-text-fill-color: #D4A857 !important;
+}
+
+.grilli-scope .info-hero-lede {
+  color: rgba(255,255,255,0.85) !important;
+  -webkit-text-fill-color: rgba(255,255,255,0.85) !important;
+  text-shadow: 0 1px 12px rgba(0,0,0,0.5) !important;
+}
+
+.grilli-scope .info-hero-eyebrow {
+  color: #D4A857 !important;
+  -webkit-text-fill-color: #D4A857 !important;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.4) !important;
+}
+
+/* About hero slider — ensure images fill properly with dark overlay */
+.grilli-scope .about-hero-slider .info-hero-veil {
+  background:
+    linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.7) 100%) !important;
+}
+
+/* Location info cards — darker text for visibility */
+.grilli-scope .location-info-card .location-info-title {
+  color: #1e293b !important;
+  -webkit-text-fill-color: #1e293b !important;
+  font-weight: 700 !important;
+}
+
+.grilli-scope .location-info-card .location-info-body {
+  color: #475569 !important;
+  -webkit-text-fill-color: #475569 !important;
+}
+
+.grilli-scope .location-info-card .location-info-icon i {
+  color: #D4A857 !important;
+}
+
+/* Contact page text — ensure visibility */
+.grilli-scope .contact-info-row .contact-row-label {
+  color: #D4A857 !important;
+  -webkit-text-fill-color: #D4A857 !important;
+  font-weight: 700 !important;
+}
+
+.grilli-scope .contact-info-row p,
+.grilli-scope .contact-info-row a {
+  color: #334155 !important;
+  -webkit-text-fill-color: #334155 !important;
+}
+
+/* Location page details — ensure dark headings */
+.grilli-scope .location-details-heading {
+  color: #1e293b !important;
+  -webkit-text-fill-color: #1e293b !important;
+}
+
+.grilli-scope .location-details-heading em {
+  color: #D4A857 !important;
+  -webkit-text-fill-color: #D4A857 !important;
+}
+
+.grilli-scope .section-subheading {
+  color: #D4A857 !important;
+  -webkit-text-fill-color: #D4A857 !important;
+}
+
+/* =============================================================
+   ABOUT PAGE — BACKEND COLOR + PREMIUM ANIMATIONS
+   ============================================================= */
+
+/* Use restaurant's primary color for card accents */
+.grilli-scope .about-team-card,
+.grilli-scope .about-award-card,
+.grilli-scope .about-value-card {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Top accent border line using primary color */
+.grilli-scope .about-team-card::before,
+.grilli-scope .about-award-card::before,
+.grilli-scope .about-value-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--primary-color, #D4A857);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.grilli-scope .about-team-card:hover::before,
+.grilli-scope .about-award-card:hover::before,
+.grilli-scope .about-value-card:hover::before {
+  transform: scaleX(1);
+}
+
+/* Icon boxes — use primary color from backend */
+.grilli-scope .about-award-card .award-icon,
+.grilli-scope .about-value-card .value-icon {
+  background: color-mix(in srgb, var(--primary-color, #D4A857) 15%, transparent) !important;
+  color: var(--primary-color, #D4A857) !important;
+  transition: transform 0.3s ease, background 0.3s ease !important;
+}
+
+.grilli-scope .about-award-card:hover .award-icon,
+.grilli-scope .about-value-card:hover .value-icon {
+  transform: scale(1.1) rotate(5deg) !important;
+  background: color-mix(in srgb, var(--primary-color, #D4A857) 25%, transparent) !important;
+}
+
+/* Team card image border — primary color */
+.grilli-scope .about-team-card img {
+  border: 3px solid color-mix(in srgb, var(--primary-color, #D4A857) 40%, transparent) !important;
+  transition: transform 0.4s ease, border-color 0.3s ease !important;
+}
+
+.grilli-scope .about-team-card:hover img {
+  transform: scale(1.08) !important;
+  border-color: var(--primary-color, #D4A857) !important;
+}
+
+/* Team card role text — primary color */
+.grilli-scope .about-team-card p:first-of-type {
+  color: var(--primary-color, #D4A857) !important;
+  -webkit-text-fill-color: var(--primary-color, #D4A857) !important;
+}
+
+/* Timeline year — primary color */
+.grilli-scope .about-timeline-year {
+  color: var(--primary-color, #D4A857) !important;
+  -webkit-text-fill-color: var(--primary-color, #D4A857) !important;
+}
+
+/* Timeline left border accent */
+.grilli-scope .about-timeline-item {
+  border-left: 3px solid transparent !important;
+  padding-left: 1.5rem !important;
+  transition: border-color 0.3s ease, background 0.3s ease !important;
+}
+
+.grilli-scope .about-timeline-item:hover {
+  border-left-color: var(--primary-color, #D4A857) !important;
+  background: color-mix(in srgb, var(--primary-color, #D4A857) 5%, transparent) !important;
+  border-radius: 8px !important;
+}
+
+/* Section subheading — primary color */
+.grilli-scope .about-team-section .section-subheading,
+.grilli-scope .about-awards-section .section-subheading,
+.grilli-scope .about-values-section .section-subheading,
+.grilli-scope .about-timeline-section .section-subheading {
+  color: var(--primary-color, #D4A857) !important;
+  -webkit-text-fill-color: var(--primary-color, #D4A857) !important;
+}
+
+/* =============================================================
+   ABOUT PAGE — CARD ENTRANCE ANIMATIONS
+   ============================================================= */
+
+/* Staggered slide-up animation for cards */
+@keyframes aboutCardSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes aboutCardSlideLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes aboutIconPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes aboutShimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+/* Cards animate when they become visible (motion-visible class added by IntersectionObserver) */
+.grilli-scope .about-team-card,
+.grilli-scope .about-award-card,
+.grilli-scope .about-value-card {
+  opacity: 0;
+  transform: translateY(40px) scale(0.95);
+  animation: aboutCardSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Staggered delays for cards */
+.grilli-scope .about-team-grid .about-team-card:nth-child(1),
+.grilli-scope .about-awards-grid .about-award-card:nth-child(1),
+.grilli-scope .about-values-grid .about-value-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.grilli-scope .about-team-grid .about-team-card:nth-child(2),
+.grilli-scope .about-awards-grid .about-award-card:nth-child(2),
+.grilli-scope .about-values-grid .about-value-card:nth-child(2) {
+  animation-delay: 0.25s;
+}
+
+.grilli-scope .about-team-grid .about-team-card:nth-child(3),
+.grilli-scope .about-awards-grid .about-award-card:nth-child(3),
+.grilli-scope .about-values-grid .about-value-card:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.grilli-scope .about-values-grid .about-value-card:nth-child(4) {
+  animation-delay: 0.55s;
+}
+
+/* Timeline items slide in from left */
+.grilli-scope .about-timeline-item {
+  opacity: 0;
+  transform: translateX(-30px);
+  animation: aboutCardSlideLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.grilli-scope .about-timeline-item:nth-child(1) { animation-delay: 0.1s; }
+.grilli-scope .about-timeline-item:nth-child(2) { animation-delay: 0.25s; }
+.grilli-scope .about-timeline-item:nth-child(3) { animation-delay: 0.4s; }
+.grilli-scope .about-timeline-item:nth-child(4) { animation-delay: 0.55s; }
+
+/* Subtle pulse animation on icons */
+.grilli-scope .about-award-card .award-icon,
+.grilli-scope .about-value-card .value-icon {
+  animation: aboutIconPulse 3s ease-in-out infinite;
+}
+
+/* Shimmer effect on card hover */
+.grilli-scope .about-team-card::after,
+.grilli-scope .about-award-card::after,
+.grilli-scope .about-value-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.grilli-scope .about-team-card:hover::after,
+.grilli-scope .about-award-card:hover::after,
+.grilli-scope .about-value-card:hover::after {
+  opacity: 1;
+  animation: aboutShimmer 1s ease forwards;
+}
+
+/* Section heading underline animation */
+.grilli-scope .about-team-section h2,
+.grilli-scope .about-timeline-section h2,
+.grilli-scope .about-awards-section h2,
+.grilli-scope .about-values-section h2 {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 12px;
+}
+
+.grilli-scope .about-team-section h2::after,
+.grilli-scope .about-timeline-section h2::after,
+.grilli-scope .about-awards-section h2::after,
+.grilli-scope .about-values-section h2::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background: var(--primary-color, #D4A857);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.grilli-scope .about-team-section h2:hover::after,
+.grilli-scope .about-timeline-section h2:hover::after,
+.grilli-scope .about-awards-section h2:hover::after,
+.grilli-scope .about-values-section h2:hover::after {
+  width: 100px;
+}
+
+/* Mission/Vision cards — left border accent with primary color */
+.grilli-scope .contact-info-section .animate-fade-in-up > div[style*="border"] {
+  border-left: 4px solid var(--primary-color, #D4A857) !important;
+  transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+.grilli-scope .contact-info-section .animate-fade-in-up > div[style*="border"]:hover {
+  transform: translateX(4px) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* =============================================================
+   HOME PAGE SERVICES CARDS — HIGHLIGHT + ANIMATIONS
+   ============================================================= */
+
+/* Override service cards with backend primary color and better visual weight */
+.grilli-scope .service-card-lux {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-radius: 16px !important;
+  padding: 2.5rem 1.75rem !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06) !important;
+  opacity: 0;
+  transform: translateY(30px);
+  animation: serviceCardReveal 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.grilli-scope .service-card-lux:nth-child(1) { animation-delay: 0.1s; }
+.grilli-scope .service-card-lux:nth-child(2) { animation-delay: 0.2s; }
+.grilli-scope .service-card-lux:nth-child(3) { animation-delay: 0.3s; }
+.grilli-scope .service-card-lux:nth-child(4) { animation-delay: 0.4s; }
+
+@keyframes serviceCardReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Card hover — lift with primary color top border */
+.grilli-scope .service-card-lux:hover {
+  transform: translateY(-8px) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12) !important;
+  border-color: var(--primary-color, #D4A857) !important;
+}
+
+/* Top accent line that reveals on hover */
+.grilli-scope .service-card-lux::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 4px !important;
+  background: var(--primary-color, #D4A857) !important;
+  border-radius: 16px 16px 0 0 !important;
+  transform: scaleX(0) !important;
+  transform-origin: center !important;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  inset: unset !important;
+  bottom: unset !important;
+}
+
+.grilli-scope .service-card-lux:hover::before {
+  transform: scaleX(1) !important;
+}
+
+/* Icon wrapper — use backend primary color */
+.grilli-scope .service-icon-wrapper {
+  width: 72px !important;
+  height: 72px !important;
+  border: 2px solid var(--primary-color, #D4A857) !important;
+  border-radius: 16px !important;
+  background: color-mix(in srgb, var(--primary-color, #D4A857) 10%, transparent) !important;
+  color: var(--primary-color, #D4A857) !important;
+  font-size: 1.75rem !important;
+  margin-bottom: 1.5rem !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.grilli-scope .service-card-lux:hover .service-icon-wrapper {
+  background: var(--primary-color, #D4A857) !important;
+  color: #ffffff !important;
+  border-color: var(--primary-color, #D4A857) !important;
+  transform: scale(1.1) rotate(5deg) !important;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--primary-color, #D4A857) 30%, transparent) !important;
+}
+
+/* Service card heading — darker, bolder */
+.grilli-scope .service-card-lux h3 {
+  color: #1e293b !important;
+  -webkit-text-fill-color: #1e293b !important;
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
   letter-spacing: 0.02em !important;
+  margin-bottom: 0.75rem !important;
 }
 
-.landing-container.light-mode.grilli-scope .menu-controls-row .menu-search-wrapper input::placeholder {
-  color: rgba(77, 54, 20, 0.5) !important;
+/* Service card description */
+.grilli-scope .service-card-lux p {
+  color: #64748b !important;
+  -webkit-text-fill-color: #64748b !important;
+  font-size: 0.9rem !important;
+  line-height: 1.7 !important;
 }
 
-/* Clear (X) button inside search */
-.grilli-scope .menu-controls-row .menu-search-wrapper .clear-search-btn {
+/* =============================================================
+   HOME PAGE "OUR STRENGTH" CARDS — SAME TREATMENT
+   ============================================================= */
+
+/* Our Strength cards — premium styling with animations */
+.grilli-scope .our-strength-card {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-radius: 16px !important;
+  padding: 2.5rem 1.75rem !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06) !important;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(30px);
+  animation: serviceCardReveal 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: transform 0.4s ease, box-shadow 0.4s ease, border-color 0.3s ease !important;
+}
+
+.grilli-scope .our-strength-card:nth-child(1) { animation-delay: 0.1s; }
+.grilli-scope .our-strength-card:nth-child(2) { animation-delay: 0.2s; }
+.grilli-scope .our-strength-card:nth-child(3) { animation-delay: 0.3s; }
+.grilli-scope .our-strength-card:nth-child(4) { animation-delay: 0.4s; }
+
+.grilli-scope .our-strength-card:hover {
+  transform: translateY(-8px) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12) !important;
+  border-color: var(--primary-color, #D4A857) !important;
+}
+
+/* Strength card top accent line */
+.grilli-scope .our-strength-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--primary-color, #D4A857);
+  border-radius: 16px 16px 0 0;
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.grilli-scope .our-strength-card:hover::before {
+  transform: scaleX(1);
+}
+
+/* Strength icon — use primary color */
+.grilli-scope .our-strength-icon {
+  color: var(--primary-color, #D4A857) !important;
+  margin-bottom: 1.25rem;
+}
+
+.grilli-scope .our-strength-icon svg {
+  stroke: var(--primary-color, #D4A857) !important;
+  transition: transform 0.3s ease;
+}
+
+.grilli-scope .our-strength-card:hover .our-strength-icon svg {
+  transform: scale(1.1);
+}
+
+/* Strength card title */
+.grilli-scope .our-strength-card-title {
+  color: #1e293b !important;
+  -webkit-text-fill-color: #1e293b !important;
+  font-weight: 700 !important;
+  font-size: 1.1rem !important;
+  margin-bottom: 0.75rem !important;
+}
+
+/* Strength card body text */
+.grilli-scope .our-strength-card-body {
+  color: #64748b !important;
+  -webkit-text-fill-color: #64748b !important;
+  font-size: 0.9rem !important;
+  line-height: 1.7 !important;
+}
+
+
+/* =============================================================
+   FULL WEBSITE COLOR APPLICATION — USE BACKEND COLORS EVERYWHERE
+   ============================================================= */
+
+/* ----- Alternating section backgrounds with tinted colors ----- */
+
+/* Heritage/Showcase section — light tint of primary */
+.grilli-scope .heritage-showcase-section {
+  background: color-mix(in srgb, var(--primary-color, #22C55E) 4%, #ffffff) !important;
+}
+
+/* Story section — light tint of secondary */
+.grilli-scope .story-section {
+  background: color-mix(in srgb, var(--secondary-color, #F59E0B) 4%, #ffffff) !important;
+}
+
+/* Signature dish section — light tint of primary */
+.grilli-scope .signature-dish-section {
+  background: color-mix(in srgb, var(--primary-color, #22C55E) 3%, #f8f8f8) !important;
+}
+
+/* Delicious menu section — slightly tinted secondary */
+.grilli-scope .delicious-menu-section {
+  background: color-mix(in srgb, var(--secondary-color, #F59E0B) 3%, #f9f8f6) !important;
+}
+
+/* Services section — keep clean white but add top/bottom colored borders */
+.grilli-scope .services-section {
+  background: #ffffff !important;
+  border-top: 1px solid color-mix(in srgb, var(--primary-color, #22C55E) 20%, transparent) !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--primary-color, #22C55E) 20%, transparent) !important;
+}
+
+/* Our Strength section — light tint of secondary */
+.grilli-scope .our-strength-section {
+  background: color-mix(in srgb, var(--secondary-color, #F59E0B) 4%, #ffffff) !important;
+}
+
+/* Online reservation section — keep dark/dramatic */
+
+/* ----- Cards border-left accent using different colors per section ----- */
+
+/* Service cards — primary color accent */
+.grilli-scope .services-grid-container .service-card-lux:nth-child(1) {
+  border-left: 4px solid var(--primary-color, #22C55E) !important;
+}
+.grilli-scope .services-grid-container .service-card-lux:nth-child(2) {
+  border-left: 4px solid var(--secondary-color, #F59E0B) !important;
+}
+.grilli-scope .services-grid-container .service-card-lux:nth-child(3) {
+  border-left: 4px solid var(--theme-tertiary, #EF4444) !important;
+}
+.grilli-scope .services-grid-container .service-card-lux:nth-child(4) {
+  border-left: 4px solid var(--primary-color, #22C55E) !important;
+}
+
+/* Each service card icon gets its own color */
+.grilli-scope .services-grid-container .service-card-lux:nth-child(1) .service-icon-wrapper {
+  border-color: var(--primary-color, #22C55E) !important;
+  color: var(--primary-color, #22C55E) !important;
+  background: color-mix(in srgb, var(--primary-color, #22C55E) 10%, transparent) !important;
+}
+.grilli-scope .services-grid-container .service-card-lux:nth-child(2) .service-icon-wrapper {
+  border-color: var(--secondary-color, #F59E0B) !important;
+  color: var(--secondary-color, #F59E0B) !important;
+  background: color-mix(in srgb, var(--secondary-color, #F59E0B) 10%, transparent) !important;
+}
+.grilli-scope .services-grid-container .service-card-lux:nth-child(3) .service-icon-wrapper {
+  border-color: var(--theme-tertiary, #EF4444) !important;
+  color: var(--theme-tertiary, #EF4444) !important;
+  background: color-mix(in srgb, var(--theme-tertiary, #EF4444) 10%, transparent) !important;
+}
+.grilli-scope .services-grid-container .service-card-lux:nth-child(4) .service-icon-wrapper {
+  border-color: var(--primary-color, #22C55E) !important;
+  color: var(--primary-color, #22C55E) !important;
+  background: color-mix(in srgb, var(--primary-color, #22C55E) 10%, transparent) !important;
+}
+
+/* Hover fill color per card */
+.grilli-scope .services-grid-container .service-card-lux:nth-child(1):hover .service-icon-wrapper {
+  background: var(--primary-color, #22C55E) !important;
+  color: #ffffff !important;
+}
+.grilli-scope .services-grid-container .service-card-lux:nth-child(2):hover .service-icon-wrapper {
+  background: var(--secondary-color, #F59E0B) !important;
+  color: #ffffff !important;
+}
+.grilli-scope .services-grid-container .service-card-lux:nth-child(3):hover .service-icon-wrapper {
+  background: var(--theme-tertiary, #EF4444) !important;
+  color: #ffffff !important;
+}
+.grilli-scope .services-grid-container .service-card-lux:nth-child(4):hover .service-icon-wrapper {
+  background: var(--primary-color, #22C55E) !important;
+  color: #ffffff !important;
+}
+
+/* Service card hover top accent per card */
+.grilli-scope .services-grid-container .service-card-lux:nth-child(1)::before { background: var(--primary-color, #22C55E) !important; }
+.grilli-scope .services-grid-container .service-card-lux:nth-child(2)::before { background: var(--secondary-color, #F59E0B) !important; }
+.grilli-scope .services-grid-container .service-card-lux:nth-child(3)::before { background: var(--theme-tertiary, #EF4444) !important; }
+.grilli-scope .services-grid-container .service-card-lux:nth-child(4)::before { background: var(--primary-color, #22C55E) !important; }
+
+/* Hover border per card */
+.grilli-scope .services-grid-container .service-card-lux:nth-child(1):hover { border-color: var(--primary-color, #22C55E) !important; }
+.grilli-scope .services-grid-container .service-card-lux:nth-child(2):hover { border-color: var(--secondary-color, #F59E0B) !important; }
+.grilli-scope .services-grid-container .service-card-lux:nth-child(3):hover { border-color: var(--theme-tertiary, #EF4444) !important; }
+.grilli-scope .services-grid-container .service-card-lux:nth-child(4):hover { border-color: var(--primary-color, #22C55E) !important; }
+
+/* ----- Our Strength cards — multi-color icons ----- */
+.grilli-scope .our-strength-grid .our-strength-card:nth-child(1) .our-strength-icon svg { stroke: var(--primary-color, #22C55E) !important; }
+.grilli-scope .our-strength-grid .our-strength-card:nth-child(2) .our-strength-icon svg { stroke: var(--secondary-color, #F59E0B) !important; }
+.grilli-scope .our-strength-grid .our-strength-card:nth-child(3) .our-strength-icon svg { stroke: var(--theme-tertiary, #EF4444) !important; }
+.grilli-scope .our-strength-grid .our-strength-card:nth-child(4) .our-strength-icon svg { stroke: var(--primary-color, #22C55E) !important; }
+
+.grilli-scope .our-strength-grid .our-strength-card:nth-child(1)::before { background: var(--primary-color, #22C55E) !important; }
+.grilli-scope .our-strength-grid .our-strength-card:nth-child(2)::before { background: var(--secondary-color, #F59E0B) !important; }
+.grilli-scope .our-strength-grid .our-strength-card:nth-child(3)::before { background: var(--theme-tertiary, #EF4444) !important; }
+.grilli-scope .our-strength-grid .our-strength-card:nth-child(4)::before { background: var(--primary-color, #22C55E) !important; }
+
+.grilli-scope .our-strength-grid .our-strength-card:nth-child(1):hover { border-color: var(--primary-color, #22C55E) !important; }
+.grilli-scope .our-strength-grid .our-strength-card:nth-child(2):hover { border-color: var(--secondary-color, #F59E0B) !important; }
+.grilli-scope .our-strength-grid .our-strength-card:nth-child(3):hover { border-color: var(--theme-tertiary, #EF4444) !important; }
+.grilli-scope .our-strength-grid .our-strength-card:nth-child(4):hover { border-color: var(--primary-color, #22C55E) !important; }
+
+/* ----- Heritage showcase cards — colored overlay accent ----- */
+.grilli-scope .heritage-showcase-card .heritage-view-menu {
+  color: var(--primary-color, #22C55E) !important;
+  -webkit-text-fill-color: var(--primary-color, #22C55E) !important;
+}
+
+.grilli-scope .heritage-showcase-card:hover {
+  border-color: var(--primary-color, #22C55E) !important;
+}
+
+/* ----- Story section stats — use secondary color for number highlights ----- */
+.grilli-scope .story-stat-value {
+  color: var(--primary-color, #22C55E) !important;
+  -webkit-text-fill-color: var(--primary-color, #22C55E) !important;
+}
+
+.grilli-scope .story-stat-value span {
+  color: var(--secondary-color, #F59E0B) !important;
+  -webkit-text-fill-color: var(--secondary-color, #F59E0B) !important;
+}
+
+/* Story features check icons */
+.grilli-scope .story-features i {
+  color: var(--primary-color, #22C55E) !important;
+}
+
+/* Story CTA button */
+.grilli-scope .story-cta,
+.grilli-scope .btn-heritage-more {
+  background: var(--primary-color, #22C55E) !important;
+  color: #ffffff !important;
+  border: none !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+.grilli-scope .story-cta:hover,
+.grilli-scope .btn-heritage-more:hover {
+  background: color-mix(in srgb, var(--primary-color, #22C55E) 85%, #000000) !important;
+}
+
+/* ----- Delicious menu items — price in primary, badge in secondary ----- */
+.grilli-scope .delicious-menu-item-price {
+  color: var(--primary-color, #22C55E) !important;
+  -webkit-text-fill-color: var(--primary-color, #22C55E) !important;
+}
+
+.grilli-scope .delicious-menu-item-badge {
+  background: var(--secondary-color, #F59E0B) !important;
+  color: #ffffff !important;
+}
+
+/* ----- Signature dish price badge — secondary color ----- */
+.grilli-scope .signature-dish-price-badge {
+  background: var(--secondary-color, #F59E0B) !important;
+}
+
+/* ----- Reservation submit button — primary color ----- */
+.grilli-scope .online-reservation-submit,
+.grilli-scope .btn-book-submit {
+  background: var(--primary-color, #22C55E) !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+.grilli-scope .online-reservation-submit:hover,
+.grilli-scope .btn-book-submit:hover {
+  background: color-mix(in srgb, var(--primary-color, #22C55E) 85%, #000000) !important;
+}
+
+/* ----- Reserve Now button in header — primary ----- */
+.grilli-scope .btn-find-table {
+  background: var(--primary-color, #22C55E) !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+.grilli-scope .btn-find-table:hover {
+  background: color-mix(in srgb, var(--primary-color, #22C55E) 85%, #000000) !important;
+}
+
+/* ----- Grilli footer subscribe button ----- */
+.grilli-scope .grilli-footer-newsletter-submit {
+  background: var(--primary-color, #22C55E) !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+/* ----- Scroll indicator and hero actions ----- */
+.grilli-scope .btn-explore-menu {
+  background: var(--primary-color, #22C55E) !important;
+  color: #ffffff !important;
+  border: none !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+.grilli-scope .btn-explore-menu:hover {
+  background: color-mix(in srgb, var(--primary-color, #22C55E) 85%, #000000) !important;
+}
+
+/* ----- Location page reserve button ----- */
+.grilli-scope .location-reserve-btn {
+  background: var(--primary-color, #22C55E) !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+/* ----- About page section backgrounds using colors ----- */
+.grilli-scope .about-team-section {
+  background: color-mix(in srgb, var(--primary-color, #22C55E) 3%, #ffffff) !important;
+}
+
+.grilli-scope .about-awards-section {
+  background: color-mix(in srgb, var(--secondary-color, #F59E0B) 3%, #ffffff) !important;
+}
+
+/* About page values icons — rotate colors */
+.grilli-scope .about-values-grid .about-value-card:nth-child(1) .value-icon {
+  background: color-mix(in srgb, var(--primary-color, #22C55E) 12%, transparent) !important;
+  color: var(--primary-color, #22C55E) !important;
+}
+.grilli-scope .about-values-grid .about-value-card:nth-child(2) .value-icon {
+  background: color-mix(in srgb, var(--secondary-color, #F59E0B) 12%, transparent) !important;
+  color: var(--secondary-color, #F59E0B) !important;
+}
+.grilli-scope .about-values-grid .about-value-card:nth-child(3) .value-icon {
+  background: color-mix(in srgb, var(--theme-tertiary, #EF4444) 12%, transparent) !important;
+  color: var(--theme-tertiary, #EF4444) !important;
+}
+.grilli-scope .about-values-grid .about-value-card:nth-child(4) .value-icon {
+  background: color-mix(in srgb, var(--primary-color, #22C55E) 12%, transparent) !important;
+  color: var(--primary-color, #22C55E) !important;
+}
+
+/* ----- Gold token override — use primary instead of hardcoded gold ----- */
+.grilli-scope .heritage-showcase-header .heritage-tag-center,
+.grilli-scope .story-eyebrow,
+.grilli-scope .delicious-menu-eyebrow,
+.grilli-scope .signature-dish-eyebrow,
+.grilli-scope .online-reservation-eyebrow,
+.grilli-scope .our-strength-eyebrow {
+  color: var(--primary-color, #22C55E) !important;
+  -webkit-text-fill-color: var(--primary-color, #22C55E) !important;
+}
+
+/* Section heading underlines — primary color */
+.grilli-scope .heritage-heading-showcase::after,
+.grilli-scope .story-title::after,
+.grilli-scope .delicious-menu-title::after,
+.grilli-scope .our-strength-title::after {
+  background: var(--primary-color, #22C55E) !important;
+}
+
+/* ----- Grilli particles — use primary color ----- */
+.grilli-scope .grilli-particle {
+  background: var(--primary-color, #22C55E) !important;
+}
+
+/* ----- Story badge text — primary ----- */
+.grilli-scope .story-badge text {
+  fill: var(--primary-color, #22C55E) !important;
+}
+
+.grilli-scope .story-badge circle[stroke] {
+  stroke: var(--primary-color, #22C55E) !important;
+}
+
+/* ----- Location page perks checkmarks ----- */
+.grilli-scope .location-perks i {
+  color: var(--primary-color, #22C55E) !important;
+}
+
+/* ----- Footer ornament ----- */
+.grilli-scope .grilli-footer-ornament span {
+  color: var(--primary-color, #22C55E) !important;
+}
+
+/* =============================================================
+   PREMIUM FOOTER OVERHAUL — Dark, Elegant, Restaurant-Grade
+   ============================================================= */
+
+/* Main footer wrapper — dark gradient background */
+.grilli-scope .grilli-footer {
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f0f1a 100%) !important;
+  border-top: none !important;
+  padding-top: 0 !important;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Decorative top border — gradient using primary color */
+.grilli-scope .grilli-footer::before {
+  content: '' !important;
+  display: block !important;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    var(--primary-color, #22C55E) 20%, 
+    var(--secondary-color, #F59E0B) 50%, 
+    var(--primary-color, #22C55E) 80%, 
+    transparent 100%
+  );
+  z-index: 10;
+}
+
+/* Subtle pattern overlay for texture */
+.grilli-scope .grilli-footer::after {
+  content: '' !important;
+  display: block !important;
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse at 20% 30%, rgba(var(--theme-primary-rgb, 34, 197, 94), 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 70%, rgba(var(--theme-secondary-rgb, 245, 158, 11), 0.04) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Footer inner layout */
+.grilli-scope .grilli-footer-inner {
+  position: relative;
+  z-index: 2;
+  padding: clamp(3rem, 6vw, 5rem) var(--grilli-gutter) clamp(2rem, 4vw, 3rem) !important;
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* Hide the old background image and veil */
+.grilli-scope .grilli-footer-bg,
+.grilli-scope .grilli-footer-veil {
+  display: none !important;
+}
+
+/* Navigation links — white text with hover glow */
+.grilli-scope .grilli-footer-nav a,
+.grilli-scope .grilli-footer-nav button {
+  color: rgba(255, 255, 255, 0.75) !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.3em !important;
+  padding: 10px 16px !important;
+  border-radius: 6px !important;
+  transition: all 0.3s ease !important;
+  background: transparent !important;
+}
+
+.grilli-scope .grilli-footer-nav a:hover,
+.grilli-scope .grilli-footer-nav button:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  transform: translateY(-2px) !important;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.3) !important;
+}
+
+.grilli-scope .grilli-footer-nav a::before,
+.grilli-scope .grilli-footer-nav button::before {
+  display: none !important;
+}
+
+/* Center card — glassmorphism dark card */
+.grilli-scope .grilli-footer-card {
+  padding: 0 !important;
+  width: min(560px, 100%) !important;
+}
+
+.grilli-scope .grilli-footer-card::before {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 20px !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+.grilli-scope .grilli-footer-card::after {
+  display: none !important;
+}
+
+.grilli-scope .grilli-footer-card-inner {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 16px !important;
+  padding: clamp(2rem, 4vw, 3rem) clamp(1.5rem, 3vw, 2.5rem) !important;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+/* Logo in footer */
+.grilli-scope .grilli-footer-logo img {
+  filter: brightness(1.2) drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5)) !important;
+}
+
+.grilli-scope .grilli-footer-logo-fallback {
+  color: #ffffff !important;
+}
+
+.grilli-scope .grilli-footer-logo-fallback i {
+  color: var(--primary-color, #22C55E) !important;
+  font-size: 2.5rem !important;
+}
+
+.grilli-scope .grilli-footer-logo-fallback span {
+  color: #ffffff !important;
+  font-size: 1.5rem !important;
+  letter-spacing: 0.2em !important;
+}
+
+/* Footer details text — light */
+.grilli-scope .grilli-footer-details {
+  color: rgba(255, 255, 255, 0.6) !important;
+  font-size: 0.9rem !important;
+  line-height: 2 !important;
+}
+
+.grilli-scope .grilli-footer-details p {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.grilli-scope .grilli-footer-details a {
+  color: rgba(255, 255, 255, 0.85) !important;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.2) !important;
+  transition: all 0.3s ease !important;
+}
+
+.grilli-scope .grilli-footer-details a:hover {
+  color: var(--primary-color, #22C55E) !important;
+  border-bottom-color: var(--primary-color, #22C55E) !important;
+}
+
+/* Ornament dots — primary color */
+.grilli-scope .grilli-footer-ornament {
+  margin: 1.5rem 0 !important;
+}
+
+.grilli-scope .grilli-footer-ornament span {
+  color: var(--primary-color, #22C55E) !important;
+  font-size: 0.6rem !important;
+  text-shadow: 0 0 8px rgba(var(--theme-primary-rgb, 34, 197, 94), 0.4) !important;
+}
+
+/* Newsletter title */
+.grilli-scope .grilli-footer-newsletter-title {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font-size: clamp(1.5rem, 3vw, 2rem) !important;
+}
+
+.grilli-scope .grilli-footer-newsletter-sub {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.grilli-scope .grilli-footer-newsletter-sub strong {
+  color: var(--secondary-color, #F59E0B) !important;
+}
+
+/* Newsletter form — dark input with glow */
+.grilli-scope .grilli-footer-newsletter-form {
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 50px !important;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.3) !important;
+  max-width: 420px !important;
+  transition: border-color 0.3s ease !important;
+}
+
+.grilli-scope .grilli-footer-newsletter-form:focus-within {
+  border-color: var(--primary-color, #22C55E) !important;
+  box-shadow: 0 0 20px rgba(var(--theme-primary-rgb, 34, 197, 94), 0.15) !important;
+}
+
+.grilli-scope .grilli-footer-newsletter-input {
+  background: transparent !important;
+  padding: 0 1.25rem !important;
+}
+
+.grilli-scope .grilli-footer-newsletter-input i {
+  color: var(--primary-color, #22C55E) !important;
+  font-size: 1.1rem !important;
+}
+
+.grilli-scope .grilli-footer-newsletter-input input {
+  color: #ffffff !important;
+  font-size: 0.9rem !important;
+  padding: 14px 12px !important;
+}
+
+.grilli-scope .grilli-footer-newsletter-input input::placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* Subscribe button — primary color with gradient */
+.grilli-scope .grilli-footer-newsletter-submit {
+  background: linear-gradient(135deg, var(--primary-color, #22C55E), color-mix(in srgb, var(--primary-color, #22C55E) 80%, #000000)) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 0 50px 50px 0 !important;
+  padding: 0 2rem !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.2em !important;
+  transition: all 0.3s ease !important;
+  min-width: 140px;
+}
+
+.grilli-scope .grilli-footer-newsletter-submit:hover {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary-color, #22C55E) 85%, #ffffff), var(--primary-color, #22C55E)) !important;
+  box-shadow: 0 4px 20px rgba(var(--theme-primary-rgb, 34, 197, 94), 0.4) !important;
+  transform: translateX(2px) !important;
+}
+
+.grilli-scope .grilli-footer-newsletter-submit::before {
+  display: none !important;
+}
+
+/* Bottom copyright bar — dark with subtle border */
+.grilli-scope .grilli-footer-bottom {
+  background: rgba(0, 0, 0, 0.3) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: rgba(255, 255, 255, 0.4) !important;
+  padding: 1.25rem var(--grilli-gutter) !important;
+  font-size: 0.75rem !important;
+  letter-spacing: 0.15em !important;
+}
+
+.grilli-scope .grilli-footer-bottom p {
+  color: rgba(255, 255, 255, 0.4) !important;
+  margin: 0 !important;
+}
+
+/* Social links section styling (right nav) */
+.grilli-scope .grilli-footer-nav--right a {
+  position: relative;
+  padding-left: 24px !important;
+}
+
+.grilli-scope .grilli-footer-nav--right a::after {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary-color, #22C55E);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.grilli-scope .grilli-footer-nav--right a:hover::after {
+  opacity: 1;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 900px) {
+  .grilli-scope .grilli-footer-nav--left,
+  .grilli-scope .grilli-footer-nav--right {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+  }
+  
+  .grilli-scope .grilli-footer-nav a,
+  .grilli-scope .grilli-footer-nav button {
+    font-size: 0.7rem !important;
+    padding: 8px 12px !important;
+    letter-spacing: 0.2em !important;
+  }
+  
+  .grilli-scope .grilli-footer-nav--right a {
+    padding-left: 12px !important;
+  }
+  
+  .grilli-scope .grilli-footer-nav--right a::after {
+    display: none !important;
+  }
+}
+
+
+/* =============================================================
+   PROFESSIONAL FOOTER — Clean SaaS-style layout
+   ============================================================= */
+
+.grilli-scope .pro-footer {
+  background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%);
+  color: rgba(255, 255, 255, 0.75);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Top gradient accent line */
+.grilli-scope .pro-footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, 
+    var(--primary-color, #22C55E) 0%, 
+    var(--secondary-color, #F59E0B) 50%, 
+    var(--primary-color, #22C55E) 100%
+  );
+  z-index: 2;
+}
+
+/* Subtle ambient glow */
+.grilli-scope .pro-footer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 300px;
+  background: radial-gradient(ellipse, rgba(var(--theme-primary-rgb, 34, 197, 94), 0.06) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.grilli-scope .pro-footer-top {
+  position: relative;
+  z-index: 1;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: clamp(3rem, 6vw, 5rem) clamp(1.5rem, 4vw, 3rem) clamp(2rem, 4vw, 3rem);
+}
+
+.grilli-scope .pro-footer-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1.3fr;
+  gap: clamp(2rem, 4vw, 4rem);
+}
+
+@media (max-width: 900px) {
+  .grilli-scope .pro-footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .grilli-scope .pro-footer-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+/* Brand column */
+.grilli-scope .pro-footer-brand {
+  padding-right: 1rem;
+}
+
+.grilli-scope .pro-footer-logo {
+  margin-bottom: 1.25rem;
+}
+
+.grilli-scope .pro-footer-logo img {
+  max-height: 48px;
+  width: auto;
+  filter: brightness(1.1);
+}
+
+.grilli-scope .pro-footer-logo-text {
+  font-family: var(--grilli-font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.grilli-scope .pro-footer-about {
+  color: rgba(255, 255, 255, 0.55) !important;
+  font-size: 0.875rem !important;
+  line-height: 1.8 !important;
+  margin: 0 0 1.5rem !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.55) !important;
+}
+
+/* Social icons */
+.grilli-scope .pro-footer-social {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.grilli-scope .pro-footer-social a {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.grilli-scope .pro-footer-social a:hover {
+  background: var(--primary-color, #22C55E);
+  border-color: var(--primary-color, #22C55E);
+  color: #ffffff;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(var(--theme-primary-rgb, 34, 197, 94), 0.3);
+}
+
+/* Column headings */
+.grilli-scope .pro-footer-heading {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font-family: var(--grilli-font-body) !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.03em !important;
+  text-transform: none !important;
+  margin: 0 0 1.25rem !important;
+  padding-bottom: 0.75rem;
+  position: relative;
+}
+
+.grilli-scope .pro-footer-heading::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 32px;
+  height: 2px;
+  background: var(--primary-color, #22C55E);
+  border-radius: 1px;
+}
+
+/* Quick links */
+.grilli-scope .pro-footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.grilli-scope .pro-footer-links li button {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-family: var(--grilli-font-body);
+  font-size: 0.875rem;
+  padding: 4px 0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  text-align: left;
+}
+
+.grilli-scope .pro-footer-links li button::before {
+  content: '→';
+  position: absolute;
+  left: -16px;
+  opacity: 0;
+  color: var(--primary-color, #22C55E);
+  transition: all 0.3s ease;
+}
+
+.grilli-scope .pro-footer-links li button:hover {
+  color: #ffffff;
+  padding-left: 20px;
+}
+
+.grilli-scope .pro-footer-links li button:hover::before {
+  opacity: 1;
+  left: 0;
+}
+
+/* Contact info */
+.grilli-scope .pro-footer-contact {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.grilli-scope .pro-footer-contact li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.6;
+}
+
+.grilli-scope .pro-footer-contact li i {
+  color: var(--primary-color, #22C55E);
+  font-size: 0.9rem;
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.grilli-scope .pro-footer-contact li a {
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.grilli-scope .pro-footer-contact li a:hover {
+  color: var(--primary-color, #22C55E);
+}
+
+/* Newsletter */
+.grilli-scope .pro-footer-newsletter-text {
+  color: rgba(255, 255, 255, 0.55) !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.55) !important;
+  font-size: 0.85rem !important;
+  line-height: 1.6 !important;
+  margin: 0 0 1rem !important;
+}
+
+.grilli-scope .pro-footer-newsletter {
+  display: flex;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.25);
+  transition: border-color 0.3s ease;
+}
+
+.grilli-scope .pro-footer-newsletter:focus-within {
+  border-color: var(--primary-color, #22C55E);
+  box-shadow: 0 0 12px rgba(var(--theme-primary-rgb, 34, 197, 94), 0.1);
+}
+
+.grilli-scope .pro-footer-newsletter input {
+  flex: 1;
+  padding: 12px 16px !important;
   background: transparent !important;
   border: none !important;
-  color: var(--grilli-text-mist) !important;
-  cursor: pointer !important;
-  padding: 4px !important;
+  color: #ffffff !important;
+  font-size: 0.85rem !important;
+  outline: none !important;
+  min-width: 0;
+}
+
+.grilli-scope .pro-footer-newsletter input::placeholder {
+  color: rgba(255, 255, 255, 0.35) !important;
+}
+
+.grilli-scope .pro-footer-newsletter button {
+  padding: 12px 20px;
+  background: var(--primary-color, #22C55E);
+  border: none;
+  color: #ffffff;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.grilli-scope .pro-footer-newsletter button:hover {
+  background: color-mix(in srgb, var(--primary-color, #22C55E) 85%, #000000);
+}
+
+/* Trust badges */
+.grilli-scope .pro-footer-badges {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.grilli-scope .pro-footer-badges span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.grilli-scope .pro-footer-badges span i {
+  color: var(--primary-color, #22C55E);
+  font-size: 0.85rem;
+}
+
+/* Bottom bar */
+.grilli-scope .pro-footer-bottom {
+  position: relative;
+  z-index: 1;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 1.25rem clamp(1.5rem, 4vw, 3rem);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1280px;
+  margin: 0 auto;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.grilli-scope .pro-footer-bottom p {
+  color: rgba(255, 255, 255, 0.4) !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.4) !important;
+  font-size: 0.8rem !important;
+  margin: 0 !important;
+  letter-spacing: 0.02em;
+}
+
+.grilli-scope .pro-footer-bottom-links {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.grilli-scope .pro-footer-bottom-links button {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: color 0.3s ease;
+  padding: 0;
+  font-family: var(--grilli-font-body);
+}
+
+.grilli-scope .pro-footer-bottom-links button:hover {
+  color: var(--primary-color, #22C55E);
+}
+
+@media (max-width: 600px) {
+  .grilli-scope .pro-footer-bottom {
+    flex-direction: column;
+    text-align: center;
+  }
+  .grilli-scope .pro-footer-bottom-links {
+    justify-content: center;
+  }
+}
+
+/* Hide old grilli footer if it somehow still renders */
+.grilli-scope .grilli-footer {
+  display: none !important;
+}
+
+/* =============================================================
+   HEADER RESERVE NOW BUTTON — VISIBILITY FIX
+   ============================================================= */
+
+/* Force Reserve Now button to be clearly visible */
+.grilli-scope .btn-find-table,
+.grilli-scope .landing-header .btn-find-table {
+  background: var(--primary-color, #22C55E) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 10px 24px !important;
+  font-size: 0.8rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1em !important;
+  text-shadow: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  transition: all 0.3s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  white-space: nowrap !important;
+}
+
+.grilli-scope .btn-find-table:hover,
+.grilli-scope .landing-header .btn-find-table:hover {
+  background: color-mix(in srgb, var(--primary-color, #22C55E) 85%, #000000) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Also fix the header right actions area — ensure nothing blurs */
+.grilli-scope .header-right-actions,
+.grilli-scope .header-right-actions * {
+  filter: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Bookmark/Wishlist button — make it visible too */
+.grilli-scope .landing-header .btn-wishlist,
+.grilli-scope .landing-header .btn-icon-only {
+  display: inline-flex !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  filter: none !important;
+  background: transparent !important;
+  border: 1px solid rgba(0, 0, 0, 0.15) !important;
+  border-radius: 8px !important;
+  color: #1e293b !important;
+  width: 40px !important;
+  height: 40px !important;
+}
+
+.grilli-scope .landing-header .btn-wishlist:hover,
+.grilli-scope .landing-header .btn-icon-only:hover {
+  background: rgba(0, 0, 0, 0.05) !important;
+  border-color: var(--primary-color, #22C55E) !important;
+  color: var(--primary-color, #22C55E) !important;
+}
+
+/* Login button fix */
+.grilli-scope .landing-header .btn-signin {
+  display: inline-flex !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  filter: none !important;
+  background: transparent !important;
+  border: 1px solid rgba(0, 0, 0, 0.15) !important;
+  border-radius: 8px !important;
+  color: #1e293b !important;
+  padding: 8px 16px !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+/* =============================================================
+   MENU CARDS — GLASSMORPHISM + ROUNDED CORNERS + LIFT EFFECT
+   ============================================================= */
+
+/* Menu item cards — glassmorphism style */
+.grilli-scope .filtered-item-card {
+  background: rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  border-radius: 20px !important;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  padding: 60px 20px 20px !important;
+}
+
+/* Hover/Click — lift up with stronger shadow (glassmorphism lift) */
+.grilli-scope .filtered-item-card:hover {
+  transform: translateY(-12px) scale(1.02) !important;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.15),
+    0 8px 24px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+  border-color: rgba(255, 255, 255, 0.8) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Active/pressed state — slightly less lift */
+.grilli-scope .filtered-item-card:active {
+  transform: translateY(-6px) scale(1.01) !important;
+  box-shadow: 
+    0 12px 36px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Menu card image circle — more rounded with glassmorphism border */
+.grilli-scope .filtered-item-card .filtered-item-image {
+  border: 3px solid rgba(255, 255, 255, 0.8) !important;
+  box-shadow: 
+    0 8px 24px rgba(0, 0, 0, 0.15),
+    0 0 0 4px rgba(var(--theme-primary-rgb, 34, 197, 94), 0.2) !important;
+  border-radius: 50% !important;
+}
+
+.grilli-scope .filtered-item-card:hover .filtered-item-image {
+  box-shadow: 
+    0 12px 36px rgba(0, 0, 0, 0.2),
+    0 0 0 6px rgba(var(--theme-primary-rgb, 34, 197, 94), 0.3) !important;
+  transform: translate(15%, -55%) scale(1.08) rotate(-3deg) !important;
+}
+
+/* ADD button — rounded with glassmorphism */
+.grilli-scope .filtered-item-card .filtered-item-bottom > button,
+.grilli-scope .filtered-item-card .filtered-item-add-btn {
+  border-radius: 12px !important;
+  background: rgba(255, 255, 255, 0.6) !important;
+  backdrop-filter: blur(8px) !important;
+  border: 1.5px solid var(--primary-color, #22C55E) !important;
+  color: var(--primary-color, #22C55E) !important;
+  font-weight: 700 !important;
+  transition: all 0.3s ease !important;
+}
+
+.grilli-scope .filtered-item-card .filtered-item-bottom > button:hover,
+.grilli-scope .filtered-item-card .filtered-item-add-btn:hover {
+  background: var(--primary-color, #22C55E) !important;
+  color: #ffffff !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 16px rgba(var(--theme-primary-rgb, 34, 197, 94), 0.3) !important;
+}
+
+/* Card counter — rounded */
+.grilli-scope .filtered-item-card .card-counter {
+  border-radius: 12px !important;
+  border: 1.5px solid var(--primary-color, #22C55E) !important;
+  background: rgba(255, 255, 255, 0.6) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+/* Customise button — rounded */
+.grilli-scope .filtered-item-card .card-customise,
+.grilli-scope .filtered-item-card .card-customisable-tag {
+  border-radius: 8px !important;
+}
+
+/* Service cards — same glassmorphism treatment */
+.grilli-scope .service-card-lux,
+.grilli-scope .our-strength-card {
+  background: rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  border-radius: 20px !important;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+}
+
+.grilli-scope .service-card-lux:hover,
+.grilli-scope .our-strength-card:hover {
+  transform: translateY(-10px) !important;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.12),
+    0 8px 24px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* About page cards — glassmorphism */
+.grilli-scope .about-team-card,
+.grilli-scope .about-award-card,
+.grilli-scope .about-value-card {
+  background: rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  border-radius: 20px !important;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+}
+
+.grilli-scope .about-team-card:hover,
+.grilli-scope .about-award-card:hover,
+.grilli-scope .about-value-card:hover {
+  transform: translateY(-10px) !important;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Location cards — same treatment */
+.grilli-scope .location-info-card {
+  background: rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  border-radius: 20px !important;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+}
+
+.grilli-scope .location-info-card:hover {
+  transform: translateY(-10px) !important;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+}
+
+/* =============================================================
+   HEADER NAV — SINGLE LINE FIX + PROPER SPACING
+   ============================================================= */
+
+/* Force all nav links on one line with proper spacing */
+.grilli-scope .landing-header .desktop-nav-links {
   display: flex !important;
   align-items: center !important;
-  transition: color 0.2s ease !important;
+  gap: clamp(0.5rem, 1.5vw, 1.25rem) !important;
+  white-space: nowrap !important;
+  flex-wrap: nowrap !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  overflow: visible !important;
 }
 
-.grilli-scope .menu-controls-row .menu-search-wrapper .clear-search-btn:hover {
-  color: var(--grilli-gold) !important;
+.grilli-scope .landing-header .desktop-nav-links span,
+.grilli-scope .landing-header .desktop-nav-links a {
+  white-space: nowrap !important;
+  font-size: clamp(0.68rem, 1vw, 0.8rem) !important;
+  padding: 8px 0 !important;
+  display: inline-block !important;
+  flex-shrink: 0 !important;
+}
+
+/* Header layout — ensure enough space for all elements */
+.grilli-scope .landing-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 0.75rem !important;
+  flex-wrap: nowrap !important;
+  padding: 0.75rem clamp(16px, 2.5vw, 32px) !important;
+  overflow: visible !important;
+}
+
+/* Header left — logo + branch — don't shrink too much */
+.grilli-scope .header-left {
+  flex-shrink: 1 !important;
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+}
+
+/* Header right actions — keep compact */
+.grilli-scope .header-right-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.375rem !important;
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+}
+
+/* Reserve Now button — more compact on smaller screens */
+.grilli-scope .btn-find-table {
+  padding: 8px 16px !important;
+  font-size: 0.72rem !important;
+  border-radius: 6px !important;
+}
+
+.grilli-scope .landing-header .btn-find-table {
+  margin-right: 8px !important;
+}
+
+/* Header responsive — medium screens (tablets/small laptops) */
+@media (max-width: 1200px) {
+  .grilli-scope .landing-header .desktop-nav-links {
+    gap: clamp(0.5rem, 1.5vw, 1rem) !important;
+  }
+  
+  .grilli-scope .landing-header .desktop-nav-links span,
+  .grilli-scope .landing-header .desktop-nav-links a {
+    font-size: 0.7rem !important;
+  }
+  
+  .grilli-scope .btn-find-table {
+    padding: 7px 12px !important;
+    font-size: 0.68rem !important;
+    margin-right: 8px !important;
+  }
+  
+  .grilli-scope .landing-header .btn-icon-only {
+    width: 36px !important;
+    height: 36px !important;
+  }
+}
+
+@media (max-width: 992px) {
+  .grilli-scope .landing-header .desktop-nav-links {
+    gap: 0.5rem !important;
+  }
+  
+  .grilli-scope .landing-header .desktop-nav-links span,
+  .grilli-scope .landing-header .desktop-nav-links a {
+    font-size: 0.65rem !important;
+  }
+  
+  .grilli-scope .btn-find-table {
+    padding: 6px 10px !important;
+    font-size: 0.65rem !important;
+    margin-right: 4px !important;
+  }
+  
+  .grilli-scope .header-right-actions {
+    gap: 0.25rem !important;
+  }
+  
+  .grilli-scope .landing-header .btn-icon-only {
+    width: 34px !important;
+    height: 34px !important;
+  }
+  
+  .grilli-scope .landing-header .btn-signin {
+    padding: 6px 12px !important;
+    font-size: 0.75rem !important;
+  }
+}
+
+/* Mobile header icons — grilli-scope styling */
+@media (max-width: 768px) {
+  .grilli-scope .mobile-header-icons {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 12px 16px 6px !important;
+  }
+  
+  .grilli-scope .mobile-header-icons .btn-icon-only {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 50% !important;
+    background: rgba(0, 0, 0, 0.04) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    color: #1e293b !important;
+    font-size: 1rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .grilli-scope .mobile-header-icons .btn-icon-only:hover {
+    background: rgba(0, 0, 0, 0.08) !important;
+    color: var(--primary-color, #22C55E) !important;
+    border-color: var(--primary-color, #22C55E) !important;
+  }
+  
+  .grilli-scope .mobile-header-branch-selector {
+    flex: 1 !important;
+  }
+  
+  .grilli-scope .mobile-header-branch-name {
+    color: #1e293b !important;
+    font-weight: 700 !important;
+  }
+  
+  .grilli-scope .mobile-search-bar {
+    background: #ffffff !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+  }
+  
+  .grilli-scope .mobile-search-input-wrapper {
+    background: #f5f7fa !important;
+    border-radius: 24px !important;
+  }
+}
+
+/* =============================================================
+   ONLINE RESERVATION FORM — PROPER FIELD ALIGNMENT
+   ============================================================= */
+
+/* Form row — proper grid with equal columns */
+.grilli-scope .online-reservation-row {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 1rem !important;
+  margin-bottom: 0 !important;
+}
+
+/* Three-column row (Persons, Date, Time) — equal widths */
+.grilli-scope .online-reservation-row--three {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr 1fr !important;
+  gap: 1rem !important;
+}
+
+/* All form fields — consistent height and styling */
+.grilli-scope .online-reservation-field {
+  position: relative !important;
+  width: 100% !important;
+}
+
+.grilli-scope .online-reservation-field input,
+.grilli-scope .online-reservation-field select,
+.grilli-scope .online-reservation-field textarea {
+  width: 100% !important;
+  height: 48px !important;
+  padding: 0 1rem !important;
+  padding-left: 1rem !important;
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  color: #1e293b !important;
+  font-family: var(--grilli-font-body) !important;
+  font-size: 0.9rem !important;
+  box-sizing: border-box !important;
+  transition: border-color 0.3s ease !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+}
+
+.grilli-scope .online-reservation-field textarea {
+  height: auto !important;
+  min-height: 100px !important;
+  padding: 1rem !important;
+  resize: vertical !important;
+}
+
+.grilli-scope .online-reservation-field input:focus,
+.grilli-scope .online-reservation-field select:focus,
+.grilli-scope .online-reservation-field textarea:focus {
+  border-color: var(--primary-color, #22C55E) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(var(--theme-primary-rgb, 34, 197, 94), 0.1) !important;
+}
+
+/* Icon input — proper padding for icon */
+.grilli-scope .online-reservation-field--icon-input input,
+.grilli-scope .online-reservation-field--select select {
+  padding-left: 2.75rem !important;
+}
+
+/* Field icon — properly positioned */
+.grilli-scope .online-reservation-field-icon {
+  position: absolute !important;
+  left: 1rem !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  color: var(--primary-color, #22C55E) !important;
+  font-size: 1rem !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+}
+
+/* Select dropdown arrow */
+.grilli-scope .online-reservation-field--select select {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1,1 L6,6 L11,1' fill='none' stroke='%2364748b' stroke-width='1.5'/></svg>") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 1rem center !important;
+  background-size: 12px 8px !important;
+  padding-right: 2.5rem !important;
+  cursor: pointer !important;
+}
+
+/* Placeholder color */
+.grilli-scope .online-reservation-field input::placeholder,
+.grilli-scope .online-reservation-field textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Submit button — full width, proper styling */
+.grilli-scope .online-reservation-submit {
+  width: 100% !important;
+  height: 52px !important;
+  background: var(--primary-color, #22C55E) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 10px !important;
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.2em !important;
+  text-transform: uppercase !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  margin-top: 0.5rem !important;
+}
+
+.grilli-scope .online-reservation-submit:hover {
+  background: color-mix(in srgb, var(--primary-color, #22C55E) 85%, #000000) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(var(--theme-primary-rgb, 34, 197, 94), 0.3) !important;
+}
+
+/* Reservation form panel — cleaner background */
+.grilli-scope .online-reservation-form-panel {
+  background: #ffffff !important;
+  border-radius: 16px !important;
+  padding: clamp(2rem, 4vw, 3rem) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Contact panel on right — cleaner */
+.grilli-scope .online-reservation-contact-panel {
+  background: #f8fafc !important;
+  border-radius: 16px !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+/* Online reservation title — dark and visible */
+.grilli-scope .online-reservation-title {
+  color: #1e293b !important;
+  -webkit-text-fill-color: #1e293b !important;
+  font-size: clamp(1.75rem, 3.5vw, 2.5rem) !important;
+}
+
+/* Contact Us title on right */
+.grilli-scope .online-reservation-contact-title {
+  color: #1e293b !important;
+  -webkit-text-fill-color: #1e293b !important;
+}
+
+/* Contact panel text */
+.grilli-scope .online-reservation-contact-label {
+  color: #1e293b !important;
+  -webkit-text-fill-color: #1e293b !important;
+}
+
+.grilli-scope .online-reservation-contact-text {
+  color: #64748b !important;
+  -webkit-text-fill-color: #64748b !important;
+}
+
+.grilli-scope .online-reservation-contact-phone {
+  color: var(--primary-color, #22C55E) !important;
+}
+
+/* Mobile fix */
+@media (max-width: 768px) {
+  .grilli-scope .online-reservation-row,
+  .grilli-scope .online-reservation-row--three {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .grilli-scope .landing-header .desktop-nav-links {
+    display: none !important;
+  }
+}
+
+@media (max-width: 1200px) {
+  .grilli-scope .landing-header .desktop-nav-links span,
+  .grilli-scope .landing-header .desktop-nav-links a {
+    font-size: 0.7rem !important;
+  }
+  
+  .grilli-scope .landing-header .desktop-nav-links {
+    gap: 0.75rem !important;
+  }
 }

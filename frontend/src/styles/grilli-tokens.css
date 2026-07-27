@@ -7,25 +7,26 @@
 
 :root {
   /* ---- Surfaces (smoky, layered) ------------------------- */
-  --grilli-surface-void:      #0A0908;                 /* page bg */
-  --grilli-surface-raised:    #14110F;                 /* cards, modals */
-  --grilli-surface-elev:      #1A1613;                 /* nav, tooltips */
-  --grilli-surface-line:      #1F1C18;                 /* dividers, borders */
-  --grilli-overlay-hush:      rgba(0, 0, 0, 0.85);
-  --grilli-overlay-veil:      rgba(0, 0, 0, 0.55);
+  --grilli-surface-void:      var(--theme-background, #f8fafc); /* page bg */
+  --grilli-surface-raised:    #ffffff;                 /* cards, modals */
+  --grilli-surface-elev:      #ffffff;                 /* nav, tooltips */
+  --grilli-surface-line:      var(--theme-border, rgba(0, 0, 0, 0.08)); /* dividers, borders */
+  --grilli-surface-alt:       #f5f2eb;                 /* alternate section bg */
+  --grilli-overlay-hush:      rgba(0, 0, 0, 0.65);
+  --grilli-overlay-veil:      rgba(0, 0, 0, 0.40);
 
   /* ---- Accent (single warm gold, our tone) --------------- */
-  --grilli-gold:              #D4A857;                 /* primary accent */
-  --grilli-gold-soft:         #E8CFA0;                 /* hover / highlight */
-  --grilli-gold-deep:         #A88338;                 /* pressed / border */
-  --grilli-gold-hairline:     rgba(212, 168, 87, 0.35);
-  --grilli-gold-glow:         rgba(212, 168, 87, 0.15);
+  --grilli-gold:              var(--theme-primary, #D4A857); /* primary accent */
+  --grilli-gold-soft:         var(--theme-primary-light, #E8CFA0); /* hover / highlight */
+  --grilli-gold-deep:         var(--theme-primary-dark, #A88338); /* pressed / border */
+  --grilli-gold-hairline:     var(--theme-accent-soft, rgba(212, 168, 87, 0.35));
+  --grilli-gold-glow:         var(--theme-accent-subtle, rgba(212, 168, 87, 0.15));
 
   /* ---- Text scale ---------------------------------------- */
-  --grilli-text-ivory:        #F5EFE6;                 /* primary */
-  --grilli-text-mist:         #A69889;                 /* secondary */
-  --grilli-text-shadow:       #5E574F;                 /* tertiary */
-  --grilli-text-inverse:      #0A0908;                 /* on gold */
+  --grilli-text-ivory:        var(--theme-font-color, #1e293b); /* primary */
+  --grilli-text-mist:         #64748b;                 /* secondary */
+  --grilli-text-shadow:       #94a3b8;                 /* tertiary */
+  --grilli-text-inverse:      var(--primary-color-contrast, #ffffff); /* on gold */
 
   /* ---- Typography ---------------------------------------- */
   --grilli-font-display:      'Cormorant Garamond', Georgia, 'Times New Roman', serif;
@@ -59,8 +60,8 @@
   --grilli-dur-hero:          1200ms;
 
   /* ---- Elevation (mostly flat, subtle) ------------------- */
-  --grilli-shadow-card:       0 8px 32px rgba(0, 0, 0, 0.4);
-  --grilli-shadow-lift:       0 16px 48px rgba(0, 0, 0, 0.55);
+  --grilli-shadow-card:       0 4px 20px rgba(0, 0, 0, 0.08);
+  --grilli-shadow-lift:       0 8px 32px rgba(0, 0, 0, 0.12);
   --grilli-shadow-glow:       0 0 24px var(--grilli-gold-glow);
 }
 

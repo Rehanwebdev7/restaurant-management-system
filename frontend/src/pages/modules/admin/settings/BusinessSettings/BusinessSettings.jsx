@@ -33,6 +33,7 @@ const BusinessSettings = () => {
     secondaryColor: '#764ba2',
     tertiaryColor: '#40E0D0',
     fontColor: '#334155',
+    backgroundColor: '#f8f8f6',
     fontName: 'Inter',
     fontSize: '14px',
     fontWeight: '400',
@@ -141,6 +142,7 @@ const BusinessSettings = () => {
             secondaryColor: data.secondaryColor || '#764ba2',
             tertiaryColor: data.tertiaryColor || '#40E0D0',
             fontColor: data.fontColor || '#334155',
+            backgroundColor: data.backgroundColor || '#f8f8f6',
             fontName: data.fontName || 'Inter',
             fontSize: data.fontSize || '14px',
             fontWeight: data.fontWeight || '400',
@@ -225,6 +227,7 @@ const BusinessSettings = () => {
           secondary: formData.secondaryColor,
           tertiary: formData.tertiaryColor,
           fontColor: formData.fontColor,
+          backgroundColor: formData.backgroundColor,
           fontName: formData.fontName,
           fontSize: formData.fontSize,
           fontWeight: formData.fontWeight,
@@ -935,6 +938,20 @@ const BusinessSettings = () => {
                   onChange={(e) => handleChange('fontColor', e.target.value)} />
                 <div style={{ flex: 1, height: '28px', borderRadius: '6px', background: formData.fontColor }}></div>
               </div>
+            </div>
+
+            {/* Background Color */}
+            <div className="mt-3">
+              <Form.Label style={labelStyle}>BACKGROUND COLOR</Form.Label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                <input type="color" value={formData.backgroundColor}
+                  onChange={(e) => handleChange('backgroundColor', e.target.value)}
+                  style={{ width: '36px', height: '36px', border: 'none', cursor: 'pointer', borderRadius: '4px' }} />
+                <Form.Control type="text" value={formData.backgroundColor} style={{ ...inputStyle, width: '120px' }}
+                  onChange={(e) => handleChange('backgroundColor', e.target.value)} />
+                <div style={{ flex: 1, height: '28px', borderRadius: '6px', background: formData.backgroundColor, border: '1px solid rgba(255,255,255,0.1)' }}></div>
+              </div>
+              <small style={{ color: '#94a3b8', fontSize: '11px' }}>This color will be used as the customer website background</small>
             </div>
 
             {/* Font Name + Size + Weight */}

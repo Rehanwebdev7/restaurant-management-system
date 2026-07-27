@@ -44,6 +44,9 @@ public class BusinessSettingEntity {
     @Column(name = "font_color", length = 20)
     private String fontColor;
 
+    @Column(name = "background_color", length = 20)
+    private String backgroundColor;
+
     @Column(name = "font_name", length = 50)
     private String fontName;
 

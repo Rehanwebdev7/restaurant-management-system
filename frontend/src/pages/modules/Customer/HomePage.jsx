@@ -139,6 +139,7 @@ const CustomerLanding = () => {
   const isGalleryPage = currentPath === '/gallery';
   const isContactPage = currentPath === '/contact';
   const isLocationPage = currentPath === '/location';
+  const isAboutPage = currentPath === '/about';
 
   // Dynamic Hero content config
   const getHeroContent = () => {
@@ -168,11 +169,18 @@ const CustomerLanding = () => {
       };
     } else if (isContactPage) {
       return {
-        bg: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=1600&q=80',
+        bg: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1600&q=80',
         subtitle: 'EASY TABLE BOOKING & LOCATIONS',
         title: <>Book Your <br /> Table <span>Online</span></>,
         description: 'Book your table in advance for a smooth visit. We are ready to serve you with warm hospitality.',
         showButtons: true
+      };
+    } else if (isAboutPage) {
+      return {
+        bg: 'https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?auto=format&fit=crop&w=1600&q=80',
+        title: 'About Us',
+        subtitle: 'Our story, values, and passion for food',
+        showButtons: false
       };
     } else {
       // Menu Page / Home
@@ -202,9 +210,6 @@ const CustomerLanding = () => {
 
   const { restaurantId, loading: themeLoading, socialMediaDetails } = useTheme();
   const [searchTerm, setSearchTerm] = useState('');
-  const [themeMode, setThemeMode] = useState(() => {
-    return localStorage.getItem('customerThemeMode') || 'dark';
-  });
   const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [reservation, setReservation] = useState({
     name: '',
@@ -419,28 +424,28 @@ const CustomerLanding = () => {
   const [activeHeroSlide, setActiveHeroSlide] = useState(0);
   const heroSlides = [
     {
-      image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1600&q=80',
-      tagline: 'PREMIUM STEAKHOUSE',
-      title: 'PREMIER KOSHER DINING EXPERIENCE',
-      description: 'GREAT FOOD. FINE DRINKS. EXCELLENT SERVICE.',
-    },
-    {
-      image: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=1600&q=80',
-      tagline: 'HAND-CRAFTED COCKTAILS',
-      title: 'EVENINGS WORTH REMEMBERING',
-      description: 'GOLDEN LIGHT. WARM PATIOS. CRAFTED SIPS.',
-    },
-    {
-      image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1600&q=80',
-      tagline: 'FROM THE COAST',
-      title: 'SEA-FRESH, TABLE-READY',
-      description: 'DAILY CATCH. DELICATE PLATING. HONEST FLAVOR.',
+      image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1600&q=80',
+      tagline: 'WELCOME TO OUR RESTAURANT',
+      title: 'WHERE EVERY MEAL BECOMES A MEMORY',
+      description: 'PREMIUM DINING. WARM HOSPITALITY. UNFORGETTABLE EVENINGS.',
     },
     {
       image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1600&q=80',
-      tagline: 'CHEF SIGNATURES',
+      tagline: 'CRAFTED WITH PASSION',
       title: 'A STORY ON EVERY PLATE',
       description: 'SLOW-COOKED. HAND-FINISHED. UNFORGETTABLE.',
+    },
+    {
+      image: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=1600&q=80',
+      tagline: 'FINE DINING EXPERIENCE',
+      title: 'TASTE THE EXTRAORDINARY',
+      description: 'SEASONAL INGREDIENTS. ARTFUL PRESENTATION. PURE FLAVOR.',
+    },
+    {
+      image: 'https://images.unsplash.com/photo-1551218808-94e220e084d2?auto=format&fit=crop&w=1600&q=80',
+      tagline: 'RESERVE YOUR TABLE',
+      title: 'AN EVENING TO REMEMBER',
+      description: 'CANDLELIT AMBIANCE. CURATED WINES. LIVE MUSIC.',
     },
   ];
   const heroSlideImages = heroSlides.map(s => s.image);
@@ -457,31 +462,60 @@ const CustomerLanding = () => {
 
   const signatureDishes = [
     {
-      image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1200&q=85',
+      image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80',
       name: 'Slow-Braised', accent: 'Short Rib', price: '34',
       description: 'Locally-sourced beef short rib, braised for eight hours in our house red-wine reduction with rosemary and thyme. Served over creamy garlic polenta with roasted heirloom vegetables and a drizzle of aged balsamic.',
       time: '8 hrs slow-braised', tag: "Chef's Pick"
     },
     {
-      image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1200&q=85',
+      image: 'https://images.unsplash.com/photo-1532550907401-a500c9a57435?auto=format&fit=crop&w=800&q=80',
       name: 'Herb-Crusted', accent: 'Chef’s Catch', price: '29',
       description: 'A beautifully plated catch of the day with garden herbs, lemon beurre blanc and seasonal vegetables, finished with a touch of smoked sea salt.',
       time: 'Fresh catch today', tag: "Chef's Pick"
     },
     {
-      image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=85',
+      image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80',
       name: 'The Garden', accent: 'Harvest Plate', price: '24',
       description: 'A colourful celebration of seasonal produce, roasted gently and paired with whipped feta, toasted grains and our signature garden dressing.',
       time: 'Seasonal ingredients', tag: 'Vegetarian'
     },
     {
-      image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=1200&q=85',
+      image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=800&q=80',
       name: 'Fire-Roasted', accent: 'Truffle Pizza', price: '26',
       description: 'Hand-stretched dough, wild mushrooms, fresh mozzarella and shaved truffle, finished in our stone oven for a crisp, smoky edge.',
       time: 'Stone-oven baked', tag: 'Guest Favourite'
     },
   ];
   const [activeSignatureDish, setActiveSignatureDish] = useState(0);
+
+  // About page hero slides — 4 images, auto-cycle 6s
+  const [activeAboutHeroSlide, setActiveAboutHeroSlide] = useState(0);
+  const aboutHeroSlides = [
+    {
+      image: 'https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?auto=format&fit=crop&w=1600&q=80',
+      tagline: 'OUR STORY',
+      title: 'WHERE TRADITION MEETS CRAFT',
+      description: 'A DECADE OF CULINARY EXCELLENCE AND WARM HOSPITALITY.',
+    },
+    {
+      image: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=1600&q=80',
+      tagline: 'OUR PEOPLE',
+      title: 'THE HEART BEHIND EVERY DISH',
+      description: 'PASSIONATE CHEFS. DEDICATED TEAM. GENUINE CARE.',
+    },
+    {
+      image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1600&q=80',
+      tagline: 'OUR VALUES',
+      title: 'ROOTED IN QUALITY AND COMMUNITY',
+      description: 'FRESH INGREDIENTS. HONEST COOKING. WELCOMING SPIRIT.',
+    },
+    {
+      image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1600&q=80',
+      tagline: 'OUR JOURNEY',
+      title: 'FROM HUMBLE BEGINNINGS TO YOUR TABLE',
+      description: 'EVERY PLATE CARRIES A STORY WORTH SAVORING.',
+    },
+  ];
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -496,6 +530,14 @@ const CustomerLanding = () => {
     }, 6000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (!isAboutPage) return;
+    const timer = setInterval(() => {
+      setActiveAboutHeroSlide((prev) => (prev + 1) % aboutHeroSlides.length);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, [isAboutPage]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -2738,6 +2780,9 @@ const CustomerLanding = () => {
     } else if (target === 'contact') {
       navigate('/contact');
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (target === 'about') {
+      navigate('/about');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -2774,7 +2819,7 @@ const CustomerLanding = () => {
         }
       `}</style>
 
-      <div className={`landing-container ${themeMode === 'light' ? 'light-mode' : 'dark-mode'} grilli-scope`}>
+      <div className={"landing-container grilli-scope"}>
         {/* Mobile Menu Overlay */}
         <div
           className={`mobile-menu-overlay ${showMobileMenu ? 'active' : ''}`}
@@ -3009,6 +3054,7 @@ const CustomerLanding = () => {
             <span onClick={() => handleNavClick('home')}>HOME</span>
             <span onClick={() => handleNavClick('menus')}>MENUS</span>
             <span onClick={() => handleNavClick('gallery')}>GALLERY</span>
+            <span onClick={() => handleNavClick('about')} className={currentPath === '/about' ? 'active' : ''}>ABOUT US</span>
             <span onClick={() => handleNavClick('location')}>LOCATION</span>
             <span onClick={() => handleNavClick('contact')}>CONTACT</span>
           </nav>
@@ -3084,17 +3130,7 @@ const CustomerLanding = () => {
             >
               <i className="bi bi-geo-alt-fill"></i>
             </button>
-            <button
-              className="btn-icon-only"
-              onClick={() => {
-                const newMode = themeMode === 'light' ? 'dark' : 'light';
-                setThemeMode(newMode);
-                localStorage.setItem('customerThemeMode', newMode);
-              }}
-              title={themeMode === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
-            >
-              {themeMode === 'light' ? <i className="bi bi-moon-fill"></i> : <i className="bi bi-sun-fill"></i>}
-            </button>
+
             {isCustomerLoggedIn ? (
               <>
                 <button
@@ -3205,18 +3241,7 @@ const CustomerLanding = () => {
                 <i className="bi bi-geo-alt-fill"></i>
               </button>
 
-              {/* Theme Toggle Button */}
-              <button
-                className="btn-theme-toggle"
-                onClick={() => {
-                  const newMode = themeMode === 'light' ? 'dark' : 'light';
-                  setThemeMode(newMode);
-                  localStorage.setItem('customerThemeMode', newMode);
-                }}
-                title={themeMode === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
-              >
-                {themeMode === 'light' ? <i className="bi bi-moon-fill"></i> : <i className="bi bi-sun-fill"></i>}
-              </button>
+
 
               {/* Desktop Login/Profile - hidden on mobile */}
               {isCustomerLoggedIn ? (
@@ -3372,6 +3397,197 @@ const CustomerLanding = () => {
           </section>
         )}
 
+        {/* About Us Page — with hero slider + rich content */}
+        {isAboutPage && (
+          <>
+            {/* Hero Slider */}
+            <section className="info-hero about-hero-slider" id="about-hero">
+              {aboutHeroSlides.map((slide, index) => (
+                <img
+                  key={index}
+                  src={slide.image}
+                  alt=""
+                  aria-hidden="true"
+                  decoding="async"
+                  className={`hero-slide ${index === activeAboutHeroSlide ? 'active' : ''}`}
+                  draggable={false}
+                />
+              ))}
+              <div className="info-hero-veil" aria-hidden="true" />
+              <div className="info-hero-content">
+                <span className="info-hero-eyebrow animate-fade-in-up">
+                  <span key={`about-tag-${activeAboutHeroSlide}`} className="hero-text-fade">
+                    — {aboutHeroSlides[activeAboutHeroSlide].tagline} —
+                  </span>
+                </span>
+                <h1 className="info-hero-title animate-fade-in-up" style={{ animationDelay: '0.15s' }}>
+                  <span key={`about-title-${activeAboutHeroSlide}`} className="hero-text-fade">
+                    {aboutHeroSlides[activeAboutHeroSlide].title}
+                  </span>
+                </h1>
+                <p className="info-hero-lede animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                  <span key={`about-desc-${activeAboutHeroSlide}`} className="hero-text-fade">
+                    {aboutHeroSlides[activeAboutHeroSlide].description}
+                  </span>
+                </p>
+              </div>
+            </section>
+
+            {/* Welcome / Theme Data Section */}
+            <section className="contact-info-section" style={{ paddingTop: '3rem' }}>
+              <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 20px' }}>
+                <div className="animate-fade-in-up" style={{ textAlign: 'center', marginBottom: '3rem' }}>
+                  <h2 style={{ fontFamily: 'var(--grilli-font-display)', fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 500, color: 'var(--grilli-text-ivory)', marginBottom: '1rem' }}>
+                    Welcome to {theme?.restaurantName || 'Our Restaurant'}
+                  </h2>
+                  <p style={{ color: 'var(--grilli-text-mist)', fontSize: '1.05rem', lineHeight: 1.8, maxWidth: '700px', margin: '0 auto' }}>
+                    {theme?.aboutUs || 'Born from a love of craft and community, our kitchen has been plating memories for years. We source with intention, cook with patience, and serve with the warmth of an evening spent with family.'}
+                  </p>
+                </div>
+
+                <div className="animate-fade-in-up" style={{ marginBottom: '2.5rem', padding: '2rem', background: 'var(--grilli-surface-raised)', borderRadius: '12px', border: '1px solid var(--grilli-surface-line)' }}>
+                  <h3 style={{ fontFamily: 'var(--grilli-font-display)', fontSize: '1.5rem', color: 'var(--grilli-gold)', marginBottom: '0.75rem' }}>Our Mission</h3>
+                  <p style={{ color: 'var(--grilli-text-mist)', lineHeight: 1.8 }}>{theme?.ourMission || 'To craft unforgettable dining experiences that bring people together through food made with passion, integrity, and the finest ingredients.'}</p>
+                </div>
+
+                <div className="animate-fade-in-up" style={{ marginBottom: '2.5rem', padding: '2rem', background: 'var(--grilli-surface-raised)', borderRadius: '12px', border: '1px solid var(--grilli-surface-line)' }}>
+                  <h3 style={{ fontFamily: 'var(--grilli-font-display)', fontSize: '1.5rem', color: 'var(--grilli-gold)', marginBottom: '0.75rem' }}>Our Vision</h3>
+                  <p style={{ color: 'var(--grilli-text-mist)', lineHeight: 1.8 }}>{theme?.ourVision || 'To be the neighborhood destination where every guest feels like family and every meal tells a story worth sharing.'}</p>
+                </div>
+              </div>
+            </section>
+
+            {/* Team Section */}
+            <section className="about-team-section">
+              <div className="animate-fade-in-up" style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+                <h2 style={{ fontFamily: 'var(--grilli-font-display)', fontSize: 'clamp(1.8rem, 3.5vw, 2.5rem)', fontWeight: 500, color: 'var(--grilli-text-ivory)' }}>
+                  Meet Our Team
+                </h2>
+                <p style={{ color: 'var(--grilli-text-mist)', marginTop: '0.5rem' }}>The passionate people behind every plate.</p>
+              </div>
+              <div className="about-team-grid">
+                <div className="about-team-card animate-fade-in-up">
+                  <img src="https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&w=300&q=80" alt="Executive Chef" />
+                  <h4 style={{ fontWeight: 600, color: 'var(--grilli-text-ivory)', marginBottom: '0.25rem' }}>Marco Rossi</h4>
+                  <p style={{ color: 'var(--grilli-gold)', fontSize: '0.9rem' }}>Executive Chef</p>
+                  <p style={{ color: 'var(--grilli-text-mist)', fontSize: '0.85rem', marginTop: '0.5rem', lineHeight: 1.6 }}>With 15 years of culinary mastery, Marco brings bold flavors and artistic presentation to every dish.</p>
+                </div>
+                <div className="about-team-card animate-fade-in-up" style={{ animationDelay: '0.15s' }}>
+                  <img src="https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&w=300&q=80" alt="Pastry Chef" />
+                  <h4 style={{ fontWeight: 600, color: 'var(--grilli-text-ivory)', marginBottom: '0.25rem' }}>Sofia Chen</h4>
+                  <p style={{ color: 'var(--grilli-gold)', fontSize: '0.9rem' }}>Pastry Chef</p>
+                  <p style={{ color: 'var(--grilli-text-mist)', fontSize: '0.85rem', marginTop: '0.5rem', lineHeight: 1.6 }}>Sofia's desserts are works of art—delicate, inventive, and the perfect ending to any meal.</p>
+                </div>
+                <div className="about-team-card animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                  <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=300&q=80" alt="General Manager" />
+                  <h4 style={{ fontWeight: 600, color: 'var(--grilli-text-ivory)', marginBottom: '0.25rem' }}>James Okafor</h4>
+                  <p style={{ color: 'var(--grilli-gold)', fontSize: '0.9rem' }}>General Manager</p>
+                  <p style={{ color: 'var(--grilli-text-mist)', fontSize: '0.85rem', marginTop: '0.5rem', lineHeight: 1.6 }}>James ensures every guest receives warm hospitality and an exceptional dining experience.</p>
+                </div>
+              </div>
+            </section>
+
+            {/* Timeline Section */}
+            <section className="about-timeline-section">
+              <div className="animate-fade-in-up" style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+                <h2 style={{ fontFamily: 'var(--grilli-font-display)', fontSize: 'clamp(1.8rem, 3.5vw, 2.5rem)', fontWeight: 500, color: 'var(--grilli-text-ivory)' }}>
+                  Our Journey
+                </h2>
+                <p style={{ color: 'var(--grilli-text-mist)', marginTop: '0.5rem' }}>Key milestones that shaped who we are today.</p>
+              </div>
+              <div className="animate-fade-in-up">
+                <div className="about-timeline-item">
+                  <span className="about-timeline-year">2012</span>
+                  <div>
+                    <h4 style={{ color: 'var(--grilli-text-ivory)', fontWeight: 600, marginBottom: '0.25rem' }}>The Beginning</h4>
+                    <p style={{ color: 'var(--grilli-text-mist)', lineHeight: 1.7 }}>Opened our doors with a small team, a big dream, and a commitment to honest cooking.</p>
+                  </div>
+                </div>
+                <div className="about-timeline-item">
+                  <span className="about-timeline-year">2015</span>
+                  <div>
+                    <h4 style={{ color: 'var(--grilli-text-ivory)', fontWeight: 600, marginBottom: '0.25rem' }}>First Expansion</h4>
+                    <p style={{ color: 'var(--grilli-text-mist)', lineHeight: 1.7 }}>Doubled our seating and introduced our signature tasting menu that put us on the map.</p>
+                  </div>
+                </div>
+                <div className="about-timeline-item">
+                  <span className="about-timeline-year">2019</span>
+                  <div>
+                    <h4 style={{ color: 'var(--grilli-text-ivory)', fontWeight: 600, marginBottom: '0.25rem' }}>Award-Winning Year</h4>
+                    <p style={{ color: 'var(--grilli-text-mist)', lineHeight: 1.7 }}>Recognized as one of the top dining destinations in the city, earning our first culinary award.</p>
+                  </div>
+                </div>
+                <div className="about-timeline-item">
+                  <span className="about-timeline-year">2023</span>
+                  <div>
+                    <h4 style={{ color: 'var(--grilli-text-ivory)', fontWeight: 600, marginBottom: '0.25rem' }}>A New Chapter</h4>
+                    <p style={{ color: 'var(--grilli-text-mist)', lineHeight: 1.7 }}>Launched our online ordering platform, bringing our flavors to even more homes and hearts.</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Awards Section */}
+            <section className="about-awards-section">
+              <div className="animate-fade-in-up" style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+                <h2 style={{ fontFamily: 'var(--grilli-font-display)', fontSize: 'clamp(1.8rem, 3.5vw, 2.5rem)', fontWeight: 500, color: 'var(--grilli-text-ivory)' }}>
+                  Awards & Recognition
+                </h2>
+                <p style={{ color: 'var(--grilli-text-mist)', marginTop: '0.5rem' }}>Honored by our peers, loved by our guests.</p>
+              </div>
+              <div className="about-awards-grid">
+                <div className="about-award-card animate-fade-in-up">
+                  <div className="award-icon"><i className="bi bi-trophy"></i></div>
+                  <h4 style={{ fontWeight: 600, color: 'var(--grilli-text-ivory)', marginBottom: '0.5rem' }}>Best Fine Dining 2023</h4>
+                  <p style={{ color: 'var(--grilli-text-mist)', fontSize: '0.9rem', lineHeight: 1.7 }}>Awarded by the City Restaurant Association for excellence in cuisine and service.</p>
+                </div>
+                <div className="about-award-card animate-fade-in-up" style={{ animationDelay: '0.15s' }}>
+                  <div className="award-icon"><i className="bi bi-star"></i></div>
+                  <h4 style={{ fontWeight: 600, color: 'var(--grilli-text-ivory)', marginBottom: '0.5rem' }}>Top Rated on TripAdvisor</h4>
+                  <p style={{ color: 'var(--grilli-text-mist)', fontSize: '0.9rem', lineHeight: 1.7 }}>Consistently rated 4.8+ stars with over 2,000 reviews from satisfied diners.</p>
+                </div>
+                <div className="about-award-card animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                  <div className="award-icon"><i className="bi bi-gem"></i></div>
+                  <h4 style={{ fontWeight: 600, color: 'var(--grilli-text-ivory)', marginBottom: '0.5rem' }}>Sustainability Champion</h4>
+                  <p style={{ color: 'var(--grilli-text-mist)', fontSize: '0.9rem', lineHeight: 1.7 }}>Recognized for our commitment to local sourcing and zero-waste kitchen practices.</p>
+                </div>
+              </div>
+            </section>
+
+            {/* Values Section */}
+            <section className="about-values-section">
+              <div className="animate-fade-in-up" style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+                <h2 style={{ fontFamily: 'var(--grilli-font-display)', fontSize: 'clamp(1.8rem, 3.5vw, 2.5rem)', fontWeight: 500, color: 'var(--grilli-text-ivory)' }}>
+                  Our Values
+                </h2>
+                <p style={{ color: 'var(--grilli-text-mist)', marginTop: '0.5rem' }}>The principles that guide everything we do.</p>
+              </div>
+              <div className="about-values-grid">
+                <div className="about-value-card animate-fade-in-up">
+                  <div className="value-icon"><i className="bi bi-award"></i></div>
+                  <h4 style={{ fontWeight: 600, color: 'var(--grilli-text-ivory)', marginBottom: '0.5rem' }}>Quality First</h4>
+                  <p style={{ color: 'var(--grilli-text-mist)', fontSize: '0.9rem', lineHeight: 1.7 }}>Every dish is prepared with consistency, hygiene, and careful attention to detail.</p>
+                </div>
+                <div className="about-value-card animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+                  <div className="value-icon"><i className="bi bi-people"></i></div>
+                  <h4 style={{ fontWeight: 600, color: 'var(--grilli-text-ivory)', marginBottom: '0.5rem' }}>Customer Focused</h4>
+                  <p style={{ color: 'var(--grilli-text-mist)', fontSize: '0.9rem', lineHeight: 1.7 }}>Our team makes sure every customer has a warm, comfortable, and happy visit.</p>
+                </div>
+                <div className="about-value-card animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                  <div className="value-icon"><i className="bi bi-heart"></i></div>
+                  <h4 style={{ fontWeight: 600, color: 'var(--grilli-text-ivory)', marginBottom: '0.5rem' }}>Made With Love</h4>
+                  <p style={{ color: 'var(--grilli-text-mist)', fontSize: '0.9rem', lineHeight: 1.7 }}>We keep the taste familiar while improving our presentation and service.</p>
+                </div>
+                <div className="about-value-card animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                  <div className="value-icon"><i className="bi bi-clock-history"></i></div>
+                  <h4 style={{ fontWeight: 600, color: 'var(--grilli-text-ivory)', marginBottom: '0.5rem' }}>Years of Experience</h4>
+                  <p style={{ color: 'var(--grilli-text-mist)', fontSize: '0.9rem', lineHeight: 1.7 }}>Over a decade of serving the community with authentic flavors and warm hospitality.</p>
+                </div>
+              </div>
+            </section>
+          </>
+        )}
+
         {/* Location Page — Grilli-styled visit-us section */}
         {isLocationPage && (
           <>
@@ -3380,7 +3596,7 @@ const CustomerLanding = () => {
                 className="info-hero-bg"
                 style={{
                   backgroundImage:
-                    "url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=2000&q=85')"
+                    "url('https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=2000&q=85')"
                 }}
                 aria-hidden="true"
               />
@@ -3485,7 +3701,7 @@ const CustomerLanding = () => {
                 className="info-hero-bg"
                 style={{
                   backgroundImage:
-                    "url('https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=2000&q=85')"
+                    "url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=2000&q=85')"
                 }}
                 aria-hidden="true"
               />
@@ -5209,109 +5425,95 @@ const CustomerLanding = () => {
 
 
 
-        {/* Grilli-style Footer (replaces old restaurant-details-footer + bottom-footer) */}
-        <footer className="grilli-footer">
-          <div
-            className="grilli-footer-bg"
-            style={{
-              backgroundImage:
-                "url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=2400&q=85')"
-            }}
-            aria-hidden="true"
-          />
-          <div className="grilli-footer-veil" aria-hidden="true" />
-
-          <div className="grilli-footer-inner">
-            {/* LEFT: Vertical nav links */}
-            <nav className="grilli-footer-nav grilli-footer-nav--left">
-              <button type="button" onClick={() => navigate('/home')}>HOME</button>
-              <button type="button" onClick={() => navigate('/menu')}>MENUS</button>
-              <button type="button" onClick={() => navigate('/about')}>ABOUT US</button>
-              <button type="button" onClick={() => navigate('/signature')}>OUR CHEFS</button>
-              <button type="button" onClick={() => navigate('/contact')}>CONTACT</button>
-            </nav>
-
-            {/* CENTER: Highlighted card */}
-            <div className="grilli-footer-card">
-              <div className="grilli-footer-card-inner">
-                <div className="grilli-footer-logo">
+        {/* Professional Footer */}
+        <footer className="pro-footer">
+          <div className="pro-footer-top">
+            <div className="pro-footer-grid">
+              {/* Column 1: Brand + About */}
+              <div className="pro-footer-col pro-footer-brand">
+                <div className="pro-footer-logo">
                   {logoUrl ? (
-                    <img
-                      src={logoUrl}
-                      alt={restaurantName || 'Restaurant'}
-                      onError={(event) => {
-                        event.currentTarget.onerror = null;
-                        event.currentTarget.src = '/app-favicon.svg';
-                      }}
-                    />
+                    <img src={logoUrl} alt={restaurantName} onError={(e) => { e.currentTarget.src = '/app-favicon.svg'; }} />
                   ) : (
-                    <div className="grilli-footer-logo-fallback">
-                      <i className="bi bi-award"></i>
-                      <span>{(restaurantName || 'Restaurant').toUpperCase()}</span>
-                    </div>
+                    <span className="pro-footer-logo-text">{restaurantName}</span>
                   )}
                 </div>
+                <p className="pro-footer-about">
+                  {theme?.aboutUs ? theme.aboutUs.substring(0, 150) + '...' : 'Experience the finest dining with fresh ingredients, expert chefs, and warm hospitality. Every dish tells a story of passion and craft.'}
+                </p>
+                <div className="pro-footer-social">
+                  <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i className="bi bi-facebook"></i></a>
+                  <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i className="bi bi-instagram"></i></a>
+                  <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter"><i className="bi bi-twitter-x"></i></a>
+                  <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i className="bi bi-youtube"></i></a>
+                </div>
+              </div>
 
-                <div className="grilli-footer-details">
-                  {contactAddress && <p>{contactAddress}</p>}
-                  {contactEmail && (
-                    <p><a href={`mailto:${contactEmail}`}>{contactEmail}</a></p>
+              {/* Column 2: Quick Links */}
+              <div className="pro-footer-col">
+                <h4 className="pro-footer-heading">Quick Links</h4>
+                <ul className="pro-footer-links">
+                  <li><button type="button" onClick={() => navigate('/home')}>Home</button></li>
+                  <li><button type="button" onClick={() => navigate('/menu')}>Menu</button></li>
+                  <li><button type="button" onClick={() => navigate('/about')}>About Us</button></li>
+                  <li><button type="button" onClick={() => navigate('/gallery')}>Gallery</button></li>
+                  <li><button type="button" onClick={() => navigate('/contact')}>Book A Table</button></li>
+                </ul>
+              </div>
+
+              {/* Column 3: Contact Info */}
+              <div className="pro-footer-col">
+                <h4 className="pro-footer-heading">Contact Us</h4>
+                <ul className="pro-footer-contact">
+                  {contactAddress && (
+                    <li>
+                      <i className="bi bi-geo-alt-fill"></i>
+                      <span>{contactAddress}</span>
+                    </li>
                   )}
                   {contactPhone && (
-                    <p>Booking Request : <a href={`tel:${contactPhone}`}>{contactPhone}</a></p>
+                    <li>
+                      <i className="bi bi-telephone-fill"></i>
+                      <a href={`tel:${contactPhone}`}>{contactPhone}</a>
+                    </li>
                   )}
-                  <p>Open : 09:00 am – 10:00 pm</p>
-                </div>
+                  {contactEmail && (
+                    <li>
+                      <i className="bi bi-envelope-fill"></i>
+                      <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
+                    </li>
+                  )}
+                  <li>
+                    <i className="bi bi-clock-fill"></i>
+                    <span>Mon - Sun: 9:00 AM - 10:00 PM</span>
+                  </li>
+                </ul>
+              </div>
 
-                <div className="grilli-footer-ornament" aria-hidden="true">
-                  <span>◆</span><span>◆</span><span>◆</span>
-                </div>
-
-                <h3 className="grilli-footer-newsletter-title">Get News &amp; Offers</h3>
-                <p className="grilli-footer-newsletter-sub">
-                  Subscribe us &amp; Get <strong>25% Off.</strong>
-                </p>
-
-                <form
-                  className="grilli-footer-newsletter-form"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    toast.success('Subscribed! Check your email for the offer.');
-                    e.currentTarget.reset();
-                  }}
-                >
-                  <label className="grilli-footer-newsletter-input">
-                    <i className="bi bi-envelope"></i>
-                    <input type="email" placeholder="Your email" required />
-                  </label>
-                  <button type="submit" className="grilli-footer-newsletter-submit">
-                    SUBSCRIBE
-                  </button>
+              {/* Column 4: Newsletter */}
+              <div className="pro-footer-col">
+                <h4 className="pro-footer-heading">Newsletter</h4>
+                <p className="pro-footer-newsletter-text">Subscribe to get updates on offers, new dishes, and events.</p>
+                <form className="pro-footer-newsletter" onSubmit={(e) => { e.preventDefault(); toast.success('Subscribed successfully!'); e.currentTarget.reset(); }}>
+                  <input type="email" placeholder="Your email address" required />
+                  <button type="submit"><i className="bi bi-send-fill"></i></button>
                 </form>
+                <div className="pro-footer-badges">
+                  <span><i className="bi bi-shield-check"></i> Secure Payments</span>
+                  <span><i className="bi bi-truck"></i> Fast Delivery</span>
+                </div>
               </div>
             </div>
-
-            {/* RIGHT: Vertical social/external links */}
-            <nav className="grilli-footer-nav grilli-footer-nav--right">
-              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">FACEBOOK</a>
-              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">INSTAGRAM</a>
-              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer">TWITTER</a>
-              <a href="https://youtube.com" target="_blank" rel="noopener noreferrer">YOUTUBE</a>
-              <a
-                href={`https://maps.google.com/?q=${encodeURIComponent(contactAddress || restaurantName || 'Restaurant')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                GOOGLE MAP
-              </a>
-            </nav>
           </div>
 
-          <div className="grilli-footer-bottom">
-            <p>
-              &copy; {new Date().getFullYear()} {restaurantName || 'Spice Garden Steakhouse'}.
-              All rights reserved.
-            </p>
+          {/* Bottom Bar */}
+          <div className="pro-footer-bottom">
+            <p>&copy; {new Date().getFullYear()} {restaurantName || 'Restaurant'}. All rights reserved.</p>
+            <div className="pro-footer-bottom-links">
+              <button type="button" onClick={() => navigate('/terms')}>Terms</button>
+              <button type="button" onClick={() => navigate('/privacy')}>Privacy</button>
+              <button type="button" onClick={() => navigate('/refund')}>Refund Policy</button>
+            </div>
           </div>
         </footer>
 

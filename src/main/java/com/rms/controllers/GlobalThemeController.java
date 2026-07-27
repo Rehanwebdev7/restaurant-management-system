@@ -66,6 +66,7 @@ public class GlobalThemeController {
         theme.put("phone", setting.getPhone());
         theme.put("email", setting.getEmail());
         theme.put("whatsappNumber", setting.getWhatsappNumber());
+        theme.put("backgroundColor", setting.getBackgroundColor());
         theme.put("aboutUs", setting.getAboutUs());
         theme.put("ourMission", setting.getOurMission());
         theme.put("ourVision", setting.getOurVision());
