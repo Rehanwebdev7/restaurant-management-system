@@ -164,6 +164,30 @@ public class AdmBusinessSettingService {
             }
         }
 
+        // CMS JSON configs
+        com.fasterxml.jackson.databind.ObjectMapper cmsMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        if (body.containsKey("navConfig")) {
+            entity.setNavConfig(cmsMapper.valueToTree(body.get("navConfig")));
+        }
+        if (body.containsKey("heroSlidesConfig")) {
+            entity.setHeroSlidesConfig(cmsMapper.valueToTree(body.get("heroSlidesConfig")));
+        }
+        if (body.containsKey("footerConfig")) {
+            entity.setFooterConfig(cmsMapper.valueToTree(body.get("footerConfig")));
+        }
+        if (body.containsKey("testimonialsConfig")) {
+            entity.setTestimonialsConfig(cmsMapper.valueToTree(body.get("testimonialsConfig")));
+        }
+        if (body.containsKey("featuresConfig")) {
+            entity.setFeaturesConfig(cmsMapper.valueToTree(body.get("featuresConfig")));
+        }
+        if (body.containsKey("statsConfig")) {
+            entity.setStatsConfig(cmsMapper.valueToTree(body.get("statsConfig")));
+        }
+        if (body.containsKey("pageContentConfig")) {
+            entity.setPageContentConfig(cmsMapper.valueToTree(body.get("pageContentConfig")));
+        }
+
         BusinessSettingEntity saved = businessSettingRepository.save(entity);
 
         // Sync theme fields to UsersProfileEntity so the theme API reflects changes

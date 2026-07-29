@@ -1066,8 +1066,11 @@ body:has(.grilli-scope) ::-webkit-scrollbar-thumb:hover {
   letter-spacing: var(--grilli-track-tight) !important;
 }
 
-.grilli-scope .menu-search-wrapper input:focus {
+.grilli-scope .menu-search-wrapper input:focus,
+.grilli-scope .menu-search-wrapper input:focus-visible,
+.grilli-scope .menu-search-wrapper input:active {
   outline: none !important;
+  border-color: rgba(201, 169, 110, 0.4) !important;
   box-shadow: none !important;
 }
 

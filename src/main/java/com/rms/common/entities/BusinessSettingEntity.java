@@ -5,6 +5,8 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
 import jakarta.validation.constraints.Digits;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.rms.common.converter.JsonNodeConverter;
 
 @Entity
 @Data
@@ -192,6 +194,46 @@ public class BusinessSettingEntity {
 
     @Column(name = "referral_enabled")
     private Boolean referralEnabled;
+
+    // CMS - Navigation Config (header nav items, logo placement, etc.)
+    @Convert(converter = JsonNodeConverter.class)
+    @Column(name = "nav_config", columnDefinition = "json")
+    private JsonNode navConfig;
+
+    // CMS - Hero Slides Config (carousel slides with images, text, CTAs)
+    @Convert(converter = JsonNodeConverter.class)
+    @Column(name = "hero_slides_config", columnDefinition = "json")
+    private JsonNode heroSlidesConfig;
+
+    // CMS - Footer Config (columns, links, copyright text)
+    @Convert(converter = JsonNodeConverter.class)
+    @Column(name = "footer_config", columnDefinition = "json")
+    private JsonNode footerConfig;
+
+    // CMS - Testimonials Config (customer reviews/testimonials)
+    @Convert(converter = JsonNodeConverter.class)
+    @Column(name = "testimonials_config", columnDefinition = "json")
+    private JsonNode testimonialsConfig;
+
+    // CMS - Features Config (feature cards/highlights)
+    @Convert(converter = JsonNodeConverter.class)
+    @Column(name = "features_config", columnDefinition = "json")
+    private JsonNode featuresConfig;
+
+    // CMS - Stats Config (counters/statistics section)
+    @Convert(converter = JsonNodeConverter.class)
+    @Column(name = "stats_config", columnDefinition = "json")
+    private JsonNode statsConfig;
+
+    // CMS - Page Content Config (about, gallery, custom pages)
+    @Convert(converter = JsonNodeConverter.class)
+    @Column(name = "page_content_config", columnDefinition = "json")
+    private JsonNode pageContentConfig;
+
+    // CMS - Website Pages (new page-based section editor structure)
+    @Convert(converter = JsonNodeConverter.class)
+    @Column(name = "website_pages", columnDefinition = "json")
+    private JsonNode websitePages;
 
     // Timestamps
     @Column(name = "created_at")

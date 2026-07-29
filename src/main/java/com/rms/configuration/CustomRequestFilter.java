@@ -244,6 +244,7 @@ public class CustomRequestFilter implements Filter {
                 "/uploads",
                 "/signup",
                 "/api/public/customer",
+                "/api/public/website-content",
                 "/api/global/",
                 "/api/ccavenue",
                 "/api/paypal/webhook",

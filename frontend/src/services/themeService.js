@@ -535,6 +535,26 @@ export const initializeTheme = async () => {
     const domainName = getDomainFromUrl();
     console.log('Initializing theme for domain:', domainName);
 
+    // ─── Super Admin / Admin get fixed default theme ──────────────────────────
+    // Restaurant-specific colors should NEVER leak into the super admin panel.
+    const loggedInUserCheck = localStorage.getItem('user');
+    if (loggedInUserCheck) {
+      try {
+        const parsedUser = JSON.parse(loggedInUserCheck);
+        const currentRole = parsedUser?.role || parsedUser?.userType || localStorage.getItem('UserRole');
+        if (currentRole === 'supadmin' || currentRole === 'admin') {
+          console.log('Super Admin detected — using fixed default theme, skipping restaurant theme.');
+          clearThemeFromLocalStorage();
+          const superAdminTheme = { ...DEFAULT_THEME, restaurantName: 'RMS Admin' };
+          applyThemeToCSS(superAdminTheme);
+          saveThemeToLocalStorage(superAdminTheme);
+          return superAdminTheme;
+        }
+      } catch (e) {
+        console.warn('Could not parse user for super admin theme check:', e);
+      }
+    }
+
     // If a user is logged in, prefer their restaurant's theme over domain-based lookup
     // This ensures impersonated/restaurant users see their own theme on shared domains
     let apiData = null;
@@ -551,6 +571,13 @@ export const initializeTheme = async () => {
         if (userId && userRole === 'restaurant') {
           console.log('Logged-in restaurant user detected, fetching theme by restId:', userId);
           apiData = await fetchThemeByRestId(userId);
+        } else if (['branch', 'kitchen', 'cashier', 'delivery'].includes(userRole)) {
+          // Child roles: use stored restaurant ID from their parent restaurant
+          const storedRestId = localStorage.getItem('CustomerRestaurantId');
+          if (storedRestId) {
+            console.log('Child role detected, fetching theme by stored restId:', storedRestId);
+            apiData = await fetchThemeByRestId(storedRestId);
+          }
         }
       } catch (e) {
         console.warn('Could not parse logged-in user for theme lookup:', e);

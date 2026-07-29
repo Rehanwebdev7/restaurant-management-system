@@ -56,6 +56,9 @@ import WithdrawalRequests from '../pages/modules/restaurant/withdrawals/Withdraw
 import Reports from '../pages/modules/restaurant/reports/Reports';
 import MyProfile from '../pages/profile/MyProfile';
 
+// My Website
+import MyWebsite from '../pages/modules/restaurant/my-website/MyWebsite';
+
 const RestaurantRoutes = () => {
   const { logout } = useAuth();
 
@@ -102,6 +105,9 @@ const RestaurantRoutes = () => {
 
         {/* Reports */}
         <Route path="/restaurant/reports" element={<Reports />} />
+
+        {/* My Website */}
+        <Route path="/restaurant/my-website" element={<MyWebsite />} />
 
         {/* Order Management Routes */}
         <Route path="/restaurant/orders/list" element={<OrderList />} />

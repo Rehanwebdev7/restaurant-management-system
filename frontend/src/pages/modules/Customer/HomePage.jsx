@@ -226,6 +226,39 @@ const CustomerLanding = () => {
   const [diningSections, setDiningSections] = useState([]);
   const [sectionsLoading, setSectionsLoading] = useState(false);
 
+  // CMS website content from API
+  const [cmsContent, setCmsContent] = useState(null);
+
+  // Fetch CMS content from public API
+  useEffect(() => {
+    const fetchCmsContent = async () => {
+      try {
+        const restId = restaurantId?.id || localStorage.getItem('CustomerRestaurantId');
+        if (!restId) return;
+        const baseUrl = server_api();
+        const response = await fetch(`${baseUrl}/api/public/website-content/get?restaurantId=${restId}`);
+        if (response.ok) {
+          const result = await response.json();
+          if (result.Status === 'SUCCESS' && result.data) {
+            setCmsContent(result.data);
+          }
+        }
+      } catch (err) {
+        console.warn('CMS content fetch failed, using defaults:', err.message);
+      }
+    };
+    fetchCmsContent();
+  }, [restaurantId]);
+
+  // Derive testimonials from CMS or use defaults
+  const cmsTestimonials = (cmsContent?.testimonialsConfig?.items && cmsContent.testimonialsConfig.items.length > 0)
+    ? cmsContent.testimonialsConfig.items
+    : [
+        { name: 'Sophia Loren', text: 'Absolutely delicious! The atmosphere is cozy, the service is fast, and the food is cooked to perfection. The best restaurant!', rating: 5, avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80', designation: 'Food Lover' },
+        { name: 'David Marcus', text: 'The steaks here are amazing, and the presentation of each dish is beautiful. Truly a wonderful meal.', rating: 5, avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80', designation: 'Food Critic' },
+        { name: 'Emily Watson', text: 'Very clean, friendly staff, and an amazing selection of sweet desserts. Will definitely come back with my family!', rating: 5, avatarUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=150&q=80', designation: 'Regular Customer' }
+      ];
+
   const formatTime = (timeString) => {
     if (!timeString) return '';
     try {
@@ -422,7 +455,7 @@ const CustomerLanding = () => {
 
   // Premium Hero Slideshow States — image + matching copy per slide
   const [activeHeroSlide, setActiveHeroSlide] = useState(0);
-  const heroSlides = [
+  const defaultHeroSlides = [
     {
       image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1600&q=80',
       tagline: 'WELCOME TO OUR RESTAURANT',
@@ -448,6 +481,15 @@ const CustomerLanding = () => {
       description: 'CANDLELIT AMBIANCE. CURATED WINES. LIVE MUSIC.',
     },
   ];
+  // Use CMS hero slides if available, otherwise fall back to defaults
+  const heroSlides = (cmsContent?.heroSlidesConfig?.slides && cmsContent.heroSlidesConfig.slides.length > 0)
+    ? cmsContent.heroSlidesConfig.slides.map(slide => ({
+        image: slide.imageUrl || defaultHeroSlides[0].image,
+        tagline: slide.subtitle || '',
+        title: slide.title || '',
+        description: slide.ctaText || '',
+      }))
+    : defaultHeroSlides;
   const heroSlideImages = heroSlides.map(s => s.image);
 
   // Menu-page hero: food-close-ups (different vibe from landing steakhouse shots)
@@ -3874,34 +3916,54 @@ const CustomerLanding = () => {
 
                   {/* Stats row */}
                   <div className="story-stats">
-                    <div className="story-stat" style={{ animationDelay: '0.4s' }}>
-                      <strong className="story-stat-value">10<span>+</span></strong>
-                      <span className="story-stat-label">Years of<br/>Excellence</span>
-                    </div>
-                    <div className="story-stat" style={{ animationDelay: '0.5s' }}>
-                      <strong className="story-stat-value">50<span>+</span></strong>
-                      <span className="story-stat-label">Signature<br/>Dishes</span>
-                    </div>
-                    <div className="story-stat" style={{ animationDelay: '0.6s' }}>
-                      <strong className="story-stat-value">200<span>+</span></strong>
-                      <span className="story-stat-label">Guests<br/>Daily</span>
-                    </div>
+                    {(cmsContent?.statsConfig?.items && cmsContent.statsConfig.items.length > 0)
+                      ? cmsContent.statsConfig.items.slice(0, 3).map((stat, idx) => (
+                        <div key={idx} className="story-stat" style={{ animationDelay: `${0.4 + idx * 0.1}s` }}>
+                          <strong className="story-stat-value">{stat.value}<span>{stat.suffix || '+'}</span></strong>
+                          <span className="story-stat-label">{stat.label}</span>
+                        </div>
+                      ))
+                      : <>
+                        <div className="story-stat" style={{ animationDelay: '0.4s' }}>
+                          <strong className="story-stat-value">10<span>+</span></strong>
+                          <span className="story-stat-label">Years of<br/>Excellence</span>
+                        </div>
+                        <div className="story-stat" style={{ animationDelay: '0.5s' }}>
+                          <strong className="story-stat-value">50<span>+</span></strong>
+                          <span className="story-stat-label">Signature<br/>Dishes</span>
+                        </div>
+                        <div className="story-stat" style={{ animationDelay: '0.6s' }}>
+                          <strong className="story-stat-value">200<span>+</span></strong>
+                          <span className="story-stat-label">Guests<br/>Daily</span>
+                        </div>
+                      </>
+                    }
                   </div>
 
                   {/* Feature bullets */}
                   <ul className="story-features">
-                    <li style={{ animationDelay: '0.7s' }}>
-                      <i className="bi bi-check2-circle"></i>
-                      <span>Farm-fresh ingredients sourced daily from local growers</span>
-                    </li>
-                    <li style={{ animationDelay: '0.8s' }}>
-                      <i className="bi bi-check2-circle"></i>
-                      <span>Award-winning chef with over 15 years of culinary craft</span>
-                    </li>
-                    <li style={{ animationDelay: '0.9s' }}>
-                      <i className="bi bi-check2-circle"></i>
-                      <span>Warm, cozy ambience — candlelit tables &amp; live acoustic evenings</span>
-                    </li>
+                    {(cmsContent?.featuresConfig?.items && cmsContent.featuresConfig.items.length > 0)
+                      ? cmsContent.featuresConfig.items.map((feat, idx) => (
+                        <li key={idx} style={{ animationDelay: `${0.7 + idx * 0.1}s` }}>
+                          <i className={feat.icon || 'bi bi-check2-circle'}></i>
+                          <span>{feat.title}{feat.description ? ` — ${feat.description}` : ''}</span>
+                        </li>
+                      ))
+                      : <>
+                        <li style={{ animationDelay: '0.7s' }}>
+                          <i className="bi bi-check2-circle"></i>
+                          <span>Farm-fresh ingredients sourced daily from local growers</span>
+                        </li>
+                        <li style={{ animationDelay: '0.8s' }}>
+                          <i className="bi bi-check2-circle"></i>
+                          <span>Award-winning chef with over 15 years of culinary craft</span>
+                        </li>
+                        <li style={{ animationDelay: '0.9s' }}>
+                          <i className="bi bi-check2-circle"></i>
+                          <span>Warm, cozy ambience — candlelit tables &amp; live acoustic evenings</span>
+                        </li>
+                      </>
+                    }
                   </ul>
 
                   <div className="story-contact">
@@ -4390,6 +4452,7 @@ const CustomerLanding = () => {
                   placeholder="Search for dishes, cuisines..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{ outline: 'none' }}
                 />
                 {searchTerm && (
                   <button className="clear-search-btn" onClick={() => setSearchTerm('')}>
@@ -5060,22 +5123,32 @@ const CustomerLanding = () => {
         {/* Statistics Section */}
         <section className="luxury-stats-section motion-reveal" data-motion-observe="stats">
           <div className="stats-grid">
-            <div className="stat-card motion-card" data-motion-observe="stat-card">
-              <div className="stat-number">15K+</div>
-              <div className="stat-label">Happy Customers</div>
-            </div>
-            <div className="stat-card motion-card" data-motion-observe="stat-card">
-              <div className="stat-number">120+</div>
-              <div className="stat-label">Signature Dishes</div>
-            </div>
-            <div className="stat-card motion-card" data-motion-observe="stat-card">
-              <div className="stat-number">15+</div>
-              <div className="stat-label">Years of Trust</div>
-            </div>
-            <div className="stat-card motion-card" data-motion-observe="stat-card">
-              <div className="stat-number">4.9★</div>
-              <div className="stat-label">Average Rating</div>
-            </div>
+            {(cmsContent?.statsConfig?.items && cmsContent.statsConfig.items.length > 0)
+              ? cmsContent.statsConfig.items.map((stat, idx) => (
+                <div key={idx} className="stat-card motion-card" data-motion-observe="stat-card">
+                  <div className="stat-number">{stat.value}{stat.suffix || '+'}</div>
+                  <div className="stat-label">{stat.label}</div>
+                </div>
+              ))
+              : <>
+                <div className="stat-card motion-card" data-motion-observe="stat-card">
+                  <div className="stat-number">15K+</div>
+                  <div className="stat-label">Happy Customers</div>
+                </div>
+                <div className="stat-card motion-card" data-motion-observe="stat-card">
+                  <div className="stat-number">120+</div>
+                  <div className="stat-label">Signature Dishes</div>
+                </div>
+                <div className="stat-card motion-card" data-motion-observe="stat-card">
+                  <div className="stat-number">15+</div>
+                  <div className="stat-label">Years of Trust</div>
+                </div>
+                <div className="stat-card motion-card" data-motion-observe="stat-card">
+                  <div className="stat-number">4.9★</div>
+                  <div className="stat-label">Average Rating</div>
+                </div>
+              </>
+            }
           </div>
         </section>
 
@@ -5095,18 +5168,28 @@ const CustomerLanding = () => {
                 and high-quality ingredients to keep every plate memorable.
               </p>
               <div className="chef-spotlight-points">
-                <div className="chef-point">
-                  <i className="bi bi-check2-circle"></i>
-                  <span>Expert chefs with signature techniques</span>
-                </div>
-                <div className="chef-point">
-                  <i className="bi bi-check2-circle"></i>
-                  <span>Fresh ingredients prepared daily</span>
-                </div>
-                <div className="chef-point">
-                  <i className="bi bi-check2-circle"></i>
-                  <span>Balanced flavors with premium presentation</span>
-                </div>
+                {(cmsContent?.featuresConfig?.items && cmsContent.featuresConfig.items.length > 0)
+                  ? cmsContent.featuresConfig.items.slice(0, 3).map((feat, idx) => (
+                    <div key={idx} className="chef-point">
+                      <i className={feat.icon || 'bi bi-check2-circle'}></i>
+                      <span>{feat.title || feat.description}</span>
+                    </div>
+                  ))
+                  : <>
+                    <div className="chef-point">
+                      <i className="bi bi-check2-circle"></i>
+                      <span>Expert chefs with signature techniques</span>
+                    </div>
+                    <div className="chef-point">
+                      <i className="bi bi-check2-circle"></i>
+                      <span>Fresh ingredients prepared daily</span>
+                    </div>
+                    <div className="chef-point">
+                      <i className="bi bi-check2-circle"></i>
+                      <span>Balanced flavors with premium presentation</span>
+                    </div>
+                  </>
+                }
               </div>
             </div>
           </div>
@@ -5238,43 +5321,29 @@ const CustomerLanding = () => {
           <div className="testimonial-slider-container">
             <div className="testimonial-card-slide">
               <div className="testimonial-stars">
-                <i className="bi bi-star-fill"></i>
-                <i className="bi bi-star-fill"></i>
-                <i className="bi bi-star-fill"></i>
-                <i className="bi bi-star-fill"></i>
-                <i className="bi bi-star-fill"></i>
+                {Array.from({ length: (cmsTestimonials[activeTestimonial]?.rating || 5) }).map((_, i) => (
+                  <i key={i} className="bi bi-star-fill"></i>
+                ))}
               </div>
               <p className="testimonial-text">
-                {activeTestimonial === 0 && "“Absolutely delicious! The atmosphere is cozy, the service is fast, and the food is cooked to perfection. The best restaurant!”"}
-                {activeTestimonial === 1 && "“The steaks here are amazing, and the presentation of each dish is beautiful. Truly a wonderful meal.”"}
-                {activeTestimonial === 2 && "“Very clean, friendly staff, and an amazing selection of sweet desserts. Will definitely come back with my family!”"}
+                &ldquo;{cmsTestimonials[activeTestimonial]?.text || ''}&rdquo;
               </p>
               <div className="testimonial-user">
                 <img 
-                  src={activeTestimonial === 0 ? "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80" : 
-                       activeTestimonial === 1 ? "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80" : 
-                       "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=150&q=80"} 
+                  src={cmsTestimonials[activeTestimonial]?.avatarUrl || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80'} 
                   alt="Customer" 
                   className="testimonial-avatar" 
                 />
                 <div className="testimonial-meta">
-                  <h4>
-                    {activeTestimonial === 0 && "Sophia Loren"}
-                    {activeTestimonial === 1 && "David Marcus"}
-                    {activeTestimonial === 2 && "Emily Watson"}
-                  </h4>
-                  <span>
-                    {activeTestimonial === 0 && "Food Lover"}
-                    {activeTestimonial === 1 && "Food Critic"}
-                    {activeTestimonial === 2 && "Regular Customer"}
-                  </span>
+                  <h4>{cmsTestimonials[activeTestimonial]?.name || 'Happy Customer'}</h4>
+                  <span>{cmsTestimonials[activeTestimonial]?.designation || ''}</span>
                 </div>
               </div>
             </div>
             <div className="testimonial-dots">
-              <span className={`dot ${activeTestimonial === 0 ? 'active' : ''}`} onClick={() => setActiveTestimonial(0)}></span>
-              <span className={`dot ${activeTestimonial === 1 ? 'active' : ''}`} onClick={() => setActiveTestimonial(1)}></span>
-              <span className={`dot ${activeTestimonial === 2 ? 'active' : ''}`} onClick={() => setActiveTestimonial(2)}></span>
+              {cmsTestimonials.map((_, idx) => (
+                <span key={idx} className={`dot ${activeTestimonial === idx ? 'active' : ''}`} onClick={() => setActiveTestimonial(idx)}></span>
+              ))}
             </div>
           </div>
         </section>

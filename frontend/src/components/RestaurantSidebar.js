@@ -139,6 +139,12 @@ const RestaurantSidebar = ({ collapsed, visible, onLogout }) => {
       exact: true
     },
     {
+      path: '/restaurant/my-website',
+      icon: 'bi bi-globe',
+      label: 'My Website',
+      exact: true
+    },
+    {
       path: '/restaurant/settings',
       icon: 'bi bi-gear-fill',
       label: 'Settings',
